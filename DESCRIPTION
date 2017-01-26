@@ -7,14 +7,13 @@ Authors@R: c(person("Frank", "Blaauw", role=c("aut", "cre"), email="f.j.blaauw@r
               person("Antoine", "Chambaz", role=c("aut", "cre"), email="achambaz@u-paris10.fr"))
 Author: Frank Blaauw [aut, cre]
   Antoine Chambaz [aut, cre]
-Maintainer: Frank Blaauw <f.j.blaauw@rug.nl
+Maintainer: Frank Blaauw <f.j.blaauw@rug.nl>
 Description: Package that enabling online super learning
 License: MIT
 LazyLoad: yes
 LazyData: yes
-Depends: R (>= 2.9.0), R.utils (>= 1.4.1)
+Depends: R (>= 2.9.0)#, R.utils (>= 1.4.1)
 Imports: R.methodsS3, R.oo
 Suggests: glmnet (>= 1.9-5), knitr, BiocStyle
 VignetteBuilder: knitr
-
 
