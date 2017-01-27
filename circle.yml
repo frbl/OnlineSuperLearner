@@ -1,0 +1,21 @@
+machine:
+  environment:
+    R_LIBS_USER: ~/lib/R/library
+    PACKAGE_NAME: onlinesuperlearner
+test:
+  override:
+    - ./inst/bash/check_code_conventions.sh
+    - R CMD INSTALL --no-multiarch --with-keep.source ~/$PACKAGE_NAME
+    - R CMD build ~/$PACKAGE_NAME
+    - R CMD check ~/$PACKAGE_NAME/$PACKAGE_NAME_1.0-0.tar.gz --no-manual --no-build-vig
+  post:
+    - mv $PACKAGE_NAME.Rcheck/tests/testthat.Rout* $CIRCLE_ARTIFACTS/.
+    - mv $PACKAGE_NAME.Rcheck/*.log $CIRCLE_ARTIFACTS/.
+dependencies:
+  cache_directories:
+    - "~/lib/R"
+  pre:
+    - mkdir -p ~/lib/R/library
+    - ./inst/bash/install-package-dependencies.sh
+    - echo "options(repos = c(CRAN='http://cran.r-project.org'))" >> ~/.Rprofile
+

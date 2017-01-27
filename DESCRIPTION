@@ -1,4 +1,4 @@
-Package: online-superlearner
+Package: onlinesuperlearner
 Type: Package
 Title: Online SuperLearner package
 Version: 0.0.1
@@ -12,7 +12,9 @@ Description: Package that enabling online super learning
 License: MIT
 LazyLoad: yes
 LazyData: yes
-Depends: R (>= 2.9.0)#, R.utils (>= 1.4.1)
+Depends:
+  R (>= 2.9.0),
+  R.utils (>= 1.4.1)
 Imports:
   R.methodsS3,
   R.oo

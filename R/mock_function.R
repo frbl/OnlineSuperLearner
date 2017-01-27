@@ -7,9 +7,9 @@
 #' @examples
 #' mock_function()
 
-mock_function <- function(test_param=TRUE){
-  if(test_param==TRUE) {
-    return 'param was true'
+mock_function <- function(test_param = TRUE){
+  if(test_param == TRUE) {
+    return('param was true')
   }
-  return 'param was false'
+  return('param was false')
 }
