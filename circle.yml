@@ -7,7 +7,7 @@ test:
     - ./inst/bash/check_code_conventions.sh
     - R CMD INSTALL --no-multiarch --with-keep.source ~/$PACKAGE_NAME
     - R CMD build ~/$PACKAGE_NAME
-    - R CMD check ~/$PACKAGE_NAME/$PACKAGE_NAME-1.0-0.tar.gz --no-manual --no-build-vig
+    - R CMD check ~/$PACKAGE_NAME/$PACKAGE_NAME\_0.0.1.tar.gz --no-manual --no-build-vig
   post:
     - mv $PACKAGE_NAME.Rcheck/tests/testthat.Rout* $CIRCLE_ARTIFACTS/.
     - mv $PACKAGE_NAME.Rcheck/*.log $CIRCLE_ARTIFACTS/.
