@@ -1,10 +1,9 @@
 #' OnlineSuperLearner
 #'
 #' This is the main super learner function
-#' @slot x A number
-#' @slot y A number
+#' @slot X A number
+#' @slot Y A number
 #' @return The best model
-#' @examples
 #' @importFrom methods setClass new
 #' @export
 OnlineSuperLearner <- setClass("OnlineSuperLearner",
@@ -37,11 +36,10 @@ OnlineSuperLearner <- setClass("OnlineSuperLearner",
 
 #' The run function
 #'
-#' @param Fun Function. Default function is \code{sum}
-#' @param ... Extra named arguments passed to FUN
+#' @param obj The superlearner object
 #' @docType methods
 #' @rdname run
-#' @importFrom methods setClass new
+#' @importFrom methods new
 #' @export
 setGeneric(name="run", def = function(obj) { standardGeneric("run") } )
 

@@ -1,11 +1,8 @@
-#' LibaryFactory
+#' LibraryFactory
 #'
 #' This is the main super learner function
-#' @slot x A number
-#' @slot y A number
-#' @return The best model
-#' @examples
-#' @importFrom methods setClass new
+#' @slot SL.type the type of platform to use for fitting the models
+#' @importFrom methods setClass
 #' @export
 LibraryFactory <- setClass("LibraryFactory",
   representation(
@@ -27,17 +24,16 @@ LibraryFactory <- setClass("LibraryFactory",
   }
 )
 
-
+#' Fabricate function
+#' 
 #' @param object An object
-#' @param data Numeric vector or data.frame
-#' @param Fun Function. Default function is \code{sum}
-#' @param ... Extra named arguments passed to FUN
+#' @param SL.library the library of different ML methods to use in the SL
 #' @rdname fabricate
 #' @export
 setGeneric("fabricate", function(object, SL.library) {standardGeneric ("fabricate")} )
 
-#' @rdname run
-setMethod("fabricate", "LibaryFactory",
+#' @rdname fabricate
+setMethod("fabricate", "LibraryFactory",
   function(object, SL.library) {
     SL.library.built <- c(123)
     # Create objects for each of the objects
