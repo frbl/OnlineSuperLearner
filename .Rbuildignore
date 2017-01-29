@@ -4,6 +4,8 @@
 ^.svn
 ^.git
 ^.make
+^.*\.gitkeep$
+^.gitignore
 INSTALL[.]md
 OVERVIEW[.]md
 README[.]md
