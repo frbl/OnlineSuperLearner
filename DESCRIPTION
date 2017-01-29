@@ -14,7 +14,8 @@ LazyLoad: yes
 LazyData: yes
 Depends:
     R (>= 2.9.0),
-    R.utils (>= 1.4.1)
+    R.utils (>= 1.4.1),
+    h2o
 Imports:
     methods
 Suggests:
