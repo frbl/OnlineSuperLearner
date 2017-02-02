@@ -6,8 +6,13 @@
 #' @slot Y A number
 #' @return The best model
 #' @importFrom methods setClass new
+#' @import h2o
+#' @import h2o.demo
 #' @export
 OnlineSuperLearner <- setClass("OnlineSuperLearner",
+  #TODO: this representation should probably accept a datareader object from which
+  # it retrieves lines of data. Also, we should add a parameter in which an already
+  # fitted model can be inputted, so it gets updated.
   representation(
     Y = "vector",
     X = "data.frame",
@@ -57,8 +62,16 @@ setMethod("run", signature = "OnlineSuperLearner",
     libraryFactory <- LibraryFactory()
     SL.fabricated.models <- fabricate(libraryFactory, 'methods')
 
-    # 2. Fit different models using cross validation
 
+    # 1.3 Setup a connection with H2O
+    localh2o <- H2oInitializer(host='imac.evionix.org', runlocal = FALSE)
+    prostate.hex = h2o.importFile(path = "https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv", destination_frame = "prostate.hex")
+
+    # 2. Fit different models using cross validation
+    glm <- H2o.model.GLM()
+    fitted <- fit(glm, y = "CAPSULE", X = c("AGE","RACE","PSA","DCAPS"), data = prostate.hex)
+
+    print(fitted)
     # 3. Fit a final model which is a glm of the original models
 
     # 4. return the final model
@@ -66,3 +79,9 @@ setMethod("run", signature = "OnlineSuperLearner",
     return(NULL)
   }
 )
+
+start <- function(){
+
+  ols <- OnlineSuperLearner()
+  run(ols)
+}
