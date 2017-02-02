@@ -1,6 +1,7 @@
 #' OnlineSuperLearner
 #'
-#' This is the main super learner function
+#' This is the main super learner class. This class contains everything related
+#' to the super learner machine learning model.
 #' @slot X A number
 #' @slot Y A number
 #' @return The best model
@@ -36,7 +37,8 @@ OnlineSuperLearner <- setClass("OnlineSuperLearner",
 
 #' The run function
 #'
-#' @param obj The superlearner object
+#' @param obj The superlearner object.
+#' @return the fitted superlearner object.
 #' @docType methods
 #' @rdname run
 #' @importFrom methods new

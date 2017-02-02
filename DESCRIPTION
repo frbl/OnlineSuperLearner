@@ -15,7 +15,7 @@ LazyData: yes
 Depends:
     R (>= 2.9.0),
     R.utils (>= 1.4.1),
-    h2o
+    h2o (>=	3.10.2.2)
 Imports:
     methods
 Suggests:
