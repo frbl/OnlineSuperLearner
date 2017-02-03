@@ -81,7 +81,7 @@ setMethod("run", signature = "OnlineSuperLearner",
 )
 
 start <- function(){
-
+  devtools::load_all()
   ols <- OnlineSuperLearner()
   run(ols)
 }
