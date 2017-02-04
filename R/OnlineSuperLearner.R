@@ -4,6 +4,8 @@
 #' to the super learner machine learning model.
 #' @field SL.Library the library of machinelearning algorithms to use
 #' @importFrom R6 R6Class
+#' @include LibraryFactory.R
+#' @include H2O.Initializer.R
 #' @import h2o
 #'
 #' @section Details:
@@ -22,42 +24,36 @@ OnlineSuperLearner <-
            # fitted model can be inputted, so it gets updated.
            private =
              list(
-                  SL.Library = NULL
+                  SL.Library = NULL,
+                  LibraryFactory = NULL
                   ),
            public =
              list(
                   initialize = function(SL.Library = c('ML.Local.lm','ML.H2O.glm')) {
                     private$SL.Library <- SL.Library
+                    private$LibraryFactory <- LibraryFactory$new()
+                    H2O.Initializer$new(host='imac.evionix.org', runlocal = FALSE)
                   },
 
-                  run = function() {
+                  run = function(data) {
                     # Steps in superlearning:
 
-                    # 1. Initialization
-                    # 1.1 Check parameters (dimensions of X / Y)
-
-                    # 1.2 Setup a connection with H2O
-                    localh2o <- H2O.initializer(host='imac.evionix.org', runlocal = FALSE)
-
-                    # 1.3 Load the data
-                    data <- Data.Static$new(url='https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
-
-                    # 1.4 Fabricate the various models
-                    libraryFactory <- LibraryFactory$new()
-                    SL.fabricated.models <- libraryFactory$fabricate(private$SL.Library, data = data)
-
+                    # 1. Initialization, Fabricate the various models
+                    SL.fabricated.models <- private$LibraryFactory$fabricate(private$SL.Library, data = data)
 
                     # 2. Fit different models using cross validation
-                    for (model in SL.fabricated.models) {
-                      fitted <- model$fit(y = "CAPSULE", X = c("AGE","RACE","PSA","DCAPS"))
-                      print(fitted)
-                    }
+                    models <- lapply(SL.fabricated.models, function(model) {
+                      model$fit(y = "CAPSULE", X = c("AGE","RACE","PSA","DCAPS"))
+                    })
 
-                    # 3. Fit a final model which is a glm of the original models
+                    print(models)
+
+                    # 3. build a matrix with predicted / actual
+
+                    # 4. Fit a final model which is a glm of the original models
 
                     # 4. return the final model
-
-                    return(NULL)
+                    return(models)
                   },
 
                   getModel = function() {
@@ -69,5 +65,6 @@ OnlineSuperLearner <-
 
 main <- function() {
   osl <- OnlineSuperLearner$new()
-  osl$run()
+  data <- Data.Static$new(url='https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
+  osl$run(data)
 }

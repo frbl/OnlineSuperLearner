@@ -27,7 +27,7 @@ Collate:
     'Data.Base.R'
     'Data.Static.R'
     'Data.Stream.R'
-    'H2O.initializer.R'
+    'H2O.Initializer.R'
     'LibraryFactory.R'
     'ML.H2O.R'
     'ML.Base.R'
