@@ -25,7 +25,8 @@ OnlineSuperLearner <- setClass("OnlineSuperLearner",
   prototype(
     family = gaussian(),
     method = "",
-    verbose = 0),
+    verbose = 0,
+    SL.library = c('ML.H2O.glm')),
 
   validity = function(object) {
     errors <- character()
@@ -51,25 +52,28 @@ OnlineSuperLearner <- setClass("OnlineSuperLearner",
 setGeneric(name="run", def = function(obj) { standardGeneric("run") } )
 
 #' @rdname run
-setMethod("run", signature = "OnlineSuperLearner",
+setMethod("run", signature = c(obj = "OnlineSuperLearner"),
   definition = function(obj) {
     # Steps in superlearning:
 
     # 1. Initialization
     # 1.1 Check parameters (dimensions of X / Y)
 
-    # 1.2 Fabricate the various models
+    # 1.2 Setup a connection with H2O
+    localh2o <- H2O.initializer(host='imac.evionix.org', runlocal = FALSE)
+
+    # 1.3 Load the data
+    data <- Data.Static(url='https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
+
+    # 1.4 Fabricate the various models
     libraryFactory <- LibraryFactory()
-    SL.fabricated.models <- fabricate(libraryFactory, 'methods')
+    SL.fabricated.models <- fabricate(libraryFactory, obj@SL.library, data = data)
 
-
-    # 1.3 Setup a connection with H2O
-    localh2o <- H2oInitializer(host='imac.evionix.org', runlocal = FALSE)
-    prostate.hex = h2o.importFile(path = "https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv", destination_frame = "prostate.hex")
 
     # 2. Fit different models using cross validation
-    glm <- H2o.model.GLM()
-    fitted <- fit(glm, y = "CAPSULE", X = c("AGE","RACE","PSA","DCAPS"), data = prostate.hex)
+    for (model in SL.fabricated.models) {
+      fitted <- fit(model, y = "CAPSULE", X = c("AGE","RACE","PSA","DCAPS"))
+    }
 
     print(fitted)
     # 3. Fit a final model which is a glm of the original models
@@ -80,8 +84,3 @@ setMethod("run", signature = "OnlineSuperLearner",
   }
 )
 
-start <- function(){
-  devtools::load_all()
-  ols <- OnlineSuperLearner()
-  run(ols)
-}
