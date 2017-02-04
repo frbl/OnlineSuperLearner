@@ -1,61 +1,52 @@
 #' LibraryFactory
 #'
-#' This is the main super learner function
-#' @slot SL.type the type of platform to use for fitting the models
-#' @importFrom methods setClass
+#' @field ML.Local the type of platform to use for fitting the models
+#' @importFrom R6 R6Class
 #' @export
-LibraryFactory <- setClass("LibraryFactory",
-  representation(ML.models.allowed = 'vector'),
-  prototype(
-    ML.models.allowed=c('ML.H2O.glm')
-  ),
-  validity = function(object) {
-    errors <- character()
-    # TODO: Test if files actually exist.
+LibraryFactory <-
+  R6Class (
+           "LibraryFactory",
+           private =
+             list(
+                  ML.models.allowed=NULL,
+                  isValidMlModel = function(ML.name) {
+                    ML.name %in% private$ML.models.allowed
+                  }
+                  ),
 
-    # Check if all models are actually ml models
-    are.ml.models <- sapply(object@ML.models.allowed, startsWith, 'ML')
-    if(!all(are.ml.models)){
-      msg <- 'Not all provided models are ML models as models should start with ML, please only use ML models.'
-      errors <- c(errors, msg)
-    }
-    if (length(errors) == 0) TRUE else errors
-  }
-)
+           public =
+             list(
+                  initialize = function(ML.models.allowed = c('ML.H2O.glm', 'ML.Local.lm')) {
+                    private$ML.models.allowed = ML.models.allowed
+                  },
 
-#' Fabricate function
-#'
-#' @param object An object
-#' @param SL.library the library of different ML methods to use in the SL
-#' @rdname fabricate
-#' @export
-setGeneric("fabricate", function(obj, SL.library, data) {standardGeneric ("fabricate")} )
+                  getValidity = function(object) {
+                    errors <- character()
+                    # TODO: Test if files actually exist.
 
-#' @rdname fabricate
-#' @include Data.Base.R
-setMethod("fabricate", signature = c(obj = "LibraryFactory", SL.library="vector", data = "Data.Base"),
-  function(obj, SL.library, data) {
-    # Create objects for each of the objects
-    lapply(SL.library, function(entry) {
-      if (!isValidMlModel(obj, entry)){
-        warning(paste('The model', entry,'is not a valid ML model name'))
-        next
-      }
+                    # Check if all models are actually ml models
+                    are.ml.models <- sapply(object@ML.models.allowed, startsWith, 'ML')
+                    if(!all(are.ml.models)){
+                      msg <- 'Not all provided models are ML models as models should start with ML, please only use ML models.'
+                      errors <- c(errors, msg)
+                    }
+                    if (length(errors) == 0) TRUE else errors
+                  },
 
-      # TODO: Find a way to do this better. We cannot call
-      # new since we are overriding the constructor.
-      # new(entry, data=data)
-      constructor <- paste(entry, "(data=data)",sep='')
-      eval(parse(text=constructor))
-    })
-  }
-)
+                  fabricate = function(SL.library, data) {
+                    # Create objects for each of the objects
+                    print(SL.library)
+                    lapply(SL.library, function(entry) {
+                             if (!private$isValidMlModel(entry)){
+                               trow(paste('The model', entry,'is not a valid ML model name'))
+                             }
 
-#' isValidMlModel
-#'
-setGeneric("isValidMlModel", function(obj, ML.name) {standardGeneric ("isValidMlModel")} )
-setMethod("isValidMlModel", signature = c(obj="LibraryFactory", ML.name="character"),
-  function(obj, ML.name) {
-    ML.name %in% obj@ML.models.allowed
-  }
-)
+                             # TODO: Find a way to do this better. We cannot call
+                             # new since we are overriding the constructor.
+                             # new(entry, data=data)
+                             constructor <- paste(entry, "$new(data=data)",sep='')
+                             eval(parse(text=constructor)) }
+                    )
+                  }
+                  )
+           )

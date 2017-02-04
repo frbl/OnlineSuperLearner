@@ -1,11 +1,18 @@
-#' ML
+#' ML.Base
+#'
+#' @importFrom R6 R6Class
+#' @include ML.H2O.R
+#' @include ML.Base.R
 #' @include Data.Base.R
-ML <- setClass("ML.Base", representation(data = "Data.Base"))
+ML.Base <-
+  R6Class (
+           "ML.Base",
+           public =
+             list(
+                  data = NULL,
 
-setGeneric("fit", function(obj, X, y, data) standardGeneric("fit"))
-
-setMethod("fit", signature(obj = "ML.Base", X = "character", y ="vector", data="ANY"),
-  function(obj, X, y, data) {
-    throw('This method needs to be inherited')
-  }
-)
+                  initialize = function(data) {
+                    self$data = data
+                  }
+                  )
+           )

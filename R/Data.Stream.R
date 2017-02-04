@@ -1,3 +1,11 @@
 #' Data.Stream
 #' @include Data.Base.R
-Data.Stream <- setClass("Data.Stream", contains = 'Data.Base')
+#' @importFrom R6 R6Class
+#' @include Data.Base.R
+Data.Stream <-
+  R6Class (
+           "Data.Stream",
+           inherit = Data.Base,
+           private = list(),
+           public = list()
+           )

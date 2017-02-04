@@ -1,5 +1,6 @@
-#' H2O.initializer
 setOldClass("h2o")
+
+#' H2O.initializer
 H2O.initializer <- setClass("H2O.initializer",
   representation = representation(
       h2o = "H2OConnection"

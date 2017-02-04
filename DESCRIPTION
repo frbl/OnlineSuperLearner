@@ -17,19 +17,20 @@ Depends:
     R.utils (>= 1.4.1),
     h2o (>=	3.10.3.2)
 Imports:
+    R6,
     methods
 Suggests:
     roxygen2,
     testthat
 RoxygenNote: 5.0.1
-Collate: 
+Collate:
     'Data.Base.R'
     'Data.Static.R'
     'Data.Stream.R'
     'H2O.initializer.R'
     'LibraryFactory.R'
-    'ML.Base.R'
     'ML.H2O.R'
+    'ML.Base.R'
     'ML.H2O.glm.R'
     'ML.Local.R'
     'ML.Local.lm.R'

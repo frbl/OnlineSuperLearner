@@ -1,43 +1,39 @@
 #' Data.Static
+#' @importFrom R6 R6Class
 #' @include Data.Base.R
-Data.Static <- setClass("Data.Static",
-  representation = representation(
-    dataset = "data.frame",
-    url = "character",
-    lazyLoad = "logical"
-  ),
+Data.Static <-
+  R6Class (
+           "Data.Static",
+           inherit = Data.Base,
+           private =
+             list(
+                  dataset = NULL,
+                  url = NULL,
+                  lazyLoad = NULL
+                  ),
+           public =
+             list(
+                  initialize = function(dataset = NULL, url = NULL, lazyLoad=TRUE) {
+                    super$initialize()
+                    private$dataset <- dataset
+                    private$url <- url
+                    private$lazyLoad <- lazyLoad
+                  },
 
-  prototype(
-    lazyLoad = TRUE
-  ),
+                  getAll = function() {
+                    if (private$lazyLoad && !is.null(private$url)) {
+                      return(private$url)
+                    }
 
-  validity = function(object) {
-    errors <- character()
-    if (length(errors) == 0) TRUE else errors
-  },
-  contains = 'Data.Base'
-)
+                    if (!is.null(private$dataset)) {
+                      return(private$dataset)
+                    }
 
-#' getAll
-setGeneric(name="getAll", def = function(obj) { standardGeneric("getAll") } )
-setMethod("getAll", signature(obj = "Data.Static"),
-  function(obj) {
-    if (obj@lazyLoad && !is.null(obj@url)) {
-      return(obj@url)
-    }
+                    # If all fails, load the data locally in a dataframe and return that
+                  },
 
-    if (!is.null(obj@dataset)) {
-      return(obj@dataset)
-    }
+                  getNext = function() {
 
-    # If all fails, load the data locally in a dataframe and return that
-  }
-)
-
-
-setMethod("getNext", signature(obj = "Data.Base"),
-  function(obj) {
-    if (is.null(dataset)) {
-    }
-  }
-)
+                  }
+                  )
+           )

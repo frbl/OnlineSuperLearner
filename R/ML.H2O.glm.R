@@ -1,42 +1,29 @@
 #' ML.H2O.glm
+#' @importFrom R6 R6Class
 #' @include ML.H2O.R
-#' @include Data.Base.R
-setOldClass("h2o")
-.ML.H2O.glm <- setClass("ML.H2O.glm",
-  representation = representation(
-     data = "Data.Base",
-     nfolds = "numeric",
-     alpha = "numeric",
-     family = "character"
-    ),
+ML.H2O.glm <-
+  R6Class (
+           "ML.H2O.glm",
+           inherit = ML.H2O,
+           public =
+             list(
+                  nfolds = NULL,
+                  alpha = NULL,
+                  family = NULL,
 
+                  initialize = function(data, nfolds= 10, alpha = 0.5, family = 'binomial') {
+                    super$initialize(data = data)
+                    self$nfolds <- nfolds
+                    self$alpha <- alpha
+                    self$family <- family
+                  },
 
-  validity = function(object) {
-    errors <- character()
-    print('hoi')
-    if (is.null(object@data)) {
-      msg <- 'You have to provide some data!'
-      errors <- c(errors, msg)
-    }
-    if(!h2o.clusterIsUp()) {
-      msg <- 'Cluster is not yet started'
-      errors <- c(errors, msg)
-    }
-    if (length(errors) == 0) TRUE else errors
-  },
-  contains = 'ML.H2O'
-)
-
-ML.H2O.glm <- function(data, nfolds = 10, alpha = 0.5, family = 'binomial') {
-  browser()
- .ML.H2O.glm(data=data, nfolds = nfolds, alpha = alpha, family = family)
- callNextMethod()
-}
-
-setMethod("fit", signature(obj = "ML.H2O.glm", X = "character", y ="vector", data="ANY"),
-  function(obj, X, y, data) {
-    h2o.glm(x=X, y=y, training_frame=obj@data, family=obj@family,
-            nfolds=obj@nfolds, alpha=obj@alpha)
-  }
-)
-
+                  fit = function(X, y){
+                    h2o.glm(x=X, y=y,
+                            training_frame=self$data,
+                            family=self$family,
+                            nfolds=self$nfolds,
+                            alpha=self$alpha)
+                  }
+                  )
+           )
