@@ -21,8 +21,12 @@ Data.Static <-
                   },
 
                   getAll = function() {
-                    if (private$lazyLoad && !is.null(private$url)) {
-                      return(private$url)
+                    if ( && !is.null(private$url)) {
+                      if (private$lazyLoad) {
+                        return(private$url)
+                      }else {
+                        return(self.readDataFromUrl())
+                      }
                     }
 
                     if (!is.null(private$dataset)) {
@@ -30,6 +34,11 @@ Data.Static <-
                     }
 
                     # If all fails, load the data locally in a dataframe and return that
+                  },
+
+                  readDataFromUrl = function() {
+                    # TODO: Test the file, which format it should be
+                    data = read.csv(self$url)
                   },
 
                   getNext = function() {

@@ -11,8 +11,7 @@ ML.Local <-
            public =
              list(
                   initialize = function(data) {
-                    data = read.csv(data$getAll())
-                    super$initialize(data = data)
+                    super$initialize(data = data$readDataFromUrl())
                   }
                   )
            )
