@@ -13,6 +13,14 @@ ML.Base <-
 
                   initialize = function(data) {
                     self$data = data
+                  },
+
+                  fit = function() {
+                    throw('The fit method needs to be inherited')
+                  },
+
+                  predict = function() {
+                    throw('The predict method needs to be inherited')
                   }
                   )
            )

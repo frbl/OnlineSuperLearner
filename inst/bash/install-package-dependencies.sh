@@ -1,7 +1,7 @@
 #! /usr/bin/env Rscript
 # General packages
 options(repos = structure(c(CRAN = "http://cran-mirror.cs.uu.nl/")))
-packages <- c("R.utils", "R.methodsS3", "R.oo", "testthat", "roxygen2")
+packages <- c("R.utils", "R.methodsS3", "R.oo", "testthat", "roxygen2", "zoo", "rkafka")
 new.packages <- packages[!(packages %in% installed.packages()[, "Package"])]
 if (length(new.packages))
   install.packages(new.packages)

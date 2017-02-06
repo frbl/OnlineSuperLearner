@@ -15,6 +15,11 @@
 #' \code{$run()} runs the actual OnlineSuperLearning calculation
 #'
 #' \code{$getModel()} returns the final OnlineSuperLearner model
+#'
+#' \code{$getModel(data, X, Y, onlySL)} allows the user to make predictions on new data using
+#' the fitted superlearner model. The data provided in this function is the new data object,
+#' which can be either a stream of data or a dataframe. X is a vector of covariate names to use for the
+#' prediction, Y is a vector containing the variables to predict
 #' @export
 OnlineSuperLearner <-
   R6Class (
@@ -58,12 +63,19 @@ OnlineSuperLearner <-
 
                   getModel = function() {
                     return(NULL)
+                  },
+
+                  predict = function(newdata, X = NULL, Y = NULL, onlySL = FALSE, ...) {
+                    #TODO: Move X and Y to the data object?
+                    return(NULL)
                   }
+
                   )
            )
 
 
 main <- function() {
+  SL.Library = c('ML.Local.lm','ML.H2O.glm')
   osl <- OnlineSuperLearner$new()
   data <- Data.Static$new(url='https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
   osl$run(data)

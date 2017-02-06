@@ -21,7 +21,7 @@ Data.Static <-
                   },
 
                   getAll = function() {
-                    if ( && !is.null(private$url)) {
+                    if (!is.null(private$url)) {
                       if (private$lazyLoad) {
                         return(private$url)
                       }else {

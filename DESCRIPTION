@@ -15,15 +15,16 @@ LazyData: yes
 Depends:
     R (>= 2.9.0),
     R.utils (>= 1.4.1),
-    h2o (>=	3.10.3.2)
+    h2o (>=	3.10.3.2),
+    zoo,
+    rkafka,
+    R6
 Imports:
-    R6,
-    methods
 Suggests:
     roxygen2,
     testthat
-RoxygenNote: 5.0.1
-Collate:
+RoxygenNote: 6.0.0
+Collate: 
     'Data.Base.R'
     'Data.Static.R'
     'Data.Stream.R'
@@ -36,3 +37,4 @@ Collate:
     'ML.Local.lm.R'
     'MockFunction.R'
     'OnlineSuperLearner.R'
+    'SummaryMeasureGenerator.R'
