@@ -6,6 +6,7 @@
 #' @importFrom R6 R6Class
 #' @include LibraryFactory.R
 #' @include H2O.Initializer.R
+#' @include SummaryMeasureGenerator.R
 #' @import h2o
 #'
 #' @section Details:
@@ -73,6 +74,16 @@ OnlineSuperLearner <-
                   )
            )
 
+
+datatest <- function() {
+  data <- Data.Static$new(lazyload = FALSE,
+                          url='https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
+
+  smg <- SummaryMeasureGenerator$new(data = data,
+                          lags = 3)
+  print(smg$getNext())
+  smg
+}
 
 main <- function() {
   SL.Library = c('ML.Local.lm','ML.H2O.glm')

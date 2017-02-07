@@ -1,6 +1,7 @@
 # History files
 .Rhistory
 .Rapp.history
+xterm-256color.ti
 
 # Session Data files
 .RData

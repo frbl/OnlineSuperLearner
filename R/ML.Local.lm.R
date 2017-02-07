@@ -18,10 +18,13 @@ ML.Local.lm <-
                     self$family <- family
                   },
 
-                  fit = function(X, y){
-                    formula = paste(y, '~', X)
-                    browser
-                    lm(formula, self$data)
+                  fit = function(X, y, oldmodel = NULL){
+                    formula <- paste(y, '~', X)
+                    if(is.null(oldmodel)){
+                      model <- lm(formula, self$data)
+                    } else {
+                      model <- update(oldmodel, formula, self$data)
+                    }
                   }
                   )
            )

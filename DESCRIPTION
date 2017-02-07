@@ -36,5 +36,5 @@ Collate:
     'ML.Local.R'
     'ML.Local.lm.R'
     'MockFunction.R'
-    'OnlineSuperLearner.R'
     'SummaryMeasureGenerator.R'
+    'OnlineSuperLearner.R'
