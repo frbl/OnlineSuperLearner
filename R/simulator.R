@@ -66,7 +66,8 @@ Simulator <-
                                      ga=self$generateMechanism(0, family="bernoulli"),
                                      Qy=self$generateMechanism(0, family="bernoulli"),
                                      intervention=NULL,
-                                     verbose=FALSE) {
+                                     verbose=FALSE,
+                                     version="slow") {
           ## Retrieving arguments
           by <- Arguments$getInteger(by, c(1, Inf))
           qw <- self$validateMechanism(qw)
@@ -107,27 +108,65 @@ Simulator <-
           }
           
           WAY <- rep(init, 3)
-          ## -------------
-          ## first version ## must be very slow; write faster version with "inline" and "Rcpp"?
-          ## -------------
-          for (ii in 1:by) {
-            past.idx <- self$retrieveRelevantMemoryWAY("W", ii, memories["W"])
-            which.pos <- which(past.idx>0)
-            past <- rep(0, memories["W"])
-            past[which.pos] <- WAY[past.idx[which.pos]]
-            WAY[(ii-1)*3+1] <- rgen[[families[1]]](UU[ii, 1], qw(past))
+          if (version=="slow") {
+            ## -------------
+            ## first version ## must be very slow
+            ## -------------
+            for (ii in 1:by) {
+              past.idx <- self$retrieveRelevantMemoryWAY("W", ii, memories["W"])
+              which.pos <- which(past.idx>0)
+              past <- rep(0, memories["W"])
+              past[which.pos] <- WAY[past.idx[which.pos]]
+              WAY[(ii-1)*3+1] <- rgen[[families[1]]](UU[ii, 1], qw(past))
+              ##
+              past.idx <- self$retrieveRelevantMemoryWAY("A", ii, memories["A"])
+              which.pos <- which(past.idx>0)
+              past <- rep(0, memories["A"])
+              past[which.pos] <- WAY[past.idx[which.pos]]
+              WAY[(ii-1)*3+2] <- rgen[[families[2]]](UU[ii, 2], ga(past))
+              ##
+              past.idx <- self$retrieveRelevantMemoryWAY("Y", ii, memories["Y"])
+              which.pos <- which(past.idx>0)
+              past <- rep(0, memories["Y"])
+              past[which.pos] <- WAY[past.idx[which.pos]]
+              WAY[(ii-1)*3+3] <- rgen[[families[3]]](UU[ii, 3], Qy(past))
+            }
+          } else if (version=="faster") {
+            ## --------------
+            ## second version ## significantly faster than previous one?
+            ## --------------
+
+#### check how to require libraries 'inline' and 'Rcpp'...
+
+            throw("'Rcpp' version not implemented yet...")
+            
             ##
-            past.idx <- self$retrieveRelevantMemoryWAY("A", ii, memories["A"])
-            which.pos <- which(past.idx>0)
-            past <- rep(0, memories["A"])
-            past[which.pos] <- WAY[past.idx[which.pos]]
-            WAY[(ii-1)*3+2] <- rgen[[families[2]]](UU[ii, 2], ga(past))
+            ## A TEMPLATE...
             ##
-            past.idx <- self$retrieveRelevantMemoryWAY("Y", ii, memories["Y"])
-            which.pos <- which(past.idx>0)
-            past <- rep(0, memories["Y"])
-            past[which.pos] <- WAY[past.idx[which.pos]]
-            WAY[(ii-1)*3+3] <- rgen[[families[3]]](UU[ii, 3], Qy(past))
+            ## generateWAY <- cxxfunction(signature(x="numeric", y="numeric", wt="numeric", param="numeric"),
+            ##                            body="
+            ##              Rcpp::NumericVector xx(x);
+            ##              Rcpp::NumericVector yy(y);
+            ##              /*Rcpp::NumericVector aa(alpha);*/
+            ##              Rcpp::NumericVector wwtt(wt);
+            ##              Rcpp::NumericVector bb(param);
+            ##              int n=xx.size();
+            ##              Rcpp::NumericVector out(1);
+            ##              Rcpp::NumericVector Nb(1);
+                         
+            ##              Nb[0]=0;
+            ##              out[0]=0;
+            ##              for(int i=0; i < n; i++){
+            ##                Nb[0] +=wwtt[i];
+            ##                for(int j=0; j<n; j++){
+            ##                  out[0] = out[0] + (1/(1+exp(bb[0]*(xx[i]-xx[j])*(yy[i]-yy[j]))))*wwtt[i]*wwtt[j];
+            ##                }
+            ##               }
+            ##              out[0] = out[0]/(Nb[0]*Nb[0]);
+                         
+                        
+            ##              return out;",
+            ##              plugin="Rcpp")            
           }
           WAY <- t(matrix(WAY, nrow=3, dimnames=list(c("W", "A", "Y"), NULL)))
           return(WAY)
