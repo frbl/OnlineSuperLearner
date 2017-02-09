@@ -1,18 +1,19 @@
-#' ML.Local
+#' ML.XGBoost
 #'
 #' @docType class
 #' @importFrom R6 R6Class
 #' @include ML.Base.R
-#' @include Data.Base.R
-#' @keywords data
-ML.Local <-
+ML.XGBoost <-
   R6Class (
-           "ML.Local",
+           "ML.XGBoost",
            inherit = ML.Base,
+           private =
+            list(
+                ),
            public =
              list(
                   initialize = function(data) {
-                    super$initialize(data = data)
+                    super$initialize(data = data$readDataFromUrl())
                   }
                   )
            )

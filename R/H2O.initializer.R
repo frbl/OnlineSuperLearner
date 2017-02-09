@@ -2,7 +2,9 @@ setOldClass("h2o")
 
 #' H2O.Initializer
 #'
+#' @docType class
 #' @importFrom R6 R6Class
+#' @import h2o
 #' @export
 H2O.Initializer <-
   R6Class(

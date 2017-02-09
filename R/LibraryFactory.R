@@ -1,5 +1,6 @@
 #' LibraryFactory
 #'
+#' @docType class
 #' @field ML.Local the type of platform to use for fitting the models
 #' @importFrom R6 R6Class
 #' @export

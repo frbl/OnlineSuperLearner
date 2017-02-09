@@ -34,3 +34,4 @@ vignettes/*.pdf
 *.knit.md
 
 xterm-256colors.ti
+.Rproj.user

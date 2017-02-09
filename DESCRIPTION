@@ -14,12 +14,16 @@ LazyLoad: yes
 LazyData: yes
 Depends:
     R (>= 2.9.0),
+    data.table,
+    R6
+Imports:
+    data.table,
     R.utils (>= 1.4.1),
     h2o (>=	3.10.3.2),
     zoo,
     rkafka,
-    R6
-Imports:
+    R6,
+    xgboost
 Suggests:
     roxygen2,
     testthat
@@ -35,6 +39,8 @@ Collate:
     'ML.H2O.glm.R'
     'ML.Local.R'
     'ML.Local.lm.R'
+    'ML.XGBoost.R'
+    'ML.XGBoost.gbm.R'
     'MockFunction.R'
     'SummaryMeasureGenerator.R'
     'OnlineSuperLearner.R'

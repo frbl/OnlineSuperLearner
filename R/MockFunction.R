@@ -2,7 +2,7 @@
 #'
 #' Function to test wether the package has been set up correctly
 #' @param test_param the parameter to test
-
+#' @export
 mock_function <- function(test_param = TRUE){
   if(test_param == TRUE) {
     return('param was true')

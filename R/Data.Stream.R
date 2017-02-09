@@ -1,8 +1,10 @@
 #' Data.Stream
-#' @include Data.Base.R
+#' 
+#' @docType class
 #' @importFrom rkafka rkafka.closeConsumer
 #' @importFrom R6 R6Class
 #' @include Data.Base.R
+#' @export
 Data.Stream <-
   R6Class (
            "Data.Stream",

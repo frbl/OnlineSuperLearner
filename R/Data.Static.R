@@ -1,6 +1,10 @@
 #' Data.Static
+#'
+#' @docType class
 #' @importFrom R6 R6Class
 #' @include Data.Base.R
+#' @import data.table
+#' @export
 Data.Static <-
   R6Class (
            "Data.Static",
@@ -14,9 +18,15 @@ Data.Static <-
 
                   readDataFromUrl = function() {
                     # TODO: Test the file, which format it should be
-                    read.csv(private$url)
+                    data.table(read.csv(private$url))
                   }
                   ),
+
+           active =
+             list(
+                  isLazy = function() private$lazyLoad
+                  ),
+
            public =
              list(
                   initialize = function(dataset = NULL, url = NULL, lazyload=TRUE) {
