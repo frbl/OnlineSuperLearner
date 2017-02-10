@@ -113,19 +113,19 @@ Simulator <-
             ## first version ## must be very slow
             ## -------------
             for (ii in 1:by) {
-              past.idx <- self$retrieveRelevantMemoryWAY("W", ii, memories["W"])
+              past.idx <- self$retrieveRelevantPastWAY("W", ii, memories["W"])
               which.pos <- which(past.idx>0)
               past <- rep(0, memories["W"])
               past[which.pos] <- WAY[past.idx[which.pos]]
               WAY[(ii-1)*3+1] <- rgen[[families[1]]](UU[ii, 1], qw(past))
               ##
-              past.idx <- self$retrieveRelevantMemoryWAY("A", ii, memories["A"])
+              past.idx <- self$retrieveRelevantPastWAY("A", ii, memories["A"])
               which.pos <- which(past.idx>0)
               past <- rep(0, memories["A"])
               past[which.pos] <- WAY[past.idx[which.pos]]
               WAY[(ii-1)*3+2] <- rgen[[families[2]]](UU[ii, 2], ga(past))
               ##
-              past.idx <- self$retrieveRelevantMemoryWAY("Y", ii, memories["Y"])
+              past.idx <- self$retrieveRelevantPastWAY("Y", ii, memories["Y"])
               which.pos <- which(past.idx>0)
               past <- rep(0, memories["Y"])
               past[which.pos] <- WAY[past.idx[which.pos]]
@@ -190,7 +190,7 @@ Simulator <-
           return(ll)
         },
 
-        retrieveRelevantMemoryWAY = function(of, at, mem) {
+        retrieveRelevantPastWAY = function(of, at, mem) {
           ## Retrieving arguments
           of <- Arguments$getCharacter(of)
           at <- Arguments$getInteger(at, c(1, Inf))
