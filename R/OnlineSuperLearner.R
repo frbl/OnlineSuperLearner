@@ -8,6 +8,7 @@
 #' @importFrom R6 R6Class
 #' @include LibraryFactory.R
 #' @include SummaryMeasureGenerator.R
+#' @include Simulator.Simple.R
 #'
 #' @section Methods:
 #' \describe{
@@ -37,6 +38,7 @@ OnlineSuperLearner <-
                       data <- private$summaryMeasurementGenerator$getNext()
                       iterations <- iterations - 1
                     }
+                    data
                   }
                   ),
            public =
@@ -55,10 +57,6 @@ OnlineSuperLearner <-
                   # initial.data.size = the number of observations needed to fit the initial model
                   run = function(data, X, Y, initial.data.size = 10) {
                     # Steps in superlearning:
-                    if (data$isLazy) {
-                      throw('currently we only support precached data')
-                    }
-
                     # Wrap the data into a summary measurement generator.
                     private$summaryMeasurementGenerator <- SummaryMeasureGenerator$new(Y = Y,
                                                                                        X = X,
@@ -69,10 +67,10 @@ OnlineSuperLearner <-
                     data <- private$summaryMeasurementGenerator$getNextN(initial.data.size)
 
                     # Fit the library of models using a given number of iterations
-                    iterations.max <- 9000
+                    iterations.max <- 500
                     X <- private$summaryMeasurementGenerator$X
                     Y <- private$summaryMeasurementGenerator$Y
-                    private$trainLibrary(X = X, Y = Y, iterations = iterations.max, data = data)
+                    data <- private$trainLibrary(X = X, Y = Y, iterations = iterations.max, data = data)
 
                     # Calculate the accuracy of the prediction based on the remaining data
                     true.predicted <- 0
@@ -81,8 +79,7 @@ OnlineSuperLearner <-
                       for (model in private$SL.Library.Fabricated) {
                         prediction <-  model$predict(data = data, X = X)
                         all.predicted <- all.predicted + 1
-                        browser()
-                        if((prediction>0.5) == data[, Y, with = FALSE][[Y]])
+                        if((prediction>0.5) == (data[, Y, with = FALSE][[Y]] > 0.5))
                           true.predicted  <- true.predicted + 1
                       }
 
@@ -113,7 +110,7 @@ OnlineSuperLearner <-
 ##################
 datatest <- function() {
   devtools::load_all()
-  data <- Data.Static$new(lazyload = FALSE, url = 'https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
+  data <- Data.Static$new(url = 'https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
 
   smg <- SummaryMeasureGenerator$new(data = data,
                                      lags = 3)
@@ -126,7 +123,7 @@ datatest <- function() {
 main <- function() {
   devtools::document()
   sim  <- Simulator.Simple$new()
-  data  <- sim$getObservation(n = 10000)
+  data  <- sim$getObservation(1000)
   Y = "CAPSULE"
   Y = "y"
   X = c("AGE", "RACE", "PSA", "DCAPS")
@@ -134,7 +131,7 @@ main <- function() {
   SL.Library = c('ML.Local.lm', 'ML.XGBoost.glm')
   SL.Library = c('ML.XGBoost.glm')
   osl <- OnlineSuperLearner$new(SL.Library)
-  #data <- Data.Static$new(lazyload = FALSE, url = 'https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
-  data <- Data.Static$new(lazyload = FALSE, dataset = data)
+  #data <- Data.Static$new(url = 'https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
+  data <- Data.Static$new(dataset = data)
   osl$run(data, X =  X, Y = Y)
 }

@@ -11,7 +11,7 @@
 #'
 #'   \item{\code{fit(nr.of.observations)}}{Generate a number of observations from the model (multple observations can be retrieved at once by using the \code{nr.of.observations} param}
 #'}
-Simulator.Simple.Binary <-
+Simulator.Simple <-
   R6Class (
            "Simulator.Simple",
            private =
@@ -30,7 +30,7 @@ Simulator.Simple.Binary <-
                     z <- 1 + 2*x1 + 3*x2
 
                     # Pass through the inverse logit function
-                    pr <- inv.logit(z)
+                    pr <- plogis(z)
 
                     # Generate binary outcomes using this
                     y <- rbinom(1000, 1, pr)
@@ -41,10 +41,10 @@ Simulator.Simple.Binary <-
                   },
 
                   getObservation = function(nr.of.observations = 1) {
-                    x1 <- rnorm(n)
-                    x2 <- rnorm(n)
+                    x1 <- rnorm(nr.of.observations)
+                    x2 <- rnorm(nr.of.observations)
                     df <- data.table(x1 = x1, x2 = x2)
-                    y <- inv.logit(predict(private$model, df))
+                    y <- plogis(predict(private$model, df))
                     cbind(df, y)
                   }
                   )

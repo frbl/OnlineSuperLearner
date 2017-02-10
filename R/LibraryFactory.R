@@ -33,7 +33,7 @@ LibraryFactory <-
                     errors <- character()
                     # TODO: Test if files actually exist.
                     # Check if all models are actually ml models
-                    are.ml.models <- sapply(ML.models.allowed, startsWith, 'ML')
+                    are.ml.models <- sapply(private$ML.models.allowed, startsWith, 'ML')
                     if(!all(are.ml.models)){
                       msg <- 'Not all provided models are ML models as models should start with ML, please only use ML models.'
                       errors <- c(errors, msg)

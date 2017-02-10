@@ -33,13 +33,12 @@ Data.Static <-
            public =
              list(
                   initialize = function(dataset = NULL, url = NULL) {
-                    private$url <- url
-                    if (!is.null(private$dataset)) {
+                    if (!is.null(dataset)) {
                       if (!is.data.table(dataset)) {
                         dataset <- data.table(dataset)
                       }
                       private$dataset <- dataset
-                    } else if (!is.null(private$url)) {
+                    } else if (!is.null(url)) {
                       private$dataset <- private$readDataFromUrl(url)
                     } else {
                       throw('You need to provide at least a datatable or url')

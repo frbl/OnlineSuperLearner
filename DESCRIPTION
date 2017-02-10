@@ -43,6 +43,5 @@ Collate:
     'ML.Local.R'
     'ML.Local.lm.R'
     'ML.XGBoost.R'
-    'ML.XGBoost.gbm.R'
     'SummaryMeasureGenerator.R'
     'OnlineSuperLearner.R'
