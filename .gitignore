@@ -1,6 +1,7 @@
 # History files
 .Rhistory
 .Rapp.history
+xterm-256color.ti
 
 # Session Data files
 .RData
@@ -31,3 +32,6 @@ vignettes/*.pdf
 # Temporary files created by R markdown
 *.utf8.md
 *.knit.md
+
+xterm-256colors.ti
+.Rproj.user

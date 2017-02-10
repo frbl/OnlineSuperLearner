@@ -14,10 +14,34 @@ LazyLoad: yes
 LazyData: yes
 Depends:
     R (>= 2.9.0),
-    R.utils (>= 1.4.1)
+    data.table,
+    R6
 Imports:
-    methods
+    data.table,
+    R.utils (>= 1.4.1),
+    h2o (>=	3.10.3.2),
+    R.oo,
+    rkafka,
+    R6,
+    xgboost
 Suggests:
     roxygen2,
     testthat
 RoxygenNote: 5.0.1
+Collate:
+    'Data.Base.R'
+    'Data.Static.R'
+    'Data.Stream.R'
+    'Simulator.Simple.R'
+    'Data.Stream.Simulator.R'
+    'H2O.Initializer.R'
+    'ML.XGBoost.glm.R'
+    'LibraryFactory.R'
+    'ML.Base.R'
+    'ML.H2O.R'
+    'ML.H2O.glm.R'
+    'ML.Local.R'
+    'ML.Local.lm.R'
+    'ML.XGBoost.R'
+    'SummaryMeasureGenerator.R'
+    'OnlineSuperLearner.R'

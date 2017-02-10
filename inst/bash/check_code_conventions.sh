@@ -1,5 +1,14 @@
 #!/bin/bash
-matching_lines=$(grep --include "*.r" --include "*.R" -nrE "[^ !=><]=|[,=][^ =]|[^ <]<-|<-[^ ]|[^ ](<=|==|!=|>=)|(<=|==|!=|>=)[^ ]" . 2>/dev/null)
+
+matching_files=$(ls R | grep -e '^[a-z]' 2>/dev/null)
+if [[ $matching_files != '' ]]
+then
+  echo 'Files should start with a capital'
+  echo $matching_files
+  exit 1
+fi
+
+matching_lines=$(grep --include "*.r" --include "*.R" -nrE "[^ !=><:]=|[^ <]<-|<-[^ ]|[^ ](<=|==|!=|>=)|(<=|==|!=|>=)[^ ]" . 2>/dev/null)
 if [[ $matching_lines == '' ]]
 then
   exit 0
