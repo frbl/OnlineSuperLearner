@@ -3,12 +3,25 @@
 \docType{class}
 \name{Data.Static}
 \alias{Data.Static}
-\title{Data.Static}
+\title{Class to provide the functionality of treating a static, finite datatable as a stream of incomming
+data.}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 Data.Static
 }
 \description{
-Data.Static
+Class to provide the functionality of treating a static, finite datatable as a stream of incomming
+data.
+}
+\section{Methods}{
+
+\describe{
+  \item{\code{new(dataset, url)}}{This method is used to create object of this class. One can provide either a \code{datatable} or a \code{url} pointing to a dataframe.}
+
+  \item{\code{getAll()}}{Method to retrieve the whole dataset at once.}
+  \item{\code{getNext()}}{Method to retrieve the next observation from the data.}
+  \item{\code{getNextN(number.of.observations)}}{Method that returns the next \code{number.of.observations} observations. This function can be used to bootstrap an initial model.}
+}
 }
 \keyword{datasets}
+

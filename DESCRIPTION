@@ -20,27 +20,29 @@ Imports:
     data.table,
     R.utils (>= 1.4.1),
     h2o (>=	3.10.3.2),
-    zoo,
+    R.oo,
     rkafka,
     R6,
     xgboost
 Suggests:
     roxygen2,
     testthat
-RoxygenNote: 6.0.0
-Collate: 
+RoxygenNote: 5.0.1
+Collate:
     'Data.Base.R'
     'Data.Static.R'
     'Data.Stream.R'
+    'Simulator.Simple.R'
+    'Data.Stream.Simulator.R'
     'H2O.Initializer.R'
+    'ML.XGBoost.glm.R'
     'LibraryFactory.R'
-    'ML.H2O.R'
     'ML.Base.R'
+    'ML.H2O.R'
     'ML.H2O.glm.R'
     'ML.Local.R'
     'ML.Local.lm.R'
     'ML.XGBoost.R'
     'ML.XGBoost.gbm.R'
-    'MockFunction.R'
     'SummaryMeasureGenerator.R'
     'OnlineSuperLearner.R'

@@ -3,12 +3,28 @@
 \docType{class}
 \name{ML.Base}
 \alias{ML.Base}
-\title{ML.Base}
+\title{Base class for any machine learning model. Extend this class if you want to create a new machine learning model.}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 ML.Base
 }
 \description{
-ML.Base
+Base class for any machine learning model. Extend this class if you want to create a new machine learning model.
+}
+\section{Fields}{
+
+\describe{
+\item{\code{model}}{the most recent / best model fitted.}
+}}
+\section{Methods}{
+
+\describe{
+  \item{\code{new()}}{This method is used to create object of this class. }
+
+  \item{\code{fit(data, X, Y)}}{Method to fit the current machine learning model. Should be overridden in the subclass.}
+  \item{\code{predict(data, X)}}{Method to predict using the current model.}
+  \item{\code{getModel()}}{Getter for the latest model.}
+}
 }
 \keyword{datasets}
+

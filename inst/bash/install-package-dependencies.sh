@@ -15,3 +15,5 @@ if ("h2o" %in% rownames(installed.packages())) { remove.packages("h2o") }
 # Next, we download, install and initialize the H2O package for R.
 #install.packages("h2o", repos=(c("http://s3.amazonaws.com/h2o-release/h2o/rel-kahan/5/R", getOption("repos"))))
 install.packages("h2o", type="source", repos=(c("http://h2o-release.s3.amazonaws.com/h2o/rel-tverberg/2/R")))
+
+devtools::install_github('cran/rkafka')

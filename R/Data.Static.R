@@ -1,9 +1,19 @@
-#' Data.Static
+#' Class to provide the functionality of treating a static, finite datatable as a stream of incomming
+#' data.
 #'
 #' @docType class
-#' @importFrom R6 R6Class
 #' @include Data.Base.R
+#' @importFrom R6 R6Class
 #' @import data.table
+#'
+#' @section Methods:
+#' \describe{
+#'   \item{\code{new(dataset, url)}}{This method is used to create object of this class. One can provide either a \code{datatable} or a \code{url} pointing to a dataframe.}
+#'
+#'   \item{\code{getAll()}}{Method to retrieve the whole dataset at once.}
+#'   \item{\code{getNext()}}{Method to retrieve the next observation from the data.}
+#'   \item{\code{getNextN(number.of.observations)}}{Method that returns the next \code{number.of.observations} observations. This function can be used to bootstrap an initial model.}
+#' }
 #' @export
 Data.Static <-
   R6Class (
@@ -12,54 +22,46 @@ Data.Static <-
            private =
              list(
                   dataset = NULL,
-                  url = NULL,
-                  lazyLoad = NULL,
                   currentrow = 1,
 
-                  readDataFromUrl = function() {
+                  readDataFromUrl = function(url) {
                     # TODO: Test the file, which format it should be
-                    data.table(read.csv(private$url))
+                    data.table(read.csv(url))
                   }
-                  ),
-
-           active =
-             list(
-                  isLazy = function() private$lazyLoad
                   ),
 
            public =
              list(
-                  initialize = function(dataset = NULL, url = NULL, lazyload=TRUE) {
-                    super$initialize()
-                    private$dataset <- dataset
+                  initialize = function(dataset = NULL, url = NULL) {
                     private$url <- url
-                    private$lazyLoad <- lazyload
+                    if (!is.null(private$dataset)) {
+                      if (!is.data.table(dataset)) {
+                        dataset <- data.table(dataset)
+                      }
+                      private$dataset <- dataset
+                    } else if (!is.null(private$url)) {
+                      private$dataset <- private$readDataFromUrl(url)
+                    } else {
+                      throw('You need to provide at least a datatable or url')
+                    }
                   },
 
                   getAll = function() {
-                    if (!is.null(private$dataset)) {
-                      return(private$dataset)
-                    }
-
-                    if (!is.null(private$url)) {
-                      if (private$lazyLoad) {
-                        return(private$url)
-                      }else {
-                        private$dataset <- private$readDataFromUrl()
-                        return(private$dataset)
-                      }
-                    }
-                    # If all fails, load the data locally in a dataframe and return that
+                    return(private$dataset)
                   },
 
-
-                  # Treat the dataframe as a stream as well.
                   getNext = function() {
-                    if (is.null(private$dataset)) {
-                        private$dataset <- private$readDataFromUrl()
-                    }
-                    temp <- private$dataset[private$currentrow,]
+                    temp <- private$dataset[private$currentrow, ]
                     private$currentrow <- private$currentrow + 1
+                    return(temp)
+                  },
+
+                  getNextN = function(number.of.observations = 1) {
+                    max <- nrow(private$dataset) - private$currentrow
+                    number.of.observations <- Arguments$getInteger(number.of.observations, c(1, max))
+
+                    temp <- private$dataset[private$currentrow:number.of.observations, ]
+                    private$currentrow <- private$currentrow + number.of.observations
                     return(temp)
                   }
                   )

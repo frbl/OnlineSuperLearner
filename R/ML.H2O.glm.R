@@ -14,7 +14,7 @@ ML.H2O.glm <-
                   alpha = NULL,
                   family = NULL,
 
-                  initialize = function(data, nfolds= 10, alpha = 0.5, family = 'binomial') {
+                  initialize = function(data, nfolds = 10, alpha = 0.5, family = 'binomial') {
                     super$initialize(data = data)
                     self$nfolds <- nfolds
                     self$alpha <- alpha
@@ -22,11 +22,11 @@ ML.H2O.glm <-
                   },
 
                   fit = function(X, y){
-                    h2o.glm(x=X, y=y,
-                            training_frame=self$data,
-                            family=self$family,
-                            nfolds=self$nfolds,
-                            alpha=self$alpha)
+                    h2o.glm(x = X, y = y,
+                            training_frame = self$data,
+                            family = self$family,
+                            nfolds = self$nfolds,
+                            alpha = self$alpha)
                   }
                   )
            )

@@ -5,14 +5,5 @@
 #' @include ML.Base.R
 #' @include Data.Base.R
 #' @keywords data
-ML.Local <-
-  R6Class (
-           "ML.Local",
-           inherit = ML.Base,
-           public =
-             list(
-                  initialize = function(data) {
-                    super$initialize(data = data)
-                  }
-                  )
-           )
+ML.Local <- R6Class("ML.Local", inherit = ML.Base, public = list(initialize = function() {
+}))

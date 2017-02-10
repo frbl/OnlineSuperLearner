@@ -12,22 +12,15 @@ OnlineSuperLearner
 This is the main super learner class. This class contains everything related
 to the super learner machine learning model.
 }
-\section{Fields}{
+\section{Methods}{
 
 \describe{
-\item{\code{SL.Library}}{the library of machinelearning algorithms to use}
-}}
+  \item{\code{new(SL.Library)}}{starts a new OnlineSuperLearner. The provided /code{SL.Library} contains the machine learning models to use}
 
-\section{Details}{
-
-\code{$new(SL.Library)} starts a new OnlineSuperLearner. The provided /code{SL.Library}
-contains the machine learning models to use
-\code{$run()} runs the actual OnlineSuperLearning calculation
-\code{$getModel()} returns the final OnlineSuperLearner model
-\code{$getModel(data, X, Y, onlySL)} allows the user to make predictions on new data using
-the fitted superlearner model. The data provided in this function is the new data object,
-which can be either a stream of data or a dataframe. X is a vector of covariate names to use for the
-prediction, Y is a vector containing the variables to predict
+  \item{\code{run(data, X, Y, initial.data.size = 10)}}{runs the actual OnlineSuperLearning calculation}
+  \item{\code{getModel()}}{returns the final OnlineSuperLearner model}
+  \item{\code{predict(data, X)}}{returns an actual prediction using the superlearning model}
 }
-
+}
 \keyword{datasets}
+

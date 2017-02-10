@@ -3,21 +3,20 @@
 #' This is the main super learner class. This class contains everything related
 #' to the super learner machine learning model.
 #' @docType class
+#' @import R.oo
+#' @import R.utils
 #' @importFrom R6 R6Class
-#' @import h2o
 #' @include LibraryFactory.R
-#' @include H2O.Initializer.R
 #' @include SummaryMeasureGenerator.R
-#' @field SL.Library the library of machinelearning algorithms to use
-#' @section Details:
-#' \code{$new(SL.Library)} starts a new OnlineSuperLearner. The provided /code{SL.Library}
-#' contains the machine learning models to use
-#' \code{$run()} runs the actual OnlineSuperLearning calculation
-#' \code{$getModel()} returns the final OnlineSuperLearner model
-#' \code{$getModel(data, X, Y, onlySL)} allows the user to make predictions on new data using
-#' the fitted superlearner model. The data provided in this function is the new data object,
-#' which can be either a stream of data or a dataframe. X is a vector of covariate names to use for the
-#' prediction, Y is a vector containing the variables to predict
+#'
+#' @section Methods:
+#' \describe{
+#'   \item{\code{new(SL.Library)}}{starts a new OnlineSuperLearner. The provided /code{SL.Library} contains the machine learning models to use}
+#'
+#'   \item{\code{run(data, X, Y, initial.data.size = 10)}}{runs the actual OnlineSuperLearning calculation}
+#'   \item{\code{getModel()}}{returns the final OnlineSuperLearner model}
+#'   \item{\code{predict(data, X)}}{returns an actual prediction using the superlearning model}
+#' }
 #' @export
 OnlineSuperLearner <-
   R6Class (
@@ -28,43 +27,74 @@ OnlineSuperLearner <-
            private =
              list(
                   SL.Library = NULL,
-                  LibraryFactory = NULL
+                  SL.Library.Fabricated = NULL,
+                  summaryMeasurementGenerator = NULL,
+
+                  trainLibrary = function(X, Y, iterations, data.initial){
+                    data <- data.initial
+                    while(iterations > 0 && nrow(data) >= 1 && !is.null(data)) {
+                      lapply(private$SL.Library.Fabricated, function(model) { model$fit(data = data, X = X, Y = Y) })
+                      data <- private$summaryMeasurementGenerator$getNext()
+                      iterations <- iterations - 1
+                    }
+                  }
                   ),
            public =
              list(
-                  initialize = function(SL.Library = c('ML.Local.lm','ML.H2O.glm')) {
+                  initialize = function(SL.Library = c('ML.Local.lm', 'ML.H2O.glm')) {
                     private$SL.Library <- SL.Library
-                    private$LibraryFactory <- LibraryFactory$new()
-                    H2O.Initializer$new(host='imac.evionix.org', runlocal = FALSE)
+
+                    # Initialization, Fabricate the various models
+                    LibraryFactory <- LibraryFactory$new()
+                    private$SL.Library.Fabricated <- LibraryFactory$fabricate(private$SL.Library)
                   },
 
-                  run = function(data) {
+                  # Data = the data object from which the data can be retrieved
+                  # X = the names of the confounders
+                  # Y = the name of the outcome
+                  # initial.data.size = the number of observations needed to fit the initial model
+                  run = function(data, X, Y, initial.data.size = 10) {
                     # Steps in superlearning:
                     if (data$isLazy) {
                       throw('currently we only support precached data')
                     }
 
-
                     # Wrap the data into a summary measurement generator.
-                    summaryMeasurementGenerator <- SummaryMeasureGenerator$new(data, 2)
+                    private$summaryMeasurementGenerator <- SummaryMeasureGenerator$new(Y = Y,
+                                                                                       X = X,
+                                                                                       data = data,
+                                                                                       lags = 2)
 
-                    # Initialization, Fabricate the various models
-                    SL.fabricated.models <- private$LibraryFactory$fabricate(private$SL.Library,
-                                                                             data = summaryMeasurementGenerator)
+                    # Get the initial data for fitting the first model
+                    data <- private$summaryMeasurementGenerator$getNextN(initial.data.size)
 
-                    # Fit different models using cross validation
-                    models <- lapply(SL.fabricated.models, function(model) {
-                      model$fit(y = "CAPSULE", X = c("AGE","RACE","PSA","DCAPS"))
-                    })
+                    # Fit the library of models using a given number of iterations
+                    iterations.max <- 9000
+                    X <- private$summaryMeasurementGenerator$X
+                    Y <- private$summaryMeasurementGenerator$Y
+                    private$trainLibrary(X = X, Y = Y, iterations = iterations.max, data = data)
 
-                    print(models)
+                    # Calculate the accuracy of the prediction based on the remaining data
+                    true.predicted <- 0
+                    all.predicted <- 0
+                    while(nrow(data) >= 1 && !is.null(data)) {
+                      for (model in private$SL.Library.Fabricated) {
+                        prediction <-  model$predict(data = data, X = X)
+                        all.predicted <- all.predicted + 1
+                        browser()
+                        if((prediction>0.5) == data[, Y, with = FALSE][[Y]])
+                          true.predicted  <- true.predicted + 1
+                      }
 
-                    # 3. build a matrix with predicted / actual
+                      data <- private$summaryMeasurementGenerator$getNext()
+                    }
+                    print(paste('Accuracy:', true.predicted / all.predicted))
 
-                    # 4. Fit a final model which is a glm of the original models
 
-                    # 4. return the final model
-                    return(models)
+                    # build a matrix with predicted / actual
+                    # Fit a final model which is a glm of the original models
+
+                    return(private$SL.Library.Fabricated)
                   },
 
                   getModel = function() {
@@ -72,20 +102,21 @@ OnlineSuperLearner <-
                   },
 
                   predict = function(newdata, X = NULL, Y = NULL, onlySL = FALSE, ...) {
-                    #TODO: Move X and Y to the data object?
                     return(NULL)
                   }
 
                   )
            )
 
-
+##################
+# TEST FUNCTIONS #
+##################
 datatest <- function() {
   devtools::load_all()
-  data <- Data.Static$new(lazyload = FALSE, url='https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
+  data <- Data.Static$new(lazyload = FALSE, url = 'https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
 
   smg <- SummaryMeasureGenerator$new(data = data,
-                          lags = 3)
+                                     lags = 3)
   smg$getNext()
 
   print(smg$getNext())
@@ -93,19 +124,17 @@ datatest <- function() {
 }
 
 main <- function() {
-  SL.Library = c('ML.Local.lm')
+  devtools::document()
+  sim  <- Simulator.Simple$new()
+  data  <- sim$getObservation(n = 10000)
+  Y = "CAPSULE"
+  Y = "y"
+  X = c("AGE", "RACE", "PSA", "DCAPS")
+  X = c("x1", "x2")
+  SL.Library = c('ML.Local.lm', 'ML.XGBoost.glm')
+  SL.Library = c('ML.XGBoost.glm')
   osl <- OnlineSuperLearner$new(SL.Library)
-  data <- Data.Static$new(url='https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
-  osl$run(data)
+  #data <- Data.Static$new(lazyload = FALSE, url = 'https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
+  data <- Data.Static$new(lazyload = FALSE, dataset = data)
+  osl$run(data, X =  X, Y = Y)
 }
-
-a <- function() {
-  B <- c(1,.5)
-  y <- c(1,2,3,4,5,6,7,8)
-  x <- c(2,3,4,5,6,7,8,9)
-  data <-data.frame(x = x, y= y)
-  model <- lm(y ~ x, data)
-  rand <- runif(10)
-  predict.lm(model, data.frame(x=rand))
-}
-

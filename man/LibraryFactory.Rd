@@ -3,18 +3,22 @@
 \docType{class}
 \name{LibraryFactory}
 \alias{LibraryFactory}
-\title{LibraryFactory}
+\title{The libraryFactory can instantiate a set of models given to it.}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 LibraryFactory
 }
 \description{
-LibraryFactory
+The libraryFactory can instantiate a set of models given to it.
 }
-\section{Fields}{
+\section{Methods}{
 
 \describe{
-\item{\code{ML.Local}}{the type of platform to use for fitting the models}
-}}
+  \item{\code{new(ML.models.allowed = c('ML.H2O.glm', 'ML.Local.lm', 'ML.XGBoost.glm'))}}{This method is used to create object of this class. It expects a \code{ML.models.allowed} as a list which describes all of the models that are allowed for fabrication. }
 
+  \item{\code{getValidity()}}{Method to determine if the object is in a valid state.}
+  \item{\code{fabricate(SL.library)}}{Method that fabricates the models in the provided \code{SL.library}.}
+}
+}
 \keyword{datasets}
+

@@ -9,6 +9,20 @@
 SummaryMeasureGenerator
 }
 \description{
-SummaryMeasureGenerator
+This is a decorator for a general Data.Base object. It retrieves data from it, processes it, and
+returns a data frame containing the summary measure provided. Currently it only provides the lag
+of the data, but this could be extended with for example the mean, variance, MSSD of the data.
+to the super learner machine learning model.
+}
+\section{Methods}{
+
+\describe{
+  \item{\code{new()}}{}
+
+  \item{\code{fillCache()}}{}
+  \item{\code{getNext()}}{}
+  \item{\code{getNextN()}}{}
+}
 }
 \keyword{datasets}
+

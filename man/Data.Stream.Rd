@@ -3,12 +3,23 @@
 \docType{class}
 \name{Data.Stream}
 \alias{Data.Stream}
-\title{Data.Stream}
+\title{Class to provide the functionality of treating a static, finite datatable as a stream of incomming
+data.}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 Data.Stream
 }
 \description{
-Data.Stream
+Class to provide the functionality of treating a static, finite datatable as a stream of incomming
+data.
+}
+\section{Methods}{
+
+\describe{
+  \item{\code{new(kafka.host, kafka.stream)}}{This method is used to create object of this class. It expects a host for a kafka cluster (or the coordinating zookeeper therof) as input in the \code{kafka.host}. Secondly, it also expects the stream on the kafka host to listen on (\code{kafka.stream}}
+
+  \item{\code{getNext()}}{Method to retrieve the next observation from the stream.}
+}
 }
 \keyword{datasets}
+
