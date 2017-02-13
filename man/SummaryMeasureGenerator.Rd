@@ -24,5 +24,5 @@ to the super learner machine learning model.
   \item{\code{getNextN()}}{}
 }
 }
-\keyword{datasets}
 
+\keyword{datasets}

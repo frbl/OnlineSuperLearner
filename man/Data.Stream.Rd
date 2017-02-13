@@ -21,5 +21,5 @@ data.
   \item{\code{getNext()}}{Method to retrieve the next observation from the stream.}
 }
 }
-\keyword{datasets}
 
+\keyword{datasets}

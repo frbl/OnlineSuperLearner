@@ -23,17 +23,19 @@ Imports:
     R.oo,
     rkafka,
     R6,
+    magrittr,
     xgboost
 Suggests:
     roxygen2,
     testthat
-RoxygenNote: 5.0.1
-Collate:
+RoxygenNote: 6.0.0
+Collate: 
     'Data.Base.R'
     'Data.Static.R'
     'Data.Stream.R'
     'Simulator.Simple.R'
     'Data.Stream.Simulator.R'
+    'Evaluation.Accuracy.R'
     'H2O.initializer.R'
     'ML.XGBoost.glm.R'
     'LibraryFactory.R'

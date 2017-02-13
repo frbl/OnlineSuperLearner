@@ -21,14 +21,15 @@ ML.Base <-
                   initialize = function() {
                   },
 
-                  fit = function(data, X, Y) {
+                  fit = function(data, Y, A, W) {
                     throw('The fit method needs to be inherited')
                   },
 
-                  predict = function(data, X) {
+                  predict = function(data, A, W) {
                     if (is.null(self$model)) {
                      throw('Train the model first')
                     }
+                    X <- c(A, W)
                     pred <- predict(self$model, as.matrix(data[, X, with = FALSE]))
                   },
 
