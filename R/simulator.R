@@ -112,53 +112,6 @@ Simulator <-
           return(WAY)
         },
 
-        generateMechanismScenarioTwo = function(stochMech=rnorm, param=rep(1, 2), rgen=identity) {
-          ## Retrieving arguments
-          stochMech <- Arguments$getFunction(stochMech)
-          param <- Arguments$getNumerics(param)
-          rgen <- Arguments$getFunction(rgen)
-          memory <- length(param)-1
-
-          if (length(param)==1) {
-            mechanism <- function(xx=numeric(0), par=param, lnk=link, verbose=FALSE) {
-              ## Retrieving arguments
-              verbose <- Arguments$getVerbose(verbose)
-              if (!length(xx)==0) {
-                verbose && enter(verbose, "Argument 'xx' not used when argument 'par' has length 1")
-                verbose && exit(verbose)
-              }
-              par <- Arguments$getNumerics(par)
-              if (mode(lnk)!="function") {
-                throw("Argument 'lnk' must be a link function, not ", mode(lnk))
-              }
-              ##
-              link(par)
-            }
-          } else {
-            mechanism <- function(xx=NA, par=param, lnk=link, verbose=FALSE) {
-              ## Retrieving arguments
-              xx <- Arguments$getNumerics(xx)
-              par <- Arguments$getNumerics(par)
-              if (mode(lnk)!="function") {
-                throw("Argument 'lnk' must be a link function, not ", mode(lnk))
-              }
-              verbose <- Arguments$getVerbose(verbose)
-              if (length(xx)!=length(param)-1) {
-                throw("Length of 'xx' should equal length of 'par' minus one")
-              }
-              ##
-              if (FALSE) {
-                link(param[1] + param[-1]%*%xx)
-              } else {
-                link(param[1] + sum(param[-1]*xx))
-              }
-            }
-          }
-          attr(mechanism, "memory") <- memory
-          attr(mechanism, "family") <- family
-          return(mechanism)
-        },
-
         
         simulateWAYScenarioOne = function(by=1,
                                           qw=self$generateMechanismScenarioOne(0, family="gaussian"),
