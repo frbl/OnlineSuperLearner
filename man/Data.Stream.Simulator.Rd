@@ -17,5 +17,5 @@ Class that serves as a very basic simulator to fill a kafka stream with data.
   \item{\code{new(kafka.host = 'imac.evionix.org:9092', kafka.stream = 'test', simulator.continuous = Simulator.Simple$new(), sleep = 1, iterations = Inf)}}{ This method is used to create object of this class. It expects a host for a kafka cluster as input in the \code{kafka.host}, to which it can push the data.  Secondly, it expects the stream on the kafka host to listen on (\code{kafka.stream}, then it needs a simulator from which it can retrieve messages to push to the stream, and lastly, between each observation it will sleep for \code{sleep} number of seconds.}
 }
 }
-\keyword{datasets}
 
+\keyword{datasets}

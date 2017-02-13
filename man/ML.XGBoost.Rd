@@ -12,4 +12,3 @@ ML.XGBoost
 Base class for any XGBoost machine learning model.
 }
 \keyword{datasets}
-

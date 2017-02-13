@@ -25,25 +25,32 @@ SummaryMeasureGenerator <-
                   data = NULL,
                   cache = data.table(),
                   minimal.measurements = NULL,
-                  lags.vector = NULL
+                  lags.vector = NULL,
+                  colnames = NULL,
+                  colnames.lagged = NULL
                   ),
            active =
              list(),
            public =
              list(
-                  X = NULL,
+                  W = NULL,
                   Y = NULL,
                   A = NULL,
-                  initialize = function(X, Y, data, lags, minimal.measurements = NULL) {
-                    self$X <- X
+                  initialize = function(W, A, Y, data, lags, minimal.measurements = NULL) {
+                    self$W <- W
+                    self$A <- A
                     self$Y <- Y
 
                     private$data <- data
                     private$lags <- lags
                     private$lags.vector <- seq(lags)
+
                     private$minimal.measurements <- ifelse(is.null(minimal.measurements),
                                                            lags + 1,
                                                            minimal.measurements)
+
+                    private$colnames <- c(self$Y, self$A, self$W)
+                    private$colnames.lagged  <- unlist(lapply(seq(private$lags), function(x) paste(x, 'lag', private$colnames, sep = "_")))
                   },
 
                   # This function will fill the cache with the first Nl measurements,
@@ -69,8 +76,8 @@ SummaryMeasureGenerator <-
                     current.data <- copy(private$cache)
 
                     # Create column names
-                    anscols  <- unlist(lapply(seq(private$lags), function(x) paste(x, 'lag', c(self$X, self$Y), sep = "_")))
-                    current.data[, (anscols) := shift(.SD, private$lags.vector, NA, "lag"), .SDcols = c(self$X, self$Y)]
+                    current.data[, (private$colnames.lagged) := shift(.SD, private$lags.vector, NA, "lag"),
+                                 .SDcols = private$colnames]
 
                     # This will return the lagged dataset, and only the complete cases
                     # which boils down to a single measurement.

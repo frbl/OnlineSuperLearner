@@ -1,10 +1,14 @@
+#' General packages used by all of the other classes
+#' @import R.oo
+#' @import R.utils
+#' @import magrittr
+generalImports <- list()
+
 #' OnlineSuperLearner
 #'
 #' This is the main super learner class. This class contains everything related
 #' to the super learner machine learning model.
 #' @docType class
-#' @import R.oo
-#' @import R.utils
 #' @importFrom R6 R6Class
 #' @include LibraryFactory.R
 #' @include SummaryMeasureGenerator.R
@@ -31,10 +35,10 @@ OnlineSuperLearner <-
                   SL.Library.Fabricated = NULL,
                   summaryMeasurementGenerator = NULL,
 
-                  trainLibrary = function(X, Y, iterations, data.initial){
+                  trainLibrary = function(Y, A, W, iterations, data.initial){
                     data <- data.initial
                     while(iterations > 0 && nrow(data) >= 1 && !is.null(data)) {
-                      lapply(private$SL.Library.Fabricated, function(model) { model$fit(data = data, X = X, Y = Y) })
+                      lapply(private$SL.Library.Fabricated, function(model) { model$fit(data = data, Y = Y, A = A, W = W) })
                       data <- private$summaryMeasurementGenerator$getNext()
                       iterations <- iterations - 1
                     }
@@ -52,14 +56,16 @@ OnlineSuperLearner <-
                   },
 
                   # Data = the data object from which the data can be retrieved
-                  # X = the names of the confounders
+                  # W = the names of the confounders
+                  # A = the names of the treatment
                   # Y = the name of the outcome
                   # initial.data.size = the number of observations needed to fit the initial model
-                  run = function(data, X, Y, initial.data.size = 4, iterations.max = 20) {
+                  run = function(data, Y, A, W, initial.data.size = 5, iterations.max = 20) {
                     # Steps in superlearning:
                     # Wrap the data into a summary measurement generator.
                     private$summaryMeasurementGenerator <- SummaryMeasureGenerator$new(Y = Y,
-                                                                                       X = X,
+                                                                                       A = A,
+                                                                                       W = W,
                                                                                        data = data,
                                                                                        lags = 2)
 
@@ -67,38 +73,25 @@ OnlineSuperLearner <-
                     data <- private$summaryMeasurementGenerator$getNextN(initial.data.size)
 
                     # Fit the library of models using a given number of iterations
-                    X <- private$summaryMeasurementGenerator$X
                     Y <- private$summaryMeasurementGenerator$Y
-                    data <- private$trainLibrary(X = X, Y = Y, iterations = iterations.max, data = data)
-
-                    # Calculate the accuracy of the prediction based on the remaining data
-                    true.predicted <- 0
-                    all.predicted <- 0
-                    while(nrow(data) >= 1 && !is.null(data)) {
-                      for (model in private$SL.Library.Fabricated) {
-                        prediction <-  model$predict(data = data, X = X)
-                        all.predicted <- all.predicted + 1
-                        if((prediction > 0.5) == (data[, Y, with = FALSE][[Y]] > 0.5))
-                          true.predicted  <- true.predicted + 1
-                      }
-
-                      data <- private$summaryMeasurementGenerator$getNext()
-                    }
-                    accuracy <- true.predicted / all.predicted
-                    print(paste('Accuracy:', accuracy, '(True:', true.predicted,'out of', all.predicted))
+                    A <- private$summaryMeasurementGenerator$A
+                    W <- private$summaryMeasurementGenerator$W
+                    data <- private$trainLibrary(Y = Y, A = A, W = W, iterations = iterations.max, data = data)
 
 
                     # build a matrix with predicted / actual
+
                     # Fit a final model which is a glm of the original models
 
-                    return(accuracy)
+                    return(private$SL.Library.Fabricated)
+
                   },
 
                   getModel = function() {
                     return(NULL)
                   },
 
-                  predict = function(newdata, X = NULL, Y = NULL, onlySL = FALSE, ...) {
+                  predict = function(newdata, A = NULL, W = NULL, onlySL = FALSE, ...) {
                     return(NULL)
                   }
 
@@ -122,23 +115,26 @@ datatest <- function() {
 
 main <- function() {
   devtools::document()
-  sim  <- Simulator.Simple$new()
-  data  <- sim$getObservation(1000)
-  Y = "CAPSULE"
-  Y = "y"
-  X = c("AGE", "RACE", "PSA", "DCAPS")
-  X = c("x1", "x2")
-  SL.Library = c('ML.Local.lm', 'ML.XGBoost.glm')
-  SL.Library = c('ML.XGBoost.glm')
-  #data <- Data.Static$new(url = 'https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
-  data <- Data.Static$new(dataset = data)
   metrics <- data.table()
-  for(i in seq(20,100,5)) {
-    print(i)
-    file.remove('test.dump')
+  sim  <- Simulator.Simple$new()
+  dataset  <- sim$getObservation(1000)
+  dataset.test  <- sim$getObservation(100)
+  for(i in seq(2,20,1)) {
+    set.seed(12345)
+    data <- Data.Static$new(dataset = dataset)
+
+
+    Y = "y"
+    W = c("x1", "x2")
+    A = c()
+    SL.Library = c('ML.XGBoost.glm')
+    #data <- Data.Static$new(url = 'https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
+
     data.copy <- copy(data)
     osl <- OnlineSuperLearner$new(SL.Library)
-    accuracy <- osl$run(data, X =  X, Y = Y, iterations.max = i)
+    models <- osl$run(data, Y = Y, A = A, W =  W, initial.data.size = 4, iterations.max = i)
+
+    accuracy <- Evaluation.Accuracy(models[[1]], data = dataset.test, W= W, A = A, Y = Y)
     metrics <- rbindlist(list(metrics, list(i = i, acc = accuracy)))
   }
   print(metrics)

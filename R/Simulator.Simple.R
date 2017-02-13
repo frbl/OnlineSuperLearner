@@ -47,7 +47,8 @@ Simulator.Simple <-
                   getObservation = function(nr.of.observations = 1) {
                     x1 <- rnorm(nr.of.observations)
                     x2 <- rnorm(nr.of.observations)
-                    df <- data.table(x1 = x1, x2 = x2)
+                    noise <- rnorm(nr.of.observations, mean = 0, sd = 1)
+                    df <- data.table(x1 = x1, x2 = x2, noise=noise)
                     y <- plogis(predict(private$model, df))
                     cbind(df, y)
                   }
