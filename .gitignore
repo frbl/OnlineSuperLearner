@@ -3,6 +3,9 @@
 .Rapp.history
 xterm-256color.ti
 
+# Files created by Emacs
+*.R~
+
 # Session Data files
 .RData
 
