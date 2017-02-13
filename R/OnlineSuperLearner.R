@@ -55,7 +55,7 @@ OnlineSuperLearner <-
                   # X = the names of the confounders
                   # Y = the name of the outcome
                   # initial.data.size = the number of observations needed to fit the initial model
-                  run = function(data, X, Y, initial.data.size = 10) {
+                  run = function(data, X, Y, initial.data.size = 4, iterations.max = 20) {
                     # Steps in superlearning:
                     # Wrap the data into a summary measurement generator.
                     private$summaryMeasurementGenerator <- SummaryMeasureGenerator$new(Y = Y,
@@ -67,7 +67,6 @@ OnlineSuperLearner <-
                     data <- private$summaryMeasurementGenerator$getNextN(initial.data.size)
 
                     # Fit the library of models using a given number of iterations
-                    iterations.max <- 500
                     X <- private$summaryMeasurementGenerator$X
                     Y <- private$summaryMeasurementGenerator$Y
                     data <- private$trainLibrary(X = X, Y = Y, iterations = iterations.max, data = data)
@@ -79,19 +78,20 @@ OnlineSuperLearner <-
                       for (model in private$SL.Library.Fabricated) {
                         prediction <-  model$predict(data = data, X = X)
                         all.predicted <- all.predicted + 1
-                        if((prediction>0.5) == (data[, Y, with = FALSE][[Y]] > 0.5))
+                        if((prediction > 0.5) == (data[, Y, with = FALSE][[Y]] > 0.5))
                           true.predicted  <- true.predicted + 1
                       }
 
                       data <- private$summaryMeasurementGenerator$getNext()
                     }
-                    print(paste('Accuracy:', true.predicted / all.predicted))
+                    accuracy <- true.predicted / all.predicted
+                    print(paste('Accuracy:', accuracy, '(True:', true.predicted,'out of', all.predicted))
 
 
                     # build a matrix with predicted / actual
                     # Fit a final model which is a glm of the original models
 
-                    return(private$SL.Library.Fabricated)
+                    return(accuracy)
                   },
 
                   getModel = function() {
@@ -130,8 +130,16 @@ main <- function() {
   X = c("x1", "x2")
   SL.Library = c('ML.Local.lm', 'ML.XGBoost.glm')
   SL.Library = c('ML.XGBoost.glm')
-  osl <- OnlineSuperLearner$new(SL.Library)
   #data <- Data.Static$new(url = 'https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
   data <- Data.Static$new(dataset = data)
-  osl$run(data, X =  X, Y = Y)
+  metrics <- data.table()
+  for(i in seq(20,100,5)) {
+    print(i)
+    file.remove('test.dump')
+    data.copy <- copy(data)
+    osl <- OnlineSuperLearner$new(SL.Library)
+    accuracy <- osl$run(data, X =  X, Y = Y, iterations.max = i)
+    metrics <- rbindlist(list(metrics, list(i = i, acc = accuracy)))
+  }
+  print(metrics)
 }

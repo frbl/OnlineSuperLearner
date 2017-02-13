@@ -2,7 +2,8 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
-#' @importFrom xgboost xgb.train xgb.DMatrix getinfo
+#' @importFrom xgboost xgb.dump xgb.train xgb.DMatrix getinfo
+#' @import xgboost
 #' @field model the most recent / best model fitted.
 #' @section Methods:
 #' \describe{
@@ -16,16 +17,21 @@ ML.XGBoost.glm <-
            inherit = ML.XGBoost,
            private =
              list(
+                  model.name = NULL,
                   lastdata = NULL,
                   param = NULL,
-                  rounds = NULL
+                  rounds = NULL,
+                  verbosity = 0
                   ),
            public =
              list(
                   initialize = function() {
-                    private$rounds <- 2
-                    private$param <- list( objective = 'binary:logistic', booster = "gblinear",
-                                          nthread = 8, alpha = 0.0001, eta = 0.001, lambda = 1)
+                    private$rounds <- 20
+                    private$param <- list(objective = 'binary:logistic',
+                                          booster = "gblinear",
+                                          nthread = 8,
+                                          alpha = 0,
+                                          lambda = 0)
                   },
 
 
@@ -57,11 +63,13 @@ ML.XGBoost.glm <-
 
                     # Fit the model, giving the previously fitted model as a parameter
                     self$model <- xgb.train(data = dtrain,
-                                               params = private$param,
-                                               nrounds = private$rounds,
-                                               watchlist = watchlist,
-                                               xgb_model = self$model)
-
+                                            params = private$param,
+                                            nrounds = private$rounds,
+                                            watchlist = watchlist,
+                                            xgb_model = private$model.name,
+                                            verbose = private$verbosity)
+                    xgb.save(self$model, 'test.dump')
+                    #private$model.name <- 'test.dump'
                   }
                   )
            )
