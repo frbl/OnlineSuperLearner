@@ -69,5 +69,5 @@ if (TRUE) {
   ##
   data <- sim$simulateWAYScenarioTwo(nobs, qw=llW, ga=llA, Qy=llY, verbose=log)
   toc <- Sys.time()
-  comp.time[version] <- toc-tic
+  comp.time <- toc-tic
 }

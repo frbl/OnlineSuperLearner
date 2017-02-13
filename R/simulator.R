@@ -23,7 +23,7 @@ Simulator <-
           if (!mode(stochMech)=="function") {
             throw("The first element of the argument should be a function, not", mode(stochMech))
           }
-          param <- Arguments$getNumerics(param)
+          param <- Arguments$getNumerics(ll[[2]])
           rgen <- ll[[3]]
           if (!mode(rgen)=="function") {
             throw("The first element of the argument should be a function, not", mode(rgen))
