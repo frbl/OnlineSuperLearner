@@ -20,5 +20,5 @@ The libraryFactory can instantiate a set of models given to it.
   \item{\code{fabricate(SL.library)}}{Method that fabricates the models in the provided \code{SL.library}.}
 }
 }
-
 \keyword{datasets}
+

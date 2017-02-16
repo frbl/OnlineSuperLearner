@@ -23,5 +23,5 @@ data.
   \item{\code{getNextN(number.of.observations)}}{Method that returns the next \code{number.of.observations} observations. This function can be used to bootstrap an initial model.}
 }
 }
-
 \keyword{datasets}
+

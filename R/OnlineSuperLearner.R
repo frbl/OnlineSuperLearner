@@ -4,6 +4,10 @@
 #' @import magrittr
 generalImports <- list()
 
+# General fixes, for usability
+expit <- plogis
+logit <- qlogis
+
 #' OnlineSuperLearner
 #'
 #' This is the main super learner class. This class contains everything related
@@ -13,6 +17,8 @@ generalImports <- list()
 #' @include LibraryFactory.R
 #' @include SummaryMeasureGenerator.R
 #' @include Simulator.Simple.R
+#' @include Simulator.GAD.R
+#' @include Simulator.Slow.R
 #'
 #' @section Methods:
 #' \describe{
@@ -141,11 +147,37 @@ datatest <- function() {
 }
 
 main <- function() {
-  devtools::document()
+  suppressWarnings(devtools::document())
+
+  log <- Arguments$getVerbose(-8, timestamp=TRUE)
   metrics <- data.table()
-  sim  <- Simulator.Simple$new()
-  dataset  <- sim$getObservation(1000)
-  dataset.test  <- sim$getObservation(100)
+  sim  <- Simulator.GAD$new()
+  nobs <- 1e5
+
+  ######################################
+  # Generate observations for training #
+  #####################################
+  llW <- list(stochMech=rnorm,
+                param=c(0, 0.5, -0.25, 0.1),
+                rgen=identity)
+
+  llA <- list (stochMech=function(ww) {
+                 rbinom(length(ww), 1, expit(ww))
+                },
+                param=c(-0.1, 0.1, 0.25),
+                rgen=function(xx, delta=0.05){
+                  rbinom(length(xx), 1, delta+(1-2*delta)*expit(xx))
+                })
+
+  llY <- list(stochMech=function(aa, ww){
+                  aa*ww+(1-aa)*(-ww)
+                },
+                param=c(0.1, 0.1, 0.1, 0.05, -0.01),
+                rgen=identity)
+  ##
+  data.train <- sim$simulateWAY(nobs, qw=llW, ga=llA, Qy=llY, verbose=log)
+  data.test <- sim$simulateWAY(1000, qw=llW, ga=llA, Qy=llY, verbose=log)
+  browser()
 
   Y = "y"
   W = c("x1", "x2")
@@ -157,7 +189,7 @@ main <- function() {
                    )
 
   set.seed(12345)
-  data <- Data.Static$new(dataset = dataset)
+  data <- Data.Static$new(dataset = data.train)
 
   SL.Library = c('ML.Local.lm')
   #data <- Data.Static$new(url = 'https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
@@ -165,7 +197,7 @@ main <- function() {
   osl <- OnlineSuperLearner$new(SL.Library, SMG.list)
   models <- osl$run(data, Y = Y, A = A, W =  W, initial.data.size = 2, iterations.max = 200)
 
-  accuracy <- Evaluation.Accuracy(models[[1]], data = dataset.test, W= W, A = A, Y = Y)
+  accuracy <- Evaluation.Accuracy(models[[1]], data = data.test, W = W, A = A, Y = Y)
   #metrics <- rbindlist(list(metrics, list(i = i, acc = accuracy)))
   #print(metrics)
 }

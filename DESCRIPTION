@@ -28,8 +28,8 @@ Imports:
 Suggests:
     roxygen2,
     testthat
-RoxygenNote: 6.0.0
-Collate: 
+RoxygenNote: 5.0.1
+Collate:
     'Data.Base.R'
     'Data.Static.R'
     'Data.Stream.R'
@@ -45,9 +45,10 @@ Collate:
     'ML.Local.R'
     'ML.Local.lm.R'
     'ML.XGBoost.R'
+    'Simulator.Slow.R'
+    'Simulator.GAD.R'
     'SummaryMeasureGenerator.R'
     'OnlineSuperLearner.R'
     'SMG.Lag.R'
     'SMG.Latest.Entry.R'
     'SMG.Mean.R'
-    'Simulator.R'
