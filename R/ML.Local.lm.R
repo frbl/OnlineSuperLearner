@@ -11,15 +11,14 @@ ML.Local.lm <-
            inherit = ML.Local,
            private =
              list(
-                  model = NULL
                   ),
            active =
              list(
                   score = function() {
-                    if(is.null(private$model)) {
+                    if(is.null(self$model)) {
                       throw('Fit a model first!')
                     }
-                    summary(private$model)$r.squared
+                    summary(self$model)$r.squared
                   }
                   ),
            public =
@@ -27,19 +26,48 @@ ML.Local.lm <-
                   initialize = function() {
                   },
 
-                  fit = function(data, X, Y){
-                    warning('This method does not actually work, its just for testing purposes')
-                    x <- paste(X, collapse = ' + ')
-                    formula <- paste(Y, '~', x)
+                  predict = function(data, A, W) {
+                    X <- c(A, W)
+                    predict(self$model, data[, X, with = FALSE], type = 'response')
+                  },
+
+                  fit = function(data, Y, A, W){
+                    formula <- self$createFormula(Y = Y,A = A,W = W)
+                    learningrate = .1
 
                     # If there is no model, we need to fit a model based on Nl observations.
                     # If we already have a model, we update the old one, given the new measurement
-                    if(is.null(private$model)){
-                      private$model <- lm(formula, data)
+                    if(is.null(self$model)){
+
+                      # We suppress warnings as we are doing our model fitting based on non binary data.
+                      # R will complain about this.
+                      suppressWarnings(
+                        self$model <- glm(formula,
+                                          data=data,
+                                          family=binomial())
+                      )
                     } else {
-                      private$model <- update(private$model, formula, data)
+                      # model matrix
+                      X <- c(A, W)
+                      Xmat <- as.matrix(data[, X, with = FALSE])
+                      Ymat <- as.matrix(data[, Y, with = FALSE])
+
+                      # Add the intercept to the matrix
+                      Xmat <- cbind(intercept=c(1), Xmat)
+
+                      # prediction
+                      prediction <- self$predict(data, A, W)
+
+                      # Calculate the gradient
+                      grad <- - t(Xmat) %*% (Ymat - prediction)
+
+                      # Update the original coefficients of our glm
+                      coef <- self$model$coefficients - learningrate * grad
+
+                      # Update the actual coefficients of our fit
+                      self$model$coefficients <- coef
                     }
-                    private$model
+                    self$model
                   }
                   )
            )

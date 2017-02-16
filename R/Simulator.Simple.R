@@ -25,10 +25,10 @@ Simulator.Simple <-
                     # We have x1 and x2 to create a variable y
                     # some continuous variables
                     x1 <- rnorm(nobs)
-                    x2 <- rnorm(nobs)
+                    x2 <- rnorm(nobs, mean=10)
 
                     # linear combination with a bias
-                    z <- 1 + 2*x1 + 3*x2
+                    z <- 1 + 2*x1 + 1.2*x2
 
                     # Pass through the inverse logit function
                     pr <- plogis(z)

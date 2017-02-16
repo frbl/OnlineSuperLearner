@@ -34,25 +34,40 @@ OnlineSuperLearner <-
                   SL.Library = NULL,
                   SL.Library.Fabricated = NULL,
                   summaryMeasurementGenerator = NULL,
+                  SMG.list = NULL,
+                  verbose = FALSE,
 
                   trainLibrary = function(Y, A, W, iterations, data.initial){
-                    data <- data.initial
-                    while(iterations > 0 && nrow(data) >= 1 && !is.null(data)) {
-                      lapply(private$SL.Library.Fabricated, function(model) { model$fit(data = data, Y = Y, A = A, W = W) })
-                      data <- private$summaryMeasurementGenerator$getNext()
+                    private$verbose && enter(private$verbose, 'Starting model training')
+
+                    data.current <- data.initial
+                    while(iterations > 0 && nrow(data.current) >= 1 && !is.null(data.current)) {
+
+                      private$verbose && enter(private$verbose, paste('Iterations left', iterations ))
+
+                      # Fit the models on the current data
+                      lapply(private$SL.Library.Fabricated, function(model) { model$fit(data = data.current, Y = Y, A = A, W = W) })
+                      data.current <- private$summaryMeasurementGenerator$getNext()
                       iterations <- iterations - 1
+
+                      # Print some of the results
+                      if(private$verbose) lapply(private$SL.Library.Fabricated, function(model) { private$verbose && cat(private$verbose, model$score) })
+                      private$verbose && exit(private$verbose)
                     }
-                    data
+                    private$verbose && exit(private$verbose, 'Finished model training')
+                    data.current
                   }
                   ),
            public =
              list(
-                  initialize = function(SL.Library = c('ML.Local.lm', 'ML.H2O.glm')) {
+                  initialize = function(SL.Library = c('ML.Local.lm', 'ML.H2O.glm'), SMG.list, verbose = -3) {
                     private$SL.Library <- SL.Library
 
                     # Initialization, Fabricate the various models
                     LibraryFactory <- LibraryFactory$new()
                     private$SL.Library.Fabricated <- LibraryFactory$fabricate(private$SL.Library)
+                    private$SMG.list <- SMG.list
+                    private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
                   },
 
                   # Data = the data object from which the data can be retrieved
@@ -61,21 +76,20 @@ OnlineSuperLearner <-
                   # Y = the name of the outcome
                   # initial.data.size = the number of observations needed to fit the initial model
                   run = function(data, Y, A, W, initial.data.size = 5, iterations.max = 20) {
+                    private$verbose && cat(private$verbose, paste('Starting super learner with a library:', private$SL.Library))
+
                     # Steps in superlearning:
                     # Wrap the data into a summary measurement generator.
                     private$summaryMeasurementGenerator <- SummaryMeasureGenerator$new(Y = Y,
                                                                                        A = A,
                                                                                        W = W,
                                                                                        data = data,
-                                                                                       lags = 2)
+                                                                                       SMG.list = private$SMG.list)
 
                     # Get the initial data for fitting the first model
                     data <- private$summaryMeasurementGenerator$getNextN(initial.data.size)
 
                     # Fit the library of models using a given number of iterations
-                    Y <- private$summaryMeasurementGenerator$Y
-                    A <- private$summaryMeasurementGenerator$A
-                    W <- private$summaryMeasurementGenerator$W
                     data <- private$trainLibrary(Y = Y, A = A, W = W, iterations = iterations.max, data = data)
 
 
@@ -102,11 +116,24 @@ OnlineSuperLearner <-
 # TEST FUNCTIONS #
 ##################
 datatest <- function() {
-  devtools::load_all()
-  data <- Data.Static$new(url = 'https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
+  set.seed(12345)
+  sim  <- Simulator.Simple$new()
+  dataset  <- sim$getObservation(1000)
 
-  smg <- SummaryMeasureGenerator$new(data = data,
-                                     lags = 3)
+  data <- Data.Static$new(dataset = dataset)
+  Y = "y"
+  W = c("x1", "x2")
+  A = c()
+  SMG.list <- list(
+                   SMG.Lag$new(lags = 2, colnames.to.lag = (c(A, W, Y))),
+                   SMG.Latest.Entry$new(colnames.to.use = (c(A, W, Y)))
+                   )
+
+  smg <- SummaryMeasureGenerator$new(Y = Y,
+                                     A = A,
+                                     W = W,
+                                     data = data,
+                                     SMG.list = SMG.list)
   smg$getNext()
 
   print(smg$getNext())
@@ -119,23 +146,26 @@ main <- function() {
   sim  <- Simulator.Simple$new()
   dataset  <- sim$getObservation(1000)
   dataset.test  <- sim$getObservation(100)
-  for(i in seq(2,20,1)) {
-    set.seed(12345)
-    data <- Data.Static$new(dataset = dataset)
 
+  Y = "y"
+  W = c("x1", "x2")
+  A = c()
 
-    Y = "y"
-    W = c("x1", "x2")
-    A = c()
-    SL.Library = c('ML.XGBoost.glm')
-    #data <- Data.Static$new(url = 'https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
+  SMG.list <- list(
+                   SMG.Lag$new(lags = 2, colnames.to.lag = (c(A, W, Y))),
+                   SMG.Latest.Entry$new(colnames.to.use = (c(A, W, Y)))
+                   )
 
-    data.copy <- copy(data)
-    osl <- OnlineSuperLearner$new(SL.Library)
-    models <- osl$run(data, Y = Y, A = A, W =  W, initial.data.size = 4, iterations.max = i)
+  set.seed(12345)
+  data <- Data.Static$new(dataset = dataset)
 
-    accuracy <- Evaluation.Accuracy(models[[1]], data = dataset.test, W= W, A = A, Y = Y)
-    metrics <- rbindlist(list(metrics, list(i = i, acc = accuracy)))
-  }
-  print(metrics)
+  SL.Library = c('ML.Local.lm')
+  #data <- Data.Static$new(url = 'https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
+
+  osl <- OnlineSuperLearner$new(SL.Library, SMG.list)
+  models <- osl$run(data, Y = Y, A = A, W =  W, initial.data.size = 2, iterations.max = 200)
+
+  accuracy <- Evaluation.Accuracy(models[[1]], data = dataset.test, W= W, A = A, Y = Y)
+  #metrics <- rbindlist(list(metrics, list(i = i, acc = accuracy)))
+  #print(metrics)
 }

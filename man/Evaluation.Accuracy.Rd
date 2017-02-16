@@ -10,3 +10,4 @@ Evaluation.Accuracy(model, data, Y, A, W)
 \description{
 Evaluation.Accuracy caluclator
 }
+

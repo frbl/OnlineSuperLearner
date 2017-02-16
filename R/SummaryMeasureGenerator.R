@@ -21,45 +21,33 @@ SummaryMeasureGenerator <-
            "SummaryMeasureGenerator",
            private =
              list(
-                  lags = NULL,
                   data = NULL,
                   cache = data.table(),
-                  minimal.measurements = NULL,
-                  lags.vector = NULL,
-                  colnames = NULL,
-                  colnames.lagged = NULL
+                  SMG.list = NULL,
+                  minimal.measurements.needed = NULL
                   ),
-           active =
-             list(),
            public =
              list(
                   W = NULL,
                   Y = NULL,
                   A = NULL,
-                  initialize = function(W, A, Y, data, lags, minimal.measurements = NULL) {
+                  initialize = function(W, A, Y, data, SMG.list) {
                     self$W <- W
                     self$A <- A
                     self$Y <- Y
 
                     private$data <- data
-                    private$lags <- lags
-                    private$lags.vector <- seq(lags)
-
-                    private$minimal.measurements <- ifelse(is.null(minimal.measurements),
-                                                           lags + 1,
-                                                           minimal.measurements)
-
-                    private$colnames <- c(self$Y, self$A, self$W)
-                    private$colnames.lagged  <- unlist(lapply(seq(private$lags), function(x) paste(x, 'lag', private$colnames, sep = "_")))
+                    private$SMG.list <- SMG.list
+                    private$minimal.measurements.needed <- max(sapply(SMG.list, function(obj) obj$minimalObservations))
                   },
 
                   # This function will fill the cache with the first Nl measurements,
                   # if needed.
                   fillCache = function() {
                     updated <-  FALSE
-                    if(nrow(private$cache) < private$minimal.measurements) {
+                    if(nrow(private$cache) < private$minimal.measurements.needed) {
                       updated <- TRUE
-                      private$cache <- private$data$getNextN(private$minimal.measurements)
+                      private$cache <- private$data$getNextN(private$minimal.measurements.needed)
                     }
                     updated
                   },
@@ -72,16 +60,10 @@ SummaryMeasureGenerator <-
                       private$cache <- private$cache[-1, ]
                     }
 
-                    # on data.tables
+                    # Generate summary measures using each of the provided objects
                     current.data <- copy(private$cache)
-
-                    # Create column names
-                    current.data[, (private$colnames.lagged) := shift(.SD, private$lags.vector, NA, "lag"),
-                                 .SDcols = private$colnames]
-
-                    # This will return the lagged dataset, and only the complete cases
-                    # which boils down to a single measurement.
-                    current.data[complete.cases(current.data), ]
+                    datas <- lapply(private$SMG.list, function(smg) smg$process(copy(current.data)))
+                    data.table(t(unlist(datas)))
                   },
 
                   getNextN = function(n = 1){

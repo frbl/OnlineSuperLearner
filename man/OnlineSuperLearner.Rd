@@ -22,5 +22,5 @@ to the super learner machine learning model.
   \item{\code{predict(data, X)}}{returns an actual prediction using the superlearning model}
 }
 }
-
 \keyword{datasets}
+

@@ -22,5 +22,5 @@ to read data from
   \item{\code{getNextN(n)}}{Method that returns the next \code{n} observations. This function can be used to bootstrap an initial model.}
 }
 }
-
 \keyword{datasets}
+
