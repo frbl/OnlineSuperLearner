@@ -16,6 +16,7 @@ General Linear Model machine learning model, based on the XGBoost library
 \describe{
 \item{\code{model}}{the most recent / best model fitted.}
 }}
+
 \section{Methods}{
 
 \describe{
@@ -24,5 +25,5 @@ General Linear Model machine learning model, based on the XGBoost library
   \item{\code{fit(data, X, Y)}}{Method to fit the linear model.}
 }
 }
-\keyword{datasets}
 
+\keyword{datasets}

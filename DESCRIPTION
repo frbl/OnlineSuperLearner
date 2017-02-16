@@ -28,8 +28,8 @@ Imports:
 Suggests:
     roxygen2,
     testthat
-RoxygenNote: 5.0.1
-Collate:
+RoxygenNote: 6.0.0
+Collate: 
     'Data.Base.R'
     'Data.Static.R'
     'Data.Stream.R'
