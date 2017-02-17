@@ -1,19 +1,10 @@
-#' General packages used by all of the other classes
-#' @import R.oo
-#' @import R.utils
-#' @import magrittr
-generalImports <- list()
-
-# General fixes, for usability
-expit <- plogis
-logit <- qlogis
-
 #' OnlineSuperLearner
 #'
 #' This is the main super learner class. This class contains everything related
 #' to the super learner machine learning model.
 #' @docType class
 #' @importFrom R6 R6Class
+#' @include Global.R
 #' @include LibraryFactory.R
 #' @include SummaryMeasureGenerator.R
 #' @include Simulator.Simple.R
@@ -37,12 +28,17 @@ OnlineSuperLearner <-
            # fitted model can be inputted, so it gets updated.
            private =
              list(
+                  # ML Library
                   SL.Library = NULL,
                   SL.Library.Fabricated = NULL,
-                  summaryMeasurementGenerator = NULL,
-                  SMG.list = NULL,
+
+                  # Summary measures and a generator
+                  summaryMeasureGenerator = NULL,
+
+                  # Verbosity of the logs
                   verbose = FALSE,
 
+                  # Function to train the whole set of models
                   trainLibrary = function(Y, A, W, iterations, data.initial){
                     private$verbose && enter(private$verbose, 'Starting model training')
 
@@ -52,28 +48,47 @@ OnlineSuperLearner <-
                       private$verbose && enter(private$verbose, paste('Iterations left', iterations ))
 
                       # Fit the models on the current data
-                      lapply(private$SL.Library.Fabricated, function(model) { model$fit(data = data.current, Y = Y, A = A, W = W) })
-                      data.current <- private$summaryMeasurementGenerator$getNext()
+                      lapply(private$SL.Library.Fabricated,
+                             function(model) { model$fit(data = data.current, Y = Y, A = A, W = W) })
+
+                      # Get the new row of data
+                      data.current <- private$summaryMeasureGenerator$getNext()
                       iterations <- iterations - 1
 
                       # Print some of the results
-                      if(private$verbose) lapply(private$SL.Library.Fabricated, function(model) { private$verbose && cat(private$verbose, model$score) })
+                      if(private$verbose) {
+                        accuracy <- self$evaluateModels(data = data.current,
+                                                        Y = Y,
+                                                        A = A,
+                                                        W = W)
+                        msg  <- paste('Accuracy on trainingset', accuracy)
+                        private$verbose && cat(private$verbose, msg)
+                      }
                       private$verbose && exit(private$verbose)
                     }
                     private$verbose && exit(private$verbose, 'Finished model training')
-                    data.current
                   }
                   ),
            public =
              list(
-                  initialize = function(SL.Library = c('ML.Local.lm', 'ML.H2O.glm'), SMG.list, verbose = -3) {
+                  initialize = function(SL.Library = c('ML.Local.lm', 'ML.H2O.glm'), summaryMeasureGenerator, verbose = FALSE) {
                     private$SL.Library <- SL.Library
 
                     # Initialization, Fabricate the various models
                     LibraryFactory <- LibraryFactory$new()
                     private$SL.Library.Fabricated <- LibraryFactory$fabricate(private$SL.Library)
-                    private$SMG.list <- SMG.list
+
+                    # Wrap the data into a summary measurement generator.
+                    private$summaryMeasureGenerator <- summaryMeasureGenerator
+
                     private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
+                  },
+
+                  evaluateModels = function(data, Y, A, W) {
+                    lapply(private$SL.Library.Fabricated,
+                           function(model) {
+                             Evaluation.Accuracy(model, data = data, W = W, A = A, Y = Y)
+                           })
                   },
 
                   # Data = the data object from which the data can be retrieved
@@ -85,18 +100,14 @@ OnlineSuperLearner <-
                     private$verbose && cat(private$verbose, paste('Starting super learner with a library:', private$SL.Library))
 
                     # Steps in superlearning:
-                    # Wrap the data into a summary measurement generator.
-                    private$summaryMeasurementGenerator <- SummaryMeasureGenerator$new(Y = Y,
-                                                                                       A = A,
-                                                                                       W = W,
-                                                                                       data = data,
-                                                                                       SMG.list = private$SMG.list)
 
                     # Get the initial data for fitting the first model
-                    data <- private$summaryMeasurementGenerator$getNextN(initial.data.size)
+                    private$summaryMeasureGenerator$setData(data = data)
+                    data <- private$summaryMeasureGenerator$getNextN(initial.data.size)
 
+                    print(names(data))
                     # Fit the library of models using a given number of iterations
-                    data <- private$trainLibrary(Y = Y, A = A, W = W, iterations = iterations.max, data = data)
+                    private$trainLibrary(Y = Y, A = A, W = W, iterations = iterations.max, data = data)
 
 
                     # build a matrix with predicted / actual
@@ -158,46 +169,68 @@ main <- function() {
   # Generate observations for training #
   #####################################
   llW <- list(stochMech=rnorm,
-                param=c(0, 0.5, -0.25, 0.1),
-                rgen=identity)
+              param=c(0, 0.5, -0.25, 0.1),
+              rgen=identity)
 
   llA <- list (stochMech=function(ww) {
                  rbinom(length(ww), 1, expit(ww))
-                },
-                param=c(-0.1, 0.1, 0.25),
-                rgen=function(xx, delta=0.05){
-                  rbinom(length(xx), 1, delta+(1-2*delta)*expit(xx))
-                })
+              },
+              param=c(-0.1, 0.1, 0.25),
+              rgen=function(xx, delta=0.05){
+                rbinom(length(xx), 1, delta+(1-2*delta)*expit(xx))
+              })
 
   llY <- list(stochMech=function(aa, ww){
-                  aa*ww+(1-aa)*(-ww)
-                },
-                param=c(0.1, 0.1, 0.1, 0.05, -0.01),
-                rgen=identity)
+                aa*ww+(1-aa)*(-ww)
+              },
+              param=c(0.1, 0.1, 0.1, 0.05, -0.01),
+              rgen=identity)
   ##
   data.train <- sim$simulateWAY(nobs, qw=llW, ga=llA, Qy=llY, verbose=log)
   data.test <- sim$simulateWAY(1000, qw=llW, ga=llA, Qy=llY, verbose=log)
   browser()
 
-  Y = "y"
-  W = c("x1", "x2")
-  A = c()
+  data <- Data.Static$new(dataset = data.train)
+  data.test <- Data.Static$new(dataset = data.test)
+  # Define the variables in the initial dataset we'd like to use
+  Y = "Y1"
+  W = c("W1")
+  A = c("V2")
 
+  # Create the measures we'd like to include in our model
   SMG.list <- list(
                    SMG.Lag$new(lags = 2, colnames.to.lag = (c(A, W, Y))),
                    SMG.Latest.Entry$new(colnames.to.use = (c(A, W, Y)))
                    )
 
+  summaryMeasureGenerator = SummaryMeasureGenerator$new(Y = Y,
+                              A = A,
+                              W = W,
+                              SMG.list = SMG.list)
   set.seed(12345)
-  data <- Data.Static$new(dataset = data.train)
 
   SL.Library = c('ML.Local.lm')
   #data <- Data.Static$new(url = 'https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
 
-  osl <- OnlineSuperLearner$new(SL.Library, SMG.list)
-  models <- osl$run(data, Y = Y, A = A, W =  W, initial.data.size = 2, iterations.max = 200)
+  osl <- OnlineSuperLearner$new(SL.Library,
+                                summaryMeasureGenerator = summaryMeasureGenerator,
+                                verbose = log)
 
-  accuracy <- Evaluation.Accuracy(models[[1]], data = data.test, W = W, A = A, Y = Y)
-  #metrics <- rbindlist(list(metrics, list(i = i, acc = accuracy)))
-  #print(metrics)
+  # Define the variables in the extended dataset we'd like to use
+  Y = "Y1"
+  W = c("W1", "V2", "V2_lag_1", "V2_lag_2",  "W1_lag_1", "W1_lag_2")
+  A = c("V2")
+  estimators <- osl$run(data, Y = Y, A = A, W =  W, initial.data.size = 20, iterations.max = 200)
+
+  if(log) {
+    data.test <- summaryMeasureGenerator$setData(data.test)
+    data.test <- summaryMeasureGenerator$getNextN(800)
+    accuracy <- osl$evaluateModels(data = data.test,
+                                   Y = Y,
+                                   A = A,
+                                   W = W)
+    msg  <- paste('Accuracy on trainingset', accuracy)
+    log && cat(log, msg)
+  }
+  estimators
 }

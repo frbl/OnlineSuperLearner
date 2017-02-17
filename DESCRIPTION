@@ -36,6 +36,7 @@ Collate:
     'Simulator.Simple.R'
     'Data.Stream.Simulator.R'
     'Evaluation.Accuracy.R'
+    'Global.R'
     'H2O.initializer.R'
     'ML.XGBoost.glm.R'
     'LibraryFactory.R'

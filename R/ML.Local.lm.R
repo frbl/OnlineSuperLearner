@@ -32,7 +32,7 @@ ML.Local.lm <-
                   },
 
                   fit = function(data, Y, A, W){
-                    formula <- self$createFormula(Y = Y,A = A,W = W)
+                    formula <- self$createFormula(Y = Y, A = A, W = W)
                     learningrate = .1
 
                     # If there is no model, we need to fit a model based on Nl observations.

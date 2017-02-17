@@ -31,7 +31,7 @@ SummaryMeasureGenerator <-
                   W = NULL,
                   Y = NULL,
                   A = NULL,
-                  initialize = function(W, A, Y, data, SMG.list) {
+                  initialize = function(W, A, Y, data = NULL, SMG.list) {
                     self$W <- W
                     self$A <- A
                     self$Y <- Y
@@ -39,6 +39,11 @@ SummaryMeasureGenerator <-
                     private$data <- data
                     private$SMG.list <- SMG.list
                     private$minimal.measurements.needed <- max(sapply(SMG.list, function(obj) obj$minimalObservations))
+                  },
+
+                  setData = function(data) {
+                    private$cache = data.table()
+                    private$data = data
                   },
 
                   # This function will fill the cache with the first Nl measurements,
@@ -53,16 +58,22 @@ SummaryMeasureGenerator <-
                   },
 
                   getNext = function(){
+                    if(is.null(private$data)) {
+                      throw('Please set the data of the summary measure generator first')
+                    }
+
                     if(!self$fillCache()) {
-                      private$cache <- rbindlist(list(private$cache, private$data$getNext()))
+                      current <- private$data$getNext()
+                      if (is.null(current)) return(NULL)
+
+                      private$cache <- rbindlist(list(private$cache,current ))
 
                       # Remove the first measurement from the dataframe
-                      private$cache <- private$cache[-1, ]
+                      private$cache <- tail(private$cache, -1)
                     }
 
                     # Generate summary measures using each of the provided objects
-                    current.data <- copy(private$cache)
-                    datas <- lapply(private$SMG.list, function(smg) smg$process(copy(current.data)))
+                    datas <- lapply(private$SMG.list, function(smg) smg$process(copy(private$cache)))
                     data.table(t(unlist(datas)))
                   },
 
@@ -70,10 +81,11 @@ SummaryMeasureGenerator <-
                     # TODO: Make this much more efficient
                     # TODO: This is an exact copy of the Data.Base function
                     dt <- data.table()
-                    i <- 0
-                    while(i < n) {
-                      dt <- rbindlist(list(dt, self$getNext()))
-                      i <- i +1
+                    for(i in 1:n) {
+                      current <- self$getNext()
+                      if(is.null(current)) break
+
+                      dt <- rbindlist(list(dt, current))
                     }
                     dt
                   }
