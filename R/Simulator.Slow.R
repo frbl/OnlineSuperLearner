@@ -18,6 +18,11 @@ Simulator.Slow <-
                       throw("Attribute 'family' is missing, this is not a valid mechanism")
                     }
                     return(fun)
+                  },
+
+                  validateIntervention = function(ll) {
+                    ## ...
+                    return(ll)
                   }
                   ),
            public =
@@ -26,9 +31,9 @@ Simulator.Slow <-
                   },
 
                   simulateWAY = function(by=1,
-                                         qw=self$generateMechanismScenarioOne(0, family="gaussian"),
-                                         ga=self$generateMechanismScenarioOne(0, family="bernoulli"),
-                                         Qy=self$generateMechanismScenarioOne(0, family="bernoulli"),
+                                         qw=self$generateMechanism(0, family="gaussian"),
+                                         ga=self$generateMechanism(0, family="bernoulli"),
+                                         Qy=self$generateMechanism(0, family="bernoulli"),
                                          intervention=NULL,
                                          verbose=FALSE,
                                          version="slow") {
@@ -38,7 +43,7 @@ Simulator.Slow <-
                     ga <- private$validateMechanism(ga)
                     Qy <- private$validateMechanism(Qy)
                     if (!is.null(intervention)) {
-                      intervention <- self$validateIntervention(intervention)
+                      intervention <- private$validateIntervention(intervention)
                     }
                     verbose <- Arguments$getVerbose(verbose)
 
@@ -137,7 +142,7 @@ Simulator.Slow <-
                     return(WAY)
                   },
 
-                  generateMechanismScenarioOne = function(param, family=c("bernoulli", "gaussian")) {
+                  generateMechanism = function(param, family=c("bernoulli", "gaussian")) {
                     ## Retrieving arguments
                     param <- Arguments$getNumerics(param)
                     memory <- length(param)-1
@@ -205,5 +210,5 @@ Simulator.Slow <-
                     }
                     return(idx)
                   }
-                 )
+                  )
            )
