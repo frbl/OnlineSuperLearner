@@ -28,33 +28,32 @@ SummaryMeasureGenerator <-
                   ),
            public =
              list(
-                  W = NULL,
-                  Y = NULL,
-                  A = NULL,
-                  initialize = function(W, A, Y, data = NULL, SMG.list) {
-                    self$W <- W
-                    self$A <- A
-                    self$Y <- Y
-
+                  initialize = function(data = NULL, SMG.list) {
                     private$data <- data
                     private$SMG.list <- SMG.list
-                    private$minimal.measurements.needed <- max(sapply(SMG.list, function(obj) obj$minimalObservations))
+
+                    # Determine the minimal number of measurements we need in order to be able to
+                    # support all our SMGs
+                    private$minimal.measurements.needed <- max(sapply(SMG.list, function(obj) obj$minimalObservations)
+                    )
+                  },
+
+                  reset = function() {
+                    private$cache = data.table()
                   },
 
                   setData = function(data) {
-                    private$cache = data.table()
+                    self$reset()
                     private$data = data
                   },
 
-                  # This function will fill the cache with the first Nl measurements,
-                  # if needed.
+                  # This function will fill the cache with the first N measurements if the cache is empty
                   fillCache = function() {
-                    updated <-  FALSE
                     if(nrow(private$cache) < private$minimal.measurements.needed) {
-                      updated <- TRUE
                       private$cache <- private$data$getNextN(private$minimal.measurements.needed)
+                      return(TRUE)
                     }
-                    updated
+                    FALSE
                   },
 
                   getNext = function(){

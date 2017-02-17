@@ -49,6 +49,10 @@ Data.Static <-
                     return(private$dataset)
                   },
 
+                  reset = function() {
+                    private$currentrow <- 1
+                  },
+
                   getNext = function() {
                     temp <- private$dataset[private$currentrow, ]
                     private$currentrow <- private$currentrow + 1

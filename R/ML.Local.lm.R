@@ -4,13 +4,14 @@
 #' @importFrom R6 R6Class
 #' @importFrom stats lm
 #' @include ML.Local.R
-#' @export
 ML.Local.lm <-
   R6Class (
            "ML.Local.lm",
            inherit = ML.Local,
            private =
              list(
+                  learning.rate = NULL,
+                  family = NULL
                   ),
            active =
              list(
@@ -18,34 +19,42 @@ ML.Local.lm <-
                     if(is.null(self$model)) {
                       throw('Fit a model first!')
                     }
-                    summary(self$model)$r.squared
+                    summary(self$model)
                   }
                   ),
            public =
              list(
-                  initialize = function() {
+                  initialize = function(learning.rate = 0.1, family='gaussian') {
+                    private$learning.rate = learning.rate
+                    private$family = family
+                    self$getValidity()
+                  },
+
+                  getValidity = function() {
+                    if (!(private$family %in% c('binomial', 'gaussian'))) {
+                      throw('Family not supported', private$family)
+                    }
+                    if (private$learning.rate <= 0) {
+                      throw('The learning rate should be greater than 0')
+                    }
                   },
 
                   predict = function(data, A, W) {
                     X <- c(A, W)
-                    predict(self$model, data[, X, with = FALSE], type = 'response')
+                    if(private$family %in% c('binomial')) {
+                      return(predict(self$model, data[, X, with = FALSE], type='response'))
+                    }
+                    predict(self$model, data[, X, with = FALSE])
                   },
 
                   fit = function(data, Y, A, W){
-                    formula <- self$createFormula(Y = Y, A = A, W = W)
-                    learningrate = .1
-
                     # If there is no model, we need to fit a model based on Nl observations.
                     # If we already have a model, we update the old one, given the new measurement
                     if(is.null(self$model)){
-
-                      # We suppress warnings as we are doing our model fitting based on non binary data.
-                      # R will complain about this.
-                      suppressWarnings(
-                        self$model <- glm(formula,
-                                          data=data,
-                                          family=binomial())
-                      )
+                      formula <- self$createFormula(Y = Y, A = A, W = W)
+                      self$model <- glm(formula,
+                                        data=data,
+                                        family=private$family)
                     } else {
                       # model matrix
                       X <- c(A, W)
@@ -58,14 +67,14 @@ ML.Local.lm <-
                       # prediction
                       prediction <- self$predict(data, A, W)
 
-                      # Calculate the gradient
-                      grad <- - t(Xmat) %*% (Ymat - prediction)
+                      # TODO: Calculate the gradient descent gradient.
+                      grad <- (t(Xmat) %*% (prediction - Ymat))
 
                       # Update the original coefficients of our glm
-                      coef <- self$model$coefficients - learningrate * grad
+                      coefs <- self$model$coefficients - (private$learning.rate * grad)
 
                       # Update the actual coefficients of our fit
-                      self$model$coefficients <- coef
+                      self$model$coefficients <- coefs
                     }
                     self$model
                   }

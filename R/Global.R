@@ -2,6 +2,7 @@
 #' @import R.oo
 #' @import R.utils
 #' @import magrittr
+#' @import parallel
 generalImports <- list()
 
 # General fixes, for usability

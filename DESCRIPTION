@@ -17,6 +17,7 @@ Depends:
     data.table,
     R6
 Imports:
+    parallel,
     data.table,
     R.utils (>= 1.4.1),
     h2o (>=	3.10.3.2),
@@ -35,7 +36,7 @@ Collate:
     'Data.Stream.R'
     'Simulator.Simple.R'
     'Data.Stream.Simulator.R'
-    'Evaluation.Accuracy.R'
+    'Evaluation.R'
     'Global.R'
     'H2O.initializer.R'
     'ML.XGBoost.glm.R'
@@ -50,6 +51,7 @@ Collate:
     'Simulator.GAD.R'
     'SummaryMeasureGenerator.R'
     'OnlineSuperLearner.R'
+    'OnlineSuperLearner.Simulation.R'
     'SMG.Lag.R'
     'SMG.Latest.Entry.R'
     'SMG.Mean.R'

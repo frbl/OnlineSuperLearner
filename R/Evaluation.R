@@ -1,7 +1,4 @@
-#' Evaluation.Accuracy caluclator
-#'
-#' @docType class
-#' @importFrom R6 R6Class
+#' Accuracy caluclator
 Evaluation.Accuracy <- function(model, data, Y, A, W) {
   true.predicted <- 0
   all.predicted <- 0
@@ -16,4 +13,13 @@ Evaluation.Accuracy <- function(model, data, Y, A, W) {
 
   accuracy <- true.predicted / all.predicted
   accuracy
+}
+
+#' MSE caluclator
+Evaluation.MeanSquaredError <- function(model, data, Y, A, W) {
+  data.predicted <-  model$predict(data = data, A = A,  W = W)
+  data.observed <- data[, Y, with = FALSE][[Y]]
+
+  # Calculate the MSE
+  mean((data.observed - data.predicted)^2)
 }
