@@ -25,7 +25,16 @@ SMG.Lag <-
                     private$lags <- lags
                     private$lags.vector <- seq(1,lags)
                     private$colnames <- colnames.to.lag
-                    private$colnames.lagged  <- unlist(lapply(seq(private$lags), function(x) paste(colnames.to.lag,'lag', x , sep = "_")))
+                    private$colnames.lagged  <- self$laggedColnames()
+                  },
+
+                  laggedColnames = function() {
+                    unlist(lapply(private$colnames,
+                                  function(col){
+                                    paste(col, 'lag', seq(private$lags), sep = "_")
+                                  }
+                                  )
+                    )
                   },
 
                   process = function(data.current) {
@@ -34,7 +43,7 @@ SMG.Lag <-
                       stop(paste('At least', self$minimalObservations, 'observations required'))
                     }
 
-                    data.current[, (private$colnames.lagged) := shift(.SD, private$lags.vector, NA, "lag"),
+                    data.current[, (private$colnames.lagged) := shift(.SD, private$lags.vector, NA),
                                  .SDcols = private$colnames]
 
                     # This will return the lagged dataset, and only the complete cases
