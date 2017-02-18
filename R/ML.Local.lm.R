@@ -20,14 +20,6 @@ ML.Local.lm <-
                       throw('Fit a model first!')
                     }
                     summary(self$model)
-                  }
-                  ),
-           public =
-             list(
-                  initialize = function(learning.rate = 0.1, family='gaussian') {
-                    private$learning.rate = learning.rate
-                    private$family = family
-                    self$getValidity()
                   },
 
                   getValidity = function() {
@@ -37,6 +29,14 @@ ML.Local.lm <-
                     if (private$learning.rate <= 0) {
                       throw('The learning rate should be greater than 0')
                     }
+                  }
+                  ),
+           public =
+             list(
+                  initialize = function(learning.rate = 0.1, family='gaussian') {
+                    private$learning.rate = learning.rate
+                    private$family = family
+                    self$getValidity
                   },
 
                   predict = function(data, A, W) {
@@ -47,25 +47,25 @@ ML.Local.lm <-
                     predict(self$model, data[, X, with = FALSE])
                   },
 
-                  fit = function(data, Y, A, W){
+                  fit = function(train, test, Y, A, W){
                     # If there is no model, we need to fit a model based on Nl observations.
                     # If we already have a model, we update the old one, given the new measurement
                     if(is.null(self$model)){
                       formula <- self$createFormula(Y = Y, A = A, W = W)
                       self$model <- glm(formula,
-                                        data=data,
+                                        data=train,
                                         family=private$family)
                     } else {
                       # model matrix
                       X <- c(A, W)
-                      Xmat <- as.matrix(data[, X, with = FALSE])
-                      Ymat <- as.matrix(data[, Y, with = FALSE])
+                      Xmat <- as.matrix(train[, X, with = FALSE])
+                      Ymat <- as.matrix(train[, Y, with = FALSE])
 
                       # Add the intercept to the matrix
                       Xmat <- cbind(intercept=c(1), Xmat)
 
                       # prediction
-                      prediction <- self$predict(data, A, W)
+                      prediction <- self$predict(train, A, W)
 
                       # TODO: Calculate the gradient descent gradient.
                       grad <- (t(Xmat) %*% (prediction - Ymat))
@@ -76,7 +76,7 @@ ML.Local.lm <-
                       # Update the actual coefficients of our fit
                       self$model$coefficients <- coefs
                     }
-                    self$model
+                    self$predict(train, A, W)
                   }
                   )
            )

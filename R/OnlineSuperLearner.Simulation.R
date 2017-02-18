@@ -16,7 +16,8 @@ OnlineSuperLearner.Simulation <-
                   initialize = function() {
                     private$sim  <- Simulator.GAD$new()
                     private$nobs <- 1e5
-                    private$SL.Library = c('ML.Local.lm')
+                    private$SL.Library = c('ML.Local.lm',
+                                           'ML.H2O.glm')
 
                     # Run the simulations
                     self$basicRegression()
@@ -98,7 +99,7 @@ OnlineSuperLearner.Simulation <-
                       Data.Static$new(dataset = .)
 
                     # Now run several iterations on the data
-                    performances <- mclapply(seq(5,201,20), function(i) {
+                    performances <- lapply(seq(5,201,20), function(i) {
                       data.train$reset()
 
                       osl <- OnlineSuperLearner$new(private$SL.Library,

@@ -59,7 +59,7 @@ OnlineSuperLearner <-
 
                       # Fit the models on the current data
                       lapply(private$SL.Library.Fabricated,
-                             function(model) { model$fit(data = data.current, Y = Y, A = A, W = W) })
+                             function(model) { model$process(data = data.current, Y = Y, A = A, W = W) })
 
                       # Fit the super learner on the current data
                       private$fitSuperlearner(data = data.current, Y = Y, A = A, W = W)

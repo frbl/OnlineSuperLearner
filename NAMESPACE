@@ -3,7 +3,6 @@
 export(Data.Static)
 export(Data.Stream)
 export(Data.Stream.Simulator)
-export(H2O.Initializer)
 export(ML.H2O)
 export(ML.H2O.glm)
 export(OnlineSuperLearner)

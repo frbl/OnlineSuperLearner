@@ -3,13 +3,13 @@
 \docType{class}
 \name{H2O.Initializer}
 \alias{H2O.Initializer}
-\title{H2O.Initializer}
-\format{An object of class \code{R6ClassGenerator} of length 24.}
+\title{H2O.Initializer
+Idealy I'd like to use a singletonpattern for this, but this also works.}
 \usage{
-H2O.Initializer
+H2O.Initializer(host = "localhost", port = 54321, runlocal = TRUE)
 }
 \description{
 H2O.Initializer
+Idealy I'd like to use a singletonpattern for this, but this also works.
 }
-\keyword{datasets}
 

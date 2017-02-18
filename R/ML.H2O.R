@@ -5,7 +5,17 @@
 #' @include ML.H2O.R
 #' @include ML.Base.R
 #' @include Data.Base.R
+#' @include H2O.initializer.R
 #' @export
-ML.H2O <- R6Class("ML.H2O", inherit = ML.Base, public = list(initialize = function(data) {
-    super$initialize(data = h2o.importFile(data$getAll()))
-}))
+ML.H2O <-
+  R6Class("ML.H2O",
+          inherit = ML.Base,
+          public =
+            list(
+                 initialize = function() {
+                   H2O.Initializer(host = "docker.dev",
+                                   port = 54321,
+                                   runlocal = FALSE)
+                 }
+                 )
+          )
