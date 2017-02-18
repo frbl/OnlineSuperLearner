@@ -13,9 +13,9 @@ ML.H2O <-
           public =
             list(
                  initialize = function() {
-                   H2O.Initializer(host = "docker.dev",
+                   H2O.Initializer(host = "localhost",
                                    port = 54321,
-                                   runlocal = FALSE)
+                                   runlocal = TRUE)
                  }
                  )
           )

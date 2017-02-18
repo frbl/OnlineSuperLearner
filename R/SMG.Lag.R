@@ -2,6 +2,7 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
+#' @export
 SMG.Lag <-
   R6Class (
            "SMG.Lag",

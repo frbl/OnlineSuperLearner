@@ -48,10 +48,16 @@ test_that("it should predict using a regression prediction if the family is bino
 context(" fit")
 test_that("it should call the initial GLM function with the correct parameters if no model exists", {
   subject <- ML.Local.lm$new(family='gaussian')
+
   formula <- subject$createFormula('a','b','c')
   with_mock(
-   glm = function(form, data, family) ifelse(family=='gaussian', TRUE, FALSE) && ifelse(formula == formula, TRUE,FALSE),
-   expect_true({ subject$fit(NULL, 'a','b','c') }),
+   # I'm overriding the original GLM function to check if what gets passed to it is correct.
+   # Then I throw an error (if everything is indeed correct) to stop executing the rest of the code.
+   glm = function(form, data, family) {
+     if(ifelse(family=='gaussian', TRUE, FALSE) && ifelse(formula == formula, TRUE,FALSE))
+       stop('stop_execution')
+   },
+   expect_error(subject$fit(NULL, NULL, 'a','b','c'), 'stop_execution'),
    .env = "base"
   )
 })

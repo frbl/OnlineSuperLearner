@@ -3,7 +3,6 @@
 #' @docType class
 #' @include Simulator.Simple.R
 #' @importFrom R6 R6Class
-#' @importFrom rkafka rkafka.send rkafka.closeProducer rkafka.createProducer
 #'
 #' @section Methods:
 #' \describe{
@@ -26,19 +25,20 @@ Data.Stream.Simulator <-
                                         simulator.continuous = Simulator.Simple$new(),
                                         sleep = 1, iterations = Inf) {
 
+                    # importFrom rkafka rkafka.send rkafka.closeProducer rkafka.createProducer
                     # Create the producer to communicate with the kafka cluster
-                    producer <- rkafka.createProducer(kafka.host)
+                    #producer <- rkafka.createProducer(kafka.host)
 
                     i <- 0
                     while(i < iterations){
                       data <- makeObservationSerializable(simulator.continuous$getObservation()[1, ])
-                      rkafka.send(producer, kafka.stream, kafka.host, data)
+                      #rkafka.send(producer, kafka.stream, kafka.host, data)
                       Sys.sleep(sleep)
                       i <- i + 1
                     }
 
                     # Close the kafka producer
-                    rkafka.closeProducer(procuder)
+                    #rkafka.closeProducer(procuder)
                   }
                   )
            )

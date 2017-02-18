@@ -1,4 +1,4 @@
-Package: onlinesuperlearner
+Package: OnlineSuperLearner
 Type: Package
 Title: Online SuperLearner package
 Version: 0.0.1
@@ -22,8 +22,8 @@ Imports:
     R.utils (>= 1.4.1),
     h2o (>=	3.10.3.2),
     R.oo,
-    rkafka,
     R6,
+    methods,
     magrittr,
     xgboost
 Suggests:

@@ -1,2 +1,3 @@
+Sys.setenv("R_TESTS" = "")
 library(testthat)
-test_check("onlinesuperlearner")
+test_check("OnlineSuperLearner")

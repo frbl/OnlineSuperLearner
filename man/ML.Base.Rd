@@ -15,6 +15,10 @@ Base class for any machine learning model. Extend this class if you want to crea
 
 \describe{
 \item{\code{model}}{the most recent / best model fitted.}
+
+\item{\code{iteration}}{the iteration we are currently on. This is needed for calculating the average cv risk score}
+
+\item{\code{CV.risk}}{the calculated crossvalidated risk of the estimator}
 }}
 \section{Methods}{
 

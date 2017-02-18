@@ -6,7 +6,8 @@
 \title{H2O.Initializer
 Idealy I'd like to use a singletonpattern for this, but this also works.}
 \usage{
-H2O.Initializer(host = "localhost", port = 54321, runlocal = TRUE)
+H2O.Initializer(host = "localhost", port = 54321, runlocal = TRUE,
+  verbose = FALSE)
 }
 \description{
 H2O.Initializer

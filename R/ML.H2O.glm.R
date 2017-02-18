@@ -14,7 +14,7 @@ ML.H2O.glm <-
                   alpha = NULL,
                   family = NULL,
 
-                  initialize = function(nfolds = 10, alpha = 0.5, family = 'gaussian') {
+                  initialize = function(nfolds = 1, alpha = 0.5, family = 'gaussian') {
                     super$initialize()
                     self$nfolds <- nfolds
                     self$alpha <- alpha
@@ -26,7 +26,10 @@ ML.H2O.glm <-
                     train.hex <- as.h2o(train, key="train.hex")
                     test.hex <- as.h2o(test, key="test.hex")
 
-                    self$model <- h2o.glm(x = X, y = y,
+                    X <- c(A, W)
+                    print(train)
+                    print(test)
+                    self$model <- h2o.glm(x = X, y = Y,
                                           training_frame = train.hex,
                                           validation_frame = test.hex,
                                           family = self$family,
