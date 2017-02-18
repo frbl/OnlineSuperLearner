@@ -8,7 +8,9 @@ test:
     - R CMD INSTALL --no-multiarch --with-keep.source ~/$PACKAGE_NAME
     - R CMD build ~/$PACKAGE_NAME
     - R CMD check ~/$PACKAGE_NAME/$PACKAGE_NAME\_0.0.1.tar.gz --no-manual --no-build-vig
+    - Rscript -e "devtools::install_github('jimhester/covr')"
   post:
+    - Rscript -e 'covr::codecov()'
     - mv $PACKAGE_NAME.Rcheck/tests/testthat.Rout* $CIRCLE_ARTIFACTS/.
     - mv $PACKAGE_NAME.Rcheck/*.log $CIRCLE_ARTIFACTS/.
 dependencies:
