@@ -153,7 +153,10 @@ OnlineSuperLearner <-
                   evaluateModels = function(data, W, A, Y) {
                     lapply(private$SL.Library.Fabricated,
                            function(model) {
-                             self$evaluationFunction(model, data = data, Y = Y, A = A, W = W)
+                             data.predicted <-  model$predict(data = data, A = A,  W = W)
+                             data.observed <- data[, Y, with = FALSE][[Y]]
+                             self$evaluationFunction(data.observed = data.observed,
+                                                     data.predicted = data.predicted)
                            })
                   },
 

@@ -6,7 +6,7 @@ test_that("it should be tested properly", {
 
   tic <- Sys.time()
   ## 'nobs' observations
-  nobs <- 1e6
+  nobs <- 1e3
   llW <- list(stochMech=rnorm,
               param=c(0, 0.5, -0.25, 0.1),
               rgen=identity)
