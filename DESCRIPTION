@@ -43,6 +43,7 @@ Collate:
     'LibraryFactory.R'
     'ML.Base.R'
     'ML.H2O.R'
+    'ML.H2O.gbm.R'
     'ML.H2O.glm.R'
     'ML.Local.R'
     'ML.Local.lm.R'

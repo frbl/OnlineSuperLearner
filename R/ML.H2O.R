@@ -10,6 +10,16 @@
 ML.H2O <-
   R6Class("ML.H2O",
           inherit = ML.Base,
+          private =
+            list(
+                 getCheckpoint = function() {
+                   checkpoint <- NULL
+                   if(!is.null(self$model)){
+                     checkpoint <- self$model@model_id
+                   }
+                   checkpoint
+                 }
+                 ),
           public =
             list(
                  initialize = function() {

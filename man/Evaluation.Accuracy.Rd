@@ -4,7 +4,7 @@
 \alias{Evaluation.Accuracy}
 \title{Accuracy caluclator}
 \usage{
-Evaluation.Accuracy(model, data, Y, A, W)
+Evaluation.Accuracy(data.observed, data.predicted)
 }
 \description{
 Accuracy caluclator

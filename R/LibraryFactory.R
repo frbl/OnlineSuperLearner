@@ -24,7 +24,10 @@ LibraryFactory <-
 
            public =
              list(
-                  initialize = function(ML.models.allowed = c('ML.H2O.glm', 'ML.Local.lm', 'ML.XGBoost.glm')) {
+                  initialize = function(ML.models.allowed = c('ML.H2O.gbm',
+                                                              'ML.H2O.glm',
+                                                              'ML.Local.lm',
+                                                              'ML.XGBoost.glm')) {
                     private$ML.models.allowed = ML.models.allowed
                     self$getValidity()
                   },

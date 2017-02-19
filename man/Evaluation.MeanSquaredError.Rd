@@ -4,7 +4,7 @@
 \alias{Evaluation.MeanSquaredError}
 \title{MSE caluclator}
 \usage{
-Evaluation.MeanSquaredError(model, data, Y, A, W)
+Evaluation.MeanSquaredError(data.observed, data.predicted)
 }
 \description{
 MSE caluclator
