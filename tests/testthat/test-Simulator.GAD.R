@@ -10,9 +10,11 @@ test_that("it should be tested properly", {
   llW <- list(stochMech=rnorm,
               param=c(0, 0.5, -0.25, 0.1),
               rgen=identity)
+
   llA <- list (stochMech=function(ww) {
     rbinom(length(ww), 1, expit(ww))
   },
+
   param=c(-0.1, 0.1, 0.25),
   rgen=function(xx, delta=0.05){
     rbinom(length(xx), 1, delta+(1-2*delta)*expit(xx))
