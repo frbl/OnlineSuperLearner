@@ -137,20 +137,13 @@ Simulator.GAD <-
                       }
 
                       # Create linear combination of the parameters / coefficients and the historical data
-                      outcome <- entry$q$rgen(tempMAT %*% entry$q$param)
+                      outcome <- as.matrix(entry$q$rgen(tempMAT %*% entry$q$param))
 
-                      # TODO: Set names for the vector outcome column as well
-                      if(!is.matrix(outcome)) {
-                       return(outcome)
-                      }
-
-                      # Set the colnames of the outcome, only if it has more than 1 dimension
-                      col.names <- paste(entry$var, seq(ncol(outcome)), sep='')
-                      colnames(outcome) <- col.names
+                      # Set the colnames of the outcome
+                      colnames(outcome) <- paste(entry$var, seq(ncol(outcome)), sep='')
 
                       # Return the outcome
                       outcome
-
                     })
 
                     return(as.data.table(WAY))

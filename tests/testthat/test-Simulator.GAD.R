@@ -1,6 +1,23 @@
 context("Simulator.GAD.R")
+context(" simulateWAY")
+nobs <- 4
+sim <- Simulator.GAD$new()
+result <- sim$simulateWAY(by = nobs)
+
+test_that("it should return a dataframe with the correct columnames", {
+  expect_equal(colnames(result), c('W1', 'A1', 'Y1'))
+})
+
+test_that("it should contain some non zero data", {
+  expect_false(all(result == 0))
+})
+
+test_that("it should have the correct number of rows in the output", {
+  expect_true(nrow(result) == nobs)
+})
+
 test_that("it should be tested properly", {
-  log <- Arguments$getVerbose(-8, timestamp=TRUE)
+  log <- FALSE
 
   sim <- Simulator.GAD$new()
 
