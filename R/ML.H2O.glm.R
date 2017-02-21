@@ -21,22 +21,17 @@ ML.H2O.glm <-
                     self$family <- family
                   },
 
-                  fit = function(train, test, Y, A, W){
+                  fit = function(train, Y, A, W){
                     # TODO:! This is teribly inefficient and is merely for testing
                     train.hex <- as.h2o(train, key="train.hex")
-                    test.hex <- as.h2o(test, key="test.hex")
 
                     X <- c(A, W)
-                    print(train)
-                    print(test)
                     self$model <- h2o.glm(x = X, y = Y,
                                           training_frame = train.hex,
-                                          validation_frame = test.hex,
                                           family = self$family,
                                           nfolds = self$nfolds,
                                           alpha = self$alpha)
 
-                    h2o.cross_validation_predictions(self$model)
                   }
                   )
            )

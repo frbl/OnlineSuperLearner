@@ -9,4 +9,5 @@ generalImports <- list()
 # General fixes, for usability
 expit <- plogis
 logit <- qlogis
+throw <- stop
 

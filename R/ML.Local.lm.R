@@ -47,7 +47,7 @@ ML.Local.lm <-
                     predict(self$model, data[, X, with = FALSE])
                   },
 
-                  fit = function(train, test, Y, A, W){
+                  fit = function(train, Y, A, W){
                     # If there is no model, we need to fit a model based on Nl observations.
                     # If we already have a model, we update the old one, given the new measurement
                     if(is.null(self$model)){
@@ -76,7 +76,6 @@ ML.Local.lm <-
                       # Update the actual coefficients of our fit
                       self$model$coefficients <- coefs
                     }
-                    self$predict(train, A, W)
                   }
                   )
            )
