@@ -21,70 +21,70 @@ SummaryMeasureGenerator <-
            "SummaryMeasureGenerator",
            private =
              list(
-                  lags = NULL,
                   data = NULL,
                   cache = data.table(),
-                  minimal.measurements = NULL,
-                  lags.vector = NULL
+                  SMG.list = NULL,
+                  minimal.measurements.needed = NULL
                   ),
-           active =
-             list(),
            public =
              list(
-                  X = NULL,
-                  Y = NULL,
-                  A = NULL,
-                  initialize = function(X, Y, data, lags, minimal.measurements = NULL) {
-                    self$X <- X
-                    self$Y <- Y
-
+                  initialize = function(data = NULL, SMG.list) {
                     private$data <- data
-                    private$lags <- lags
-                    private$lags.vector <- seq(lags)
-                    private$minimal.measurements <- ifelse(is.null(minimal.measurements),
-                                                           lags + 1,
-                                                           minimal.measurements)
+                    private$SMG.list <- SMG.list
+
+                    # Determine the minimal number of measurements we need in order to be able to
+                    # support all our SMGs
+                    private$minimal.measurements.needed <- max(sapply(SMG.list, function(obj) obj$minimalObservations)
+                    )
                   },
 
-                  # This function will fill the cache with the first Nl measurements,
-                  # if needed.
+                  reset = function() {
+                    private$cache = data.table()
+                  },
+
+                  setData = function(data) {
+                    self$reset()
+                    private$data = data
+                  },
+
+                  # This function will fill the cache with the first N measurements if the cache is empty
                   fillCache = function() {
-                    updated <-  FALSE
-                    if(nrow(private$cache) < private$minimal.measurements) {
-                      updated <- TRUE
-                      private$cache <- private$data$getNextN(private$minimal.measurements)
+                    if(nrow(private$cache) < private$minimal.measurements.needed) {
+                      private$cache <- private$data$getNextN(private$minimal.measurements.needed)
+                      return(TRUE)
                     }
-                    updated
+                    FALSE
                   },
 
                   getNext = function(){
-                    if(!self$fillCache()) {
-                      private$cache <- rbindlist(list(private$cache, private$data$getNext()))
-
-                      # Remove the first measurement from the dataframe
-                      private$cache <- private$cache[-1, ]
+                    if(is.null(private$data)) {
+                      throw('Please set the data of the summary measure generator first')
                     }
 
-                    # on data.tables
-                    current.data <- copy(private$cache)
+                    if(!self$fillCache()) {
+                      current <- private$data$getNext()
+                      if (is.null(current)) return(NULL)
 
-                    # Create column names
-                    anscols  <- unlist(lapply(seq(private$lags), function(x) paste(x, 'lag', c(self$X, self$Y), sep = "_")))
-                    current.data[, (anscols) := shift(.SD, private$lags.vector, NA, "lag"), .SDcols = c(self$X, self$Y)]
+                      private$cache <- rbindlist(list(private$cache,current ))
 
-                    # This will return the lagged dataset, and only the complete cases
-                    # which boils down to a single measurement.
-                    current.data[complete.cases(current.data), ]
+                      # Remove the first measurement from the dataframe
+                      private$cache <- tail(private$cache, -1)
+                    }
+
+                    # Generate summary measures using each of the provided objects
+                    datas <- lapply(private$SMG.list, function(smg) smg$process(copy(private$cache)))
+                    data.table(t(unlist(datas)))
                   },
 
                   getNextN = function(n = 1){
                     # TODO: Make this much more efficient
                     # TODO: This is an exact copy of the Data.Base function
                     dt <- data.table()
-                    i <- 0
-                    while(i < n) {
-                      dt <- rbindlist(list(dt, self$getNext()))
-                      i <- i +1
+                    for(i in 1:n) {
+                      current <- self$getNext()
+                      if(is.null(current)) break
+
+                      dt <- rbindlist(list(dt, current))
                     }
                     dt
                   }

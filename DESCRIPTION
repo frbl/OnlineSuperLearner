@@ -1,4 +1,4 @@
-Package: onlinesuperlearner
+Package: OnlineSuperLearner
 Type: Package
 Title: Online SuperLearner package
 Version: 0.0.1
@@ -17,12 +17,14 @@ Depends:
     data.table,
     R6
 Imports:
+    parallel,
     data.table,
     R.utils (>= 1.4.1),
     h2o (>=	3.10.3.2),
     R.oo,
-    rkafka,
     R6,
+    methods,
+    magrittr,
     xgboost
 Suggests:
     roxygen2,
@@ -34,14 +36,23 @@ Collate:
     'Data.Stream.R'
     'Simulator.Simple.R'
     'Data.Stream.Simulator.R'
-    'H2O.Initializer.R'
+    'Evaluation.R'
+    'Global.R'
+    'H2O.initializer.R'
     'ML.XGBoost.glm.R'
     'LibraryFactory.R'
     'ML.Base.R'
     'ML.H2O.R'
+    'ML.H2O.gbm.R'
     'ML.H2O.glm.R'
     'ML.Local.R'
     'ML.Local.lm.R'
     'ML.XGBoost.R'
+    'Simulator.Slow.R'
+    'Simulator.GAD.R'
     'SummaryMeasureGenerator.R'
     'OnlineSuperLearner.R'
+    'OnlineSuperLearner.Simulation.R'
+    'SMG.Lag.R'
+    'SMG.Latest.Entry.R'
+    'SMG.Mean.R'

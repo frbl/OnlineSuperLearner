@@ -2,136 +2,195 @@
 #'
 #' This is the main super learner class. This class contains everything related
 #' to the super learner machine learning model.
+#'
 #' @docType class
-#' @import R.oo
-#' @import R.utils
 #' @importFrom R6 R6Class
+#' @include Global.R
 #' @include LibraryFactory.R
 #' @include SummaryMeasureGenerator.R
 #' @include Simulator.Simple.R
+#' @include Simulator.GAD.R
+#' @include Simulator.Slow.R
 #'
 #' @section Methods:
 #' \describe{
-#'   \item{\code{new(SL.Library)}}{starts a new OnlineSuperLearner. The provided /code{SL.Library} contains the machine learning models to use}
+#'   \item{\code{new(SL.Library)}}{
+#'     starts a new OnlineSuperLearner. The provided /code{SL.Library} contains the machine learning models to use
+#'   }
 #'
-#'   \item{\code{run(data, X, Y, initial.data.size = 10)}}{runs the actual OnlineSuperLearning calculation}
-#'   \item{\code{getModel()}}{returns the final OnlineSuperLearner model}
-#'   \item{\code{predict(data, X)}}{returns an actual prediction using the superlearning model}
+#'   \item{\code{run(data, Y, A, W,  initial.data.size = 10)}}{
+#'     Runs the actual OnlineSuperLearning calculation
+#'   }
+#'   \item{\code{getModel()}}{
+#'     Returns the final OnlineSuperLearner model
+#'   }
+#'   \item{\code{predict(data, X)}}{
+#'     returns an actual prediction using the superlearning model
+#'   }
 #' }
 #' @export
 OnlineSuperLearner <-
   R6Class (
            "OnlineSuperLearner",
-           #TODO: this representation should probably accept a datareader object from which
-           # it retrieves lines of data. Also, we should add a parameter in which an already
-           # fitted model can be inputted, so it gets updated.
            private =
              list(
+                  # The superLearnerModel itself
+                  superLearnerEstimator = NULL,
+
+                  # ML Library
                   SL.Library = NULL,
                   SL.Library.Fabricated = NULL,
-                  summaryMeasurementGenerator = NULL,
 
-                  trainLibrary = function(X, Y, iterations, data.initial){
-                    data <- data.initial
-                    while(iterations > 0 && nrow(data) >= 1 && !is.null(data)) {
-                      lapply(private$SL.Library.Fabricated, function(model) { model$fit(data = data, X = X, Y = Y) })
-                      data <- private$summaryMeasurementGenerator$getNext()
+                  family = NULL,
+
+                  # Summary measures and a generator
+                  summaryMeasureGenerator = NULL,
+
+                  # Verbosity of the logs
+                  verbose = FALSE,
+
+                  # Function to train the whole set of models
+                  trainLibrary = function(Y, A, W, iterations, data.initial){
+                    private$verbose && enter(private$verbose, 'Starting model training')
+
+                    data.current <- data.initial
+                    while(iterations > 0 && nrow(data.current) >= 1 && !is.null(data.current)) {
+                      private$verbose && enter(private$verbose, paste('Iterations left', iterations ))
+
+                      # Fit the models on the current data
+                      lapply(private$SL.Library.Fabricated,
+                             function(model) { model$process(data = data.current, Y = Y, A = A, W = W) })
+
+                      # Fit the super learner on the current data
+                      private$fitSuperlearner(data = data.current, Y = Y, A = A, W = W)
+
+                      # Get the new row of data
+                      data.current <- private$summaryMeasureGenerator$getNext()
                       iterations <- iterations - 1
+
+                      # Print some of the results
+                      if(private$verbose) {
+                        accuracy <- self$evaluateModels(data = data.current,
+                                                        Y = Y,
+                                                        A = A,
+                                                        W = W)
+
+                        private$verbose && cat(private$verbose, paste('Performance on trainingset', accuracy))
+                      }
+                      private$verbose && exit(private$verbose)
                     }
-                    data
+                    private$verbose && exit(private$verbose)
+                  },
+
+                  # Fit the actual super learner on all models in the current set of models
+                  fitSuperlearner = function(data, Y, A, W) {
+                    if (length(private$SL.Library.Fabricated) == 1) {
+                      # If we have 1 estimator, the weighted combination of that estimator
+                      # is just the estimator itself.
+                      private$superLearnerEstimator <- private$SL.Library.Fabricated[[1]]
+                      return()
+                    }
+                    private$verbose && enter(private$verbose, 'Starting training super learner')
+                    # Actually fit a model here
+                    # Tratidional way:
+                    # We run each of the models on the (full?) dataset
+                    # to determine their performance, and we build a design matrix from
+                    # their predictions and the true observed outcome. This design matrix
+                    # is then used to fit the new 'SuperLearner' model on.
+                    #
+                    # Online way:
+                    # We fit our initial superlearner model in a similar way as described
+                    # above, and we update this initial model useing the new observations
+                    # as they come in.
+                    private$superLearnerEstimator <- NULL # New model
+                    private$verbose && exit(private$verbose)
                   }
+
                   ),
+           active =
+             list(
+                  evaluationFunction = function() {
+                    if (private$family == 'gaussian') {
+                      return(Evaluation.MeanSquaredError)
+                    } else if(private$familty == 'binomial') {
+                      return(Evaluation.Accuracy)
+                    } else {
+                      throw('No evaluation measure implemented for family', private$family)
+                    }
+                  }),
            public =
              list(
-                  initialize = function(SL.Library = c('ML.Local.lm', 'ML.H2O.glm')) {
+                  initialize = function(SL.Library = c('ML.Local.lm', 'ML.H2O.glm'), summaryMeasureGenerator, verbose = FALSE, family='gaussian') {
+                    private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
+
+                    private$verbose && cat(private$verbose, paste('Created super learner with a library:', private$SL.Library))
+                    private$family <- family
+
                     private$SL.Library <- SL.Library
 
                     # Initialization, Fabricate the various models
                     LibraryFactory <- LibraryFactory$new()
                     private$SL.Library.Fabricated <- LibraryFactory$fabricate(private$SL.Library)
+
+                    # Wrap the data into a summary measurement generator.
+                    private$summaryMeasureGenerator <- summaryMeasureGenerator
+
+                    self$getValidity()
                   },
 
-                  # Data = the data object from which the data can be retrieved
-                  # X = the names of the confounders
-                  # Y = the name of the outcome
-                  # initial.data.size = the number of observations needed to fit the initial model
-                  run = function(data, X, Y, initial.data.size = 10) {
-                    # Steps in superlearning:
-                    # Wrap the data into a summary measurement generator.
-                    private$summaryMeasurementGenerator <- SummaryMeasureGenerator$new(Y = Y,
-                                                                                       X = X,
-                                                                                       data = data,
-                                                                                       lags = 2)
+                  getValidity = function() {
+                    if (length(private$SL.Library) == 0 || length(private$SL.Library.Fabricated) == 0 ) {
+                      throw("There should be at least one estimator in the library")
+                    }
+                    if (is.null(private$summaryMeasureGenerator) || class(private$summaryMeasureGenerator) != 'SummaryMeasureGenerator') {
+                      throw("You need to provide a summary measure generator of class SummaryMeasureGenerator")
+                    }
+                    if (is.null(private$family) || private$family == "") {
+                      throw("The provided family is not valid")
+                    }
+                  },
 
+                  evaluateModels = function(data, W, A, Y) {
+                    lapply(private$SL.Library.Fabricated,
+                           function(model) {
+                             data.predicted <-  model$predict(data = data, A = A,  W = W)
+                             data.observed <- data[, Y, with = FALSE][[Y]]
+                             self$evaluationFunction(data.observed = data.observed,
+                                                     data.predicted = data.predicted)
+                           })
+                  },
+
+                  run = function(data, W, A, Y, initial.data.size = 5, iterations.max = 20) {
+                    # Data = the data object from which the data can be retrieved
+                    # initial.data.size = the number of observations needed to fit the initial model
+
+                    # Steps in superlearning:
                     # Get the initial data for fitting the first model
-                    data <- private$summaryMeasurementGenerator$getNextN(initial.data.size)
+                    private$summaryMeasureGenerator$setData(data = data)
+                    data <- private$summaryMeasureGenerator$getNextN(initial.data.size)
 
                     # Fit the library of models using a given number of iterations
-                    iterations.max <- 500
-                    X <- private$summaryMeasurementGenerator$X
-                    Y <- private$summaryMeasurementGenerator$Y
-                    data <- private$trainLibrary(X = X, Y = Y, iterations = iterations.max, data = data)
+                    private$trainLibrary(Y = Y, A = A, W = W, iterations = iterations.max, data = data)
 
-                    # Calculate the accuracy of the prediction based on the remaining data
-                    true.predicted <- 0
-                    all.predicted <- 0
-                    while(nrow(data) >= 1 && !is.null(data)) {
-                      for (model in private$SL.Library.Fabricated) {
-                        prediction <-  model$predict(data = data, X = X)
-                        all.predicted <- all.predicted + 1
-                        if((prediction>0.5) == (data[, Y, with = FALSE][[Y]] > 0.5))
-                          true.predicted  <- true.predicted + 1
-                      }
+                    TRUE
+                  },
 
-                      data <- private$summaryMeasurementGenerator$getNext()
-                    }
-                    print(paste('Accuracy:', true.predicted / all.predicted))
+                  predict = function(newdata, A = NULL, W = NULL, onlySL = FALSE, ...) {
+                    # This will be the convex combination of the data and the models (and weights)
+                    # something like
+                    # private$summaryMeasureGenerator$setData(data = data)
+                    # data <- private$summaryMeasureGenerator$getNext()
+                    # data[, X] %*% W * private$models
+                    #
+                    # Where the weights W are trained / fitted
+                    return(NULL)
+                  },
 
-
-                    # build a matrix with predicted / actual
-                    # Fit a final model which is a glm of the original models
-
+                  getModels = function() {
                     return(private$SL.Library.Fabricated)
-                  },
-
-                  getModel = function() {
-                    return(NULL)
-                  },
-
-                  predict = function(newdata, X = NULL, Y = NULL, onlySL = FALSE, ...) {
-                    return(NULL)
                   }
+
 
                   )
            )
 
-##################
-# TEST FUNCTIONS #
-##################
-datatest <- function() {
-  devtools::load_all()
-  data <- Data.Static$new(url = 'https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
-
-  smg <- SummaryMeasureGenerator$new(data = data,
-                                     lags = 3)
-  smg$getNext()
-
-  print(smg$getNext())
-  smg
-}
-
-main <- function() {
-  devtools::document()
-  sim  <- Simulator.Simple$new()
-  data  <- sim$getObservation(1000)
-  Y = "CAPSULE"
-  Y = "y"
-  X = c("AGE", "RACE", "PSA", "DCAPS")
-  X = c("x1", "x2")
-  SL.Library = c('ML.Local.lm', 'ML.XGBoost.glm')
-  SL.Library = c('ML.XGBoost.glm')
-  osl <- OnlineSuperLearner$new(SL.Library)
-  #data <- Data.Static$new(url = 'https://raw.github.com/0xdata/h2o/master/smalldata/logreg/prostate.csv')
-  data <- Data.Static$new(dataset = data)
-  osl$run(data, X =  X, Y = Y)
-}

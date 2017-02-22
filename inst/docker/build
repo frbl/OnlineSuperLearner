@@ -1,2 +1,2 @@
 #!/bin/bash
-docker build -t frbl/h2o h2o
+docker build --no-cache=true -t frbl/h2o h2o

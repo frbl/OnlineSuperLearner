@@ -5,5 +5,16 @@
 #' @include ML.Base.R
 #' @include Data.Base.R
 #' @keywords data
-ML.Local <- R6Class("ML.Local", inherit = ML.Base, public = list(initialize = function() {
-}))
+ML.Local <- R6Class("ML.Local",
+                    inherit = ML.Base,
+                    public =
+                      list(
+                           initialize = function() {
+                           },
+
+                           createFormula = function(Y, A, W) {
+                              X <- paste(c(A,W), collapse = ' + ')
+                              paste(Y, '~', X)
+                           }
+                           )
+                    )

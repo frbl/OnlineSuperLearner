@@ -1,25 +1,25 @@
-#' ML.H2O.glm
+#' ML.H2O.gbm
 #'
 #' @docType class
 #' @importFrom R6 R6Class
 #' @include ML.H2O.R
 #' @export
-ML.H2O.glm <-
+ML.H2O.gbm <-
   R6Class (
-           "ML.H2O.glm",
+           "ML.H2O.gbm",
            inherit = ML.H2O,
+           private =
+             list(
+                  prev = NULL
+                  ),
            public =
              list(
                   nfolds = NULL,
-                  alpha = NULL,
-                  family = NULL,
 
-                  initialize = function(nfolds = 1, alpha = 0.5, family = 'gaussian') {
+                  initialize = function(nfolds = 0) {
                     super$initialize()
-                    self$nfolds <- nfolds
-                    self$alpha <- alpha
-                    self$family <- family
                   },
+
 
                   fit = function(train, test, Y, A, W){
                     # TODO:! This is teribly inefficient and is merely for testing
@@ -27,14 +27,21 @@ ML.H2O.glm <-
                     test.hex <- as.h2o(test, key="test.hex")
 
                     X <- c(A, W)
-                    print(train)
-                    print(test)
-                    self$model <- h2o.glm(x = X, y = Y,
+                    checkpoint <- private$getCheckpoint()
+                    if(!is.null(private$prev) &&
+                       !all(private$prev == colnames(train))){
+                      throw('All columns must be equal, every iteration!')
+                    }
+                    private$prev <- colnames(train)
+
+                    # TODO: This currently fails because it probably
+                    # has unseen strata in the new data? (it fails
+                    # because of the checkpoint)
+                    self$model <- h2o.gbm(x = X, y = Y,
                                           training_frame = train.hex,
                                           validation_frame = test.hex,
-                                          family = self$family,
                                           nfolds = self$nfolds,
-                                          alpha = self$alpha)
+                                          checkpoint = checkpoint)
 
                     h2o.cross_validation_predictions(self$model)
                   }
