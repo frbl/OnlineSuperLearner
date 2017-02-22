@@ -71,7 +71,7 @@ OnlineSuperLearner.Simulation <-
                     # Define the variables in the initial dataset we'd like to use
                     Y = "Y1"
                     W = c("W1")
-                    A = c("V2")
+                    A = c("A1")
 
                     # Create the measures we'd like to include in our model
                     # In this simulation we will include 2 lags and the latest data (non lagged)
@@ -83,8 +83,8 @@ OnlineSuperLearner.Simulation <-
 
                     # We'd like to use the following features in our estimation:
                     Y = "Y1"
-                    W = c("Y1_lag_1","Y1_lag_2","W1", "W1_lag_1", "W1_lag_2", "V2_lag_1", "V2_lag_2")
-                    A = c("V2")
+                    W = c("Y1_lag_1","Y1_lag_2","W1", "W1_lag_1", "W1_lag_2", "A1_lag_1", "A1_lag_2")
+                    A = c("A1")
 
                     # Generate a dataset we will use for testing.
                     # TODO: This step is really slow, because of the getNextN(800)
