@@ -57,7 +57,7 @@ test_that("it should call the initial GLM function with the correct parameters i
      if(ifelse(family=='gaussian', TRUE, FALSE) && ifelse(formula == formula, TRUE,FALSE))
        stop('stop_execution')
    },
-   expect_error(subject$fit(NULL, NULL, 'a','b','c'), 'stop_execution'),
+   expect_error(subject$fit(NULL, NULL, 'a','b'), 'stop_execution'),
    .env = "base"
   )
 })

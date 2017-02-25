@@ -16,9 +16,7 @@ OnlineSuperLearner.Simulation <-
                   initialize = function() {
                     private$sim  <- Simulator.GAD$new()
                     private$nobs <- 1e5
-                    private$SL.Library = c('ML.Local.lm',
-                                           'ML.H2O.glm',
-                                           'ML.H2O.gbm')
+                    private$SL.Library = c('ML.Local.lm')
 
                     # Run the simulations
                     self$basicRegression()

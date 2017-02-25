@@ -1,11 +1,14 @@
 context("WCC.NNLS.R")
+
 context(" compute")
+# Initialize
+K <- 10
+nobs <- 20
+obsWeights <- rep(1/K, K)
+subject<- WCC.NNLS$new(obsWeights) 
+
 test_that("it should return a vector of weights, with a sum of 1", {
  set.seed(1234)
- K <- 10
- nobs <- 10
- obsWeights <- rep(1/K, K)
- subject<- WeightedCombinationComputer$new(obsWeights) 
  Y <- seq(nobs)
  Z <- matrix(rep(Y, K), byrow=F, ncol=K)
  Z <- Z + rnorm(K * nobs, mean=0, sd=0.001)
@@ -19,10 +22,6 @@ test_that("it should return a vector of weights, with a sum of 1", {
 
 test_that("it should create the best weighted combination and should return the params", {
  set.seed(1234)
- K <- 10
- nobs <- 20
- obsWeights <- rep(1/K, K)
- subject<- WeightedCombinationComputer$new(obsWeights) 
  Y <- seq(nobs)
  Z <- matrix(rep(Y,K), byrow=F, ncol=K)
  Z[,1] <- 0 
