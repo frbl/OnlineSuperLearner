@@ -111,7 +111,7 @@ OnlineSuperLearner.Simulation <-
                                             Y = Y,
                                             A = A,
                                             W = W,
-                                            initial.data.size = 30, iterations.max = i)
+                                            initial.data.size = 30, max.iterations = i)
 
                       osl$evaluateModels(data = copy(data.test),
                                         W = W, A = A, Y = Y) %>% c(iterations = i, performance = .)

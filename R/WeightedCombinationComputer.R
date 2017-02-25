@@ -1,0 +1,35 @@
+#' WeightedCombinationComputer
+#'
+#' @docType class
+#' @importFrom R6 R6Class
+#'
+#' @section Methods:
+#' \describe{
+#'   \item{\code{new()}}{
+#'    Creates a new computer for determining the best weighted combination of the ML libraries.
+#'    \code{obsWeights} vector containing the initial weights
+#'   }
+#'   \item{\code{compute(Z, Y, libraryNames, obsWeights)}}{
+#'    Method to compute the best weighted combination of the underlying estimators
+#'    \code{Z} matrix containing the outcomes of each of the estimators
+#'    \code{Y} vector containing the actual outcome
+#'    \code{libraryNames} vector containing the names of the estimators
+#'   }
+#' }
+WeightedCombinationComputer <-
+  R6Class (
+           "WeightedCombinationComputer",
+           private =
+             list(
+                  obsWeights = NULL
+                  ),
+           public =
+             list(
+                  initialize = function(obsWeights) {
+                    private$obsWeights <- obsWeights
+                  },
+                  compute = function(Z, Y, libraryNames ) {
+                    throw('This method is not implemented, please inherit this class and implement it.')
+                  }
+                  )
+           )

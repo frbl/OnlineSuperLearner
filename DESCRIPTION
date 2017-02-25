@@ -25,7 +25,8 @@ Imports:
     R6,
     methods,
     magrittr,
-    xgboost
+    xgboost,
+    nnls
 Suggests:
     roxygen2,
     testthat
@@ -48,11 +49,13 @@ Collate:
     'ML.Local.R'
     'ML.Local.lm.R'
     'ML.XGBoost.R'
-    'Simulator.Slow.R'
-    'Simulator.GAD.R'
+    'WeightedCombinationComputer.R'
     'SummaryMeasureGenerator.R'
     'OnlineSuperLearner.R'
     'OnlineSuperLearner.Simulation.R'
     'SMG.Lag.R'
     'SMG.Latest.Entry.R'
     'SMG.Mean.R'
+    'Simulator.GAD.R'
+    'Simulator.Slow.R'
+    'WCC.NNLS.R'
