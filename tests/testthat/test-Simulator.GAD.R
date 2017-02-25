@@ -4,8 +4,8 @@ test_that("it should be tested properly", {
 
   sim <- Simulator.GAD$new()
 
+  ## One trajectory
   tic <- Sys.time()
-  ## 'nobs' observations
   nobs <- 1e3
   llW <- list(stochMech=rnorm,
               param=c(0, 0.5, -0.25, 0.1),
@@ -23,7 +23,14 @@ test_that("it should be tested properly", {
   param=c(0.1, 0.1, 0.1, 0.05, -0.01),
   rgen=identity)
   ##
-  data <- sim$simulateWAYOneTrajectory(nobs, qw=llW, ga=llA, Qy=llY, verbose=log)
+  data.1 <- sim$simulateWAYOneTrajectory(nobs, qw=llW, ga=llA, Qy=llY, verbose=log)
   toc <- Sys.time()
   comp.time <- toc-tic
+  ## Three trajectories merged into one
+  tic <- Sys.time()
+  ntraj <- 3
+  data.3 <- sim$simulateWAYiidTrajectories(nobs, ntraj,
+                                           qw=llW, ga=llA, Qy=llY, verbose=log)
+  toc <- Sys.time()
+  comp.time <- c(comp.time, toc-tic)
 })
