@@ -88,7 +88,7 @@ OnlineSuperLearner.Simulation <-
 
                     # Generate a dataset we will use for testing.
                     # TODO: This step is really slow, because of the getNextN(800)
-                    private$sim$simulateWAY(1000, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
+                    private$sim$simulateWAYOneTrajectory(1000, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
                       Data.Static$new(dataset = .) %>%
                       summaryMeasureGenerator$setData(.)
 
@@ -96,7 +96,7 @@ OnlineSuperLearner.Simulation <-
 
                     # Generate a dataset, from the same statistical model, which we will use to train our model
                     data.train <-
-                      private$sim$simulateWAY(private$nobs, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
+                      private$sim$simulateWAYOneTrajectory(private$nobs, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
                       Data.Static$new(dataset = .)
 
                     # Now run several iterations on the data

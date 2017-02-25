@@ -23,7 +23,7 @@ test_that("it should be tested properly", {
   param=c(0.1, 0.1, 0.1, 0.05, -0.01),
   rgen=identity)
   ##
-  data <- sim$simulateWAY(nobs, qw=llW, ga=llA, Qy=llY, verbose=log)
+  data <- sim$simulateWAYOneTrajectory(nobs, qw=llW, ga=llA, Qy=llY, verbose=log)
   toc <- Sys.time()
   comp.time <- toc-tic
 })
