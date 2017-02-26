@@ -25,6 +25,7 @@ Imports:
     R6,
     methods,
     magrittr,
+    purrr,
     xgboost,
     nloptr,
     nnls
@@ -41,14 +42,14 @@ Collate:
     'Evaluation.R'
     'Global.R'
     'H2O.initializer.R'
+    'ML.Base.R'
+    'ML.Local.R'
+    'ML.Local.lm.R'
     'ML.XGBoost.glm.R'
     'LibraryFactory.R'
-    'ML.Base.R'
     'ML.H2O.R'
     'ML.H2O.gbm.R'
     'ML.H2O.glm.R'
-    'ML.Local.R'
-    'ML.Local.lm.R'
     'ML.XGBoost.R'
     'WeightedCombinationComputer.R'
     'SummaryMeasureGenerator.R'
