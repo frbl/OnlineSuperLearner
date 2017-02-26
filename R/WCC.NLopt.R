@@ -17,8 +17,8 @@
 #'   \item{\code{getWeigths()}}{
 #'    Returns the current list of optimal weights (or the initial weights, if not yet fitted)
 #'   }
-#'   \item{\code{compute(Z, Y, libraryNames, obsWeights)}}{
-#'    Method to compute the best weighted combination of the underlying estimators. The function will use the obsWeights supplied to the constructor. If the model has been fitted before, it will reuse the weights of the previous run as the starting value for the current run.
+#'   \item{\code{compute(Z, Y, libraryNames)}}{
+#'    Method to compute the best weighted combination of the underlying estimators. The function will use the weights supplied to the constructor. If the model has been fitted before, it will reuse the weights of the previous run as the starting value for the current run.
 #'    \code{Z} matrix containing the outcomes of each of the estimators
 #'    \code{Y} vector containing the actual outcome
 #'    \code{libraryNames} vector containing the names of the estimators
@@ -32,14 +32,27 @@ WCC.NLopt <-
              list(
                   lossFunction = NULL,
                   lossFunctionGradient = NULL,
-                  opts = NULL
+                  opts = NULL,
+
+                  compute = function(Z, Y, libraryNames, opts = NULL ) {
+                    # Compute the best convex combination
+                    result <- nloptr(x0=self$getWeights,
+                                  eval_f=private$lossFunction,
+                                  eval_grad_f = private$lossFunctionGradient,
+                                  opts=private$opts,
+                                  X = Z,
+                                  Y = Y)
+
+                    # Normalize the weights
+                    private$weights <- (result$solution / sum(result$solution))
+                  }
                   ),
            active = 
              list(),
            public =
              list(
-                  initialize = function(obsWeights, lossFunction = NULL, lossFunctionGradient = NULL, opts = NULL) {
-                    super$initialize(obsWeights)
+                  initialize = function(weights.initial, lossFunction = NULL, lossFunctionGradient = NULL, opts = NULL) {
+                    super$initialize(weights.initial)
 
                     # TODO: These functions are probably incorrect / inefficient currently. Update them with the correct functions.
                     if(is.null(lossFunction)){
@@ -64,23 +77,6 @@ WCC.NLopt <-
                     private$lossFunction <- lossFunction
                     private$lossFunctionGradient <- lossFunctionGradient
                     private$opts <- opts
-                  },
-
-
-                  compute = function(Z, Y, libraryNames, opts = NULL ) {
-
-
-                    # Compute the best convex combination
-                    result <- nloptr(x0=self$getWeights,
-                                  eval_f=private$lossFunction,
-                                  eval_grad_f = private$lossFunctionGradient,
-                                  opts=private$opts,
-                                  X = Z,
-                                  Y = Y)
-
-                    # Normalize the weights
-                    private$obsWeights <- (result$solution / sum(result$solution))
-                    private$obsWeights
                   }
                   )
            )

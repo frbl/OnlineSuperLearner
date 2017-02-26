@@ -7,12 +7,12 @@
 #' \describe{
 #'   \item{\code{new()}}{
 #'    Creates a new computer for determining the best weighted combination of the ML libraries.
-#'    \code{obsWeights} vector containing the initial weights
+#'    \code{weigths.initial} vector containing the initial weights
 #'   }
 #'   \item{\code{getWeigths()}}{
 #'    Returns the current list of optimal weights (or the initial weights, if not yet fitted)
 #'   }
-#'   \item{\code{compute(Z, Y, libraryNames, obsWeights)}}{
+#'   \item{\code{compute(Z, Y, libraryNames)}}{
 #'    Method to compute the best weighted combination of the underlying estimators
 #'    \code{Z} matrix containing the outcomes of each of the estimators
 #'    \code{Y} vector containing the actual outcome
@@ -24,21 +24,34 @@ WeightedCombinationComputer <-
            "WeightedCombinationComputer",
            private =
              list(
-                  obsWeights = NULL
+                  weights = NULL,
+
+                  compute = function(Z, Y, libraryNames ) {
+                    throw('This method is not implemented, please inherit this class and implement it.')
+                  }
                   ),
            active = 
                 list(
                   getWeights = function() {
-                    return(private$obsWeights)
+                    return(private$weights)
                   }
                   ),
            public =
              list(
-                  initialize = function(obsWeights) {
-                    private$obsWeights <- obsWeights
+                  initialize = function(weights.initial) {
+                    private$weights <- weights.initial
                   },
-                  compute = function(Z, Y, libraryNames ) {
-                    throw('This method is not implemented, please inherit this class and implement it.')
+
+                  process = function(Z, Y, libraryNames) {
+                    if (length(private$weigths) == 1) {
+                      private$weights <- c(1)
+                      return(private$weights)
+                    }
+
+                    # Call the subclass
+                    private$compute(Z, Y, libraryNames)
+                    return(private$weights)
                   }
+
                   )
            )

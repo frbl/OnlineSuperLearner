@@ -33,7 +33,6 @@ OnlineSuperLearner <-
            private =
              list(
                   # The superLearnerModel itself (the weights).
-                  osl.weights = NULL,
                   odsl.estimator = NULL,
 
                   # ML Library
@@ -157,11 +156,6 @@ OnlineSuperLearner <-
 
                     # If we have 1 estimator, the weighted combination of that estimator
                     # is just the estimator itself.
-                    if (length(private$SL.Library.Fabricated) == 1) {
-                      private$osl.weights <- c(1)
-                      return()
-                    }
-
                     private$verbose && enter(private$verbose, 'Starting training super learner')
 
                     # Actually fit a model here
@@ -178,21 +172,15 @@ OnlineSuperLearner <-
 
                     # If there is no model, we need to fit a model based on Nl observations.
                     # If we already have a model, we update the old one, given the new measurement
-                    if(self$fitted){
+                    weightedCombinationComputer$process(X= predicted.outcome, Y=observed.outcome, private$SL.Library)
 
-                      # Fit initial model
-                      private$osl.weights <- weightedCombinationComputer$compute(X= predicted.outcome, Y=observed.outcome, private$SL.Library)
+                    # Do gradient descent update
+                    # Something like:
+                    #Xmat <- model.matrix(formula, train)
+                    #suppressWarnings(prediction <- self$predict(train, A, W))
+                    #gradient <- (t(Xmat) %*% (prediction - Ymat))
+                    #self$model <- self$model - private$learning.rate * gradient
 
-                    } else {
-
-                      # Do gradient descent update
-                      # Something like:
-                      #Xmat <- model.matrix(formula, train)
-                      #suppressWarnings(prediction <- self$predict(train, A, W))
-                      #gradient <- (t(Xmat) %*% (prediction - Ymat))
-                      #self$model <- self$model - private$learning.rate * gradient
-
-                    }
                     suppressWarnings(prediction <- self$predict(train, A, W))
 
                     # New model
@@ -238,8 +226,8 @@ OnlineSuperLearner <-
                     private$summaryMeasureGenerator <- summaryMeasureGenerator
 
                     # TODO: DIP the WCC
-                    private$osl.weights <- rep(1 / length(private$SL.Library), length(private$SL.Library))
-                    private$weightedCombinationComputer <- WCC.NNLS$new(obsWeights = private$osl.weights)
+                    weights.initial <- rep(1 / length(private$SL.Library), length(private$SL.Library))
+                    private$weightedCombinationComputer <- WCC.NLopt$new(weights.initial = weights.initial)
 
                     # The initial risk is 0. Should probably be Inf
                     self$risk.cv = 0
@@ -310,10 +298,9 @@ OnlineSuperLearner <-
                     # something like
                     # private$summaryMeasureGenerator$setData(data = data)
                     # data <- private$summaryMeasureGenerator$getNext()
-                    #outcomes <- data[, X, with=FALSE] %*% private$osl.weights
-                    #
-                    # Where the weights W are trained / fitted
-                    return(1)
+                    outcomes <- data[, X, with=FALSE] %*% private$weightedCombinationComputer$getWeights
+                    return(outcomes)
+
                   },
 
                   getModels = function() {
