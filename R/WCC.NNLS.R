@@ -13,6 +13,9 @@
 #'    it should be updated to be 1. online, and 2. using better algorithm (like NLopts)
 #'    \code{obsWeights} vector containing the initial weights
 #'   }
+#'   \item{\code{getWeigths()}}{
+#'    Returns the current list of optimal weights (or the initial weights, if not yet fitted)
+#'   }
 #'   \item{\code{compute(Z, Y, libraryNames, obsWeights)}}{
 #'    Method to compute the best weighted combination of the underlying estimators
 #'    \code{Z} matrix containing the outcomes of each of the estimators
@@ -26,13 +29,15 @@ WCC.NNLS <-
            inherit = WeightedCombinationComputer,
            private =
             list(
-                  obsWeights = NULL
                 ),
+           active = 
+             list(),
            public =
              list(
                   initialize = function(obsWeights) {
-                    private$obsWeights <- obsWeights
+                    super$initialize(obsWeights)
                   },
+
                   compute = function(Z, Y, libraryNames ) {
                     # Compute the best convex combination
                     weights <- coef(nnls(Z,Y))
@@ -42,8 +47,9 @@ WCC.NNLS <-
                       return(weights)
                     } 
 
-                    # Normalize the weights
-                    weights/sum(weights)
+                    # Normalize the weights and store them for later use
+                    private$obsWeights <- weights/sum(weights)
+                    private$obsWeights
                   }
                   )
            )

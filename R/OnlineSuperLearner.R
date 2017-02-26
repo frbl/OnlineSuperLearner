@@ -32,18 +32,14 @@ OnlineSuperLearner <-
            "OnlineSuperLearner",
            private =
              list(
-                  # Variables
                   # The superLearnerModel itself (the weights).
                   osl.weights = NULL,
-                  dosl.estimator = NULL,
-                  osl.fitted = NULL,
-
-                  # The R.cv score of the current fit
-                  risk.cv = NULL,
+                  odsl.estimator = NULL,
 
                   # ML Library
                   SL.Library = NULL,
                   SL.Library.Fabricated = NULL,
+                  osl.fitted = NULL,
 
                   # The family of data we are working with
                   family = NULL,
@@ -81,10 +77,10 @@ OnlineSuperLearner <-
                     private$fit(predicted.outcome = predictions, observed.outcome = Ymat )
 
                     # Update the discrete superlearner (take the first if there are multiple candidates)
-                    private$dosl.estimator <-
+                    private$odsl.estimator <-
                       private$SL.Library.Fabricated[[which(predictions == min(predictions))[1]]]
 
-                    private$osl.fitted = TRUE
+                    self$setFitted(TRUE)
                     private$verbose && exit(private$verbose)
                     TRUE
                   },
@@ -136,13 +132,13 @@ OnlineSuperLearner <-
 
                       # Update the cross-validated risk
                       risk.cv.update <- self$lossFunction(data.observed = observed.outcome, predicted.outcome) / t
-                      private$risk.cv <- (t / (t + 1)) * private$risk.cv + risk.cv.update
+                      self$risk.cv <- (t / (t + 1)) * self$risk.cv + risk.cv.update
 
                       # ReFit the super learner on the current data
                       private$fit(predicted.outcome = predicted.outcome, observed.outcome = observed.outcome )
 
                       # Update the discrete superlearner (take the first if there are multiple candidates)
-                      private$dosl.estimator <- private$SL.Library.Fabricated[[which(predictions == min(predictions))[1]]]
+                      private$odsl.estimator <- private$SL.Library.Fabricated[[which(predictions == min(predictions))[1]]]
 
                       # Get the new row of data
                       data.current <- private$summaryMeasureGenerator$getNext()
@@ -185,7 +181,7 @@ OnlineSuperLearner <-
                     if(self$fitted){
 
                       # Fit initial model
-                      self$osl.weights <- weightedCombinationComputer$compute(X= predicted.outcome, Y=observed.outcome, private$SL.Library)
+                      private$osl.weights <- weightedCombinationComputer$compute(X= predicted.outcome, Y=observed.outcome, private$SL.Library)
 
                     } else {
 
@@ -222,6 +218,11 @@ OnlineSuperLearner <-
                   ),
            public =
              list(
+                  # Variables
+
+                  # The R.cv score of the current fit
+                  risk.cv = NULL,
+
                   initialize = function(SL.Library = c('ML.Local.lm', 'ML.H2O.glm'), summaryMeasureGenerator, verbose = FALSE, family='gaussian') {
                     private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
                     private$verbose && cat(private$verbose, paste('Created super learner with a library:', private$SL.Library))
@@ -241,9 +242,9 @@ OnlineSuperLearner <-
                     private$weightedCombinationComputer <- WCC.NNLS$new(obsWeights = private$osl.weights)
 
                     # The initial risk is 0. Should probably be Inf
-                    private$risk.cv = 0
+                    self$risk.cv = 0
 
-                    private$osl.fitted = FALSE
+                    self$setFitted(FALSE)
 
                     self$getValidity()
                   },
@@ -261,6 +262,10 @@ OnlineSuperLearner <-
                     if (!is.a(private$weightedCombinationComputer, 'WeightedCombinationComputer')) {
                       throw("The provided WCC is not a WCC")
                     }
+                  },
+
+                  setFitted = function(value) {
+                    private$osl.fitted = value
                   },
 
                   evaluateModels = function(data, W, A, Y) {
@@ -289,16 +294,16 @@ OnlineSuperLearner <-
                     private$updateLibrary(Y = Y, A = A, W = W, max.iterations = max.iterations)
 
                     # Return the cross validated risk
-                    return(private$risk.cv)
+                    return(self$risk.cv)
                   },
 
                   predict = function(data, A = NULL, W = NULL, discrete = FALSE) {
-                    if(is.null(private$dosl.estimator) || is.null(private$osl.weights)){
+                    if(!self$fitted){
                       return(NA)
                     }
 
                     if(discrete){
-                      return(private$dosl.estimator$predict(data = data, A = A, W = W))
+                      return(private$odsl.estimator$predict(data = data, A = A, W = W))
                     }
 
                     # This will be the convex combination of the data and the models (and weights)

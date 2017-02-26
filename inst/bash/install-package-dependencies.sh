@@ -12,6 +12,7 @@ packages <- c(
 "testthat",
 "xgboost",
 "nnls",
+"nloptr",
 "roxygen2"
 )
 new.packages <- packages[!(packages %in% installed.packages()[, "Package"])]

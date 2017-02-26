@@ -9,6 +9,9 @@
 #'    Creates a new computer for determining the best weighted combination of the ML libraries.
 #'    \code{obsWeights} vector containing the initial weights
 #'   }
+#'   \item{\code{getWeigths()}}{
+#'    Returns the current list of optimal weights (or the initial weights, if not yet fitted)
+#'   }
 #'   \item{\code{compute(Z, Y, libraryNames, obsWeights)}}{
 #'    Method to compute the best weighted combination of the underlying estimators
 #'    \code{Z} matrix containing the outcomes of each of the estimators
@@ -22,6 +25,12 @@ WeightedCombinationComputer <-
            private =
              list(
                   obsWeights = NULL
+                  ),
+           active = 
+                list(
+                  getWeights = function() {
+                    return(private$obsWeights)
+                  }
                   ),
            public =
              list(
