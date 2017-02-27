@@ -17,11 +17,12 @@ test_that("it should be tested properly", {
   rgen=function(xx, delta=0.05){
     rbinom(length(xx), 1, delta+(1-2*delta)*expit(xx))
   })
-  llY <- list(stochMech=function(aa, ww){
-    aa*ww+(1-aa)*(-ww)
-  },
-  param=c(0.1, 0.1, 0.1, 0.05, -0.01),
-  rgen=identity)
+  llY <- list(rgen={function(AW){
+    aa <- AW[, "A"]
+    ww <- AW[, grep("[^A]", colnames(AW))]
+    mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
+      (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
+    rnorm(length(mu), mu, sd=1)}})
   ##
   data.1 <- sim$simulateWAYOneTrajectory(nobs, qw=llW, ga=llA, Qy=llY, verbose=log)
   toc <- Sys.time()
@@ -33,4 +34,20 @@ test_that("it should be tested properly", {
                                            qw=llW, ga=llA, Qy=llY, verbose=log)
   toc <- Sys.time()
   comp.time <- c(comp.time, toc-tic)
+  ## Simulating under an intervention
+  tic <- Sys.time()
+  intervention <- list(when=c(10, 15, 20),
+                       what=c(1, 1, 0))
+  ## -> parameter E((Y_{1,10}+Y_{1,15}+Y_{0,20})/3)
+  B <- 1e3
+  psi.approx <- mean(sapply(1:B, function(bb) {
+    when <- max(intervention$when)
+    data.int <- sim$simulateWAYOneTrajectory(max(when), qw=llW, ga=llA, Qy=llY,
+                                             intervention=intervention, verbose=FALSE)
+    data.int$Y[when]
+  }))
+  ## 'psi.approx' approximates the parameter of interest
+  toc <- Sys.time()
+  comp.time <- c(comp.time, toc-tic)
+  
 })

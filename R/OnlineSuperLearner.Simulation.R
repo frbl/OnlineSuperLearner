@@ -20,7 +20,7 @@ OnlineSuperLearner.Simulation <-
                                            'ML.H2O.glm',
                                            'ML.H2O.gbm')
 
-                    # Run the simulations
+                    ## Run the simulations
                     self$basicRegression()
                     self$basicRegressionWithLags()
                     self$basicClassification()
@@ -46,9 +46,9 @@ OnlineSuperLearner.Simulation <-
                     set.seed(12345)
                     log <- FALSE
 
-                    ######################################
-                    # Generate observations for training #
-                    #####################################
+                    ## ####################################
+                    ## Generate observations for training #
+                    ## ###################################
                     llW <- list(stochMech=rnorm,
                                 param=c(0, 0.5, -0.25, 0.1),
                                 rgen=identity)
@@ -61,45 +61,46 @@ OnlineSuperLearner.Simulation <-
                                   rbinom(length(xx), 1, delta+(1-2*delta)*expit(xx))
                                 })
 
-                    llY <- list(stochMech=function(aa, ww){
-                                  aa*ww+(1-aa)*(-ww)
-                                },
-                                param=c(0.1, 0.1, 0.1, 0.05, -0.01),
-                                rgen=identity)
+                    llY <- list(rgen={function(AW){
+                      aa <- AW[, "A"]
+                      ww <- AW[, grep("[^A]", colnames(AW))]
+                      mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
+                        (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
+                      rnorm(length(mu), mu, sd=0.1)}})
+                    
 
-
-                    # Define the variables in the initial dataset we'd like to use
+                    ## Define the variables in the initial dataset we'd like to use
                     Y = "Y1"
                     W = c("W1")
                     A = c("V2")
 
-                    # Create the measures we'd like to include in our model
-                    # In this simulation we will include 2 lags and the latest data (non lagged)
+                    ## Create the measures we'd like to include in our model
+                    ## In this simulation we will include 2 lags and the latest data (non lagged)
                     SMG.list <- list()
                     SMG.list <- c(SMG.list, SMG.Lag$new(lags = 2, colnames.to.lag = (c(A, W, Y))))
                     SMG.list <- c(SMG.list, SMG.Latest.Entry$new(colnames.to.use = (c(A, W, Y))))
 
                     summaryMeasureGenerator = SummaryMeasureGenerator$new(SMG.list = SMG.list)
 
-                    # We'd like to use the following features in our estimation:
+                    ## We'd like to use the following features in our estimation:
                     Y = "Y1"
                     W = c("Y1_lag_1","Y1_lag_2","W1", "W1_lag_1", "W1_lag_2", "V2_lag_1", "V2_lag_2")
                     A = c("V2")
 
-                    # Generate a dataset we will use for testing.
-                    # TODO: This step is really slow, because of the getNextN(800)
+                    ## Generate a dataset we will use for testing.
+                    ## TODO: This step is really slow, because of the getNextN(800)
                     private$sim$simulateWAYOneTrajectory(1000, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
                       Data.Static$new(dataset = .) %>%
                       summaryMeasureGenerator$setData(.)
 
                     data.test <- summaryMeasureGenerator$getNextN(800)
 
-                    # Generate a dataset, from the same statistical model, which we will use to train our model
+                    ## Generate a dataset, from the same statistical model, which we will use to train our model
                     data.train <-
                       private$sim$simulateWAYOneTrajectory(private$nobs, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
                       Data.Static$new(dataset = .)
 
-                    # Now run several iterations on the data
+                    ## Now run several iterations on the data
                     performances <- lapply(seq(5,201,20), function(i) {
                       data.train$reset()
 
