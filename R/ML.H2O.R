@@ -29,11 +29,10 @@ ML.H2O <-
                  },
 
                  predict = function(data, A, W) {
-                   # Upload the data to h2o. This is terribly inefficient.
+                   # Upload the data to h2o. 
+                   # TODO: This is terribly inefficient.
                    data.hex <- as.h2o(data, key="data.hex")
-                   # TODO: Return all data, if there is more than 1 row / col
-                   h2o.predict(object = self$model, newdata = data.hex)[1,1]
-
+                   as.data.table(h2o.predict(object = self$model, newdata = data.hex))
                  }
 
                  )

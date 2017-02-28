@@ -18,9 +18,12 @@ WCC.NNLS
    Creates a new computer for determining the best weighted combination of the ML libraries.
    currently this is merely the NNLS version from the general superlearner, but in the future
    it should be updated to be 1. online, and 2. using better algorithm (like NLopts)
-   \code{obsWeights} vector containing the initial weights
+   \code{weights.initial} vector containing the initial weights
   }
-  \item{\code{compute(Z, Y, libraryNames, obsWeights)}}{
+  \item{\code{getWeigths()}}{
+   Returns the current list of optimal weights (or the initial weights, if not yet fitted)
+  }
+  \item{\code{compute(Z, Y, libraryNames, weights.initial)}}{
    Method to compute the best weighted combination of the underlying estimators
    \code{Z} matrix containing the outcomes of each of the estimators
    \code{Y} vector containing the actual outcome

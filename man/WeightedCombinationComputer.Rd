@@ -16,9 +16,12 @@ WeightedCombinationComputer
 \describe{
   \item{\code{new()}}{
    Creates a new computer for determining the best weighted combination of the ML libraries.
-   \code{obsWeights} vector containing the initial weights
+   \code{weigths.initial} vector containing the initial weights
   }
-  \item{\code{compute(Z, Y, libraryNames, obsWeights)}}{
+  \item{\code{getWeigths()}}{
+   Returns the current list of optimal weights (or the initial weights, if not yet fitted)
+  }
+  \item{\code{compute(Z, Y, libraryNames)}}{
    Method to compute the best weighted combination of the underlying estimators
    \code{Z} matrix containing the outcomes of each of the estimators
    \code{Y} vector containing the actual outcome

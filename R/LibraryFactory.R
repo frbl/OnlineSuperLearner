@@ -3,7 +3,7 @@
 #' @docType class
 #' @importFrom R6 R6Class
 #' @import data.table
-#' @import purrr cross_df
+#' @import purrr
 #' @include ML.XGBoost.glm.R
 #' @include ML.Local.lm.R
 #' @section Methods:

@@ -30,7 +30,9 @@ ML.H2O.glm <-
                                           training_frame = train.hex,
                                           family = self$family,
                                           nfolds = self$nfolds,
-                                          alpha = self$alpha)
+                                          alpha = self$alpha,
+                                          checkpoint = private$getCheckpoint()
+                                          )
 
                   }
                   )

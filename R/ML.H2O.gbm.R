@@ -10,21 +10,22 @@ ML.H2O.gbm <-
            inherit = ML.H2O,
            private =
              list(
-                  prev = NULL
+                  prev = NULL,
+                  ntrees = NULL
                   ),
            public =
              list(
                   nfolds = NULL,
 
-                  initialize = function(nfolds = 0) {
+                  initialize = function(nfolds = 0, ntrees=50) {
                     super$initialize()
+                    private$ntrees = ntrees
                   },
 
                   fit = function(train, Y, A, W){
                     # TODO:! This is teribly inefficient and is merely for testing
                     train.hex <- as.h2o(train, key="train.hex")
 
-                    X <- c(A, W)
                     checkpoint <- private$getCheckpoint()
                     if(!is.null(private$prev) &&
                        !all(private$prev == colnames(train))){
@@ -35,10 +36,14 @@ ML.H2O.gbm <-
                     # TODO: This currently fails because it probably
                     # has unseen strata in the new data? (it fails
                     # because of the checkpoint)
-                    self$model <- h2o.gbm(x = X, y = Y,
+                    self$model <- h2o.gbm(x = c(A,W), y = Y,
                                           training_frame = train.hex,
                                           nfolds = self$nfolds,
+                                          ntrees = private$ntrees,
                                           checkpoint = checkpoint)
+
+                    # Every update adds a new tree, so we have to increase the number of trees
+                    private$ntrees <- private$ntrees + 1
 
                   }
                   )

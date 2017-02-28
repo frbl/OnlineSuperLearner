@@ -21,22 +21,25 @@ ML.Base <-
                   data.previous = NULL,
 
                   splitData = function(data){
+                    # Use the last observation as test set
+                    test <- tail(data, 1)
+
                     if(is.null(self$model)){
                       if(nrow(data) < 2){
                         throw('At least 2 rows of data are needed, 1 train and 1 test')
                       }
-                      test <- tail(data, 1)
+                      # use the rest of the observations as trainingset
                       train <- head(data, nrow(data)-1)
                     } else {
-                      test <- data
-                      train <- private$data.previous
+                      # Use the rest of the observations as trainingset, including the previous testset
+                      train <- rbind(private$data.previous, head(data, nrow(data) - 1))
                     }
                     return(list(train = train, test = test))
                   }
                   ),
            public =
              list(
-                  model = NULL, 
+                  model = NULL,
 
                   initialize = function() {
                   },
@@ -60,7 +63,7 @@ ML.Base <-
                   predict = function(data, A, W) {
                     warning('You are using the base predict function, you\'d probably want to inherit and override this')
                     if (is.null(self$model)) {
-                     throw('Train the model first')
+                      throw('Train the model first')
                     }
                     X <- c(A, W)
                     pred <- predict(self$model, as.matrix(data[, X, with = FALSE]))

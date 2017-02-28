@@ -52,6 +52,41 @@ OnlineSuperLearner <-
                   # The computer for the SuperLearner combination
                   weightedCombinationComputer = NULL,
 
+                  # Predict using all estimators separately.
+                  # Params:
+                  # @param data.initial: the initial dataset to train the estimators on
+                  # @param Y: the column names used for the outcome
+                  # @param A: the column names used for the treatment
+                  # @param W: the column names used for the covariates
+                  # @return a vector of outcomes, each entry being the predicted outcome of an estimator
+                  predictUsingAllEstimators = function(data, A, W) {
+                    result <- lapply(private$SL.Library.Fabricated,
+                                     function(model) { model$predict(data = data, A = A, W = W) }) %>%
+                      as.data.table(.)
+
+                    # TODO: make this work with lists instead of vectors
+                    names(result) <- private$SL.Library
+                    result
+                  },
+
+
+                  # Train using all estimators separately.
+                  # Params:
+                  # @param data.initial: the initial dataset to train the estimators on
+                  # @param Y: the column names used for the outcome
+                  # @param A: the column names used for the treatment
+                  # @param W: the column names used for the covariates
+                  # @return a vector of outcomes, each entry being the predicted outcome of an estimator on the test set
+                  trainAllEstimators = function(data, Y, A, W) {
+                    result <- lapply(private$SL.Library.Fabricated,
+                                  function(model) { model$process(data = data, Y = Y, A = A, W = W) }) %>%
+                      as.data.table(.)
+
+                    # TODO: make this work with lists instead of vectors
+                    names(result) <- private$SL.Library
+                    result
+                  },
+
                   # Functions
                   # Function to train the initial set of models
                   # Params:
@@ -60,16 +95,19 @@ OnlineSuperLearner <-
                   # @param A: the column names used for the treatment
                   # @param W: the column names used for the covariates
                   trainLibrary = function(data.initial, Y, A, W) {
-                    private$verbose && enter(private$verbose, 'Starting model training')
+
                     if(self$fitted){
                       warning('DOSL and OSL already fitted (initially), skipping initialization')
                       return(FALSE)
                     }
 
+                    private$verbose && enter(private$verbose, 'Creating initial fits')
 
                     # Fit the initial models
+                    CVpredictions <- private$trainAllEstimators(data = data.initial, Y = Y, A = A, W = W)
+
                     # TODO: Make sure that all predictions are returned in the same format
-                    predictions <- private$predictUsingAllEstimators(data = data.initial, Y = Y, A = A, W = W)
+                    predictions <- private$predictUsingAllEstimators(data = data.initial, A = A, W = W)
 
                     # Fit the super learner on the current data
                     Ymat <- as.matrix(data.initial[, Y, with = FALSE])
@@ -77,26 +115,13 @@ OnlineSuperLearner <-
 
                     # Update the discrete superlearner (take the first if there are multiple candidates)
                     private$odsl.estimator <-
-                      private$SL.Library.Fabricated[[which(predictions == min(predictions))[1]]]
+                      private$SL.Library.Fabricated[[which(CVpredictions == min(CVpredictions))[1]]]
 
                     self$setFitted(TRUE)
                     private$verbose && exit(private$verbose)
+
                     TRUE
                   },
-
-                  # Predict using all estimators separately.
-                  # Params:
-                  # @param data.initial: the initial dataset to train the estimators on
-                  # @param Y: the column names used for the outcome
-                  # @param A: the column names used for the treatment
-                  # @param W: the column names used for the covariates
-                  # @return a vector of outcomes, each entry being the predicted outcome of an estimator
-                  predictUsingAllEstimators = function(data, Y, A, W) {
-                    unlist(lapply(private$SL.Library.Fabricated,
-                                  function(model) { model$process(data = data, Y = Y, A = A, W = W) }))
-
-                  },
-
 
                   # Function to update the models with the available data
                   # Params:
@@ -104,45 +129,50 @@ OnlineSuperLearner <-
                   # @param A: the column names used for the treatment
                   # @param W: the column names used for the covariates
                   # @param max.iterations: the number of iterations we can maximaly run for training
-                  updateLibrary = function(Y, A, W, max.iterations){
+                  # @param mini.batch.size: size of the batch we use
+                  updateLibrary = function(Y, A, W, max.iterations, mini.batch.size){
                     private$verbose && enter(private$verbose, 'Starting model updating')
                     if(!self$fitted){
                       throw('Fit the inital D-OSL and OSL first')
                     }
 
-                    # Set the current timestep to 0
-                    t <- 0
+                    # Set the current timestep to 1
+                    t <- mini.batch.size
 
-                    data.current <- private$summaryMeasureGenerator$getNext()
+                    data.current <- private$summaryMeasureGenerator$getNextN(mini.batch.size)
 
                     # TODO: Check wether the stopping criteria are met (e.g., improvement < theta)
                     while(t < max.iterations && nrow(data.current) >= 1 && !is.null(data.current)) {
+                      if(t %% (1 * mini.batch.size) == 0) private$verbose && cat(private$verbose, paste('Updating OSL at iteration', t, 'error is', self$risk.cv))
 
                       # Update all models on the previous data set, and get their prediction on the current data.
-                      predictions <- private$predictUsingAllEstimators(data = data.current, Y = Y, A = A, W = W)
+                      CVpredictions <- private$trainAllEstimators(data = data.current, Y = Y, A = A, W = W)
 
                       # Make a prediction using our (discrete) superlearner
-                      osl.prediction <- self$predict(data = data.current, A = A, W = W)
-                      dosl.prediction <- self$predict(data = data.current, A = A, W = W, discrete = TRUE)
+                      osl.prediction <- self$predict(data = tail(data.current, 1), A = A, W = W)
+                      dosl.prediction <- self$predict(data = tail(data.current, 1), A = A, W = W, discrete = TRUE)
 
                       # Calculate the updated cross validated risk using the new measurement
-                      predicted.outcome <- c(predictions, osl.prediction, dosl.prediction)
-                      observed.outcome <- tail(data.current[, Y, with = FALSE], 1)
+                      # Predicted.outcome is now the level 1 'matrix' of each estimator. It contains
+                      # their predicted outcomes on the test set
+                      predicted.outcome <- as.data.frame(c(CVpredictions, osl = osl.prediction, dosl = dosl.prediction))
+                      observed.outcome <- as.matrix(tail(data.current[, Y, with = FALSE], 1))
 
                       # Update the cross-validated risk
                       risk.cv.update <- self$lossFunction(data.observed = observed.outcome, predicted.outcome) / t
-                      self$risk.cv <- (t / (t + 1)) * self$risk.cv + risk.cv.update
+                      self$risk.cv <- (t / (t + mini.batch.size)) * self$risk.cv + risk.cv.update
 
                       # ReFit the super learner on the current data
-                      private$fit(predicted.outcome = predicted.outcome, observed.outcome = observed.outcome )
+                      private$fit(predicted.outcome = CVpredictions, observed.outcome = observed.outcome)
 
                       # Update the discrete superlearner (take the first if there are multiple candidates)
-                      private$odsl.estimator <- private$SL.Library.Fabricated[[which(predictions == min(predictions))[1]]]
+                      private$odsl.estimator <- 
+                        private$SL.Library.Fabricated[[which( self$risk.cv[private$SL.Library] == min(self$risk.cv[private$SL.Library]))]]
 
                       # Get the new row of data
-                      data.current <- private$summaryMeasureGenerator$getNext()
+                      data.current <- private$summaryMeasureGenerator$getNextN(mini.batch.size)
 
-                      t <- t + 1
+                      t <- t + mini.batch.size
                     }
                     private$verbose && exit(private$verbose)
                   },
@@ -156,8 +186,6 @@ OnlineSuperLearner <-
 
                     # If we have 1 estimator, the weighted combination of that estimator
                     # is just the estimator itself.
-                    private$verbose && enter(private$verbose, 'Starting training super learner')
-
                     # Actually fit a model here
                     # Tratidional way:
                     # We run each of the models on the (full?) dataset
@@ -172,7 +200,9 @@ OnlineSuperLearner <-
 
                     # If there is no model, we need to fit a model based on Nl observations.
                     # If we already have a model, we update the old one, given the new measurement
-                    weightedCombinationComputer$process(X= predicted.outcome, Y=observed.outcome, private$SL.Library)
+                    private$weightedCombinationComputer$process(Z = predicted.outcome,
+                                                                Y = observed.outcome,
+                                                                private$SL.Library)
 
                     # Do gradient descent update
                     # Something like:
@@ -181,10 +211,7 @@ OnlineSuperLearner <-
                     #gradient <- (t(Xmat) %*% (prediction - Ymat))
                     #self$model <- self$model - private$learning.rate * gradient
 
-                    suppressWarnings(prediction <- self$predict(train, A, W))
-
-                    # New model
-                    private$verbose && exit(private$verbose)
+                    #prediction <- self$predict(train, A, W)
                   }
 
                   ),
@@ -266,30 +293,34 @@ OnlineSuperLearner <-
                            })
                   },
 
-                  run = function(data, W, A, Y, initial.data.size = 5, max.iterations = 20) {
-                    # Data = the data object from which the data can be retrieved
-                    # initial.data.size = the number of observations needed to fit the initial model
 
-                    # Steps in superlearning:
-                    # Get the initial data for fitting the first model
+                  # Data = the data object from which the data can be retrieved
+                  # initial.data.size = the number of observations needed to fit the initial model
+                  run = function(data, W, A, Y, initial.data.size = 5, max.iterations = 20, mini.batch.size = 20) {
+
                     private$summaryMeasureGenerator$setData(data = data)
-                    data.initial <- private$summaryMeasureGenerator$getNextN(initial.data.size)
 
-                    # Train the library of models using the initial dataset
-                    private$trainLibrary(data.initial = data.initial, Y = Y, A = A, W = W)
+                    # Get the initial data for fitting the first model and train the initial models
+                    private$summaryMeasureGenerator$getNextN(initial.data.size) %>%
+                      private$trainLibrary(data.initial = ., Y = Y, A = A, W = W)
 
                     # Update the library of models using a given number of max.iterations
-                    private$updateLibrary(Y = Y, A = A, W = W, max.iterations = max.iterations)
+                    private$updateLibrary(Y = Y, A = A, W = W, max.iterations = max.iterations,
+                                          mini.batch.size = mini.batch.size)
 
                     # Return the cross validated risk
                     return(self$risk.cv)
                   },
 
+                  # Predict should return a nrow(data) * 1 matrix, where the predictions are multiplied by
+                  # the weights of each estimator.
                   predict = function(data, A = NULL, W = NULL, discrete = FALSE) {
                     if(!self$fitted){
                       return(NA)
                     }
 
+                    # TODO: This can be very inefficient, especially when we are updating both of them. 
+                    # We could perform the prediction only once, which saves time.
                     if(discrete){
                       return(private$odsl.estimator$predict(data = data, A = A, W = W))
                     }
@@ -298,9 +329,10 @@ OnlineSuperLearner <-
                     # something like
                     # private$summaryMeasureGenerator$setData(data = data)
                     # data <- private$summaryMeasureGenerator$getNext()
-                    outcomes <- data[, X, with=FALSE] %*% private$weightedCombinationComputer$getWeights
-                    return(outcomes)
+                    predictions <- as.matrix(private$predictUsingAllEstimators(data=data, A=A, W=W))
+                    weights <- as.matrix(private$weightedCombinationComputer$getWeights)
 
+                    return(predictions %*% weights)
                   },
 
                   getModels = function() {

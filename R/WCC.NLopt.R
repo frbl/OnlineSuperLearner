@@ -57,14 +57,14 @@ WCC.NLopt <-
                     # TODO: These functions are probably incorrect / inefficient currently. Update them with the correct functions.
                     if(is.null(lossFunction)){
                       lossFunction <- function(coeff, X, Y) {
-                        pred <- X %*% coeff
+                        pred <- as.matrix(X) %*% coeff
                         1/2 * mean((pred - Y)^2)
                       }
                     }
 
                     if(is.null(lossFunctionGradient)){
                       lossFunctionGradient <- function(coeff, X, Y) {
-                        pred <- X %*% coeff
+                        pred <- as.matrix(X) %*% coeff
                         t(X) %*% (1/length(Y) * (pred - Y))
                       }
                     }
