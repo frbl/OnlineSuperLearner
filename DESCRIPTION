@@ -25,7 +25,10 @@ Imports:
     R6,
     methods,
     magrittr,
-    xgboost
+    purrr,
+    xgboost,
+    nloptr,
+    nnls
 Suggests:
     roxygen2,
     testthat
@@ -39,20 +42,23 @@ Collate:
     'Evaluation.R'
     'Global.R'
     'H2O.initializer.R'
+    'ML.Base.R'
+    'ML.Local.R'
+    'ML.Local.lm.R'
     'ML.XGBoost.glm.R'
     'LibraryFactory.R'
-    'ML.Base.R'
     'ML.H2O.R'
     'ML.H2O.gbm.R'
     'ML.H2O.glm.R'
-    'ML.Local.R'
-    'ML.Local.lm.R'
     'ML.XGBoost.R'
-    'Simulator.Slow.R'
-    'Simulator.GAD.R'
+    'WeightedCombinationComputer.R'
     'SummaryMeasureGenerator.R'
     'OnlineSuperLearner.R'
     'OnlineSuperLearner.Simulation.R'
     'SMG.Lag.R'
     'SMG.Latest.Entry.R'
     'SMG.Mean.R'
+    'Simulator.GAD.R'
+    'Simulator.Slow.R'
+    'WCC.NLopt.R'
+    'WCC.NNLS.R'

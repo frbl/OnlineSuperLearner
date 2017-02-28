@@ -20,11 +20,9 @@ ML.H2O.gbm <-
                     super$initialize()
                   },
 
-
-                  fit = function(train, test, Y, A, W){
+                  fit = function(train, Y, A, W){
                     # TODO:! This is teribly inefficient and is merely for testing
                     train.hex <- as.h2o(train, key="train.hex")
-                    test.hex <- as.h2o(test, key="test.hex")
 
                     X <- c(A, W)
                     checkpoint <- private$getCheckpoint()
@@ -39,11 +37,9 @@ ML.H2O.gbm <-
                     # because of the checkpoint)
                     self$model <- h2o.gbm(x = X, y = Y,
                                           training_frame = train.hex,
-                                          validation_frame = test.hex,
                                           nfolds = self$nfolds,
                                           checkpoint = checkpoint)
 
-                    h2o.cross_validation_predictions(self$model)
                   }
                   )
            )

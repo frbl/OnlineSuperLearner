@@ -22,6 +22,9 @@ ML.Base <-
 
                   splitData = function(data){
                     if(is.null(self$model)){
+                      if(nrow(data) < 2){
+                        throw('At least 2 rows of data are needed, 1 train and 1 test')
+                      }
                       test <- tail(data, 1)
                       train <- head(data, nrow(data)-1)
                     } else {
@@ -33,13 +36,9 @@ ML.Base <-
                   ),
            public =
              list(
-                  iteration = NULL,
-                  CV.risk = NULL,
                   model = NULL, 
 
                   initialize = function() {
-                    self$iteration = 0
-                    self$CV.risk = 0
                   },
 
                   process = function(data, Y, A, W) {
@@ -48,14 +47,13 @@ ML.Base <-
                     private$data.previous <- split$test
 
                     # This function delegates the call to its subclass
-                    test.prediction <- self$fit(split$train, split$test, Y, A, W)
+                    self$fit(split$train, Y, A, W)
 
-                    # Update the CV risk
-                    self$iteration <- self$iteration + 1
-                    #TODO: recalculate the crossvalidated risk here
+                    # Predict the outcome on the testset
+                    self$predict(split$test, A, W)
                   },
 
-                  fit = function(train, test, Y, A, W) {
+                  fit = function(train, Y, A, W) {
                     throw('The fit method needs to be inherited')
                   },
 

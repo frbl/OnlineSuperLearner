@@ -16,9 +16,7 @@ OnlineSuperLearner.Simulation <-
                   initialize = function() {
                     private$sim  <- Simulator.GAD$new()
                     private$nobs <- 1e5
-                    private$SL.Library = c('ML.Local.lm',
-                                           'ML.H2O.glm',
-                                           'ML.H2O.gbm')
+                    private$SL.Library = c('ML.Local.lm')
 
                     # Run the simulations
                     self$basicRegression()
@@ -111,7 +109,7 @@ OnlineSuperLearner.Simulation <-
                                             Y = Y,
                                             A = A,
                                             W = W,
-                                            initial.data.size = 30, iterations.max = i)
+                                            initial.data.size = 30, max.iterations = i)
 
                       osl$evaluateModels(data = copy(data.test),
                                         W = W, A = A, Y = Y) %>% c(iterations = i, performance = .)

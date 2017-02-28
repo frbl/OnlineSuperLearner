@@ -55,7 +55,7 @@ ML.Local.lm <-
                     throw('Family not found')
                   },
 
-                  fit = function(train, test, Y, A, W){
+                  fit = function(train, Y, A, W){
                     formula <- as.formula(self$createFormula(Y = Y, A = A, W = W))
                     # If there is no model, we need to fit a model based on Nl observations.
                     # If we already have a model, we update the old one, given the new measurement
@@ -89,7 +89,6 @@ ML.Local.lm <-
                       gradient <- (t(Xmat) %*% (prediction - Ymat))
                       self$model <- self$model - private$learning.rate * gradient
                     }
-                    suppressWarnings(prediction <- self$predict(train, A, W))
                   }
                   )
            )
