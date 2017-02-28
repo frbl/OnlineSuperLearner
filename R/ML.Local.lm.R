@@ -11,7 +11,8 @@ ML.Local.lm <-
            private =
              list(
                   learning.rate = NULL,
-                  family = NULL
+                  family = NULL,
+                  initialization.random = NULL
                   ),
            active =
              list(
@@ -33,48 +34,60 @@ ML.Local.lm <-
                   ),
            public =
              list(
-                  initialize = function(learning.rate = 0.1, family='gaussian') {
+                  initialize = function(learning.rate = 0.1, family='gaussian', initialization.random=FALSE) {
                     private$learning.rate = learning.rate
                     private$family = family
+                    private$initialization.random = initialization.random
                     self$getValidity
                   },
 
                   predict = function(data, A, W) {
                     X <- c(A, W)
+                    Xmat <- data[, X, with = FALSE]
+                    Xmat <- as.matrix(cbind(rep(1, nrow(data)), Xmat))
+
                     if(private$family %in% c('binomial')) {
-                      return(predict(self$model, data[, X, with = FALSE], type='response'))
+                      return(expit(Xmat %*% self$model))
                     }
-                    predict(self$model, data[, X, with = FALSE])
+                    if(private$family %in% c('gaussian')) {
+                      return(Xmat %*% self$model)
+                    }
+                    throw('Family not found')
                   },
 
                   fit = function(train, Y, A, W){
+                    formula <- as.formula(self$createFormula(Y = Y, A = A, W = W))
                     # If there is no model, we need to fit a model based on Nl observations.
                     # If we already have a model, we update the old one, given the new measurement
                     if(is.null(self$model)){
-                      formula <- self$createFormula(Y = Y, A = A, W = W)
-                      self$model <- glm(formula,
-                                        data=train,
-                                        family=private$family)
+
+                      # Instead of using a GLM for initialization, we can also do a random initialization
+                      if(private$initialization.random) {
+                        Xmat <- model.matrix(formula, train)
+                        self$model <- runif(ncol(Xmat))
+                      } else {
+                        model.fitted <- glm(formula,
+                                            data=train,
+                                            family=private$family)$coefficients
+
+                        # TODO: do something with the NA's
+                        nas <- is.na(model.fitted)
+                        if(length(nas) > 0) { model.fitted[nas] <- runif(length(nas) - 1) }
+
+                        self$model <- model.fitted
+                      }
+
                     } else {
-                      # model matrix
-                      X <- c(A, W)
-                      Xmat <- as.matrix(train[, X, with = FALSE])
                       Ymat <- as.matrix(train[, Y, with = FALSE])
 
                       # Add the intercept to the matrix
-                      Xmat <- cbind(intercept=c(1), Xmat)
+                      Xmat <- model.matrix(formula, train)
 
-                      # prediction
-                      prediction <- self$predict(train, A, W)
-
-                      # TODO: Calculate the gradient descent gradient.
-                      grad <- (t(Xmat) %*% (prediction - Ymat))
-
-                      # Update the original coefficients of our glm
-                      coefs <- self$model$coefficients - (private$learning.rate * grad)
-
-                      # Update the actual coefficients of our fit
-                      self$model$coefficients <- coefs
+                      # Make a prediction.
+                      # Note that this could throw warnings if the model has not converged yet
+                      suppressWarnings(prediction <- self$predict(train, A, W))
+                      gradient <- (t(Xmat) %*% (prediction - Ymat))
+                      self$model <- self$model - private$learning.rate * gradient
                     }
                   }
                   )
