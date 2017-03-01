@@ -21,16 +21,11 @@ ML.H2O.randomForest <-
                   },
 
                   fit = function(train, Y, A, W){
-                    # TODO:! This is teribly inefficient and is merely for testing
-                    train.hex <- as.h2o(train, key="train.hex")
 
                     checkpoint <- private$getCheckpoint()
 
-                    # TODO: This currently fails because it probably
-                    # has unseen strata in the new data? (it fails
-                    # because of the checkpoint)
                     self$model <- h2o.randomForest(x = c(A,W), y = Y,
-                                          training_frame = train.hex,
+                                          training_frame = 'train.hex',
                                           ntrees = private$ntrees,
                                           nfolds = private$nfolds,
                                           checkpoint = checkpoint)

@@ -24,7 +24,8 @@ SummaryMeasureGenerator <-
                   data = NULL,
                   cache = data.table(),
                   SMG.list = NULL,
-                  minimal.measurements.needed = NULL
+                  minimal.measurements.needed = NULL,
+                  currentData = NULL
                   ),
            public =
              list(
@@ -56,7 +57,7 @@ SummaryMeasureGenerator <-
                     FALSE
                   },
 
-                  getNext = function(){
+                  loadNext = function() {
                     if(is.null(private$data)) {
                       throw('Please set the data of the summary measure generator first')
                     }
@@ -73,10 +74,10 @@ SummaryMeasureGenerator <-
 
                     # Generate summary measures using each of the provided objects
                     datas <- lapply(private$SMG.list, function(smg) smg$process(copy(private$cache)))
-                    data.table(t(unlist(datas)))
+                    private$currentData <- data.table(t(unlist(datas)))
                   },
 
-                  getNextN = function(n = 1){
+                  loadNextN = function(n = 1) {
                     # TODO: Make this much more efficient
                     # TODO: This is an exact copy of the Data.Base function
                     dt <- data.table()
@@ -86,7 +87,18 @@ SummaryMeasureGenerator <-
 
                       dt <- rbindlist(list(dt, current))
                     }
-                    dt
+                    private$currentData <- dt
+
+                  },
+
+                  getNext = function(){
+                    self$loadNext()
+                    private$currentData
+                  },
+
+                  getNextN = function(n = 1){
+                    self$loadNextN()
+                    private$currentData
                   }
                   )
            )

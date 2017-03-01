@@ -18,24 +18,7 @@ ML.Base <-
            "ML.Base",
            private =
              list(
-                  data.previous = NULL,
-
-                  splitData = function(data){
-                    # Use the last observation as test set
-                    test <- tail(data, 1)
-
-                    if(is.null(self$model)){
-                      if(nrow(data) < 2){
-                        throw('At least 2 rows of data are needed, 1 train and 1 test')
-                      }
-                      # use the rest of the observations as trainingset
-                      train <- head(data, nrow(data)-1)
-                    } else {
-                      # Use the rest of the observations as trainingset, including the previous testset
-                      train <- rbind(private$data.previous, head(data, nrow(data) - 1))
-                    }
-                    return(list(train = train, test = test))
-                  }
+                  data.previous = NULL
                   ),
            public =
              list(
@@ -44,16 +27,15 @@ ML.Base <-
                   initialize = function() {
                   },
 
-                  process = function(data, Y, A, W) {
+                  process = function(train, test, Y, A, W) {
                     # DO NOT OVERRIDE THIS FUNCTION!
-                    split <- private$splitData(data)
-                    private$data.previous <- split$test
+                    private$data.previous <- test
 
                     # This function delegates the call to its subclass
-                    self$fit(split$train, Y, A, W)
+                    self$fit(train, Y, A, W)
 
                     # Predict the outcome on the testset
-                    self$predict(split$test, A, W)
+                    self$predict(test, A, W)
                   },
 
                   fit = function(train, Y, A, W) {

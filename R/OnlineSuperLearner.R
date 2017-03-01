@@ -7,13 +7,14 @@
 #' @importFrom R6 R6Class
 #' @include Global.R
 #' @include LibraryFactory.R
+#' @include DataSplitter.R
 #' @include SummaryMeasureGenerator.R
 #' @include WeightedCombinationComputer.R
 #'
 #' @section Methods:
 #' \describe{
-#'   \item{\code{new(SL.Library)}}{
-#'     starts a new OnlineSuperLearner. The provided /code{SL.Library} contains the machine learning models to use
+#'   \item{\code{new(SL.library.definition)}}{
+#'     starts a new OnlineSuperLearner. The provided /code{SL.library.definition} contains the machine learning models to use
 #'   }
 #'
 #'   \item{\code{run(data, Y, A, W,  initial.data.size = 10)}}{
@@ -32,13 +33,17 @@ OnlineSuperLearner <-
            "OnlineSuperLearner",
            private =
              list(
-                  # The superLearnerModel itself (the weights).
+                  # The online discrete super learner
                   odsl.estimator = NULL,
 
                   # ML Library
-                  SL.Library = NULL,
-                  SL.Library.Fabricated = NULL,
+                  SL.library.names = NULL,
+                  SL.library.descriptions = NULL,
+                  SL.library.fabricated = NULL,
                   osl.fitted = NULL,
+
+                  # Splitter for the data
+                  dataSplitter = NULL,
 
                   # The family of data we are working with
                   family = NULL,
@@ -60,13 +65,12 @@ OnlineSuperLearner <-
                   # @param W: the column names used for the covariates
                   # @return a vector of outcomes, each entry being the predicted outcome of an estimator
                   predictUsingAllEstimators = function(data, A, W) {
-                    result <- lapply(private$SL.Library.Fabricated,
+                    result <- lapply(private$SL.library.fabricated,
                                      function(model) { model$predict(data = data, A = A, W = W) }) %>%
-                      as.data.table(.)
+                    as.data.table(.)
 
-                    # TODO: make this work with lists instead of vectors
-                    names(result) <- private$SL.Library
-                    result
+                  names(result) <- private$SL.library.descriptions
+                  result
                   },
 
 
@@ -78,13 +82,16 @@ OnlineSuperLearner <-
                   # @param W: the column names used for the covariates
                   # @return a vector of outcomes, each entry being the predicted outcome of an estimator on the test set
                   trainAllEstimators = function(data, Y, A, W) {
-                    result <- lapply(private$SL.Library.Fabricated,
-                                  function(model) { model$process(data = data, Y = Y, A = A, W = W) }) %>%
-                      as.data.table(.)
+                    data.splitted <- private$dataSplitter$split(data)
 
-                    # TODO: make this work with lists instead of vectors
-                    names(result) <- private$SL.Library
-                    result
+                    result <- lapply(private$SL.library.fabricated,
+                                     function(model) { model$process(train = data.splitted$train,
+                                                                     test = data.splitted$test,
+                                                                     Y = Y, A = A, W = W) }) %>%
+                    as.data.table(.)
+
+                  names(result) <- private$SL.library.descriptions
+                  result
                   },
 
                   # Functions
@@ -95,7 +102,6 @@ OnlineSuperLearner <-
                   # @param A: the column names used for the treatment
                   # @param W: the column names used for the covariates
                   trainLibrary = function(data.initial, Y, A, W) {
-
                     if(self$fitted){
                       warning('DOSL and OSL already fitted (initially), skipping initialization')
                       return(FALSE)
@@ -115,7 +121,7 @@ OnlineSuperLearner <-
 
                     # Update the discrete superlearner (take the first if there are multiple candidates)
                     private$odsl.estimator <-
-                      private$SL.Library.Fabricated[[which(CVpredictions == min(CVpredictions))[1]]]
+                      private$SL.library.fabricated[[which(CVpredictions == min(CVpredictions))[1]]]
 
                     self$setFitted(TRUE)
                     private$verbose && exit(private$verbose)
@@ -143,7 +149,13 @@ OnlineSuperLearner <-
 
                     # TODO: Check wether the stopping criteria are met (e.g., improvement < theta)
                     while(t < max.iterations && nrow(data.current) >= 1 && !is.null(data.current)) {
-                      if(t %% (1 * mini.batch.size) == 0) private$verbose && cat(private$verbose, paste('Updating OSL at iteration', t, 'error is', self$risk.cv))
+                      if(t %% (1 * mini.batch.size) == 0 && private$verbose) {
+                        lapply(names(self$risk.cv), function(cv.name) {
+                                 cat(private$verbose, paste('Updating OSL at iteration', t,
+                                                            'error for', cv.name,
+                                                            'is', self$risk.cv[cv.name]))
+                                     })
+                      }
 
                       # Update all models on the previous data set, and get their prediction on the current data.
                       CVpredictions <- private$trainAllEstimators(data = data.current, Y = Y, A = A, W = W)
@@ -155,7 +167,7 @@ OnlineSuperLearner <-
                       # Calculate the updated cross validated risk using the new measurement
                       # Predicted.outcome is now the level 1 'matrix' of each estimator. It contains
                       # their predicted outcomes on the test set
-                      predicted.outcome <- as.data.frame(c(CVpredictions, osl = osl.prediction, dosl = dosl.prediction))
+                      predicted.outcome <- as.data.frame(c(CVpredictions, dosl = dosl.prediction, osl = osl.prediction))
                       observed.outcome <- as.matrix(tail(data.current[, Y, with = FALSE], 1))
 
                       # Update the cross-validated risk
@@ -166,8 +178,8 @@ OnlineSuperLearner <-
                       private$fit(predicted.outcome = CVpredictions, observed.outcome = observed.outcome)
 
                       # Update the discrete superlearner (take the first if there are multiple candidates)
-                      private$odsl.estimator <- 
-                        private$SL.Library.Fabricated[[which( self$risk.cv[private$SL.Library] == min(self$risk.cv[private$SL.Library]))]]
+                      private$odsl.estimator <-
+                        private$SL.library.fabricated[[which( self$risk.cv[private$SL.library.descriptions] == min(self$risk.cv[private$SL.library.descriptions]))]]
 
                       # Get the new row of data
                       data.current <- private$summaryMeasureGenerator$getNextN(mini.batch.size)
@@ -202,7 +214,7 @@ OnlineSuperLearner <-
                     # If we already have a model, we update the old one, given the new measurement
                     private$weightedCombinationComputer$process(Z = predicted.outcome,
                                                                 Y = observed.outcome,
-                                                                private$SL.Library)
+                                                                private$SL.library.descriptions)
 
                     # Do gradient descent update
                     # Something like:
@@ -234,30 +246,40 @@ OnlineSuperLearner <-
            public =
              list(
                   # Variables
-
                   # The R.cv score of the current fit
                   risk.cv = NULL,
 
-                  initialize = function(SL.Library = c('ML.Local.lm', 'ML.H2O.glm'), summaryMeasureGenerator, verbose = FALSE, family='gaussian') {
+                  initialize = function(SL.library.definition = c('ML.Local.lm', 'ML.H2O.glm'), summaryMeasureGenerator, verbose = FALSE, family='gaussian') {
                     private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
-                    private$verbose && cat(private$verbose, paste('Created super learner with a library:', private$SL.Library))
 
                     private$family <- family
-                    private$SL.Library <- SL.Library
 
                     # Initialization, Fabricate the various models
                     LibraryFactory <- LibraryFactory$new()
-                    private$SL.Library.Fabricated <- LibraryFactory$fabricate(private$SL.Library)
+                    private$SL.library.fabricated <- LibraryFactory$fabricate(SL.library.definition)
+
+                    # If the list of libraries is a list instead of a vector, convert it
+                    if(is.a(SL.library.definition, 'list')){
+                      private$SL.library.descriptions <- sapply(SL.library.definition, function(entry) entry$description )
+                    } else {
+                      private$SL.library.descriptions <- SL.library.definition
+                    }
+
+                    private$verbose && cat(private$verbose, paste('Creating super learner with a library:', private$SL.library.descriptions))
 
                     # Wrap the data into a summary measurement generator.
                     private$summaryMeasureGenerator <- summaryMeasureGenerator
 
                     # TODO: DIP the WCC
-                    weights.initial <- rep(1 / length(private$SL.Library), length(private$SL.Library))
+                    weights.initial <- rep(1 / length(private$SL.library.descriptions), length(private$SL.library.descriptions))
                     private$weightedCombinationComputer <- WCC.NLopt$new(weights.initial = weights.initial)
 
                     # The initial risk is 0. Should probably be Inf
-                    self$risk.cv = 0
+                    self$risk.cv <- rep(0, length(private$SL.library.descriptions) + 2) # +2 for the OSL and DOSL
+                    names(self$risk.cv) <- c(private$SL.library.descriptions, 'DOSL', 'OSL')
+
+                    # TODO: Check for H2O, if we need it
+                    private$dataSplitter <- DataSplitter$new(h2o=TRUE)
 
                     self$setFitted(FALSE)
 
@@ -265,7 +287,7 @@ OnlineSuperLearner <-
                   },
 
                   getValidity = function() {
-                    if (length(private$SL.Library) == 0 || length(private$SL.Library.Fabricated) == 0 ) {
+                    if (length(private$SL.library.descriptions) == 0 || length(private$SL.library.fabricated) == 0 ) {
                       throw("There should be at least one estimator in the library")
                     }
                     if (is.null(private$summaryMeasureGenerator) || class(private$summaryMeasureGenerator) != 'SummaryMeasureGenerator') {
@@ -284,7 +306,7 @@ OnlineSuperLearner <-
                   },
 
                   evaluateModels = function(data, W, A, Y) {
-                    lapply(private$SL.Library.Fabricated,
+                    lapply(private$SL.library.fabricated,
                            function(model) {
                              data.predicted <-  model$predict(data = data, A = A,  W = W)
                              data.observed <- data[, Y, with = FALSE][[Y]]
@@ -292,7 +314,6 @@ OnlineSuperLearner <-
                                                data.predicted = data.predicted)
                            })
                   },
-
 
                   # Data = the data object from which the data can be retrieved
                   # initial.data.size = the number of observations needed to fit the initial model
@@ -319,7 +340,7 @@ OnlineSuperLearner <-
                       return(NA)
                     }
 
-                    # TODO: This can be very inefficient, especially when we are updating both of them. 
+                    # TODO: This can be very inefficient, especially when we are updating both of them.
                     # We could perform the prediction only once, which saves time.
                     if(discrete){
                       return(private$odsl.estimator$predict(data = data, A = A, W = W))
@@ -336,7 +357,7 @@ OnlineSuperLearner <-
                   },
 
                   getModels = function() {
-                    return(private$SL.Library.Fabricated)
+                    return(private$SL.library.fabricated)
                   }
 
                   )

@@ -22,10 +22,11 @@ ML.H2O <-
                  ),
           public =
             list(
-                 initialize = function() {
+                 initialize = function(verbose = Arguments$getVerbose(-8, timestamp=TRUE) ) {
                    H2O.Initializer(host = "localhost",
                                    port = 54321,
-                                   runlocal = TRUE)
+                                   runlocal = TRUE,
+                                   verbose = verbose)
                  },
 
                  predict = function(data, A, W) {

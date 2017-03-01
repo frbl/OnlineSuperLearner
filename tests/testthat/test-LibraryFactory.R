@@ -8,13 +8,13 @@ context("  > without gridsearch")
 test_that("it should should throw if the models provided are not valid", {
   subject <- described.class$new()
   SL.library <- c('Wont work!') 
-  expect_error(subject$fabricate(SL.library), 'The model Wont work! is not a valid ML model name')
+  expect_error(subject$fabricate(SL.library), 'The model Wont work! is not a valid ML model algorithm')
 })
 
 test_that("it should should throw if one of the models provided are not valid", {
   subject <- described.class$new()
   SL.library <- c('ML.Local.lm', 'Wont work!') 
-  expect_error(subject$fabricate(SL.library), 'The model Wont work! is not a valid ML model name')
+  expect_error(subject$fabricate(SL.library), 'The model Wont work! is not a valid ML model algorithm')
 })
 
 test_that("it should work with list of estimators", {
@@ -45,20 +45,20 @@ test_that("it should work with a single estimator", {
 context("  > with gridsearch")
 test_that("it should should throw if the models provided are not valid", {
   subject <- described.class$new()
-  SL.library <- list(list(name = 'Wont work!')) 
-  expect_error(subject$fabricate(SL.library), 'The model Wont work! is not a valid ML model name')
+  SL.library <- list(list(algorithm = 'Wont work!')) 
+  expect_error(subject$fabricate(SL.library), 'The model Wont work! is not a valid ML model algorithm')
 })
 
 test_that("it should throw if one of the models provided are not valid", {
   subject <- described.class$new()
-  SL.library <- list(list(name='ML.Local.lm'), list(name = 'Wont work!')) 
-  expect_error(subject$fabricate(SL.library), 'The model Wont work! is not a valid ML model name')
+  SL.library <- list(list(algorithm='ML.Local.lm'), list(algorithm = 'Wont work!')) 
+  expect_error(subject$fabricate(SL.library), 'The model Wont work! is not a valid ML model algorithm')
 })
 
 test_that("it should work without prividing parameters", {
 described.class <- LibraryFactory
   subject <- described.class$new()
-  SL.library <- list(list(name='ML.Local.lm')) 
+  SL.library <- list(list(algorithm='ML.Local.lm')) 
   result <- subject$fabricate(SL.library)
 
   expect_true(is.a(result, 'list' ))
@@ -72,7 +72,7 @@ described.class <- LibraryFactory
 
 test_that("it should expand a grid for gridsearch", {
   subject <- described.class$new()
-  SL.library <- list(list(name = 'ML.Local.lm', params = list(family= c('binomial', 'gaussian'), learning.rate = c(1, 2, 3, 4)))) 
+  SL.library <- list(list(algorithm = 'ML.Local.lm', params = list(family= c('binomial', 'gaussian'), learning.rate = c(1, 2, 3, 4)))) 
   result <- subject$fabricate(SL.library)
   expect_true(is.a(result, 'list' ))
   expect_true(length(result) == 4 * 2 )

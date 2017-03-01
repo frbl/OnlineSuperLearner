@@ -10,14 +10,25 @@ OnlineSuperLearner.Simulation <-
              list(
                   sim = NULL,
                   nobs = NULL,
-                  SL.Library = NULL
+                  SL.library.definition = NULL
                   ),
            public =
              list(
                   initialize = function() {
                     private$sim  <- Simulator.GAD$new()
                     private$nobs <- 1e5
-                    private$SL.Library = c('ML.Local.lm', 'ML.H2O.gbm')
+                    algos <- list(list(description='ML.H2O.randomForest-1tree',
+                                           algorithm = 'ML.H2O.randomForest',
+                                           params = list(ntrees = 1)))
+
+                    algos <- append(algos, list(list(description='ML.H2O.randomForest-50trees',
+                                           algorithm = 'ML.H2O.randomForest',
+                                           params = list(ntrees = 50))))
+
+                    algos <- append(algos, list(list(description='ML.H2O.gbm',
+                                           algorithm = 'ML.H2O.gbm')))
+
+                    private$SL.library.definition <- algos
 
                     # Run the simulations
                     self$basicRegression()
@@ -88,11 +99,11 @@ OnlineSuperLearner.Simulation <-
 
                     # Generate a dataset we will use for testing.
                     # TODO: This step is really slow, because of the getNextN(800)
-                    private$sim$simulateWAY(1000, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
+                    private$sim$simulateWAY(100, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
                       Data.Static$new(dataset = .) %>%
                       summaryMeasureGenerator$setData(.)
 
-                    data.test <- summaryMeasureGenerator$getNextN(800)
+                    data.test <- summaryMeasureGenerator$getNextN(80)
 
                     # Generate a dataset, from the same statistical model, which we will use to train our model
                     data.train <-
@@ -105,7 +116,7 @@ OnlineSuperLearner.Simulation <-
                     i = 200
                     data.train$reset()
 
-                    osl <- OnlineSuperLearner$new(private$SL.Library,
+                    osl <- OnlineSuperLearner$new(private$SL.library.definition,
                                                   summaryMeasureGenerator = summaryMeasureGenerator,
                                                   verbose = log)
 
@@ -117,10 +128,10 @@ OnlineSuperLearner.Simulation <-
 
                     osl$evaluateModels(data = copy(data.test), W = W, A = A, Y = Y) %>%
                       c(iterations = i, performance = .) %>%
-                      return
+                      print
                     #})
                     #performances <- do.call(rbind, lapply(performances, data.frame)) %T>%
-                      #print
+                    #print
 
                     #plot(x=performances$iterations, y=performances$performance)
                     #performances
