@@ -6,7 +6,7 @@ setOldClass("h2o")
 #' @docType class
 #' @import h2o
 H2O.Initializer <- function(host = "localhost", port = 54321, runlocal = TRUE, verbose = FALSE) {
-  if(h2o.clusterIsUp()) {
+  if(H2O.Available()) {
     verbose && cat(verbose, 'Cluster is up, not initializing.')
     return(FALSE)
   }
@@ -20,6 +20,25 @@ H2O.Initializer <- function(host = "localhost", port = 54321, runlocal = TRUE, v
   }
   verbose && exit(verbose)
   return(TRUE)
+}
+
+H2O.Available <- function() {
+  # TODO: It is bad practice to use this try-catch construction, but I could not find a method that
+  # would just return true false instead of throwing an error.
+  result <- tryCatch({
+    status <- h2o.clusterIsUp()
+    if (status == FALSE) {
+      return(FALSE)
+    }
+    return(TRUE) 
+  }, warning = function(e) {
+    print('Warning!')
+    return(FALSE) 
+  }, error = function(e) {
+    print('Error!')
+    return(FALSE) 
+  })
+  return(result)
 }
 
 #H2O.Initializer <-

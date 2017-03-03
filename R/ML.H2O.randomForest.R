@@ -8,10 +8,10 @@ ML.H2O.randomForest <-
            "ML.H2O.randomForest",
            inherit = ML.H2O,
            private =
-            list(
+             list(
                   nfolds = NULL,
                   ntrees = NULL
-                ),
+                  ),
            public =
              list(
                   initialize = function(nfolds = 0, ntrees = 50) {
@@ -20,18 +20,21 @@ ML.H2O.randomForest <-
                     private$ntrees = ntrees
                   },
 
-                  fit = function(train, Y, A, W){
 
+                  fit = function(trainH2o,  Y, A, W){
                     checkpoint <- private$getCheckpoint()
 
                     self$model <- h2o.randomForest(x = c(A,W), y = Y,
-                                          training_frame = 'train.hex',
-                                          ntrees = private$ntrees,
-                                          nfolds = private$nfolds,
-                                          checkpoint = checkpoint)
+                                                   training_frame = trainH2o,
+                                                   ntrees = private$ntrees,
+                                                   nfolds = private$nfolds,
+                                                   checkpoint = checkpoint)
 
                     # Every update adds a new tree, so we have to increase the number of trees
                     private$ntrees <- private$ntrees + 1
+                    return(NULL)
                   }
                   )
            )
+
+

@@ -24,19 +24,19 @@ SummaryMeasureGenerator <-
                   data = NULL,
                   cache = data.table(),
                   SMG.list = NULL,
-                  minimal.measurements.needed = NULL,
-                  currentData = NULL
+                  verbose = NULL,
+                  minimal.measurements.needed = NULL
                   ),
            public =
              list(
-                  initialize = function(data = NULL, SMG.list) {
+                  initialize = function(data = NULL, SMG.list, verbose = FALSE) {
                     private$data <- data
                     private$SMG.list <- SMG.list
+                    private$verbose <- verbose
 
                     # Determine the minimal number of measurements we need in order to be able to
                     # support all our SMGs
-                    private$minimal.measurements.needed <- max(sapply(SMG.list, function(obj) obj$minimalObservations)
-                    )
+                    private$minimal.measurements.needed <- max(sapply(SMG.list, function(obj) obj$minimalObservations))
                   },
 
                   reset = function() {
@@ -57,48 +57,46 @@ SummaryMeasureGenerator <-
                     FALSE
                   },
 
-                  loadNext = function() {
+                  getNext = function(n = 1) {
                     if(is.null(private$data)) {
                       throw('Please set the data of the summary measure generator first')
                     }
 
-                    if(!self$fillCache()) {
-                      current <- private$data$getNext()
-                      if (is.null(current)) return(NULL)
-
-                      private$cache <- rbindlist(list(private$cache,current ))
-
-                      # Remove the first measurement from the dataframe
-                      private$cache <- tail(private$cache, -1)
-                    }
-
-                    # Generate summary measures using each of the provided objects
-                    datas <- lapply(private$SMG.list, function(smg) smg$process(copy(private$cache)))
-                    private$currentData <- data.table(t(unlist(datas)))
-                  },
-
-                  loadNextN = function(n = 1) {
+                    dt <- data.table()
                     # TODO: Make this much more efficient
                     # TODO: This is an exact copy of the Data.Base function
-                    dt <- data.table()
                     for(i in 1:n) {
-                      current <- self$getNext()
+
+                      if(!self$fillCache()) {
+                        current <- private$data$getNext()
+                        if (is.null(current)) return(NULL)
+
+                        private$cache <- rbindlist(list(private$cache,current ))
+
+                        # Remove the first measurement from the dataframe
+                        private$cache <- tail(private$cache, -1)
+                      }
+
+                      # Generate summary measures using each of the provided objects
+                      # TODO: Use reduce here
+                      datas <- lapply(private$SMG.list, function(smg) smg$process(copy(private$cache)))
+                      current <- data.table(t(unlist(datas)))
+
                       if(is.null(current)) break
 
                       dt <- rbindlist(list(dt, current))
                     }
-                    private$currentData <- dt
-
-                  },
-
-                  getNext = function(){
-                    self$loadNext()
-                    private$currentData
+                    dt
                   },
 
                   getNextN = function(n = 1){
-                    self$loadNextN()
-                    private$currentData
+                    tic <- Sys.time()
+                    private$verbose && enter(private$verbose, paste('Generating subset of',n,'observations'))
+                    data <- self$getNext(n=n) 
+                    toc <- Sys.time()
+                    private$verbose && exit(private$verbose, paste('This took', (toc - tic), 'seconds!!'))
+                    data
+
                   }
                   )
            )

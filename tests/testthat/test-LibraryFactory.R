@@ -45,34 +45,42 @@ test_that("it should work with a single estimator", {
 context("  > with gridsearch")
 test_that("it should should throw if the models provided are not valid", {
   subject <- described.class$new()
-  SL.library <- list(list(algorithm = 'Wont work!')) 
+  SL.library <- list(list(algorithm = 'Wont work!', description = 'nothing')) 
   expect_error(subject$fabricate(SL.library), 'The model Wont work! is not a valid ML model algorithm')
 })
 
 test_that("it should throw if one of the models provided are not valid", {
   subject <- described.class$new()
-  SL.library <- list(list(algorithm='ML.Local.lm'), list(algorithm = 'Wont work!')) 
+  SL.library <- list(list(algorithm='ML.Local.lm', description = 'abc'), list(algorithm = 'Wont work!', description='cba')) 
   expect_error(subject$fabricate(SL.library), 'The model Wont work! is not a valid ML model algorithm')
 })
 
-test_that("it should work without prividing parameters", {
+test_that("it should should throw if the provide list contains invalid entries", {
+  subject <- described.class$new()
+  SL.library <- list(list(algorithm = 'ML.Local.lm')) 
+  expect_error(subject$fabricate(SL.library), 'The entry ML.Local.lm is not specified correctly')
+})
+
+
+test_that("it should work without providing parameters", {
 described.class <- LibraryFactory
   subject <- described.class$new()
-  SL.library <- list(list(algorithm='ML.Local.lm')) 
+  SL.library <- list(list(algorithm='ML.Local.lm', description='ML.Local.lm')) 
   result <- subject$fabricate(SL.library)
 
   expect_true(is.a(result, 'list' ))
   expect_true(length(result) == 1 )
   for (i in 1:length(result)) {
     model <- result[[i]]
-    expect_true(is.a(model, SL.library[i]))
+    expect_true(is.a(model, SL.library[[i]]$algorithm))
     expect_true(is.a(model, 'ML.Base'))
   }
 })
 
 test_that("it should expand a grid for gridsearch", {
   subject <- described.class$new()
-  SL.library <- list(list(algorithm = 'ML.Local.lm', params = list(family= c('binomial', 'gaussian'), learning.rate = c(1, 2, 3, 4)))) 
+  SL.library <- list(list(algorithm = 'ML.Local.lm', description = 'ML.Local.LM-Model',
+                          params = list(family= c('binomial', 'gaussian'), learning.rate = c(1, 2, 3, 4)))) 
   result <- subject$fabricate(SL.library)
   expect_true(is.a(result, 'list' ))
   expect_true(length(result) == 4 * 2 )

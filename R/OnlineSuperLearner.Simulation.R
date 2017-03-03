@@ -90,8 +90,7 @@ OnlineSuperLearner.Simulation <-
                     SMG.list <- c(SMG.list, SMG.Lag$new(lags = 2, colnames.to.lag = (c(A, W, Y))))
                     SMG.list <- c(SMG.list, SMG.Latest.Entry$new(colnames.to.use = (c(A, W, Y))))
 
-                    summaryMeasureGenerator = SummaryMeasureGenerator$new(SMG.list = SMG.list)
-
+                    summaryMeasureGenerator = SummaryMeasureGenerator$new(SMG.list = SMG.list, verbose = log) 
                     # We'd like to use the following features in our estimation:
                     Y = "Y1"
                     W = c("Y1_lag_1","Y1_lag_2","W1", "W1_lag_1", "W1_lag_2", "V2_lag_1", "V2_lag_2")
@@ -113,7 +112,7 @@ OnlineSuperLearner.Simulation <-
                     # Now run several iterations on the data
                     #performances <- mclapply(seq(5,201,20), function(i) {
 
-                    i = 200
+                    i = 20000
                     data.train$reset()
 
                     osl <- OnlineSuperLearner$new(private$SL.library.definition,
@@ -124,7 +123,8 @@ OnlineSuperLearner.Simulation <-
                                           Y = Y,
                                           A = A,
                                           W = W,
-                                          initial.data.size = 30, max.iterations = i)
+                                          initial.data.size = 1000, max.iterations = i,
+                                          mini.batch.size = 1000)
 
                     osl$evaluateModels(data = copy(data.test), W = W, A = A, Y = Y) %>%
                       c(iterations = i, performance = .) %>%

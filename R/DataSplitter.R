@@ -1,21 +1,18 @@
 #' DataSplitter
 #'
-#' Splits data into train and test set, and makes data available to H2O
+#' Splits data into train and test set.
 #' @docType class
 #' @importFrom R6 R6Class
 DataSplitter <-
   R6Class (
            "DataSplitter",
            private =
-            list(
-                ),
+             list(
+                  data.previous = NULL
+                  ),
            public =
              list(
-                  initialize = function(h2o = TRUE) {
-                  },
-
-                  makeDataAvailableOnH2o = function(data, key) {
-                   data.hex <- as.h2o(data, key=key)
+                  initialize = function() {
                   },
 
                   split = function(data){
@@ -33,8 +30,9 @@ DataSplitter <-
                       train <- rbind(private$data.previous, head(data, nrow(data) - 1))
                     }
 
-                    self$makeDataAvailableOnH2o(train, 'train.hex')
+                    private$data.previous <- test
 
+                    
                     return(list(train = train, test = test))
                   }
                   )

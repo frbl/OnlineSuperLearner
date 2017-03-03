@@ -18,7 +18,6 @@ ML.Base <-
            "ML.Base",
            private =
              list(
-                  data.previous = NULL
                   ),
            public =
              list(
@@ -29,8 +28,6 @@ ML.Base <-
 
                   process = function(train, test, Y, A, W) {
                     # DO NOT OVERRIDE THIS FUNCTION!
-                    private$data.previous <- test
-
                     # This function delegates the call to its subclass
                     self$fit(train, Y, A, W)
 

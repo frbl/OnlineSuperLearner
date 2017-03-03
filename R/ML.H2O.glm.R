@@ -24,7 +24,7 @@ ML.H2O.glm <-
                   fit = function(train, Y, A, W){
                     X <- c(A, W)
                     self$model <- h2o.glm(x = X, y = Y,
-                                          training_frame = 'train.hex',
+                                          training_frame = train,
                                           family = self$family,
                                           nfolds = self$nfolds,
                                           alpha = self$alpha,

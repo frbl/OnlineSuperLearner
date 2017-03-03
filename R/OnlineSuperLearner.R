@@ -65,12 +65,27 @@ OnlineSuperLearner <-
                   # @param W: the column names used for the covariates
                   # @return a vector of outcomes, each entry being the predicted outcome of an estimator
                   predictUsingAllEstimators = function(data, A, W) {
-                    result <- lapply(private$SL.library.fabricated,
-                                     function(model) { model$predict(data = data, A = A, W = W) }) %>%
-                    as.data.table(.)
+                    # TODO: Merge with trainAllEstimators
 
-                  names(result) <- private$SL.library.descriptions
-                  result
+                    private$verbose && enter(private$verbose, 'Predicting with all models')
+                    dataH2o <- as.h2o(data)
+                    private$verbose && cat(private$verbose, 'Uploaded data to h2o')
+
+                    result <- lapply(private$SL.library.fabricated,
+                                     function(model) {
+                                       if(is.a(model, 'ML.H2O')){
+                                         current <- dataH2o
+                                       } else {
+                                         current <- data
+                                       }
+                                       model$predict(current, A = A, W = W)
+                                     }
+                                     )
+
+                    result <- as.data.table(result)
+                    names(result) <- private$SL.library.descriptions
+                    private$verbose && exit(private$verbose)
+                    result
                   },
 
 
@@ -82,16 +97,21 @@ OnlineSuperLearner <-
                   # @param W: the column names used for the covariates
                   # @return a vector of outcomes, each entry being the predicted outcome of an estimator on the test set
                   trainAllEstimators = function(data, Y, A, W) {
-                    data.splitted <- private$dataSplitter$split(data)
+                    private$verbose && enter(private$verbose, 'Training all models')
+                    dataH2o <- as.h2o(data)
+                    private$verbose && cat(private$verbose, 'Uploaded data to h2o')
 
-                    result <- lapply(private$SL.library.fabricated,
-                                     function(model) { model$process(train = data.splitted$train,
-                                                                     test = data.splitted$test,
-                                                                     Y = Y, A = A, W = W) }) %>%
-                    as.data.table(.)
-
-                  names(result) <- private$SL.library.descriptions
-                  result
+                    lapply(private$SL.library.fabricated,
+                           function(model) {
+                             if(is.a(model, 'ML.H2O')){
+                               current <- dataH2o
+                             } else {
+                               current <- data
+                             }
+                             model$fit(current, Y = Y, A = A, W = W)
+                           }
+                           )
+                    private$verbose && exit(private$verbose)
                   },
 
                   # Functions
@@ -109,11 +129,13 @@ OnlineSuperLearner <-
 
                     private$verbose && enter(private$verbose, 'Creating initial fits')
 
+                    data.splitted <- private$dataSplitter$split(data.initial)
                     # Fit the initial models
-                    CVpredictions <- private$trainAllEstimators(data = data.initial, Y = Y, A = A, W = W)
+                    private$trainAllEstimators(data = data.splitted$train, Y = Y, A = A, W = W)
 
                     # TODO: Make sure that all predictions are returned in the same format
                     predictions <- private$predictUsingAllEstimators(data = data.initial, A = A, W = W)
+                    CVpredictions <- tail(predictions, 1)
 
                     # Fit the super learner on the current data
                     Ymat <- as.matrix(data.initial[, Y, with = FALSE])
@@ -154,15 +176,18 @@ OnlineSuperLearner <-
                                  cat(private$verbose, paste('Updating OSL at iteration', t,
                                                             'error for', cv.name,
                                                             'is', self$risk.cv[cv.name]))
-                                     })
+                           })
                       }
 
                       # Update all models on the previous data set, and get their prediction on the current data.
-                      CVpredictions <- private$trainAllEstimators(data = data.current, Y = Y, A = A, W = W)
 
-                      # Make a prediction using our (discrete) superlearner
-                      osl.prediction <- self$predict(data = tail(data.current, 1), A = A, W = W)
-                      dosl.prediction <- self$predict(data = tail(data.current, 1), A = A, W = W, discrete = TRUE)
+                      data.splitted <- private$dataSplitter$split(data.current)
+                      private$trainAllEstimators(data = data.splitted$train, Y = Y, A = A, W = W)
+
+                      # Make a prediction using our (super)learners
+                      CVpredictions <- private$predictUsingAllEstimators(data = data.splitted$test, A = A, W = W)
+                      osl.prediction <- self$predict(data = data.splitted$test, A = A, W = W)
+                      dosl.prediction <- self$predict(data = data.splitted$test, A = A, W = W, discrete = TRUE)
 
                       # Calculate the updated cross validated risk using the new measurement
                       # Predicted.outcome is now the level 1 'matrix' of each estimator. It contains
@@ -279,7 +304,7 @@ OnlineSuperLearner <-
                     names(self$risk.cv) <- c(private$SL.library.descriptions, 'DOSL', 'OSL')
 
                     # TODO: Check for H2O, if we need it
-                    private$dataSplitter <- DataSplitter$new(h2o=TRUE)
+                    private$dataSplitter <- DataSplitter$new()
 
                     self$setFitted(FALSE)
 
