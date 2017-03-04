@@ -40,6 +40,11 @@ test_that("it should be tested properly", {
                        what=c(1, 1, 0))
   ## -> parameter E((Y_{1,10}+Y_{1,15}+Y_{0,20})/3)
   B <- 1e3
+  
+  #'psi.approx' is a Monte-Carlo approximation of the parameter of interest.
+  # This is a little slow, because 'simulateWAYOneTrajectory' is designed to simulate quickly a long time series,
+  # as opposed to many short time series. 
+  # TODO: Workaround: parallelize!
   psi.approx <- mean(sapply(1:B, function(bb) {
     when <- max(intervention$when)
     data.int <- sim$simulateWAYOneTrajectory(max(when), qw=llW, ga=llA, Qy=llY,
