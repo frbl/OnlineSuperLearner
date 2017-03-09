@@ -54,6 +54,7 @@ Collate:
     'ML.H2O.randomForest.R'
     'ML.XGBoost.R'
     'WeightedCombinationComputer.R'
+    'SMG.Mock.R'
     'SummaryMeasureGenerator.R'
     'OnlineSuperLearner.R'
     'OnlineSuperLearner.Simulation.R'

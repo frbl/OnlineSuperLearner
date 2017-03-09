@@ -43,6 +43,7 @@ Data.Static <-
                     } else {
                       throw('You need to provide at least a datatable or url')
                     }
+                    self$reset()
                   },
 
                   getAll = function() {
@@ -66,7 +67,7 @@ Data.Static <-
                     Arguments$getInteger(max, c(1, Inf))
                     number.of.observations <- Arguments$getInteger(number.of.observations, c(1, max))
 
-                    temp <- private$dataset[private$currentrow:number.of.observations, ]
+                    temp <- private$dataset[private$currentrow:((private$currentrow+number.of.observations)-1), ]
                     private$currentrow <- private$currentrow + number.of.observations
                     return(temp)
                   }
