@@ -70,9 +70,9 @@ OnlineSuperLearner.Simulation <-
                     
 
                     # Define the variables in the initial dataset we'd like to use
-                    Y = "Y1"
-                    W = c("W1")
-                    A = c("V2")
+                    Y = "Y"
+                    W = c("W")
+                    A = c("A")
 
                     # Create the measures we'd like to include in our model
                     # In this simulation we will include 2 lags and the latest data (non lagged)
@@ -83,9 +83,9 @@ OnlineSuperLearner.Simulation <-
                     summaryMeasureGenerator = SummaryMeasureGenerator$new(SMG.list = SMG.list)
 
                     # We'd like to use the following features in our estimation:
-                    Y = "Y1"
-                    W = c("Y1_lag_1","Y1_lag_2","W1", "W1_lag_1", "W1_lag_2", "V2_lag_1", "V2_lag_2")
-                    A = c("V2")
+                    Y = "Y"
+                    W = c("Y_lag_1","Y_lag_2","W", "W_lag_1", "W_lag_2", "A_lag_1", "A_lag_2")
+                    A = c("A")
 
                     # Generate a dataset we will use for testing.
                     # TODO: This step is really slow, because of the getNextN(800)
