@@ -61,17 +61,18 @@ OnlineSuperLearner.Simulation <-
                                   rbinom(length(xx), 1, delta+(1-2*delta)*expit(xx))
                                 })
 
-                    llY <- list(stochMech=function(aa, ww){
-                                  aa*ww+(1-aa)*(-ww)
-                                },
-                                param=c(0.1, 0.1, 0.1, 0.05, -0.01),
-                                rgen=identity)
-
+                    llY <- list(rgen={function(AW){
+                      aa <- AW[, "A"]
+                      ww <- AW[, grep("[^A]", colnames(AW))]
+                      mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
+                        (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
+                      rnorm(length(mu), mu, sd=0.1)}})
+                    
 
                     # Define the variables in the initial dataset we'd like to use
-                    Y = "Y1"
-                    W = c("W1")
-                    A = c("V2")
+                    Y = "Y"
+                    W = c("W")
+                    A = c("A")
 
                     # Create the measures we'd like to include in our model
                     # In this simulation we will include 2 lags and the latest data (non lagged)
@@ -82,13 +83,13 @@ OnlineSuperLearner.Simulation <-
                     summaryMeasureGenerator = SummaryMeasureGenerator$new(SMG.list = SMG.list)
 
                     # We'd like to use the following features in our estimation:
-                    Y = "Y1"
-                    W = c("Y1_lag_1","Y1_lag_2","W1", "W1_lag_1", "W1_lag_2", "V2_lag_1", "V2_lag_2")
-                    A = c("V2")
+                    Y = "Y"
+                    W = c("Y_lag_1","Y_lag_2","W", "W_lag_1", "W_lag_2", "A_lag_1", "A_lag_2")
+                    A = c("A")
 
                     # Generate a dataset we will use for testing.
                     # TODO: This step is really slow, because of the getNextN(800)
-                    private$sim$simulateWAY(1000, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
+                    private$sim$simulateWAYOneTrajectory(1000, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
                       Data.Static$new(dataset = .) %>%
                       summaryMeasureGenerator$setData(.)
 
@@ -96,7 +97,7 @@ OnlineSuperLearner.Simulation <-
 
                     # Generate a dataset, from the same statistical model, which we will use to train our model
                     data.train <-
-                      private$sim$simulateWAY(private$nobs, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
+                      private$sim$simulateWAYOneTrajectory(private$nobs, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
                       Data.Static$new(dataset = .)
 
                     # Now run several iterations on the data
