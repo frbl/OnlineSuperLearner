@@ -3,13 +3,20 @@
 #' @docType class
 #' @importFrom R6 R6Class
 #' @import data.table
+#' @import purrr
 #' @include ML.XGBoost.glm.R
+#' @include ML.Local.lm.R
 #' @section Methods:
 #' \describe{
 #'   \item{\code{new(ML.models.allowed = c('ML.H2O.glm', 'ML.Local.lm', 'ML.XGBoost.glm'))}}{This method is used to create object of this class. It expects a \code{ML.models.allowed} as a list which describes all of the models that are allowed for fabrication. }
 #'
-#'   \item{\code{getValidity()}}{Method to determine if the object is in a valid state.}
-#'   \item{\code{fabricate(SL.library)}}{Method that fabricates the models in the provided \code{SL.library}.}
+#'   \item{\code{getValidity()}}{
+#'    Method to determine if the object is in a valid state.
+#'   }
+#'
+#'   \item{\code{fabricate(SL.library)}}{
+#'    Method that fabricates the models in the provided \code{SL.library}.
+#'   }
 #'}
 LibraryFactory <-
   R6Class (
@@ -17,8 +24,46 @@ LibraryFactory <-
            private =
              list(
                   ML.models.allowed = NULL,
+
+                  isValidLibraryGrid = function(SL.library.entry) {
+                    'algorithm' %in% names(SL.library.entry) &
+                    'description' %in% names(SL.library.entry)
+                  },
+
                   isValidMlModel = function(ML.name) {
+                    # TODO: Test if files actually exist.
                     ML.name %in% private$ML.models.allowed
+                  },
+
+                  fabricateGrid = function(SL.library) {
+                    # Create objects for each of the objects
+                    instances <- lapply(SL.library,
+                                        function(entry) {
+                                          self$getEntryValidity(entry)
+
+                                          # If no params are provided, treat the list as a vector
+                                          if (!('params' %in% names(entry))){
+                                            return(list(do.call(get(entry$algorithm)$new, args = list())))
+                                          }
+
+                                          param.list <- entry$params %>% purrr::cross_d()
+                                          data.table::setDT(param.list)
+                                          lapply(1:nrow(param.list),
+                                                 function(i){ do.call(get(entry$algorithm)$new, args = param.list[i]) })
+                                        })
+
+                    unlist(instances)
+                  },
+
+                  fabricateDefault = function(SL.library) {
+                    # Create objects for each of the objects
+                    lapply(SL.library,
+                           function(entry) {
+                             if (!private$isValidMlModel(entry)){
+                               throw(paste('The model', entry, 'is not a valid ML model algorithm'))
+                             }
+                             do.call(get(entry)$new, args = list())
+                           })
                   }
                   ),
 
@@ -26,15 +71,29 @@ LibraryFactory <-
              list(
                   initialize = function(ML.models.allowed = c('ML.H2O.gbm',
                                                               'ML.H2O.glm',
+                                                              'ML.H2O.randomForest',
                                                               'ML.Local.lm',
                                                               'ML.XGBoost.glm')) {
                     private$ML.models.allowed = ML.models.allowed
                     self$getValidity()
                   },
 
+                  getEntryValidity = function(entry) {
+                    if (!is.a(entry, 'list')) {
+                     return() 
+                    }
+
+                    if (!private$isValidLibraryGrid(entry)){
+                      throw(paste('The entry', entry, 'is not specified correctly'))
+                    }
+
+                    if (!private$isValidMlModel(entry$algorithm)){
+                      throw(paste('The model', entry$algorithm, 'is not a valid ML model algorithm'))
+                    }
+                  },
+
                   getValidity = function() {
                     errors <- character()
-                    # TODO: Test if files actually exist.
                     # Check if all models are actually ml models
                     are.ml.models <- sapply(private$ML.models.allowed, startsWith, 'ML')
                     if(!all(are.ml.models)){
@@ -45,15 +104,14 @@ LibraryFactory <-
                   },
 
                   fabricate = function(SL.library) {
-                    # Create objects for each of the objects
-                    lapply(SL.library, function(entry) {
-                             if (!private$isValidMlModel(entry)){
-                               throw(paste('The model', entry, 'is not a valid ML model name'))
-                             }
+                    # If we receive a list, assume that we have to create a parameter grid for each model
+                    if(is.a(SL.library, 'list')){
+                      return(private$fabricateGrid(SL.library))
+                    }
 
-                             # TODO: Find a way to do this better.
-                             constructor <- paste(entry, "$new()", sep = '')
-                             eval(parse(text = constructor)) })
+                    # if it is not a list, assume it is a vector or string
+                    SL.library <- Arguments$getCharacters(SL.library)
+                    return(private$fabricateDefault(SL.library))
                   }
                   )
            )

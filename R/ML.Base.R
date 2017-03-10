@@ -18,51 +18,31 @@ ML.Base <-
            "ML.Base",
            private =
              list(
-                  data.previous = NULL,
-
-                  splitData = function(data){
-                    if(is.null(self$model)){
-                      test <- tail(data, 1)
-                      train <- head(data, nrow(data)-1)
-                    } else {
-                      test <- data
-                      train <- private$data.previous
-                    }
-                    return(list(train = train, test = test))
-                  }
                   ),
            public =
              list(
-                  iteration = NULL,
-                  CV.risk = NULL,
-                  model = NULL, 
+                  model = NULL,
 
                   initialize = function() {
-                    self$iteration = 0
-                    self$CV.risk = 0
                   },
 
-                  process = function(data, Y, A, W) {
+                  process = function(train, test, Y, A, W) {
                     # DO NOT OVERRIDE THIS FUNCTION!
-                    split <- private$splitData(data)
-                    private$data.previous <- split$test
-
                     # This function delegates the call to its subclass
-                    test.prediction <- self$fit(split$train, split$test, Y, A, W)
+                    self$fit(train, Y, A, W)
 
-                    # Update the CV risk
-                    self$iteration <- self$iteration + 1
-                    #TODO: recalculate the crossvalidated risk here
+                    # Predict the outcome on the testset
+                    self$predict(test, A, W)
                   },
 
-                  fit = function(train, test, Y, A, W) {
+                  fit = function(train, Y, A, W) {
                     throw('The fit method needs to be inherited')
                   },
 
                   predict = function(data, A, W) {
                     warning('You are using the base predict function, you\'d probably want to inherit and override this')
                     if (is.null(self$model)) {
-                     throw('Train the model first')
+                      throw('Train the model first')
                     }
                     X <- c(A, W)
                     pred <- predict(self$model, as.matrix(data[, X, with = FALSE]))

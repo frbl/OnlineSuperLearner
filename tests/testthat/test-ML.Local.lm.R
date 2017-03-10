@@ -24,27 +24,27 @@ test_that("it should predict using a regression prediction if the family is gaus
   estimator <- glm(y ~ x, data, family = gaussian())
   data.new <-  data.table(x= c(1,11,111))
   expected <- predict(estimator, data.new)
-  subject$model <- estimator
+  subject$model <- estimator$coefficients
   result <- subject$predict(data = data.new, A = NULL, W='x')
-
-  expect_equal(result, expected)
+  expect_true(all((result -  expected) == 0))
 })
 test_that("it should predict using a regression prediction if the family is binomial", {
   subject <- ML.Local.lm$new(family='binomial')
   data <- data.table(
-                     x=c(2,3,4,5,6,7,8,9,10),
-                     y=c(0,0,0,0,0,1,0,1,1)
+                     x=c(1,2,3,4,5,6,7,8,9,10),
+                     y=c(0,0,0,0,0,0,1,0,1,1)
                      )
   data.new <-  data.table(x= c(-1,1,10,11,12))
 
   estimator <- glm(y ~ x, data, family = binomial())
-  subject$model <- estimator
+  subject$model <- estimator$coefficients
   expected <- predict(estimator, data.new, type = 'response') > 0.5
   result <- subject$predict(data = data.new, A = NULL, W='x') > 0.5
 
   expect_true(all(expected == c(FALSE, FALSE, TRUE, TRUE, TRUE)))
   expect_true(all(result == expected))
 })
+
 context(" fit")
 test_that("it should call the initial GLM function with the correct parameters if no model exists", {
   subject <- ML.Local.lm$new(family='gaussian')
@@ -57,7 +57,7 @@ test_that("it should call the initial GLM function with the correct parameters i
      if(ifelse(family=='gaussian', TRUE, FALSE) && ifelse(formula == formula, TRUE,FALSE))
        stop('stop_execution')
    },
-   expect_error(subject$fit(NULL, NULL, 'a','b','c'), 'stop_execution'),
+   expect_error(subject$fit(NULL, NULL, 'a','b'), 'stop_execution'),
    .env = "base"
   )
 })
@@ -70,7 +70,7 @@ test_that("it should do a gradient descent update of the coefficients of the fit
   )
 
   subject$fit(data, Y = 'y', A = NULL, W = 'x')
-  model.pre <- subject$model$coefficients
+  model.pre <- subject$model
 
   newdata <- data.table(
     x=(seq(1,200) + 2),
@@ -78,10 +78,37 @@ test_that("it should do a gradient descent update of the coefficients of the fit
   )
 
   subject$fit(newdata, Y = 'y', A = NULL, W = 'x')
-  model.post <- subject$model$coefficients
+  model.post <- subject$model
   expect_false(all((model.pre - model.post) == 0))
   # TODO: Test whether the gradient descent actually works
 })
 
+test_that("it should work with a large number of observations", {
+  set.seed(1234)
+  subject <- ML.Local.lm$new(learning.rate = 0.0001, family='gaussian', initialization.random = TRUE)
+  obs <- 100
+  initial <- 1
+  x0 <- rep(1,obs) # column of 1's
+  x1 <- rnorm(obs, mean=5) # original x-values
 
+  intercept = 1.5
+  coeff1 = 1.5
+
+  # create the y-matrix of dependent variables
+  noise <- rnorm(obs)
+  y <- intercept * x0 + coeff1 * x1
+
+  data <- data.table(x1= x1, y= y)
+  subject$fit(data[1:initial,], Y = 'y', A = NULL, W = c('x1'))
+  coeff.org <- subject$model
+  for (i in initial:obs) {
+      subject$fit(data[i,], Y = 'y', A = NULL, W = c('x1'))
+  }
+  coeff.new <- subject$model
+  # TODO: Add actual test
+  print(coeff.org)
+  print(coeff.new)
+  expect_true(abs(coeff.org[1] - intercept) >= abs(coeff.new[1] - intercept))
+  expect_true(abs(coeff.org[2] - intercept) >= abs(coeff.new[2] - intercept))
+})
 

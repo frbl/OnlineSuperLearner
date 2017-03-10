@@ -16,8 +16,13 @@ The libraryFactory can instantiate a set of models given to it.
 \describe{
   \item{\code{new(ML.models.allowed = c('ML.H2O.glm', 'ML.Local.lm', 'ML.XGBoost.glm'))}}{This method is used to create object of this class. It expects a \code{ML.models.allowed} as a list which describes all of the models that are allowed for fabrication. }
 
-  \item{\code{getValidity()}}{Method to determine if the object is in a valid state.}
-  \item{\code{fabricate(SL.library)}}{Method that fabricates the models in the provided \code{SL.library}.}
+  \item{\code{getValidity()}}{
+   Method to determine if the object is in a valid state.
+  }
+
+  \item{\code{fabricate(SL.library)}}{
+   Method that fabricates the models in the provided \code{SL.library}.
+  }
 }
 }
 \keyword{datasets}
