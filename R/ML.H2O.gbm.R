@@ -3,30 +3,27 @@
 #' @docType class
 #' @importFrom R6 R6Class
 #' @include ML.H2O.R
-#' @export
 ML.H2O.gbm <-
   R6Class (
            "ML.H2O.gbm",
            inherit = ML.H2O,
            private =
              list(
-                  prev = NULL
+                  prev = NULL,
+                  min_rows = NULL,
+                  ntrees = NULL
                   ),
            public =
              list(
                   nfolds = NULL,
 
-                  initialize = function(nfolds = 0) {
+                  initialize = function(nfolds = 0, ntrees=50, min_rows=9) {
                     super$initialize()
+                    private$ntrees = ntrees
+                    private$min_rows = min_rows
                   },
 
-
-                  fit = function(train, test, Y, A, W){
-                    # TODO:! This is teribly inefficient and is merely for testing
-                    train.hex <- as.h2o(train, key="train.hex")
-                    test.hex <- as.h2o(test, key="test.hex")
-
-                    X <- c(A, W)
+                  fit = function(train, Y, A, W){
                     checkpoint <- private$getCheckpoint()
                     if(!is.null(private$prev) &&
                        !all(private$prev == colnames(train))){
@@ -34,16 +31,16 @@ ML.H2O.gbm <-
                     }
                     private$prev <- colnames(train)
 
-                    # TODO: This currently fails because it probably
-                    # has unseen strata in the new data? (it fails
-                    # because of the checkpoint)
-                    self$model <- h2o.gbm(x = X, y = Y,
-                                          training_frame = train.hex,
-                                          validation_frame = test.hex,
+                    self$model <- h2o.gbm(x = c(A,W), y = Y,
+                                          training_frame = train,
                                           nfolds = self$nfolds,
+                                          ntrees = private$ntrees,
+                                          min_rows = private$min_rows,
                                           checkpoint = checkpoint)
 
-                    h2o.cross_validation_predictions(self$model)
+                    # Every update adds a new tree, so we have to increase the number of trees
+                    private$ntrees <- private$ntrees + 1
+                    return(NULL)
                   }
                   )
            )

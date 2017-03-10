@@ -22,10 +22,19 @@ ML.H2O <-
                  ),
           public =
             list(
-                 initialize = function() {
+                 initialize = function(verbose = Arguments$getVerbose(-8, timestamp=TRUE) ) {
                    H2O.Initializer(host = "localhost",
                                    port = 54321,
-                                   runlocal = TRUE)
+                                   runlocal = TRUE,
+                                   verbose = verbose)
+                 },
+
+                 predict = function(data, A, W) {
+                   # Upload the data to h2o. 
+                   # TODO: This is terribly inefficient.
+                   data.hex <- as.h2o(data, key="data.hex")
+                   as.data.table(h2o.predict(object = self$model, newdata = data.hex))
                  }
+
                  )
           )

@@ -10,6 +10,7 @@ ML.Local <- R6Class("ML.Local",
                     public =
                       list(
                            initialize = function() {
+                             super$initialize()
                            },
 
                            createFormula = function(Y, A, W) {

@@ -1,14 +1,25 @@
 #' Accuracy caluclator
 Evaluation.Accuracy <- function(data.observed, data.predicted) {
-  boolean.prediction <- as.numeric(data.predicted) >= 0.5
-  boolean.predicted <- as.numeric(data.observed) >= 0.5
-  mean(as.numeric(boolean.prediction == boolean.predicted))
+  boolean.predicted <- as.numeric(data.predicted) >= 0.5
+  boolean.observed <- as.numeric(data.observed) >= 0.5
+  if (is.a(boolean.predicted, 'matrix')) {
+    means <- colMeans(as.numeric(boolean.observed == boolean.predicted))
+    names(means) <- names(data.predicted)
+    return(means)
+  }
+  mean(as.numeric(boolean.observed == boolean.predicted))
 }
 
 #' MSE caluclator
 Evaluation.MeanSquaredError <- function(data.observed, data.predicted) {
   # Calculate the MSE
-  mean((data.observed - data.predicted)^2)
+  se <- (data.predicted - data.observed)^2
+  if (is.a(data.predicted, 'matrix')) {
+    means <- colMeans(se)
+    names(means) <- names(data.predicted)
+    return(means)
+  }
+  mean(se)
 }
 
 #' RMSE caluclator

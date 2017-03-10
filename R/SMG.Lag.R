@@ -44,6 +44,8 @@ SMG.Lag <-
                       stop(paste('At least', self$minimalObservations, 'observations required'))
                     }
 
+                    # TODO: We could probably do this in a smarter way, i.e., creating an initial frame first
+                    # and than prepend new columns, and remove the last column.
                     data.current[, (private$colnames.lagged) := shift(.SD, private$lags.vector, NA),
                                  .SDcols = private$colnames]
 

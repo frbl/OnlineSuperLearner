@@ -2,6 +2,7 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
+#' @export
 OnlineSuperLearner.Simulation <-
   R6Class (
            "OnlineSuperLearner.Simulation",
@@ -9,16 +10,25 @@ OnlineSuperLearner.Simulation <-
              list(
                   sim = NULL,
                   nobs = NULL,
-                  SL.Library = NULL
+                  SL.library.definition = NULL
                   ),
            public =
              list(
                   initialize = function() {
                     private$sim  <- Simulator.GAD$new()
                     private$nobs <- 1e5
-                    private$SL.Library = c('ML.Local.lm',
-                                           'ML.H2O.glm',
-                                           'ML.H2O.gbm')
+                    algos <- list(list(description='ML.H2O.randomForest-1tree',
+                                           algorithm = 'ML.H2O.randomForest',
+                                           params = list(ntrees = 1)))
+
+                    algos <- append(algos, list(list(description='ML.H2O.randomForest-50trees',
+                                           algorithm = 'ML.H2O.randomForest',
+                                           params = list(ntrees = 50))))
+
+                    algos <- append(algos, list(list(description='ML.H2O.gbm',
+                                           algorithm = 'ML.H2O.gbm')))
+
+                    private$SL.library.definition <- algos
 
                     # Run the simulations
                     self$basicRegression()
@@ -45,6 +55,7 @@ OnlineSuperLearner.Simulation <-
                   basicRegressionWithLags = function() {
                     set.seed(12345)
                     log <- FALSE
+                    log <- Arguments$getVerbose(-8, timestamp=TRUE)
 
                     ######################################
                     # Generate observations for training #
@@ -80,8 +91,7 @@ OnlineSuperLearner.Simulation <-
                     SMG.list <- c(SMG.list, SMG.Lag$new(lags = 2, colnames.to.lag = (c(A, W, Y))))
                     SMG.list <- c(SMG.list, SMG.Latest.Entry$new(colnames.to.use = (c(A, W, Y))))
 
-                    summaryMeasureGenerator = SummaryMeasureGenerator$new(SMG.list = SMG.list)
-
+                    summaryMeasureGenerator = SummaryMeasureGenerator$new(SMG.list = SMG.list, verbose = log) 
                     # We'd like to use the following features in our estimation:
                     Y = "Y"
                     W = c("Y_lag_1","Y_lag_2","W", "W_lag_1", "W_lag_2", "A_lag_1", "A_lag_2")
@@ -93,7 +103,7 @@ OnlineSuperLearner.Simulation <-
                       Data.Static$new(dataset = .) %>%
                       summaryMeasureGenerator$setData(.)
 
-                    data.test <- summaryMeasureGenerator$getNextN(800)
+                    data.test <- summaryMeasureGenerator$getNextN(80)
 
                     # Generate a dataset, from the same statistical model, which we will use to train our model
                     data.train <-
@@ -101,27 +111,31 @@ OnlineSuperLearner.Simulation <-
                       Data.Static$new(dataset = .)
 
                     # Now run several iterations on the data
-                    performances <- lapply(seq(5,201,20), function(i) {
-                      data.train$reset()
+                    #performances <- mclapply(seq(5,201,20), function(i) {
 
-                      osl <- OnlineSuperLearner$new(private$SL.Library,
-                                                    summaryMeasureGenerator = summaryMeasureGenerator,
-                                                    verbose = log)
+                    i = 20000
+                    data.train$reset()
 
-                      estimators <- osl$run(data.train,
-                                            Y = Y,
-                                            A = A,
-                                            W = W,
-                                            initial.data.size = 30, iterations.max = i)
+                    osl <- OnlineSuperLearner$new(private$SL.library.definition,
+                                                  summaryMeasureGenerator = summaryMeasureGenerator,
+                                                  verbose = log)
 
-                      osl$evaluateModels(data = copy(data.test),
-                                        W = W, A = A, Y = Y) %>% c(iterations = i, performance = .)
-                    })
-                    performances <- do.call(rbind, lapply(performances, data.frame)) %T>%
+                    estimators <- osl$run(data.train,
+                                          Y = Y,
+                                          A = A,
+                                          W = W,
+                                          initial.data.size = 20, max.iterations = i,
+                                          mini.batch.size = 1000)
+
+                    osl$evaluateModels(data = copy(data.test), W = W, A = A, Y = Y) %>%
+                      c(iterations = i, performance = .) %>%
                       print
+                    #})
+                    #performances <- do.call(rbind, lapply(performances, data.frame)) %T>%
+                    #print
 
-                    plot(x=performances$iterations, y=performances$performance)
-                    performances
+                    #plot(x=performances$iterations, y=performances$performance)
+                    #performances
                   }
                   )
 

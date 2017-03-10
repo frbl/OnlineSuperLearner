@@ -9,12 +9,17 @@ test_that("it should calculate the accuracy correctly", {
   expected  <- 0.8
   expect_equal(accuracy, expected)
 })
-test_that("it should also work with boolean values", {
+
+test_that("it should also predict the accuracy correctly with boolean values", {
   true.data <- c(T,F,T,F,T,F,F,T,F,T)
   predicted.data <- c(T,F,T,T,T,F,F,F,F,T)
   accuracy <- Evaluation.Accuracy(predicted.data, true.data)
   expected  <- 0.8
   expect_equal(accuracy, expected)
+})
+
+test_that("it should predict the accuracy correctly with matrices", {
+  
 })
 
 context(" Evaluation.MeanSquaredError")
@@ -31,6 +36,10 @@ test_that("it should calculate the MSE correctly", {
   expect_equal(mse, expected)
 })
 
+test_that("it should predict the mse correctly with matrices", {
+  
+})
+
 context(" Evaluation.RootMeanSquaredError")
 test_that("it should calculate the RMSE correctly", {
   true.data <-      c(1,1,6,4,6,4,1,1,4,9)
@@ -42,4 +51,8 @@ test_that("it should calculate the RMSE correctly", {
 
   result <- Evaluation.RootMeanSquaredError(predicted.data, true.data)
   expect_equal(result, expected)
+})
+
+test_that("it should predict the rmse correctly with matrices", {
+  
 })
