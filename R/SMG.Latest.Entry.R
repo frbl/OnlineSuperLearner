@@ -22,7 +22,8 @@ SMG.Latest.Entry <-
                     if(nobs < self$minimalObservations){
                       stop(paste('At least', self$minimalObservations, 'observations required'))
                     }
-                    tail(data.current, 1)
+                    if(self$minimalObservations == 1) return(data.current)
+                    return(tail(data.current, -(self$minimalObservations -1)))
                   }
                   )
            )

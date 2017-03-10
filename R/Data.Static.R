@@ -44,6 +44,8 @@ Data.Static <-
                       throw('You need to provide at least a datatable or url')
                     }
                     self$reset()
+                    print('Static set initialized with:')
+                    print(head(dataset))
                   },
 
                   getAll = function() {

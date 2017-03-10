@@ -204,7 +204,8 @@ OnlineSuperLearner <-
 
                       # Update the discrete superlearner (take the first if there are multiple candidates)
                       private$odsl.estimator <-
-                        private$SL.library.fabricated[[which( self$risk.cv[private$SL.library.descriptions] == min(self$risk.cv[private$SL.library.descriptions]))]]
+                        which(self$risk.cv[private$SL.library.descriptions] == min(self$risk.cv[private$SL.library.descriptions]))[1] %>%
+                        private$SL.library.fabricated[[.]]
 
                       # Get the new row of data
                       data.current <- private$summaryMeasureGenerator$getNextN(mini.batch.size)
