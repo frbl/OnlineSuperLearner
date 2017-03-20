@@ -12,4 +12,3 @@ ML.H2O.glm
 ML.H2O.glm
 }
 \keyword{datasets}
-

@@ -9,4 +9,3 @@ Evaluation.MeanSquaredError(data.observed, data.predicted)
 \description{
 MSE caluclator
 }
-

@@ -16,10 +16,24 @@ packages <- c(
 "purrr",
 "roxygen2"
 )
-new.packages <- packages[!(packages %in% installed.packages()[, "Package"])]
-if (length(new.packages))
-  install.packages(new.packages)
-update.packages(lib.loc = Sys.getenv("R_LIBS_USER"), ask = FALSE)
+
+gh_packages <- c(
+"osofr/tmlenet"
+)
+
+install <- function(packages, installfunc){
+  new.packages <- packages[!(packages %in% installed.packages()[, "Package"])]
+  if (length(new.packages))
+    installfunc(new.packages)
+  update.packages(lib.loc = Sys.getenv("R_LIBS_USER"), ask = FALSE)
+}
+
+install(packages, install.packages)
+install(gh_packages, devtools::install_github)
+#new.packages <- packages[!(packages %in% installed.packages()[, "Package"])]
+#if (length(new.packages))
+  #install.packages(new.packages)
+#update.packages(lib.loc = Sys.getenv("R_LIBS_USER"), ask = FALSE)
 
 # Specific packages
 # Finds and remove any previously installed H2O packages for R.

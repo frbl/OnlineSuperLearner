@@ -9,4 +9,3 @@ Evaluation.Accuracy(data.observed, data.predicted)
 \description{
 Accuracy caluclator
 }
-

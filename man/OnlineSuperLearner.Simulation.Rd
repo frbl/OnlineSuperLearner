@@ -12,4 +12,3 @@ OnlineSuperLearner.Simulation
 OnlineSuperLearner.Simulation runs different simulations on the superlearner object.
 }
 \keyword{datasets}
-

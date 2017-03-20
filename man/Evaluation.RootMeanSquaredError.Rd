@@ -9,4 +9,3 @@ Evaluation.RootMeanSquaredError(data.observed, data.predicted)
 \description{
 RMSE caluclator
 }
-

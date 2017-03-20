@@ -14,4 +14,3 @@ is.a(obj, obj.class)
 \description{
 Checks whether an object is an instance of the provided class
 }
-

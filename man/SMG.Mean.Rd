@@ -12,4 +12,3 @@ SMG.Mean
 SMG.Mean
 }
 \keyword{datasets}
-

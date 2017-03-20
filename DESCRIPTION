@@ -23,6 +23,7 @@ Imports:
     h2o (>=	3.10.3.2),
     R.oo,
     R6,
+    tmlenet,
     methods,
     magrittr,
     purrr,
@@ -32,19 +33,20 @@ Imports:
 Suggests:
     roxygen2,
     testthat
-RoxygenNote: 5.0.1
-Collate:
+RoxygenNote: 6.0.1
+Collate: 
     'Data.Base.R'
     'Data.Static.R'
     'Data.Stream.R'
     'Simulator.Simple.R'
     'Data.Stream.Simulator.R'
     'DataSplitter.R'
+    'ML.Base.R'
+    'ML.Local.R'
+    'Density.Estimation.R'
     'Evaluation.R'
     'Global.R'
     'H2O.initializer.R'
-    'ML.Base.R'
-    'ML.Local.R'
     'ML.Local.lm.R'
     'ML.XGBoost.glm.R'
     'LibraryFactory.R'

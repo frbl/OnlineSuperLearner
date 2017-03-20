@@ -16,6 +16,7 @@ Very basic simulator to generate data from a simple binary model
 \describe{
 \item{\code{model}}{the most recent / best model fitted.}
 }}
+
 \section{Methods}{
 
 \describe{
@@ -24,5 +25,5 @@ Very basic simulator to generate data from a simple binary model
   \item{\code{fit(nr.of.observations)}}{Generate a number of observations from the model (multple observations can be retrieved at once by using the \code{nr.of.observations} param}
 }
 }
-\keyword{datasets}
 
+\keyword{datasets}

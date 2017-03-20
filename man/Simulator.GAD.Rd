@@ -14,4 +14,3 @@ Simulator.GAD
 directed acyclic graph approach to simulation
 }
 \keyword{datasets}
-
