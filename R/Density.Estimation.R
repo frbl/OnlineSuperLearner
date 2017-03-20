@@ -1,3 +1,4 @@
+devtools::load_all('~/Workspace/frbl/tmlenet/')
 #' Density.Estimation
 #'
 #' @import tmlenet
@@ -11,7 +12,13 @@ Density.Estimation <-
                     inherit = ML.Local,
            private =
              list(
-                  nobs = 100000
+                  data = NULL,
+                  nobs = 1000,
+                  fakeUpdate = function(newData, X = c("W1"), Y = c("Y")){
+                    warning('This is not an online update! We fake  the online part!')
+                    data <- rbindlist(list(private$data, newData))
+                    self$fit(data, X,Y)
+                  }
                   ),
            active =
              list(
@@ -27,13 +34,16 @@ Density.Estimation <-
              list(
                   initialize = function() {
                     set.seed(12345)
-                    datO <- self$defaultDataTable[sample(.N,100)]
+                    datO <- self$defaultDataTable
                     self$fit(datO = datO)
                     datO <- self$defaultDataTable
                     self$predict(datO = datO)
                   },
 
                   fit = function(datO, X = c("W1"), Y = c("Y"), nbins = 20){
+                    #TODO: Make this step online (remove the following line)
+                    private$data <- datO
+
                     nodeObjects <- self$defineNodeObjects(datO = datO, X = X, Y = Y)
 
                     DatNet_object <- nodeObjects$datNetObs
@@ -57,17 +67,21 @@ Density.Estimation <-
                   },
 
                   update = function(datO, X = c("W1"), Y = c("Y")) {
-                    throw('Not yet implemented')
+                    private$fakeUpdate(datO, X=X, Y=Y)
                   },
 
                   predict = function(datO, X = c("W1"), Y = c("Y")) {
                     nodeObjects <- self$defineNodeObjects(datO = datO, X = X, Y = Y)
+                    nodeObjectsSub <- self$defineNodeObjects(datO = datO[1:30,], X = X, Y = Y)
 
                     # Create predictions
-                    browser()
-                    self$model$predict(newdata = nodeObjects$datNetObs)
+                    #TODO: Why would we want to use predict over Aeqa?
+                    self$model$predict(newdata = nodeObjectsSub$datNetObs)
 
+
+                    # Predict the instances where A=A (i.e., the outcome is the outcome)
                     estimated_densities <- self$model$predictAeqa(newdata = nodeObjects$datNetObs)
+                    estimated_densities2 <- self$model$predictAeqa(newdata = nodeObjectsSub$datNetObs)
                     y_values <- datO[[Y]]
 
                     # TESTING:
@@ -77,10 +91,19 @@ Density.Estimation <-
                     #estimated_densities <- estimated_densities[subs]
 
                     # plot densitity first:
-                    plot(density(datO[[Y]]))
+                    plot(density(y_values), ylim=c(0,max(estimated_densities)+0.01))
+                    #plot(density(seq(min(y_values), max(y_values),length.out = length(estimated_densities))* estimated_densities[order(y_values)]))
+                    
                     lines(y_values, estimated_densities, type = "p", cex = .3, col = "red")
 
-                    estimated_densities
+                    subs = self$model$getPsAsW.models()[[1]]$getPsAsW.models()
+                    subs[[10]]$getfit
+                    tot = -50
+                    lapply(subs, function(i) {if(i$bw.j < 1000) tot <- tot + i$bw.j;print(tot)})
+                    #sampleA(newdata = nodeObjectsSub$datNetObs)
+                    browser()
+                    print('')
+
                   },
 
                   # Refactor:
