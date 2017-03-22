@@ -3,6 +3,7 @@
 1. Add summary measures in wide form (lags, variance, mean, etc).
 1. Wait / simulate the minimal number of measurements needed from a single time series
 1. Using all these measurements, we estimate the density for q_w given w-, (g given g-), and q_y given y-. (If a dist is binary, we don't have to estimate its distribution, but we still can using Oleg's package, for consistency. The same goes for if a variable is discrete.)
+1. SuperLearning will be done to estimate the densities. That is, we use several different estimators for estimating the densities (currently we only use logistic regression). We will also fit the number of bins that best resembles our data.
 1. Now, using these densities, we generate a number of draws, using the scheme you sent earlier, in order to get the counterfactual distribution (j is time of intervention, tau is time of response) :
 ``` R
 result <- 0
@@ -33,6 +34,7 @@ which will give you the response for an _intervention a on time j for an outcome
 1. Questions:
     - How do we deal with the initialization? Up to now I just expected that we'd skip the first `Z` measurements, where `Z` is the maximum number of observations needed for each of the summary measures we include. 
     - In this scheme of drawing observations we are not including the change of probability $g_a^*(a(t) | c(a)) / g_a(a(t) | c(a))$, which is probably incorrect?
+    - For the SuperLearning step, since we are not comparing a simple mean with an outcome, what would be our cross-validation step and loss function?
 
 
 # Initial roadmap
