@@ -32,7 +32,7 @@ Data.Static <-
 
            public =
              list(
-                  initialize = function(dataset = NULL, url = NULL) {
+                  initialize = function(dataset = NULL, url = NULL, verbose = FALSE) {
                     if (!is.null(dataset)) {
                       if (!is.data.table(dataset)) {
                         dataset <- data.table(dataset)
@@ -44,8 +44,11 @@ Data.Static <-
                       throw('You need to provide at least a datatable or url')
                     }
                     self$reset()
-                    print('Static set initialized with:')
-                    print(head(dataset))
+                    #TODO: Do proper verbosity check here
+                    if(verbose){
+                      print('Static set initialized with:')
+                      print(head(dataset))
+                    }
                   },
 
                   getAll = function() {

@@ -1,12 +1,13 @@
 context("Simulator.GAD.R")
 test_that("it should be tested properly", {
   log <- Arguments$getVerbose(-8, timestamp=TRUE)
+  log <- FALSE
 
   sim <- Simulator.GAD$new()
 
   ## One trajectory
   tic <- Sys.time()
-  nobs <- 1e3
+  nobs <- 1e2
   llW <- list(stochMech=rnorm,
               param=c(0, 0.5, -0.25, 0.1),
               rgen=identity)
@@ -39,7 +40,7 @@ test_that("it should be tested properly", {
   intervention <- list(when=c(10, 15, 20),
                        what=c(1, 1, 0))
   ## -> parameter E((Y_{1,10}+Y_{1,15}+Y_{0,20})/3)
-  B <- 1e3
+  B <- 1e2
   
   #'psi.approx' is a Monte-Carlo approximation of the parameter of interest.
   # This is a little slow, because 'simulateWAYOneTrajectory' is designed to simulate quickly a long time series,

@@ -18,6 +18,9 @@ SMG.Lag <-
              list(
                   minimalObservations = function() {
                     private$lags + 1
+                  },
+                  exposedVariables = function() {
+                    private$colnames.lagged
                   }
                   ),
            public =
@@ -42,6 +45,10 @@ SMG.Lag <-
                     # Create column names
                     if(nrow(data.current) < self$minimalObservations){
                       stop(paste('At least', self$minimalObservations, 'observations required'))
+                    } else if(anyNA(tail(data.current, 1))){
+                      # If the last row contains an NA, we are not supposed to create new lags,
+                      # So we just return the lagged data we received.
+                      return(head(data.current, -1))
                     }
 
                     # TODO: We could probably do this in a smarter way, i.e., creating an initial frame first

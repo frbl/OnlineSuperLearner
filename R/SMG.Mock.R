@@ -9,18 +9,23 @@ SMG.Mock <-
            "SMG.Mock",
            private =
              list(
-                  theMinimalObservations = NULL
+                  theMinimalObservations = NULL,
+                  theExposedVariables = NULL
                   ),
            active =
              list(
                   minimalObservations = function() {
                     private$theMinimalObservations
+                  },
+                  exposedVariables = function() {
+                    private$theExposedVariables
                   }
                   ),
            public =
              list(
-                  initialize = function(minimalObservations = 1){
+                  initialize = function(minimalObservations = 1, variables = c('y','a','w'), exposedVariables = ''){
                     private$theMinimalObservations <- minimalObservations
+                    private$theExposedVariables <- unlist(lapply(variables, function(x) paste(x,exposedVariables, sep='')))
                   },
                   
                   process = function(data.current) {

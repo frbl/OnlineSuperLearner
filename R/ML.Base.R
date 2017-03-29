@@ -24,6 +24,7 @@ ML.Base <-
                   model = NULL,
 
                   initialize = function() {
+                    model <- list()
                   },
 
                   process = function(train, test, Y, A, W) {

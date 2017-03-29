@@ -40,6 +40,20 @@ SummaryMeasureGenerator <-
                     private$cache = data.table()
                   },
 
+                  checkEnoughDataAvailable = function(formulae) {
+                    # Currently we do not support interactions
+                    labels <- unique(unlist(lapply(formulae, function(f) attr(terms(f), 'term.labels'))))
+                    needed <- unique(unlist(lapply(formulae, function(f) all.vars(f))))
+                    interactionTerms <-setdiff(labels, needed)
+                    if(length(interactionTerms) != 0) warning(paste('Interactions are not yet supported and are ignored',interactionTerms))
+
+                    available <- unlist(lapply(private$SMG.list, function(smg) smg$exposedVariables))
+                    diff <- setdiff(needed, available)
+
+                    # check if our set is empty, in that case we cover them all
+                    length(diff) == 0
+                  },
+
                   setData = function(data) {
                     self$reset()
                     private$data = data
@@ -57,6 +71,19 @@ SummaryMeasureGenerator <-
                       return(TRUE)
                     }
                     FALSE
+                  },
+
+                  summarizeData = function(data){
+                    if(nrow(data) <= self$minimal.measurements.needed){
+                      throw('Not enough data provided to support all summary measures')
+                    }
+
+                    datas <- lapply(private$SMG.list, function(smg) {
+                                     result <- smg$process(copy(data))
+                                     tail(result, n)
+                                  })
+
+                    Reduce(cbind, datas)
                   },
 
                   getNext = function(n = 1) {
@@ -78,12 +105,8 @@ SummaryMeasureGenerator <-
                     # Now, this combined with the cache, should be enough to get the new observations
                     private$cache <- rbindlist(list(private$cache, current))
 
-                    datas <- lapply(private$SMG.list, function(smg) {
-                                     result <- smg$process(copy(private$cache))
-                                     tail(result, n)
-                                  })
+                    summarizeData(private$cache)
 
-                    Reduce(cbind, datas)
                   },
 
                   getNextN = function(n = 1){

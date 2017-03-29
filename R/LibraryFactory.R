@@ -26,8 +26,12 @@ LibraryFactory <-
                   ML.models.allowed = NULL,
 
                   isValidLibraryGrid = function(SL.library.entry) {
-                    'algorithm' %in% names(SL.library.entry) &
-                    'description' %in% names(SL.library.entry)
+                    errors = c()
+                    if(!('algorithm' %in% names(SL.library.entry)))
+                      errors <- c(errors, 'Algorithm not specified')
+                    if(!('description' %in% names(SL.library.entry)))
+                      errors <- c(errors, 'Description not specified')
+                    errors
                   },
 
                   isValidMlModel = function(ML.name) {
@@ -49,7 +53,10 @@ LibraryFactory <-
                                           param.list <- entry$params %>% purrr::cross_d()
                                           data.table::setDT(param.list)
                                           lapply(1:nrow(param.list),
-                                                 function(i){ do.call(get(entry$algorithm)$new, args = param.list[i]) })
+                                                 function(i) {
+                                                   # Initialize the actual algorithms
+                                                   do.call(get(entry$algorithm)$new, args = param.list[i]) 
+                                                 })
                                         })
 
                     unlist(instances)
@@ -69,7 +76,8 @@ LibraryFactory <-
 
            public =
              list(
-                  initialize = function(ML.models.allowed = c('ML.H2O.gbm',
+                  initialize = function(ML.models.allowed = c('MLD.Density.Estimation',
+                                                              'ML.H2O.gbm',
                                                               'ML.H2O.glm',
                                                               'ML.H2O.randomForest',
                                                               'ML.Local.lm',
@@ -83,8 +91,9 @@ LibraryFactory <-
                      return() 
                     }
 
-                    if (!private$isValidLibraryGrid(entry)){
-                      throw(paste('The entry', entry, 'is not specified correctly'))
+                    errors = private$isValidLibraryGrid(entry)
+                    if (length(errors) != 0){
+                      throw(paste('The entry', entry, 'is not specified correctly:', errors ))
                     }
 
                     if (!private$isValidMlModel(entry$algorithm)){
@@ -103,7 +112,7 @@ LibraryFactory <-
                     if (length(errors) == 0) TRUE else throw(errors)
                   },
 
-                  fabricate = function(SL.library) {
+                  fabricate = function(SL.library, summaryMeasureGenerator) {
                     # If we receive a list, assume that we have to create a parameter grid for each model
                     if(is.a(SL.library, 'list')){
                       return(private$fabricateGrid(SL.library))

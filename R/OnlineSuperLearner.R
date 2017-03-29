@@ -68,17 +68,17 @@ OnlineSuperLearner <-
                     # TODO: Merge with trainAllEstimators
 
                     private$verbose && enter(private$verbose, 'Predicting with all models')
-                    dataH2o <- as.h2o(data)
-                    private$verbose && cat(private$verbose, 'Uploaded data to h2o')
+                    #dataH2o <- as.h2o(data)
+                    #private$verbose && cat(private$verbose, 'Uploaded data to h2o')
 
                     result <- lapply(private$SL.library.fabricated,
                                      function(model) {
-                                       if(is.a(model, 'ML.H2O')){
-                                         current <- dataH2o
-                                       } else {
+                                       #if(is.a(model, 'ML.H2O')){
+                                         #current <- dataH2o
+                                       #} else {
                                          current <- data
-                                       }
-                                       model$predict(current, A = A, W = W)
+                                       #}
+                                       model$sample(current)
                                      }
                                      )
 
@@ -90,25 +90,29 @@ OnlineSuperLearner <-
 
 
                   # Train using all estimators separately.
+                  # Postcondition: each of our density estimators will have a fitted conditional
+                  # density in them for each of our random vars WAY *AND IT SHOULD DO THIS FOR ALL
+                  # $w \in W$*
                   # Params:
                   # @param data.initial: the initial dataset to train the estimators on
                   # @param Y: the column names used for the outcome
                   # @param A: the column names used for the treatment
                   # @param W: the column names used for the covariates
                   # @return a vector of outcomes, each entry being the predicted outcome of an estimator on the test set
-                  trainAllEstimators = function(data, Y, A, W) {
+                  trainAllEstimators = function(data, Y.eq, A.eq, W.eq) {
                     private$verbose && enter(private$verbose, 'Training all models')
-                    dataH2o <- as.h2o(data)
+                    #dataH2o <- as.h2o(data)
+
                     private$verbose && cat(private$verbose, 'Uploaded data to h2o')
 
                     lapply(private$SL.library.fabricated,
                            function(model) {
-                             if(is.a(model, 'ML.H2O')){
-                               current <- dataH2o
-                             } else {
-                               current <- data
-                             }
-                             model$fit(current, Y = Y, A = A, W = W)
+                             #if(is.a(model, 'ML.H2O')){
+                               #current <- dataH2o
+                             #} else {
+                              current <- data
+                             #}
+                             model$process(current, formulae = c(Y.eq, A.eq, W.eq))
                            }
                            )
                     private$verbose && exit(private$verbose)
@@ -121,7 +125,7 @@ OnlineSuperLearner <-
                   # @param Y: the column names used for the outcome
                   # @param A: the column names used for the treatment
                   # @param W: the column names used for the covariates
-                  trainLibrary = function(data.initial, Y, A, W) {
+                  trainLibrary = function(data.initial, Y.eq, A.eq, W.eq) {
                     if(self$fitted){
                       warning('DOSL and OSL already fitted (initially), skipping initialization')
                       return(FALSE)
@@ -131,9 +135,11 @@ OnlineSuperLearner <-
 
                     data.splitted <- private$dataSplitter$split(data.initial)
                     # Fit the initial models
-                    private$trainAllEstimators(data = data.splitted$train, Y = Y, A = A, W = W)
+                    private$trainAllEstimators(data = data.splitted$train, Y.eq = Y.eq, A.eq = A.eq, W.eq = W.eq)
 
                     # TODO: Make sure that all predictions are returned in the same format
+                    #################################################################
+                    #################################################################
                     predictions <- private$predictUsingAllEstimators(data = data.initial, A = A, W = W)
                     CVpredictions <- tail(predictions, 1)
 
@@ -279,28 +285,26 @@ OnlineSuperLearner <-
                     private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
 
                     private$family <- family
+                    private$summaryMeasureGenerator <- summaryMeasureGenerator
 
                     # Initialization, Fabricate the various models
                     LibraryFactory <- LibraryFactory$new()
                     private$SL.library.fabricated <- LibraryFactory$fabricate(SL.library.definition)
 
-                    # If the list of libraries is a list instead of a vector, convert it
+                    # If the list of libraries is a list instead of a vector, convert it to a vector
                     if(is.a(SL.library.definition, 'list')){
-                      private$SL.library.descriptions <- sapply(SL.library.definition, function(entry) entry$description )
-                    } else {
-                      private$SL.library.descriptions <- SL.library.definition
-                    }
+                      SL.library.definition <- sapply(SL.library.definition, function(entry) entry$description )
+                    } 
+                    private$SL.library.descriptions <- SL.library.definition
 
                     private$verbose && cat(private$verbose, paste('Creating super learner with a library:', private$SL.library.descriptions))
 
-                    # Wrap the data into a summary measurement generator.
-                    private$summaryMeasureGenerator <- summaryMeasureGenerator
 
                     # TODO: DIP the WCC
                     weights.initial <- rep(1 / length(private$SL.library.descriptions), length(private$SL.library.descriptions))
                     private$weightedCombinationComputer <- WCC.NLopt$new(weights.initial = weights.initial)
 
-                    # The initial risk is 0. Should probably be Inf
+                    # TODO: The initial risk is 0. Should probably be Inf? 
                     self$risk.cv <- rep(0, length(private$SL.library.descriptions) + 2) # +2 for the OSL and DOSL
                     names(self$risk.cv) <- c(private$SL.library.descriptions, 'DOSL', 'OSL')
 
@@ -343,17 +347,20 @@ OnlineSuperLearner <-
 
                   # Data = the data object from which the data can be retrieved
                   # initial.data.size = the number of observations needed to fit the initial model
-                  run = function(data, W, A, Y, initial.data.size = 5, max.iterations = 20, mini.batch.size = 20) {
+                  run = function(data, W, A, Y, W.eq, A.eq, Y.eq,  initial.data.size = 5, max.iterations = 20, mini.batch.size = 20) {
 
                     private$summaryMeasureGenerator$setData(data = data)
 
+                    # TODO: Move to check validity? Needs moving of the equations as well.
+                    if(!private$summaryMeasureGenerator$checkEnoughDataAvailable(formulae = c(W.eq, A.eq, Y.eq))) throw('Not all provided variables are included in the SMGs, include the correct SMGs')
+
                     # Get the initial data for fitting the first model and train the initial models
                     private$summaryMeasureGenerator$getNextN(initial.data.size) %>%
-                      private$trainLibrary(data.initial = ., Y = Y, A = A, W = W)
+                      private$trainLibrary(data.initial = ., Y.eq = Y.eq, A.eq = A.eq, W.eq = W.eq)
 
                     # Update the library of models using a given number of max.iterations
-                    private$updateLibrary(Y = Y, A = A, W = W, max.iterations = max.iterations,
-                                          mini.batch.size = mini.batch.size)
+                    #private$updateLibrary(Y = Y, A = A, W = W, max.iterations = max.iterations,
+                                          #mini.batch.size = mini.batch.size)
 
                     # Return the cross validated risk
                     return(self$risk.cv)

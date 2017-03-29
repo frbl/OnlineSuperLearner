@@ -9,6 +9,12 @@ SMG.Latest.Entry <-
             list(
                  colnames.to.use = NULL
                 ),
+           active =
+             list(
+                  exposedVariables = function() {
+                    private$colnames.to.use
+                  }
+                  ),
            public =
              list(
                   initialize = function(colnames.to.use) {
@@ -23,7 +29,7 @@ SMG.Latest.Entry <-
                       stop(paste('At least', self$minimalObservations, 'observations required'))
                     }
                     if(self$minimalObservations == 1) return(data.current)
-                    return(tail(data.current, -(self$minimalObservations -1)))
+                    return(tail(data.current, -(self$minimalObservations - 1)))
                   }
                   )
            )

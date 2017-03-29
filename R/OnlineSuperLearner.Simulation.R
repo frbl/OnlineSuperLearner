@@ -17,16 +17,24 @@ OnlineSuperLearner.Simulation <-
                   initialize = function() {
                     private$sim  <- Simulator.GAD$new()
                     private$nobs <- 1e5
-                    algos <- list(list(description='ML.H2O.randomForest-1tree',
-                                           algorithm = 'ML.H2O.randomForest',
-                                           params = list(ntrees = 1)))
+                    #algos <- list(list(description='ML.H2O.randomForest-1tree',
+                                           #algorithm = 'ML.H2O.randomForest',
+                                           #params = list(ntrees = 1)))
 
-                    algos <- append(algos, list(list(description='ML.H2O.randomForest-50trees',
-                                           algorithm = 'ML.H2O.randomForest',
-                                           params = list(ntrees = 50))))
+                    #algos <- append(algos, list(list(description='ML.H2O.randomForest-50trees',
+                                           #algorithm = 'ML.H2O.randomForest',
+                                           #params = list(ntrees = 50))))
 
-                    algos <- append(algos, list(list(description='ML.H2O.gbm',
-                                           algorithm = 'ML.H2O.gbm')))
+                    #algos <- append(algos, list(list(description='ML.H2O.gbm',
+                                           #algorithm = 'ML.H2O.gbm')))
+
+                    algos <- list(list(description='MLD.Density.Estimation-50bins',
+                                           algorithm = 'MLD.Density.Estimation',
+                                           params = list(nbins = 3)))
+
+                    #algos <- append(algos, list(list(description='MLD.Density.Estimation-100bins',
+                                           #algorithm = 'MLD.Density.Estimation',
+                                           #params = list(nbins = 100))))
 
                     private$SL.library.definition <- algos
 
@@ -97,6 +105,18 @@ OnlineSuperLearner.Simulation <-
                     W = c("Y_lag_1","Y_lag_2","W", "W_lag_1", "W_lag_2", "A_lag_1", "A_lag_2")
                     A = c("A")
 
+
+                    ## The predict should be ran for each dist separately
+                    # Once Y ~ its dependencies
+                    # Once a ~ its dependencies
+                    # Once W ~ its dependencies
+                    #Y.eq <- Y ~ A + W +  Y_lag_1 + A_lag_1 + W_lag_1 + Y_lag_2 + A_lag_2 + W_lag_2
+                    #A.eq <- A ~ W + Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2 + A_lag_2 + W_lag_2
+                    #W.eq <- W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2 + A_lag_2 + W_lag_2
+                    Y.eq <- Y ~ A + W
+                    A.eq <- A ~ W
+                    W.eq <- W ~ W_lag_1
+
                     # Generate a dataset we will use for testing.
                     # TODO: This step is really slow, because of the getNextN(800)
                     private$sim$simulateWAYOneTrajectory(1000, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
@@ -124,6 +144,9 @@ OnlineSuperLearner.Simulation <-
                                           Y = Y,
                                           A = A,
                                           W = W,
+                                          Y.eq = Y.eq,
+                                          A.eq = A.eq,
+                                          W.eq = W.eq,
                                           initial.data.size = 20, max.iterations = i,
                                           mini.batch.size = 1000)
 
