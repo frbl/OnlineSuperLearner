@@ -2,6 +2,7 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
+#' @include RandomVariable.R
 #' @export
 OnlineSuperLearner.Simulation <-
   R6Class (
@@ -112,9 +113,9 @@ OnlineSuperLearner.Simulation <-
                     #Y.eq <- Y ~ A + W +  Y_lag_1 + A_lag_1 + W_lag_1 + Y_lag_2 + A_lag_2 + W_lag_2
                     #A.eq <- A ~ W + Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2 + A_lag_2 + W_lag_2
                     #W.eq <- W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2 + A_lag_2 + W_lag_2
-                    Y.eq <- Y ~ A + W
-                    A.eq <- A ~ W
-                    W.eq <- W ~ W_lag_1
+                    W <- RandomVariable$new(formula = (W ~ W_lag_1), family = 'gaussian')
+                    A <- RandomVariable$new(formula = (A ~ W), family = 'binomial')
+                    Y <- RandomVariable$new(formula = (Y ~ A + W), family = 'gaussian')
 
                     # Generate a dataset we will use for testing.
                     # TODO: This step is really slow, because of the getNextN(800)
@@ -140,9 +141,9 @@ OnlineSuperLearner.Simulation <-
                                                   verbose = log)
 
                     estimators <- osl$run(data.train,
-                                          Y.eq = Y.eq,
-                                          A.eq = A.eq,
-                                          W.eq = W.eq,
+                                          Y = Y,
+                                          A = A,
+                                          W = W,
                                           initial.data.size = 200, max.iterations = i,
                                           mini.batch.size = 1000)
 

@@ -1,7 +1,7 @@
-lossFunction = function(family) {
+Evaluation.lossFunction = function(family) {
   if (family == 'gaussian') {
-    return(Evaluation.MeanSquaredError)
-  } else if(familty == 'binomial') {
+    return(Evaluation.Mseloss)
+  } else if(family == 'binomial') {
     return(Evaluation.Logloss)
   } else {
     throw('No evaluation measure implemented for family', family)
@@ -21,14 +21,20 @@ Evaluation.Accuracy <- function(data.observed, data.predicted) {
 }
 
 #' Log loss evaluation metric
-Evaluation.Logloss <- function(data.observed, data.predicted) {
+Evaluation.Logloss <- function(data.observed, data.predicted, eps=1e-10) {
+  # Bound the observed value
+  data.observed <- max(c(eps, min(c(1 - eps, data.observed))))
   data.predicted * log(data.observed) + (1-data.predicted) * log(1-data.observed)
+}
+
+Evaluation.Mseloss <-  function(data.observed, data.predicted) {
+  (data.predicted - data.observed)^2
 }
 
 #' MSE caluclator
 Evaluation.MeanSquaredError <- function(data.observed, data.predicted) {
   # Calculate the MSE
-  se <- (data.predicted - data.observed)^2
+  se <- Evaluation.Mseloss(data.predicted, data.observed)
   if (is.a(data.predicted, 'matrix')) {
     means <- colMeans(se)
     names(means) <- names(data.predicted)

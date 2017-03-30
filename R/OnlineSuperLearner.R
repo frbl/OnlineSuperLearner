@@ -33,20 +33,17 @@ OnlineSuperLearner <-
            "OnlineSuperLearner",
            private =
              list(
-                  # The online discrete super learner
-                  odsl.estimator = NULL,
+                  # The online discrete super learners. One for each outcome variable.
+                  odsl.estimators = NULL,
 
                   # ML Library
                   SL.library.names = NULL,
                   SL.library.descriptions = NULL,
                   SL.library.fabricated = NULL,
-                  osl.fitted = NULL,
+                  fitted = NULL,
 
                   # Splitter for the data
                   dataSplitter = NULL,
-
-                  # The family of data we are working with
-                  family = NULL,
 
                   # Summary measures and a generator
                   summaryMeasureGenerator = NULL,
@@ -97,7 +94,7 @@ OnlineSuperLearner <-
                   # @param A: the column names used for the treatment
                   # @param W: the column names used for the covariates
                   # @return a vector of outcomes, each entry being the predicted outcome of an estimator on the test set
-                  trainAllEstimators = function(data, Y.eq, A.eq, W.eq) {
+                  trainAllEstimators = function(data, randomVariables) {
                     private$verbose && enter(private$verbose, 'Training all models')
                     #dataH2o <- as.h2o(data)
                     #private$verbose && cat(private$verbose, 'Uploaded data to h2o')
@@ -109,7 +106,7 @@ OnlineSuperLearner <-
                              #} else {
                               current <- data
                              #}
-                             model$process(current, formulae = c(Y.eq, A.eq, W.eq))
+                             model$process(current, randomVariables = randomVariables)
                            }
                            )
                     private$verbose && exit(private$verbose)
@@ -122,8 +119,8 @@ OnlineSuperLearner <-
                   # @param Y: the column names used for the outcome
                   # @param A: the column names used for the treatment
                   # @param W: the column names used for the covariates
-                  trainLibrary = function(data.initial, Y.eq, A.eq, W.eq, Y.fam, A.fam, W.fam) {
-                    if(self$fitted){
+                  trainLibrary = function(data.initial, randomVariables) {
+                    if(self$isFitted){
                       warning('DOSL and OSL already fitted (initially), skipping initialization')
                       return(FALSE)
                     }
@@ -133,39 +130,29 @@ OnlineSuperLearner <-
                     data.splitted <- private$dataSplitter$split(data.initial)
 
                     # Fit the initial models
-                    private$trainAllEstimators(data = data.splitted$train, Y.eq = Y.eq, A.eq = A.eq, W.eq = W.eq)
+                    private$trainAllEstimators(data = data.splitted$train,
+                                               randomVariables = randomVariables)
 
                     # TODO: Make sure that all predictions are returned in the same format
                     predicted.outcome <- private$predictUsingAllEstimators(data = data.splitted$test)
-                    
-                    # Calculate the error
                     observed.outcome <- data.splitted$test[,colnames(predicted.outcome), with=FALSE]
-                    browser()
 
-                    ###############################################################
-                    ###############################################################
-                    ###############################################################
-                    ###############################################################
-                    ###############################################################
-                    ###############################################################
-                    b <- as.matrix(predicted.outcome)
-                    x <- as.matrix(observed.outcome)[1,]
-                    b<- sweep(b,2,x)
-                    sqrt(b^2)
-
-                    risk.cv.update <- self$lossFunction(family)(data.observed = observed.outcome,
-                                                        predicted.outcome) 
+                    # Calculate the error
+                    for (rv in randomVariables) {
+                      current.outcome <- predicted.outcome[[rv$getY]]
+                      names(current.outcome) <- rownames(predicted.outcome)
+                      lossFn <- Evaluation.lossFunction(rv$getFamily)
+                      self$risk.cv[[rv$getY]] <- lossFn(data.observed = observed.outcome[[rv$getY]],
+                                                   data.predicted = current.outcome) 
+                    }
 
                     # Fit the super learner on the current data
-
-                    Ymat <- as.matrix(data.initial[, Y, with = FALSE])
-                    private$fit(predicted.outcome = predictions, observed.outcome = Ymat )
+                    #Ymat <- as.matrix(data.initial[, Y, with = FALSE])
+                    #private$fit(predicted.outcome = predictions, observed.outcome = Ymat )
 
                     # Update the discrete superlearner (take the first if there are multiple candidates)
-                    private$odsl.estimator <-
-                      private$SL.library.fabricated[[which(CVpredictions == min(CVpredictions))[1]]]
-
-                    self$setFitted(TRUE)
+                    private$odsl.estimator <- lapply(self$risk.cv, function(rv) { names(rv[which(rv == min(rv))])[1] })
+                    private$fitted = TRUE
                     private$verbose && exit(private$verbose)
 
                     TRUE
@@ -180,7 +167,7 @@ OnlineSuperLearner <-
                   # @param mini.batch.size: size of the batch we use
                   updateLibrary = function(Y, A, W, max.iterations, mini.batch.size){
                     private$verbose && enter(private$verbose, 'Starting model updating')
-                    if(!self$fitted){
+                    if(!self$isFitted){
                       throw('Fit the inital D-OSL and OSL first')
                     }
 
@@ -202,7 +189,8 @@ OnlineSuperLearner <-
                       # Update all models on the previous data set, and get their prediction on the current data.
 
                       data.splitted <- private$dataSplitter$split(data.current)
-                      private$trainAllEstimators(data = data.splitted$train, Y = Y, A = A, W = W)
+                      private$trainAllEstimators(data = data.splitted$train,
+                                                 c(Y, A, W))
 
                       # Make a prediction using our (super)learners
                       CVpredictions <- private$predictUsingAllEstimators(data = data.splitted$test)
@@ -275,10 +263,9 @@ OnlineSuperLearner <-
                   ),
            active =
              list(
-                  fitted = function(){
-                    private$osl.fitted
-                  },
-
+                  isFitted = function(){
+                    private$fitted
+                  }
                   ),
            public =
              list(
@@ -286,14 +273,16 @@ OnlineSuperLearner <-
                   # The R.cv score of the current fit
                   risk.cv = NULL,
 
-                  initialize = function(SL.library.definition = c('ML.Local.lm', 'ML.H2O.glm'), summaryMeasureGenerator, verbose = FALSE, family='gaussian') {
+                  initialize = function(SL.library.definition = c('ML.Local.lm', 'ML.H2O.glm'), summaryMeasureGenerator, verbose = FALSE) {
                     private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
-
-                    private$family <- family
+                    private$fitted = FALSE
                     private$summaryMeasureGenerator <- summaryMeasureGenerator
+                    private$dataSplitter <- DataSplitter$new()
+                    self$risk.cv = list()
+
+                    libraryFactory <- LibraryFactory$new()
 
                     # Initialization, Fabricate the various models
-                    libraryFactory <- LibraryFactory$new()
                     private$SL.library.fabricated <- libraryFactory$fabricate(SL.library.definition,
                                                                               private$summaryMeasureGenerator)
 
@@ -310,15 +299,6 @@ OnlineSuperLearner <-
                     weights.initial <- rep(1 / length(private$SL.library.descriptions), length(private$SL.library.descriptions))
                     private$weightedCombinationComputer <- WCC.NLopt$new(weights.initial = weights.initial)
 
-                    # TODO: The initial risk is 0. Should probably be Inf? 
-                    self$risk.cv <- rep(0, length(private$SL.library.descriptions) + 2) # +2 for the OSL and DOSL
-                    names(self$risk.cv) <- c(private$SL.library.descriptions, 'DOSL', 'OSL')
-
-                    # TODO: Check for H2O, if we need it
-                    private$dataSplitter <- DataSplitter$new()
-
-                    self$setFitted(FALSE)
-
                     self$getValidity()
                   },
 
@@ -329,16 +309,9 @@ OnlineSuperLearner <-
                     if (is.null(private$summaryMeasureGenerator) || class(private$summaryMeasureGenerator) != 'SummaryMeasureGenerator') {
                       throw("You need to provide a summary measure generator of class SummaryMeasureGenerator")
                     }
-                    if (is.null(private$family) || private$family == "") {
-                      throw("The provided family is not valid")
-                    }
                     if (!is.a(private$weightedCombinationComputer, 'WeightedCombinationComputer')) {
                       throw("The provided WCC is not a WCC")
                     }
-                  },
-
-                  setFitted = function(value) {
-                    private$osl.fitted = value
                   },
 
                   evaluateModels = function(data, W, A, Y) {
@@ -353,22 +326,18 @@ OnlineSuperLearner <-
 
                   # Data = the data object from which the data can be retrieved
                   # initial.data.size = the number of observations needed to fit the initial model
-                  run = function(data, W.eq, A.eq, Y.eq, W.fam = 'gaussian', A.fam='binomial', Y.fam='gaussian',
-                                 initial.data.size = 5, max.iterations = 20, mini.batch.size = 20) {
+                  run = function(data, W, A, Y, initial.data.size = 5, max.iterations = 20, mini.batch.size = 20) {
 
                     private$summaryMeasureGenerator$setData(data = data)
 
                     # TODO: Move to check validity? Needs moving of the equations as well.
-                    if(!private$summaryMeasureGenerator$checkEnoughDataAvailable(formulae = c(W.eq, A.eq, Y.eq))) {
+                    if(!private$summaryMeasureGenerator$checkEnoughDataAvailable(randomVariables = c(W, A, Y))) {
                       throw('Not all provided variables are included in the SMGs, include the correct SMGs')
                     }
 
                     # Get the initial data for fitting the first model and train the initial models
                     private$summaryMeasureGenerator$getNextN(initial.data.size) %>%
-                      private$trainLibrary(data.initial = ., 
-                                           Y.eq = Y.eq, A.eq = A.eq, W.eq = W.eq,
-                                           Y.fam = Y.fam, A.fam = A.fam, W.fam = W.fam
-                                           )
+                      private$trainLibrary(data.initial = ., randomVariables = c(W, A, Y))
 
                     # Update the library of models using a given number of max.iterations
                     #private$updateLibrary(Y = Y, A = A, W = W, max.iterations = max.iterations,
@@ -381,7 +350,7 @@ OnlineSuperLearner <-
                   # Predict should return a nrow(data) * 1 matrix, where the predictions are multiplied by
                   # the weights of each estimator.
                   predict = function(data, A = NULL, W = NULL, discrete = FALSE) {
-                    if(!self$fitted){
+                    if(!self$isFitted){
                       return(NA)
                     }
 

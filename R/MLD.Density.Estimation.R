@@ -17,7 +17,7 @@ MLD.Density.Estimation <-
                   nbins = NULL,
                   SMG = NULL,
                   verbose = NULL,
-                  formulae.parsed = NULL,
+                  randomVariables = NULL,
 
                   fakeUpdate = function(newData, X = c("W1"), Y = c("Y")){
                     warning('This is not an online update! We fake  the online part!')
@@ -128,27 +128,16 @@ MLD.Density.Estimation <-
                     private$SMG <- summaryMeasureGenerator
                   },
 
-                  parseFormula = function(formula){
-                    vars <- all.vars(formula)
-                    depvar <- head(vars, 1)
-                    names(depvar) <- depvar
-
-                    indepvar <- tail(vars, -1)
-                    names(indepvar) <- indepvar
-
-                    list(Y = depvar, X = indepvar)
-                  },
-
                   # Generates a sample given the provided data.
                   sample = function(data) {
-                    if (is.null(private$formulae.parsed)) {
+                    if (is.null(private$randomVariables)) {
                       throw('The conditional densities need to be fit first!')
                     }
 
-                    lapply(private$formulae.parsed, function(parsed.formula) {
+                    lapply(private$randomVariables, function(rv) {
                         private$predict(datO=data,
-                                     Y=parsed.formula$Y,
-                                     X=parsed.formula$X)
+                                     Y=rv$getY,
+                                     X=rv$getX)
                       })
                   },
 
@@ -158,30 +147,30 @@ MLD.Density.Estimation <-
                       print(data)
                       data[,ordering] <- NA
                       for (variableToPredict in ordering) {
-                        parsed.formula <- private$formulae.parsed[[variableToPredict]]
-                        cat('Predicting', parsed.formula$Y,'using',parsed.formula$X,'\n')
-                        data[[parsed.formula$Y]] <- private$predict(datO=data,
-                                                                    Y=parsed.formula$Y,
-                                                                    X=parsed.formula$X)
+                        rv <- private$randomVariables[[variableToPredict]]
+                        cat('Predicting', rv$getY,'using', rv$getX,'\n')
+                        data[[parsed.formula$Y]] <- private$predict(datO = data,
+                                                                    Y = rv$getY,
+                                                                    X = rv$getX)
                       }
                       data <- private$SMG$getLatestCovariates(data)
                     }
                     
                   },
 
-                  # Fits the densities according to the provided formulae
-                  process = function(data, formulae) {
-                    private$verbose && cat(private$verbose, 'Fitting', length(formulae), 'densities')
+                  # Fits the densities according to the provided randomVariables
+                  process = function(data, randomVariables) {
+                    private$verbose && cat(private$verbose, 'Fitting', length(randomVariables), 'densities')
 
                     # Convert the formula in vectors (can probably be done easier)
-                    private$formulae.parsed <- list()
-                    for (i in 1:length(formulae)) {
-                      variables <- self$parseFormula(formulae[[i]])
-                      private$formulae.parsed[[variables$Y]] <- list(Y = variables$Y, X = variables$X)
+                    for (rv in randomVariables) {
+                      private$randomVariables[[rv$getY]] <- rv
                     }
 
-                    # Fit conditional density for all of the formulae
-                    lapply(private$formulae.parsed, function(f) { private$fit(datO=data, Y=f$Y, X=f$X) })
+                    # Fit conditional density for all of the randomVariables
+                    lapply(randomVariables, function(rv) {
+                      private$fit(datO = data, Y = rv$getY, X = rv$getX) 
+                    })
                     TRUE
                   },
 

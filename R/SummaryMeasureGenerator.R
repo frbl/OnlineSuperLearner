@@ -40,13 +40,9 @@ SummaryMeasureGenerator <-
                     private$cache = data.table()
                   },
 
-                  checkEnoughDataAvailable = function(formulae) {
+                  checkEnoughDataAvailable = function(randomVariables) {
                     # Currently we do not support interactions
-                    labels <- unique(unlist(lapply(formulae, function(f) attr(terms(f), 'term.labels'))))
-                    needed <- unique(unlist(lapply(formulae, function(f) all.vars(f))))
-                    interactionTerms <-setdiff(labels, needed)
-                    if(length(interactionTerms) != 0) warning(paste('Interactions are not yet supported and are ignored',interactionTerms))
-
+                    needed <- unique(unlist(lapply(randomVariables, function(rv) rv$getX)))
                     available <- unlist(lapply(private$SMG.list, function(smg) smg$exposedVariables))
                     diff <- setdiff(needed, available)
 
