@@ -23,6 +23,10 @@ SMG.Latest.Entry <-
 
                   minimalObservations = 1,
 
+                  update = function(data.current) {
+                    data.current[,private$colnames.to.use, with=FALSE]
+                  },
+
                   process = function(data.current){
                     nobs <- nrow(data.current)
                     if(nobs < self$minimalObservations){

@@ -1,3 +1,13 @@
+lossFunction = function(family) {
+  if (family == 'gaussian') {
+    return(Evaluation.MeanSquaredError)
+  } else if(familty == 'binomial') {
+    return(Evaluation.Logloss)
+  } else {
+    throw('No evaluation measure implemented for family', family)
+  }
+}
+
 #' Accuracy caluclator
 Evaluation.Accuracy <- function(data.observed, data.predicted) {
   boolean.predicted <- as.numeric(data.predicted) >= 0.5
@@ -8,6 +18,11 @@ Evaluation.Accuracy <- function(data.observed, data.predicted) {
     return(means)
   }
   mean(as.numeric(boolean.observed == boolean.predicted))
+}
+
+#' Log loss evaluation metric
+Evaluation.Logloss <- function(data.observed, data.predicted) {
+  data.predicted * log(data.observed) + (1-data.predicted) * log(1-data.observed)
 }
 
 #' MSE caluclator

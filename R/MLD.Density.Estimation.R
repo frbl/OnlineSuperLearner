@@ -15,13 +15,15 @@ MLD.Density.Estimation <-
                   conditional.densities = NULL,
                   data = NULL,
                   nbins = NULL,
+                  SMG = NULL,
+                  verbose = NULL,
+                  formulae.parsed = NULL,
+
                   fakeUpdate = function(newData, X = c("W1"), Y = c("Y")){
                     warning('This is not an online update! We fake  the online part!')
                     private$data <- rbindlist(list(private$data, newData))
                     self$fit(data, X,Y)
                   },
-                  verbose = NULL,
-                  formulae.parsed = NULL
 
                   predict = function(datO, X = c("W1"), Y = c("Y")) {
 
@@ -36,6 +38,7 @@ MLD.Density.Estimation <-
 
                     # Sample from the cond dist given the provided data
                     sampled_data <- conditionalDensity$sampleA(newdata = nodeObjects$datNetObs)
+                    #sampled_data <- conditionalDensity$getPsAsW.models()[[1]]$sampleA(newdata = nodeObjects$datNetObs)
 
                     if(FALSE){
                       # Testing code
@@ -118,10 +121,11 @@ MLD.Density.Estimation <-
                   ),
            public =
              list(
-                  initialize = function(nbins = 30, verbose = FALSE) {
+                  initialize = function(nbins = 30, verbose = FALSE, summaryMeasureGenerator) {
                     private$verbose = verbose
-                    private$nbins = nbins
+                    private$nbins <- Arguments$getIntegers(as.numeric(nbins), c(1, Inf))
                     private$conditional.densities <- list()
+                    private$SMG <- summaryMeasureGenerator
                   },
 
                   parseFormula = function(formula){
@@ -141,21 +145,28 @@ MLD.Density.Estimation <-
                       throw('The conditional densities need to be fit first!')
                     }
 
-                    lapply(private$formulae.parsed,
-                           function(f) {
-                             self$predict(datO=data, Y=f$Y, X=f$X)
-                           })
+                    lapply(private$formulae.parsed, function(parsed.formula) {
+                        private$predict(datO=data,
+                                     Y=parsed.formula$Y,
+                                     X=parsed.formula$X)
+                      })
                   },
 
                   sampleIteratively = function(data, ordering = c('W', 'A', 'Y'), iterations=10) {
                     # TODO: The ordering can probably be extracte from the formula
-                    lapply(1:iterations, function(i) {
-                             lapply(ordering, function(variableToPredict) {
-                                      f <- private$formulae[[variableToPredict]]
-                                      data <- self$predict(datO=data, Y=f$Y, X=f$X)
-                                      data <- SMG$summarizeData(data)
-                              })
-                           })
+                    for (i in seq(iterations)) {
+                      print(data)
+                      data[,ordering] <- NA
+                      for (variableToPredict in ordering) {
+                        parsed.formula <- private$formulae.parsed[[variableToPredict]]
+                        cat('Predicting', parsed.formula$Y,'using',parsed.formula$X,'\n')
+                        data[[parsed.formula$Y]] <- private$predict(datO=data,
+                                                                    Y=parsed.formula$Y,
+                                                                    X=parsed.formula$X)
+                      }
+                      data <- private$SMG$getLatestCovariates(data)
+                    }
+                    
                   },
 
                   # Fits the densities according to the provided formulae
@@ -163,13 +174,14 @@ MLD.Density.Estimation <-
                     private$verbose && cat(private$verbose, 'Fitting', length(formulae), 'densities')
 
                     # Convert the formula in vectors (can probably be done easier)
-                    private$formulae.parsed <- lapply(formulae, function(formula) {
-                                                        variables <- self$parseFormula(formula)
-                                                        list(Y = variables$Y, X = variables$X)
-                           })
+                    private$formulae.parsed <- list()
+                    for (i in 1:length(formulae)) {
+                      variables <- self$parseFormula(formulae[[i]])
+                      private$formulae.parsed[[variables$Y]] <- list(Y = variables$Y, X = variables$X)
+                    }
 
                     # Fit conditional density for all of the formulae
-                    lapply(private$formulae.parsed, function(f) { self$fit(datO=data, Y=f$Y, X=f$Y) })
+                    lapply(private$formulae.parsed, function(f) { private$fit(datO=data, Y=f$Y, X=f$X) })
                     TRUE
                   },
 

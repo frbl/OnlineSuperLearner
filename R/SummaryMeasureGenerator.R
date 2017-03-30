@@ -73,7 +73,15 @@ SummaryMeasureGenerator <-
                     FALSE
                   },
 
-                  summarizeData = function(data){
+                  getLatestCovariates =function(data) {
+                    if(nrow(data) != 1){
+                      throw('Not enough data provided to support all summary measures')
+                    }
+                    datas <- unlist(lapply(private$SMG.list, function(smg) {smg$update(copy(data))}))
+                    as.data.table(t(datas))
+                  },
+
+                  summarizeData = function(data, n = 1){
                     if(nrow(data) <= self$minimal.measurements.needed){
                       throw('Not enough data provided to support all summary measures')
                     }
@@ -105,7 +113,7 @@ SummaryMeasureGenerator <-
                     # Now, this combined with the cache, should be enough to get the new observations
                     private$cache <- rbindlist(list(private$cache, current))
 
-                    summarizeData(private$cache)
+                    self$summarizeData(private$cache, n=n)
 
                   },
 

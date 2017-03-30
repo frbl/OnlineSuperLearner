@@ -32,9 +32,9 @@ OnlineSuperLearner.Simulation <-
                                            algorithm = 'MLD.Density.Estimation',
                                            params = list(nbins = 3)))
 
-                    #algos <- append(algos, list(list(description='MLD.Density.Estimation-100bins',
-                                           #algorithm = 'MLD.Density.Estimation',
-                                           #params = list(nbins = 100))))
+                    algos <- append(algos, list(list(description='MLD.Density.Estimation-100bins',
+                                           algorithm = 'MLD.Density.Estimation',
+                                           params = list(nbins = 100))))
 
                     private$SL.library.definition <- algos
 
@@ -98,7 +98,6 @@ OnlineSuperLearner.Simulation <-
                     SMG.list <- list()
                     SMG.list <- c(SMG.list, SMG.Lag$new(lags = 2, colnames.to.lag = (c(A, W, Y))))
                     SMG.list <- c(SMG.list, SMG.Latest.Entry$new(colnames.to.use = (c(A, W, Y))))
-
                     summaryMeasureGenerator = SummaryMeasureGenerator$new(SMG.list = SMG.list, verbose = log) 
                     # We'd like to use the following features in our estimation:
                     Y = "Y"
@@ -141,13 +140,10 @@ OnlineSuperLearner.Simulation <-
                                                   verbose = log)
 
                     estimators <- osl$run(data.train,
-                                          Y = Y,
-                                          A = A,
-                                          W = W,
                                           Y.eq = Y.eq,
                                           A.eq = A.eq,
                                           W.eq = W.eq,
-                                          initial.data.size = 20, max.iterations = i,
+                                          initial.data.size = 200, max.iterations = i,
                                           mini.batch.size = 1000)
 
                     osl$evaluateModels(data = copy(data.test), W = W, A = A, Y = Y) %>%

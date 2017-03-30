@@ -39,7 +39,7 @@ LibraryFactory <-
                     ML.name %in% private$ML.models.allowed
                   },
 
-                  fabricateGrid = function(SL.library) {
+                  fabricateGrid = function(SL.library, summaryMeasureGenerator) {
                     # Create objects for each of the objects
                     instances <- lapply(SL.library,
                                         function(entry) {
@@ -47,7 +47,8 @@ LibraryFactory <-
 
                                           # If no params are provided, treat the list as a vector
                                           if (!('params' %in% names(entry))){
-                                            return(list(do.call(get(entry$algorithm)$new, args = list())))
+                                            return(list(do.call(get(entry$algorithm)$new, 
+                                                                args = list(summaryMeasureGenerator = summaryMeasureGenerator))))
                                           }
 
                                           param.list <- entry$params %>% purrr::cross_d()
@@ -55,21 +56,21 @@ LibraryFactory <-
                                           lapply(1:nrow(param.list),
                                                  function(i) {
                                                    # Initialize the actual algorithms
-                                                   do.call(get(entry$algorithm)$new, args = param.list[i]) 
+                                                   do.call(get(entry$algorithm)$new, args = list(param.list[i], summaryMeasureGenerator = summaryMeasureGenerator)) 
                                                  })
                                         })
 
                     unlist(instances)
                   },
 
-                  fabricateDefault = function(SL.library) {
+                  fabricateDefault = function(SL.library, summaryMeasureGenerator) {
                     # Create objects for each of the objects
                     lapply(SL.library,
                            function(entry) {
                              if (!private$isValidMlModel(entry)){
                                throw(paste('The model', entry, 'is not a valid ML model algorithm'))
                              }
-                             do.call(get(entry)$new, args = list())
+                             do.call(get(entry)$new, args = list(summaryMeasureGenerator = summaryMeasureGenerator))
                            })
                   }
                   ),
@@ -115,12 +116,12 @@ LibraryFactory <-
                   fabricate = function(SL.library, summaryMeasureGenerator) {
                     # If we receive a list, assume that we have to create a parameter grid for each model
                     if(is.a(SL.library, 'list')){
-                      return(private$fabricateGrid(SL.library))
+                      return(private$fabricateGrid(SL.library, summaryMeasureGenerator))
                     }
 
                     # if it is not a list, assume it is a vector or string
                     SL.library <- Arguments$getCharacters(SL.library)
-                    return(private$fabricateDefault(SL.library))
+                    return(private$fabricateDefault(SL.library, summaryMeasureGenerator))
                   }
                   )
            )
