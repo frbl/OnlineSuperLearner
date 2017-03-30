@@ -4,7 +4,7 @@
 \alias{Evaluation.Logloss}
 \title{Log loss evaluation metric}
 \usage{
-Evaluation.Logloss(data.observed, data.predicted)
+Evaluation.Logloss(data.observed, data.predicted, eps = 1e-10)
 }
 \description{
 Log loss evaluation metric

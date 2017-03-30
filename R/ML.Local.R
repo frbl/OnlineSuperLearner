@@ -5,7 +5,7 @@
 #' @include ML.Base.R
 #' @include Data.Base.R
 #' @keywords data
-ML.Local <- R6Clas("ML.Local",
+ML.Local <- R6Class("ML.Local",
   inherit = ML.Base,
   public =
     list(
