@@ -11,24 +11,22 @@
 #'
 #'   \item{\code{fit(data, X, Y)}}{Method to fit the linear model.}
 #'}
-ML.XGBoost.glm <-
-  R6Class (
-           "ML.XGBoost.glm",
-           inherit = ML.XGBoost,
-           private =
-             list(),
-           public =
-             list(
-                  initialize = function() {
-                    self$rounds <- 200
-                    self$param <- list(objective = 'binary:logistic',
-                                          booster = "gblinear",
-                                          nthread = 8,
-                                          alpha = 0,
-                                          lambda = 0)
+ML.XGBoost.glm <- R6Class("ML.XGBoost.glm",
+  inherit = ML.XGBoost,
+  private =
+    list(),
+  public =
+    list(
+        initialize = function() {
+          self$rounds <- 200
+          self$param <- list(objective = 'binary:logistic',
+                                booster = "gblinear",
+                                nthread = 8,
+                                alpha = 0,
+                                lambda = 0)
 
-                    self$model.name <- 'gblinear'
-                    super$initialize()
-                  }
-                  )
-           )
+          self$model.name <- 'gblinear'
+          super$initialize()
+        }
+    )
+)

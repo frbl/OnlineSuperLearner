@@ -19,39 +19,37 @@
 #'    \code{libraryNames} vector containing the names of the estimators
 #'   }
 #' }
-WeightedCombinationComputer <-
-  R6Class (
-           "WeightedCombinationComputer",
-           private =
-             list(
-                  weights = NULL,
+WeightedCombinationComputer <- R6Class("WeightedCombinationComputer",
+  private =
+    list(
+        weights = NULL,
 
-                  compute = function(Z, Y, libraryNames ) {
-                    throw('This method is not implemented, please inherit this class and implement it.')
-                  }
-                  ),
-           active = 
-                list(
-                  getWeights = function() {
-                    return(private$weights)
-                  }
-                  ),
-           public =
-             list(
-                  initialize = function(weights.initial) {
-                    private$weights <- weights.initial
-                  },
+        compute = function(Z, Y, libraryNames ) {
+          throw('This method is not implemented, please inherit this class and implement it.')
+        }
+        ),
+  active = 
+      list(
+        getWeights = function() {
+          return(private$weights)
+        }
+        ),
+  public =
+    list(
+        initialize = function(weights.initial) {
+          private$weights <- weights.initial
+        },
 
-                  process = function(Z, Y, libraryNames) {
-                    if (length(private$weigths) == 1) {
-                      private$weights <- c(1)
-                      return(private$weights)
-                    }
+        process = function(Z, Y, libraryNames) {
+          if (length(private$weigths) == 1) {
+            private$weights <- c(1)
+            return(private$weights)
+          }
 
-                    # Call the subclass
-                    private$compute(Z, Y, libraryNames)
-                    return(private$weights)
-                  }
+          # Call the subclass
+          private$compute(Z, Y, libraryNames)
+          return(private$weights)
+        }
 
-                  )
-           )
+    )
+)
