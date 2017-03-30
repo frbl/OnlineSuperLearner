@@ -1,4 +1,5 @@
 context("OnlineSuperLearner")
+described.class <- OnlineSuperLearner
 
 context(" Initialize")
 
@@ -10,7 +11,7 @@ test_that("it should return NA if no estimators were fit", {
   SL.Library <- 'ML.Local.lm'
   smg = list()
   class(smg) <- 'SummaryMeasureGenerator'
-  subject <- OnlineSuperLearner$new(SL.Library, summaryMeasureGenerator = smg)
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = smg)
   expect_equal(subject$predict(data, c('a'), c('b'), discrete = FALSE), NA)
   expect_equal(subject$predict(data, c('a'), c('b'), discrete = TRUE), NA)
 })

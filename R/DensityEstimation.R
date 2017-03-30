@@ -10,13 +10,16 @@ devtools::load_all('~/Workspace/frbl/tmlenet/')
 DensityEstimation <- R6Class ("DensityEstimation",
   private =
     list(
+        # Variables
+        # =========
         conditional.densities = NULL,
         data = NULL,
         nbins = NULL,
-        SMG = NULL,
         verbose = NULL,
         randomVariables = NULL,
 
+        # Functions
+        # =========
         fakeUpdate = function(newData, X = c("W1"), Y = c("Y")){
           warning('This is not an online update! We fake  the online part!')
           private$data <- rbindlist(list(private$data, newData))
@@ -85,7 +88,6 @@ DensityEstimation <- R6Class ("DensityEstimation",
           private$verbose = verbose
           private$nbins <- Arguments$getIntegers(as.numeric(nbins), c(1, Inf))
           private$conditional.densities <- list()
-          private$SMG <- summaryMeasureGenerator
         },
 
         # Generates a sample given the provided data.
@@ -99,23 +101,6 @@ DensityEstimation <- R6Class ("DensityEstimation",
                             Y=rv$getY,
                             X=rv$getX)
             })
-        },
-
-        sampleIteratively = function(data, ordering = c('W', 'A', 'Y'), iterations=10) {
-          # TODO: The ordering can probably be extracte from the formula
-          for (i in seq(iterations)) {
-            print(data)
-            data[,ordering] <- NA
-            for (variableToPredict in ordering) {
-              rv <- private$randomVariables[[variableToPredict]]
-              cat('Predicting', rv$getY,'using', rv$getX,'\n')
-              data[[parsed.formula$Y]] <- self$predict(datO = data,
-                                                          Y = rv$getY,
-                                                          X = rv$getX)
-            }
-            data <- private$SMG$getLatestCovariates(data)
-          }
-          
         },
 
         predict = function(datO, X = c("W1"), Y = c("Y")) {

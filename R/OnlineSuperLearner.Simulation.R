@@ -27,12 +27,12 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           #algos <- append(algos, list(list(description='ML.H2O.gbm',
                                   #algorithm = 'ML.H2O.gbm')))
 
-          algos <- list(list(description='MLD.Density.Estimation-50bins',
-                                  algorithm = 'MLD.Density.Estimation',
+          algos <- list(list(description='DensityEstimation-3bins',
+                                  algorithm = 'DensityEstimation',
                                   params = list(nbins = 3)))
 
-          algos <- append(algos, list(list(description='MLD.Density.Estimation-100bins',
-                                  algorithm = 'MLD.Density.Estimation',
+          algos <- append(algos, list(list(description='DensityEstimation-100bins',
+                                  algorithm = 'DensityEstimation',
                                   params = list(nbins = 100))))
 
           private$SL.library.definition <- algos
@@ -151,6 +151,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           #plot(x=performances$iterations, y=performances$performance)
           #performances
+          intervention <- list(variable = 'A', when = c(5, 7), what = c(1,0))
+          result <- osl$sample_iteratively(data = data.test[1,], randomVariables = c(W,A,Y), intervention = intervention)
+          browser()
         }
   )
 )
