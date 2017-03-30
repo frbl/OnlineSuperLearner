@@ -53,3 +53,43 @@ RandomVariable <- R6Class("RandomVariable",
 
     )
 )
+# Static functions
+# ================
+
+# Algorithm to find a possible ordering of the functions.
+# The worst case run time of this algorithm is pretty bad, and can it
+# probably done more efficiently
+RandomVariable.find_ordering = function(randomVariables, verbose=FALSE) {
+  dependencies <- list()
+  order <- c()
+  managed_deps <- c()
+
+  for (rv in randomVariables) {
+    dependencies[[rv$getY]] <- list(deps = rv$getX, rv= rv)
+  }
+
+  for (Y in names(dependencies)) {
+    dependencies[[Y]]$deps <- intersect(dependencies[[Y]][['deps']], names(dependencies)) 
+  }
+
+  i <- 1
+  while(length(dependencies) > 0) {
+    if(i > length(dependencies)) {
+      throw('Intractable problem! There are interdependencies that cannot be solved!')
+    }
+
+    delta <- setdiff(dependencies[[i]]$deps, managed_deps)
+    if (length(delta) == 0) {
+      current <- names(dependencies)[[i]]
+      verbose && cat(verbose, 'Adding', current,'\n')
+      order <- c(order, dependencies[[i]]$rv) 
+      managed_deps <- c(managed_deps, current) 
+      dependencies[[i]] <- NULL
+      i <- 1
+      next
+    }
+    i <- i + 1
+  }
+  names(order) <- managed_deps
+  order
+}
