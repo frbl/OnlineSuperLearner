@@ -1,11 +1,21 @@
-Evaluation.lossFunction = function(family) {
+EvaluationFunction = function(family, useAsLoss=TRUE) {
+  if(useAsLoss){
+    if (family == 'gaussian') {
+      return(Evaluation.Mseloss)
+    } else if(family == 'binomial') {
+      return(Evaluation.Logloss)
+    } else {
+      throw('No evaluation measure implemented for family', family)
+    }
+  }
   if (family == 'gaussian') {
-    return(Evaluation.Mseloss)
+    return(Evaluation.MeanSquaredError)
   } else if(family == 'binomial') {
-    return(Evaluation.Logloss)
+    return(Evaluation.Accuracy)
   } else {
     throw('No evaluation measure implemented for family', family)
   }
+
 }
 
 #' Accuracy caluclator

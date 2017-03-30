@@ -133,7 +133,7 @@ OnlineSuperLearner.Simulation <-
                     # Now run several iterations on the data
                     #performances <- mclapply(seq(5,201,20), function(i) {
 
-                    i = 20000
+                    i = 2000
                     data.train$reset()
 
                     osl <- OnlineSuperLearner$new(private$SL.library.definition,
@@ -147,7 +147,7 @@ OnlineSuperLearner.Simulation <-
                                           initial.data.size = 200, max.iterations = i,
                                           mini.batch.size = 1000)
 
-                    osl$evaluateModels(data = copy(data.test), W = W, A = A, Y = Y) %>%
+                    osl$evaluateModels(data = copy(data.test), randomVariables = c(W, A, Y)) %>%
                       c(iterations = i, performance = .) %>%
                       print
                     #})

@@ -25,44 +25,6 @@ MLD.Density.Estimation <-
                     self$fit(data, X,Y)
                   },
 
-                  predict = function(datO, X = c("W1"), Y = c("Y")) {
-
-                    # Get the current conditional density
-                    conditionalDensity <- self$getConditionalDensities(Y)
-
-                    # Store the yValues for easy access
-                    yValues <- datO[[Y]]
-
-                    # Generate a datanet object (this needs to be refactored)
-                    nodeObjects <- private$defineNodeObjects(datO = datO, X = X, Y = Y)
-
-                    # Sample from the cond dist given the provided data
-                    sampled_data <- conditionalDensity$sampleA(newdata = nodeObjects$datNetObs)
-                    #sampled_data <- conditionalDensity$getPsAsW.models()[[1]]$sampleA(newdata = nodeObjects$datNetObs)
-
-                    if(FALSE){
-                      # Testing code
-                      # Create predictions
-                      #TODO: Why would we want to use predict over Aeqa?
-                      # Predict the instances where A=A (i.e., the outcome is the outcome)
-                      estimated_densities <- conditionalDensity$predictAeqa(newdata = nodeObjects$datNetObs)
-                      # plot densitity first:
-                      plot(density(datO[[Y]]), ylim=c(0,max(estimated_densities)+0.01))
-                      #plot(density(seq(min(yValues), max(yValues),length.out = length(estimated_densities))* estimated_densities[order(yValues)]))
-
-                      lines(yValues, estimated_densities, type = "p", cex = .3, col = "red")
-
-                      subs <- conditionalDensity$getPsAsW.models()[[1]]$getPsAsW.models()
-                      a <- lapply(seq(50), function(x) conditionalDensity$getPsAsW.models()[[1]]$sampleA(newdata = nodeObjectsSub$datNetObs))
-                      df <- as.data.frame(t(as.data.frame(a))); rownames(df)<-NULL
-
-                      subs <- conditionalDensity$getPsAsW.models()[[1]]$getPsAsW.models()
-                      conditionalDensity$predict(newdata = nodeObjectsSub$datNetObs)
-                    }
-
-                    sampled_data
-                  },
-
                   fit = function(datO, X, Y){
                     #TODO: Make this step online (remove the following line)
                     private$data <- datO
@@ -135,7 +97,7 @@ MLD.Density.Estimation <-
                     }
 
                     lapply(private$randomVariables, function(rv) {
-                        private$predict(datO=data,
+                        self$predict(datO=data,
                                      Y=rv$getY,
                                      X=rv$getX)
                       })
@@ -149,13 +111,51 @@ MLD.Density.Estimation <-
                       for (variableToPredict in ordering) {
                         rv <- private$randomVariables[[variableToPredict]]
                         cat('Predicting', rv$getY,'using', rv$getX,'\n')
-                        data[[parsed.formula$Y]] <- private$predict(datO = data,
+                        data[[parsed.formula$Y]] <- self$predict(datO = data,
                                                                     Y = rv$getY,
                                                                     X = rv$getX)
                       }
                       data <- private$SMG$getLatestCovariates(data)
                     }
                     
+                  },
+
+                  predict = function(datO, X = c("W1"), Y = c("Y")) {
+
+                    # Get the current conditional density
+                    conditionalDensity <- self$getConditionalDensities(Y)
+
+                    # Store the yValues for easy access
+                    yValues <- datO[[Y]]
+
+                    # Generate a datanet object (this needs to be refactored)
+                    nodeObjects <- private$defineNodeObjects(datO = datO, X = X, Y = Y)
+
+                    # Sample from the cond dist given the provided data
+                    sampled_data <- conditionalDensity$sampleA(newdata = nodeObjects$datNetObs)
+                    #sampled_data <- conditionalDensity$getPsAsW.models()[[1]]$sampleA(newdata = nodeObjects$datNetObs)
+
+                    if(FALSE){
+                      # Testing code
+                      # Create predictions
+                      #TODO: Why would we want to use predict over Aeqa?
+                      # Predict the instances where A=A (i.e., the outcome is the outcome)
+                      estimated_densities <- conditionalDensity$predictAeqa(newdata = nodeObjects$datNetObs)
+                      # plot densitity first:
+                      plot(density(datO[[Y]]), ylim=c(0,max(estimated_densities)+0.01))
+                      #plot(density(seq(min(yValues), max(yValues),length.out = length(estimated_densities))* estimated_densities[order(yValues)]))
+
+                      lines(yValues, estimated_densities, type = "p", cex = .3, col = "red")
+
+                      subs <- conditionalDensity$getPsAsW.models()[[1]]$getPsAsW.models()
+                      a <- lapply(seq(50), function(x) conditionalDensity$getPsAsW.models()[[1]]$sampleA(newdata = nodeObjectsSub$datNetObs))
+                      df <- as.data.frame(t(as.data.frame(a))); rownames(df)<-NULL
+
+                      subs <- conditionalDensity$getPsAsW.models()[[1]]$getPsAsW.models()
+                      conditionalDensity$predict(newdata = nodeObjectsSub$datNetObs)
+                    }
+
+                    sampled_data
                   },
 
                   # Fits the densities according to the provided randomVariables

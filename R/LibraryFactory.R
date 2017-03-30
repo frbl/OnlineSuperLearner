@@ -102,6 +102,15 @@ LibraryFactory <-
                     }
                   },
 
+                  getDescriptions = function(SL.library) {
+                    # If we only have a vector, that itself is the description. Otherwise
+                    # the list contains the descriptions
+                    if(is.a(SL.library, 'list')){
+                      SL.library <- sapply(SL.library, function(entry) entry$description )
+                    } 
+                    return(SL.library)
+                  },
+
                   getValidity = function() {
                     errors <- character()
                     # Check if all models are actually ml models
@@ -110,18 +119,21 @@ LibraryFactory <-
                       msg <- 'Not all provided models are ML models as models should start with ML, please only use ML models.'
                       errors <- c(errors, msg)
                     }
-                    if (length(errors) == 0) TRUE else throw(errors)
+                    if (length(errors) == 0) return(TRUE) else throw(errors)
                   },
 
                   fabricate = function(SL.library, summaryMeasureGenerator) {
                     # If we receive a list, assume that we have to create a parameter grid for each model
                     if(is.a(SL.library, 'list')){
-                      return(private$fabricateGrid(SL.library, summaryMeasureGenerator))
+                      fabricatedLibrary <- private$fabricateGrid(SL.library, summaryMeasureGenerator)
+                    } else {
+                      # if it is not a list, assume it is a vector or string
+                      SL.library <- Arguments$getCharacters(SL.library)
+                      fabricatedLibrary <- private$fabricateDefault(SL.library, summaryMeasureGenerator)
                     }
-
-                    # if it is not a list, assume it is a vector or string
-                    SL.library <- Arguments$getCharacters(SL.library)
-                    return(private$fabricateDefault(SL.library, summaryMeasureGenerator))
+                    descriptions <- self$getDescriptions(SL.library)
+                    names(fabricatedLibrary) <- descriptions
+                    return(fabricatedLibrary)
                   }
                   )
            )
