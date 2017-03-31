@@ -2,6 +2,41 @@ context("LibraryFactory")
 described.class <- LibraryFactory
 
 context(" initialize")
+test_that("it should initialize", {
+ expect_error(described.class$new(),NA)
+})
+
+context(" get_validity")
+test_that("it should always return true", {
+  # TODO: Implement proper validity checking
+  lf <- described.class$new()
+  expect_true(lf$get_validity)
+})
+
+context(' getDescriptions')
+test_that("it should return a vector of descriptions when a vector of ML algorithms is given", {
+  lf <- described.class$new()
+  algos <- c('Alg1', 'Alg2')
+  result <- lf$getDescriptions(algos)
+  expect_equal(length(result), 2)
+  expect_equal(result, c('Alg1', 'Alg2'))
+})
+
+test_that("it should return the descriptions in the list if a list of ml algorithms is given", {
+  lf <- described.class$new()
+
+  algos <- list(list(description='Alg1',
+                          algorithm = 'DensityEstimation',
+                          params = list(nbins = 3)))
+
+  algos <- append(algos, list(list(description='Alg2',
+                          algorithm = 'DensityEstimation',
+                          params = list(nbins = 100))))
+  
+  result <- lf$getDescriptions(algos)
+  expect_equal(length(result), 2)
+  expect_equal(result, c('Alg1', 'Alg2'))
+})
 
 context(" fabricate")
 context("  > without gridsearch")
@@ -61,7 +96,6 @@ test_that("it should should throw if the provide list contains invalid entries",
   expect_error(subject$fabricate(SL.library), 'The entry ML.Local.lm is not specified correctly')
 })
 
-
 test_that("it should work without providing parameters", {
 described.class <- LibraryFactory
   subject <- described.class$new()
@@ -79,14 +113,25 @@ described.class <- LibraryFactory
 
 test_that("it should expand a grid for gridsearch", {
   subject <- described.class$new()
-  SL.library <- list(list(algorithm = 'ML.Local.lm', description = 'ML.Local.LM-Model',
-                          params = list(family= c('binomial', 'gaussian'), learning.rate = c(1, 2, 3, 4)))) 
+
+  nbins1 <- c(122,123,1234,12345)
+  nbins2 <- c(1,2,3,100)
+  SL.library <- list(list(description='Alg1',
+                          algorithm = 'DensityEstimation',
+                          params = list(nbins = nbins1)))
+
+  SL.library <- append(SL.library, list(list(description='Alg2',
+                          algorithm = 'DensityEstimation',
+                          params = list(nbins = nbins2))))
+
   result <- subject$fabricate(SL.library)
   expect_true(is.a(result, 'list' ))
   expect_true(length(result) == 4 * 2 )
+  i <- 1
   for (model in result) {
-    expect_true(is.a(model, 'ML.Local.lm'))
-    expect_true(is.a(model, 'ML.Base'))
+    expect_true(is.a(model, 'DensityEstimation'))
+    expect_equal(model$get_nbins, c(nbins1, nbins2)[i])
+    i <- i + 1
   }
-  # TODO: Also test the actual params
+  # TODO: Also test with an actual grid of params
 })

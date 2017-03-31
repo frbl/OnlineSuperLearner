@@ -12,8 +12,8 @@ test_that("it should return NA if no estimators were fit", {
   smg = list()
   class(smg) <- 'SummaryMeasureGenerator'
   subject <- described.class$new(SL.Library, summaryMeasureGenerator = smg)
-  expect_equal(subject$predict(data, c('a'), c('b'), discrete = FALSE), NA)
-  expect_equal(subject$predict(data, c('a'), c('b'), discrete = TRUE), NA)
+  expect_equal(subject$predict(data, randomVariables = c('a'), discrete = FALSE), NA)
+  expect_equal(subject$predict(data, randomVariables = c('a'), discrete = TRUE), NA)
 })
 
 test_that("it should call the predict function of the discrete online super learner if discrete is true", {

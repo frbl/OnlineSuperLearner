@@ -12,7 +12,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
     list(
         # Variables
         # =========
-        conditional.densities = NULL,
+        conditional_densities = NULL,
         data = NULL,
         nbins = NULL,
         verbose = NULL,
@@ -45,7 +45,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
                                           subset = subset_vars)
 
           # Create the conditional density, based on the regression just specified and fit it
-          private$conditional.densities[Y] <- list(SummariesModel$new(reg = regclass, DatNet.sWsA.g0 = nodeObjects$datNetObs))
+          private$conditional_densities[Y] <- list(SummariesModel$new(reg = regclass, DatNet.sWsA.g0 = nodeObjects$datNetObs))
           self$getConditionalDensities(Y)$fit(data = nodeObjects$datNetObs)
         },
 
@@ -81,19 +81,22 @@ DensityEstimation <- R6Class ("DensityEstimation",
         ),
   active =
     list(
+        get_nbins = function() {
+          return(private$nbins)
+        }
         ),
   public =
     list(
-        initialize = function(nbins = 30, verbose = FALSE, summaryMeasureGenerator) {
+        initialize = function(nbins = 30, verbose = FALSE) {
           private$verbose = verbose
           private$nbins <- Arguments$getIntegers(as.numeric(nbins), c(1, Inf))
-          private$conditional.densities <- list()
+          private$conditional_densities <- list()
         },
 
         # Generates a sample given the provided data.
         sample = function(data) {
-          if (is.null(private$randomVariables)) {
-            throw('The conditional densities need to be fit first!')
+          if (is.null(private$randomVariables) | length(private$conditional_densities) == 0) {
+            throw('The conditional_densities need to be fit first!')
           }
 
           lapply(private$randomVariables, function(rv) {
@@ -104,6 +107,21 @@ DensityEstimation <- R6Class ("DensityEstimation",
         },
 
         predict = function(datO, X = c("W1"), Y = c("Y")) {
+
+          # TODO: BUGS!!!!!!!! For some weird reason, the code doesn't work with NA OR with 1 row of data. Fix on the correct location:
+          if(anyNA(datO)) {
+            warning('Some NA values were replaced with zeros!')
+            datO[is.na(datO)] <- 0
+          }
+
+          fixed <- FALSE
+          if(nrow(datO) == 1) {
+            datO <- rbind(datO, datO)
+            fixed <- TRUE
+          }
+
+          # TODO: Implement sampling from a non conditional distribution
+          if(length(X) == 0) return(NULL)
 
           # Get the current conditional density
           conditionalDensity <- self$getConditionalDensities(Y)
@@ -118,15 +136,18 @@ DensityEstimation <- R6Class ("DensityEstimation",
           sampled_data <- conditionalDensity$sampleA(newdata = nodeObjects$datNetObs)
           #sampled_data <- conditionalDensity$getPsAsW.models()[[1]]$sampleA(newdata = nodeObjects$datNetObs)
 
+          # TODO: We undo our fix here:
+          if(fixed) { sampled_data <- sampled_data[[1]] }
+
           if(FALSE){
             # Testing code
             # Create predictions
             #TODO: Why would we want to use predict over Aeqa?
             # Predict the instances where A=A (i.e., the outcome is the outcome)
-            estimated_densities <- conditionalDensity$predictAeqa(newdata = nodeObjects$datNetObs)
             # plot densitity first:
             plot(density(datO[[Y]]), ylim=c(0,max(estimated_densities)+0.01))
             #plot(density(seq(min(yValues), max(yValues),length.out = length(estimated_densities))* estimated_densities[order(yValues)]))
+            estimated_densities <- conditionalDensity$predictAeqa(newdata = nodeObjects$datNetObs)
 
             lines(yValues, estimated_densities, type = "p", cex = .3, col = "red")
 
@@ -147,16 +168,21 @@ DensityEstimation <- R6Class ("DensityEstimation",
 
           # Convert the formula in vectors (can probably be done easier)
           for (rv in randomVariables) {
+            if (!is.a(rv, 'RandomVariable')) {
+             throw('Please provide a list of randomvariables when running this function') 
+            }
             private$randomVariables[[rv$getY]] <- rv
           }
 
           # Fit conditional density for all of the randomVariables
           lapply(randomVariables, function(rv) {
-            private$fit(datO = data, Y = rv$getY, X = rv$getX) 
+            # TODO: Currently it is is not yet possible to sample from an non-conditional distribution!
+            if(length(rv$getX) > 0) {
+              private$fit(datO = data, Y = rv$getY, X = rv$getX) 
+            }
           })
           TRUE
         },
-
 
         # Updates the used condistional density
         update = function(datO, X = c("W1"), Y = c("Y")) {
@@ -165,16 +191,16 @@ DensityEstimation <- R6Class ("DensityEstimation",
 
 
         getConditionalDensities = function(outcome = NULL) {
-          if(is.null(private$conditional.densities)) throw('Densities not yet fitted')
+          if(length(private$conditional_densities) == 0) throw('Densities not yet fitted')
 
           # If no outcome type is provided, just return all of them
-          if(is.null(outcome)) return(private$conditional.densities)
-          if(!(all(outcome %in% names(private$conditional.densities)))) throw(paste(outcome, 'not a fitted outcome'))
+          if(is.null(outcome)) return(private$conditional_densities)
+          if(!(all(outcome %in% names(private$conditional_densities)))) throw(paste(outcome, 'is not a fitted outcome'))
 
           if (length(outcome) == 1) {
-            return(private$conditional.densities[[outcome]])
+            return(private$conditional_densities[[outcome]])
           }
-          return(private$conditional.densities[outcome])
+          return(private$conditional_densities[outcome])
         }
   )
 )

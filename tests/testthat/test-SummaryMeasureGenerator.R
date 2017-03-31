@@ -149,9 +149,9 @@ test_that("it should combine the results of multiple summarizers" , {
 
 context(" checkEnoughDataAvailable")
 test_that("it should check if enough data is available for all formulae, and return true if all is available", {
-  f1 <- y ~ w + w2 + w3 + a
-  f2 <- w ~ a + a1 + a2
-  f3 <- a ~ x + y + z
+  f1 <- RandomVariable$new(formula = y ~ w + w2 + w3 + a, family='gaussian')
+  f2 <- RandomVariable$new(formula = w ~ a + a1 + a2, family='gaussian')
+  f3 <- RandomVariable$new(formula = a ~ x + y + z, family='gaussian')
 
   variables = c('y','a','w', 'x', 'z')
   exposed_variables1 <- c('1','2','3','4')
@@ -163,9 +163,9 @@ test_that("it should check if enough data is available for all formulae, and ret
 })
 
 test_that("it should check if enough data is available for all formulae", {
-  f1 <- y ~ w + w2 + w3 + a
-  f2 <- w ~ a + a1 + a2
-  f3 <- a ~ x + y + z
+  f1 <- RandomVariable$new(formula = y ~ w + w2 + w3 + a, family='gaussian')
+  f2 <- RandomVariable$new(formula = w ~ a + a1 + a2, family='gaussian')
+  f3 <- RandomVariable$new(formula = a ~ x + y + z, family='gaussian')
 
   variables = c('y', 'a', 'w')
   exposed_variables1 <- c('1','2','3','4')
@@ -176,17 +176,6 @@ test_that("it should check if enough data is available for all formulae", {
   expect_false(subject$checkEnoughDataAvailable(c(f1,f2,f3)))
   expect_true(subject$checkEnoughDataAvailable(c(f1,f2)))
 })
-
-test_that("it should throw a warning whenever an interaction term is included", {
-  f1 <- a ~ x + y + z*a
-
-  variables = c('y','a','w', 'x', 'z')
-  exposed_variables <- c('')
-  mySmgs <- c(SMG.Mock$new(variables=variables, exposedVariables=exposed_variables))
-  subject <- described.class$new(SMG.list = mySmgs)
-  expect_that(subject$checkEnoughDataAvailable(c(f1)), gives_warning())
-})
-
 
 context(" getNextN")
 test_that("it should be removed, this function is deprecated", {

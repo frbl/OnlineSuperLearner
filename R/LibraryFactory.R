@@ -10,7 +10,7 @@
 #' \describe{
 #'   \item{\code{new(ML.models.allowed = c('ML.H2O.glm', 'ML.Local.lm', 'ML.XGBoost.glm'))}}{This method is used to create object of this class. It expects a \code{ML.models.allowed} as a list which describes all of the models that are allowed for fabrication. }
 #'
-#'   \item{\code{getValidity()}}{
+#'   \item{\code{get_validity}}{
 #'    Method to determine if the object is in a valid state.
 #'   }
 #'
@@ -37,10 +37,25 @@ LibraryFactory <- R6Class("LibraryFactory",
           ML.name %in% private$ML.models.allowed
         },
 
+        check_entry_validity = function(entry) {
+          if (!is.a(entry, 'list')) {
+            return() 
+          }
+
+          errors = private$isValidLibraryGrid(entry)
+          if (length(errors) != 0){
+            throw(paste('The entry', entry, 'is not specified correctly:', errors ))
+          }
+
+          if (!private$isValidMlModel(entry$algorithm)){
+            throw(paste('The model', entry$algorithm, 'is not a valid ML model algorithm'))
+          }
+        },
+
         fabricateGrid = function(SL.library) {
           # Create objects for each of the objects
           instances <- lapply(SL.library, function(entry) {
-            self$getEntryValidity(entry)
+            private$check_entry_validity(entry)
 
             # If no params are provided, treat the list as a vector
             if (!('params' %in% names(entry))){
@@ -70,7 +85,19 @@ LibraryFactory <- R6Class("LibraryFactory",
           })
         }
         ),
-
+  active = 
+    list(
+        get_validity = function() {
+          errors <- character()
+          # Check if all models are actually ml models
+          #are.ml.models <- sapply(private$ML.models.allowed, startsWith, 'ML')
+          #if(!all(are.ml.models)){
+            #msg <- 'Not all provided models are ML models as models should start with ML, please only use ML models.'
+            #errors <- c(errors, msg)
+          #}
+          if (length(errors) == 0) return(TRUE) else throw(errors)
+        }
+        ),
   public =
     list(
         initialize = function(ML.models.allowed = c('DensityEstimation',
@@ -80,23 +107,9 @@ LibraryFactory <- R6Class("LibraryFactory",
                                                     'ML.Local.lm',
                                                     'ML.XGBoost.glm')) {
           private$ML.models.allowed = ML.models.allowed
-          self$getValidity()
+          self$get_validity
         },
 
-        getEntryValidity = function(entry) {
-          if (!is.a(entry, 'list')) {
-            return() 
-          }
-
-          errors = private$isValidLibraryGrid(entry)
-          if (length(errors) != 0){
-            throw(paste('The entry', entry, 'is not specified correctly:', errors ))
-          }
-
-          if (!private$isValidMlModel(entry$algorithm)){
-            throw(paste('The model', entry$algorithm, 'is not a valid ML model algorithm'))
-          }
-        },
 
         getDescriptions = function(SL.library) {
           # If we only have a vector, that itself is the description. Otherwise
@@ -105,17 +118,6 @@ LibraryFactory <- R6Class("LibraryFactory",
             SL.library <- sapply(SL.library, function(entry) entry$description )
           } 
           return(SL.library)
-        },
-
-        getValidity = function() {
-          errors <- character()
-          # Check if all models are actually ml models
-          #are.ml.models <- sapply(private$ML.models.allowed, startsWith, 'ML')
-          #if(!all(are.ml.models)){
-            #msg <- 'Not all provided models are ML models as models should start with ML, please only use ML models.'
-            #errors <- c(errors, msg)
-          #}
-          if (length(errors) == 0) return(TRUE) else throw(errors)
         },
 
         fabricate = function(SL.library) {

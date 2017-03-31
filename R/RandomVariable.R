@@ -23,10 +23,24 @@ RandomVariable <- R6Class("RandomVariable",
           return(private$formula.Y)
         },
         getValidity = function() {
-          labels <- unique(attr(terms(formula), 'term.labels'))
-          needed <- c(self$getX, self$getY)
-          interactionTerms <- setdiff(labels, needed)
-          if(length(interactionTerms) != 0) warning(paste('Interactions are not yet supported and are ignored',interactionTerms))
+          errors <- character()
+          if(!is.a(private$formula, 'formula')){
+            msg <- 'Provided formula should be a formula'
+            errors <- c(errors, msg)
+          }
+          if(!private$family %in% RandomVariable.get_supported_families()){
+            msg <- paste('Provided family', private$family, 'not supported')
+            errors <- c(errors, msg)
+          }
+          if (length(errors) > 0) throw(errors)
+
+          if(length(private$formula.X) > 0) {
+            labels <- unique(attr(terms(private$formula), 'term.labels'))
+            needed <- c(self$getX, self$getY)
+            interactionTerms <- setdiff(labels, needed)
+            if(length(interactionTerms) != 0) warning(paste('Interactions are not yet supported and are ignored',interactionTerms))
+          }
+          return(TRUE) 
         }
         ),
   public =
@@ -38,15 +52,24 @@ RandomVariable <- R6Class("RandomVariable",
           private$formula.X = formula.parsed$X
           private$formula.Y = formula.parsed$Y
           private$family = family
+          self$getValidity
         },
 
         parseFormula = function(formula){
+          if(!is.a(formula, 'formula')){
+            throw('Provided formula should be a formula')
+          }
+
           vars <- all.vars(formula)
           depvar <- head(vars, 1)
           names(depvar) <- depvar
 
           indepvar <- tail(vars, -1)
-          names(indepvar) <- indepvar
+          if(indepvar == c('.')){
+            indepvar <- c()
+          } else {
+            names(indepvar) <- indepvar
+          }
 
           list(Y = depvar, X = indepvar)
         }
@@ -55,11 +78,14 @@ RandomVariable <- R6Class("RandomVariable",
 )
 # Static functions
 # ================
+RandomVariable.get_supported_families <- function() {
+  return(c('binomial', 'gaussian'))
+}
 
 # Algorithm to find a possible ordering of the functions.
 # The worst case run time of this algorithm is pretty bad, and can it
 # probably done more efficiently
-RandomVariable.find_ordering = function(randomVariables, verbose=FALSE) {
+RandomVariable.find_ordering <- function(randomVariables, verbose=FALSE) {
   dependencies <- list()
   order <- c()
   managed_deps <- c()

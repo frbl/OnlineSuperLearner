@@ -8,11 +8,21 @@
 #'
 #' @section Methods:
 #' \describe{
-#'   \item{\code{new(dataset, url)}}{This method is used to create object of this class. One can provide either a \code{datatable} or a \code{url} pointing to a dataframe.}
+#'   \item{\code{new(dataset, url)}}{
+#'     This method is used to create object of this class. One can provide either a \code{datatable} or a \code{url} pointing to a dataframe.
+#'   }
 #'
-#'   \item{\code{getAll()}}{Method to retrieve the whole dataset at once.}
-#'   \item{\code{getNext()}}{Method to retrieve the next observation from the data.}
-#'   \item{\code{getNextN(number.of.observations)}}{Method that returns the next \code{number.of.observations} observations. This function can be used to bootstrap an initial model.}
+#'   \item{\code{getAll()}}{
+#'     Method to retrieve the whole dataset at once.
+#'   }
+#'
+#'   \item{\code{getNext()}}{
+#'     Method to retrieve the next observation from the data.
+#'   }
+#'
+#'   \item{\code{getNextN(n)}}{
+#'     Method that returns the next \code{n} observations. This function can be used to bootstrap an initial model.
+#'   }
 #' }
 #' @export
 Data.Static <-
@@ -65,15 +75,15 @@ Data.Static <-
           return(temp)
         },
 
-        getNextN = function(number.of.observations = 1) {
-          max <- nrow(private$dataset) - private$currentrow
+        getNextN = function(n = 1) {
+          max <- nrow(private$dataset) - private$currentrow + 1
 
           # Check if the max value > 0
           Arguments$getInteger(max, c(1, Inf))
-          number.of.observations <- Arguments$getInteger(number.of.observations, c(1, max))
+          n <- Arguments$getInteger(n, c(1, max))
 
-          temp <- private$dataset[private$currentrow:((private$currentrow+number.of.observations)-1), ]
-          private$currentrow <- private$currentrow + number.of.observations
+          temp <- private$dataset[private$currentrow:((private$currentrow + n)-1), ]
+          private$currentrow <- private$currentrow + n
           return(temp)
         }
     )

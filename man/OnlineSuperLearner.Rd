@@ -19,7 +19,7 @@ to the super learner machine learning model.
     starts a new OnlineSuperLearner. The provided /code{SL.library.definition} contains the machine learning models to use
   }
 
-  \item{\code{run(data, Y, A, W,  initial.data.size = 10)}}{
+  \item{\code{run(data, Y, A, W,  initial_data_size = 10)}}{
     Runs the actual OnlineSuperLearning calculation
   }
   \item{\code{getModel()}}{

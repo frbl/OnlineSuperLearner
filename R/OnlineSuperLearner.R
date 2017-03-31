@@ -17,7 +17,7 @@
 #'     starts a new OnlineSuperLearner. The provided /code{SL.library.definition} contains the machine learning models to use
 #'   }
 #'
-#'   \item{\code{run(data, Y, A, W,  initial.data.size = 10)}}{
+#'   \item{\code{run(data, Y, A, W,  initial_data_size = 10)}}{
 #'     Runs the actual OnlineSuperLearning calculation
 #'   }
 #'   \item{\code{getModel()}}{
@@ -63,8 +63,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         # Find the best estimator among the current set, for each of the outcomes (WAY)
         find_current_best_estimator = function() {
-          lapply(self$get_cv_risk, function(rv) {
-            names(rv[which(rv == min(rv))])[1] %>%
+          lapply(self$get_cv_risk, function(risk) {
+            names(risk[which(risk == min(risk))])[1] %>%
             private$SL.library.fabricated[[.]]
           })
         },
@@ -83,7 +83,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         },
 
         update_risk = function(predicted.outcome = predicted.outcome, observed.outcome = observed.outcome, randomVariables= randomVariables) {
-          private$cv_risk <- private$calculate_risk(predicted.outcome = predicted.outcome,
+          updated_risk <- private$calculate_risk(predicted.outcome = predicted.outcome,
                                                   observed.outcome = observed.outcome, 
                                                   randomVariables= randomVariables)
 
@@ -93,10 +93,12 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             current <- rv$getY 
 
             # The score up to now needs to be calculated t times, the other score 1 time.
-            scaled_risk_total   <- (t / (t + 1)) * self$get_cv_risk[[current]] 
-            scaled_risk_current <- (1 / (t + 1)) * risk.cv.update[[current]] 
+            new_risk <- (1 / (t + 1)) * updated_risk[[current]] 
+            if(!is.null(self$get_cv_risk[[current]])){
+              new_risk <- new_risk +(t / (t + 1)) * self$get_cv_risk[[current]] 
+            }
 
-            private$cv_risk[[current]] <- scaled_risk_total + scaled_risk_current
+            private$cv_risk[[current]] <- new_risk
           })
           private$cv_risk_count <- private$cv_risk_count + 1
           return(self$get_cv_risk)
@@ -208,23 +210,23 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         # @param A: the column names used for the treatment
         # @param W: the column names used for the covariates
         # @param max_iterations: the number of iterations we can maximaly run for training
-        # @param mini.batch.size: size of the batch we use
-        updateLibrary = function(randomVariables, max_iterations, mini.batch.size){
+        # @param mini_batch_size: size of the batch we use
+        updateLibrary = function(randomVariables, max_iterations, mini_batch_size){
           private$verbose && enter(private$verbose, 'Starting model updating')
           if(!self$isFitted){
             throw('Fit the inital D-OSL and OSL first')
           }
 
           # Set the current timestep to 1
-          t <- mini.batch.size
+          t <- mini_batch_size
 
-          data.current <- private$summaryMeasureGenerator$getNextN(mini.batch.size)
+          data.current <- private$summaryMeasureGenerator$getNextN(mini_batch_size)
 
           # TODO: Check wether the stopping criteria are met (e.g., improvement < theta)
           while(t < max_iterations && nrow(data.current) >= 1 && !is.null(data.current)) {
 
-            # Only show this log every X times (X * mini.batch.size)
-            if(t %% (1 * mini.batch.size) == 0 && private$verbose) {
+            # Only show this log every X times (X * mini_batch_size)
+            if(t %% (1 * mini_batch_size) == 0 && private$verbose) {
               lapply(names(self$get_cv_risk), function(cv_name) {
                         cat(private$verbose, paste('Updating OSL at iteration', t,
                                                   'error for', cv_name,
@@ -263,8 +265,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             private$odsl.estimators <- private$find_current_best_estimator()
 
             # Get the new row of data
-            data.current <- private$summaryMeasureGenerator$getNextN(mini.batch.size)
-            t <- t + mini.batch.size
+            data.current <- private$summaryMeasureGenerator$getNextN(mini_batch_size)
+            t <- t + mini_batch_size
           }
           private$verbose && exit(private$verbose)
         },
@@ -394,8 +396,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
 
         # Data = the data object from which the data can be retrieved
-        # initial.data.size = the number of observations needed to fit the initial model
-        run = function(data, W, A, Y, initial.data.size = 5, max_iterations = 20, mini.batch.size = 20) {
+        # initial_data_size = the number of observations needed to fit the initial model
+        run = function(data, W, A, Y, initial_data_size = 5, max_iterations = 20, mini_batch_size = 20) {
 
           private$summaryMeasureGenerator$setData(data = data)
 
@@ -405,12 +407,12 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           }
 
           # Get the initial data for fitting the first model and train the initial models
-          private$summaryMeasureGenerator$getNextN(initial.data.size) %>%
+          private$summaryMeasureGenerator$getNextN(initial_data_size) %>%
             private$trainLibrary(data.initial = ., randomVariables = c(W, A, Y))
 
           # Update the library of models using a given number of max_iterations
           private$updateLibrary(randomVariables = c(W,A,Y), max_iterations = max_iterations,
-                                mini.batch.size = mini.batch.size)
+                                mini_batch_size = mini_batch_size)
 
           # Return the cross validated risk
           return(self$get_cv_risk)

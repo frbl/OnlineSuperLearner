@@ -1,6 +1,17 @@
 #' DataSplitter
 #'
 #' Splits data into train and test set.
+ #' @section Methods: 
+ #' \describe{  
+ #'   \item{\code{initialize() }}{ 
+ #'     <<description>> 
+ #'   } 
+ #' 
+ #'   \item{\code{split(data) }}{ 
+ #'     splits the data in a train and test set
+ #'     @param data the data to spit 
+ #'   } 
+ #' }  
 #' @docType class
 #' @importFrom R6 R6Class
 DataSplitter <- R6Class("DataSplitter",

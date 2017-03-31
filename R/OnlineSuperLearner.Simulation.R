@@ -62,7 +62,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
         basicRegressionWithLags = function() {
           set.seed(12345)
           log <- FALSE
-          log <- Arguments$getVerbose(-8, timestamp=TRUE)
+          #log <- Arguments$getVerbose(-8, timestamp=TRUE)
 
           ######################################
           # Generate observations for training #
@@ -98,26 +98,19 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           SMG.list <- c(SMG.list, SMG.Lag$new(lags = 2, colnames.to.lag = (c(A, W, Y))))
           SMG.list <- c(SMG.list, SMG.Latest.Entry$new(colnames.to.use = (c(A, W, Y))))
           summaryMeasureGenerator = SummaryMeasureGenerator$new(SMG.list = SMG.list, verbose = log) 
+
+
           # We'd like to use the following features in our estimation:
-          Y = "Y"
-          W = c("Y_lag_1","Y_lag_2","W", "W_lag_1", "W_lag_2", "A_lag_1", "A_lag_2")
-          A = c("A")
-
-
-          ## The predict should be ran for each dist separately
-          # Once Y ~ its dependencies
-          # Once a ~ its dependencies
-          # Once W ~ its dependencies
-          #Y.eq <- Y ~ A + W +  Y_lag_1 + A_lag_1 + W_lag_1 + Y_lag_2 + A_lag_2 + W_lag_2
-          #A.eq <- A ~ W + Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2 + A_lag_2 + W_lag_2
-          #W.eq <- W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2 + A_lag_2 + W_lag_2
-          W <- RandomVariable$new(formula = (W ~ W_lag_1), family = 'gaussian')
-          A <- RandomVariable$new(formula = (A ~ W), family = 'binomial')
-          Y <- RandomVariable$new(formula = (Y ~ A + W), family = 'gaussian')
+          Y.eq <- Y ~ A + W +  Y_lag_1 + A_lag_1 + W_lag_1 + Y_lag_2 + A_lag_2 + W_lag_2
+          A.eq <- A ~ W + Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2 + A_lag_2 + W_lag_2
+          W.eq <- W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2 + A_lag_2 + W_lag_2
+          W <- RandomVariable$new(formula = W.eq, family = 'gaussian')
+          A <- RandomVariable$new(formula = A.eq, family = 'binomial')
+          Y <- RandomVariable$new(formula = Y.eq, family = 'gaussian')
 
           # Generate a dataset we will use for testing.
           # TODO: This step is really slow, because of the getNextN(800)
-          private$sim$simulateWAYOneTrajectory(1000, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
+          private$sim$simulateWAY(1000, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
             Data.Static$new(dataset = .) %>%
             summaryMeasureGenerator$setData(.)
 
@@ -125,7 +118,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           # Generate a dataset, from the same statistical model, which we will use to train our model
           data.train <-
-            private$sim$simulateWAYOneTrajectory(private$nobs, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
+            private$sim$simulateWAY(private$nobs, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
             Data.Static$new(dataset = .)
 
           # Now run several iterations on the data
@@ -139,8 +132,8 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                         verbose = log)
 
           estimators <- osl$run(data.train, Y = Y, A = A, W = W,
-                                initial.data.size = 200, max.iterations = i,
-                                mini.batch.size = 1000)
+                                initial_data_size = 200, max_iterations = i,
+                                mini_batch_size = 1000)
 
           osl$evaluateModels(data = copy(data.test), randomVariables = c(W, A, Y)) %>%
             c(iterations = i, performance = .) %>%

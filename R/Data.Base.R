@@ -22,13 +22,7 @@ Data.Base <- R6Class ("Data.Base",
         },
 
         getNextN = function(n = 1){
-          # TODO: This method is currently super inefficient, and just a placeholder.
-          # This should be updated whenever there is a different way. It also depends on the underlaying class how this method should be implemented.
-          data <- data.table()
-          while(nrows(data) < n) {
-            data <- rbindlist(list(data, self$getNext()))
-          }
-          data
+          throw('This method needs to be inherited in a subclass')
         }
   )
 
