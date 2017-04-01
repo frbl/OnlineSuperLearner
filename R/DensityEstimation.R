@@ -1,4 +1,4 @@
-devtools::load_all('~/Workspace/frbl/tmlenet/')
+#devtools::load_all('~/Workspace/frbl/tmlenet/')
 #' Density.Estimation
 #'
 #' @import tmlenet

@@ -126,7 +126,7 @@ test_that("it should when sampled with NA, it should give a warning", {
   )
 
   W <- 1
-  dat <- data.frame(W=c(W), Y=c(NA))
+  dat <- data.frame(D = 1, W=c(W), Y=c(NA))
   expect_warning(subject$predict(dat, X=rv.Y$getX, Y=rv.Y$getY))
 })
 

@@ -20,7 +20,7 @@ packages <- c(
 )
 
 gh_packages <- c(
-"osofr/tmlenet"
+"frbl/tmlenet"
 )
 
 install <- function(packages, installfunc){

@@ -11,4 +11,18 @@ DataSplitter
 \description{
 Splits data into train and test set.
 }
+\section{Methods}{
+ 
+\describe{  
+  \item{\code{initialize() }}{ 
+    <<description>> 
+  } 
+
+  \item{\code{split(data) }}{ 
+    splits the data in a train and test set
+    @param data the data to spit 
+  } 
+}
+}
+
 \keyword{datasets}
