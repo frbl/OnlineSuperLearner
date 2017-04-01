@@ -3,6 +3,9 @@
 #' @docType class
 #' @importFrom R6 R6Class
 #' @include RandomVariable.R
+#' @include SMG.Latest.Entry.R
+#' @include SMG.Lag.R
+#' @include SMG.Transformation.R
 #' @export
 OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
   private =
@@ -27,13 +30,13 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           #algos <- append(algos, list(list(description='ML.H2O.gbm',
                                   #algorithm = 'ML.H2O.gbm')))
 
-          algos <- list(list(description='DensityEstimation-3bins',
+          algos <- list(list(description='DensityEstimation-50bins',
                                   algorithm = 'DensityEstimation',
-                                  params = list(nbins = 3)))
+                                  params = list(nbins = 6)))
 
           algos <- append(algos, list(list(description='DensityEstimation-100bins',
                                   algorithm = 'DensityEstimation',
-                                  params = list(nbins = 100))))
+                                  params = list(nbins = 60)))) 
 
           private$SL.library.definition <- algos
 
@@ -82,15 +85,16 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           llY <- list(rgen={function(AW){
             aa <- AW[, "A"]
             ww <- AW[, grep("[^A]", colnames(AW))]
-            mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
-              (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
+            #mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
+              #(1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
+            mu <- aa*(0.9) + (1-aa)*(0.3)
             rnorm(length(mu), mu, sd=0.1)}})
           
 
           # Define the variables in the initial dataset we'd like to use
           Y = "Y"
-          W = c("W")
-          A = c("A")
+          W = "W"
+          A = "A"
 
           # Create the measures we'd like to include in our model
           # In this simulation we will include 2 lags and the latest data (non lagged)
@@ -101,16 +105,15 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
 
           # We'd like to use the following features in our estimation:
-          Y.eq <- Y ~ A + W +  Y_lag_1 + A_lag_1 + W_lag_1 + Y_lag_2 + A_lag_2 + W_lag_2
-          A.eq <- A ~ W + Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2 + A_lag_2 + W_lag_2
-          W.eq <- W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2 + A_lag_2 + W_lag_2
+          Y.eq <- Y ~ A + W
+          A.eq <- A ~ W + Y_lag_1 + A_lag_1
+          W.eq <- W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2
           W <- RandomVariable$new(formula = W.eq, family = 'gaussian')
           A <- RandomVariable$new(formula = A.eq, family = 'binomial')
           Y <- RandomVariable$new(formula = Y.eq, family = 'gaussian')
 
           # Generate a dataset we will use for testing.
-          # TODO: This step is really slow, because of the getNextN(800)
-          private$sim$simulateWAY(1000, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
+          private$sim$simulateWAY(20000, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
             Data.Static$new(dataset = .) %>%
             summaryMeasureGenerator$setData(.)
 
@@ -124,7 +127,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           # Now run several iterations on the data
           #performances <- mclapply(seq(5,201,20), function(i) {
 
-          i = 2000
+          i = 1
           data.train$reset()
 
           osl <- OnlineSuperLearner$new(private$SL.library.definition,
@@ -132,7 +135,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                         verbose = log)
 
           estimators <- osl$run(data.train, Y = Y, A = A, W = W,
-                                initial_data_size = 200, max_iterations = i,
+                                initial_data_size = 20000, max_iterations = i,
                                 mini_batch_size = 1000)
 
           osl$evaluateModels(data = copy(data.test), randomVariables = c(W, A, Y)) %>%

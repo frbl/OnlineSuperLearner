@@ -37,6 +37,7 @@ Suggests:
     testthat
 RoxygenNote: 6.0.1
 Collate: 
+    'CrossValidationRiskCalculator.R'
     'Data.Base.R'
     'Data.Static.R'
     'Data.Stream.R'
@@ -61,10 +62,11 @@ Collate:
     'SummaryMeasureGenerator.R'
     'zzz.R'
     'OnlineSuperLearner.R'
-    'RandomVariable.R'
-    'OnlineSuperLearner.Simulation.R'
+    'SMG.Transformation.R'
     'SMG.Lag.R'
     'SMG.Latest.Entry.R'
+    'RandomVariable.R'
+    'OnlineSuperLearner.Simulation.R'
     'SMG.Mean.R'
     'Simulator.GAD.R'
     'Simulator.Slow.R'

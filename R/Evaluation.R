@@ -34,10 +34,7 @@ Evaluation.accuracy <- function(data.observed, data.predicted) {
 #' Log loss evaluation metric
 Evaluation.log_loss <- function(data.observed, data.predicted, eps = 1e-15) {
   data.predicted = pmin(pmax(data.predicted, eps), 1-eps)
-  loss <- - (sum(data.observed * log(data.predicted) + (1 - data.observed) * log(1 - data.predicted))) / length(data.observed)
-
-  # TODO: Not entirely sure why, but the loss is 0 if every element is different
-  loss
+  return(-mean(data.observed * log(data.predicted) + (1 - data.observed) * log(1 - data.predicted)))
 }
 
 Evaluation.mse_loss <-  function(data.observed, data.predicted) {

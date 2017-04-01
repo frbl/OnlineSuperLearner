@@ -12,13 +12,14 @@ suppressWarnings(devtools::load_all())
 defaultDataTable = function() {
   nobs = 1000
   W = rbinom(n=nobs,size=1, prob=0.5)
+  D = seq(nobs)
   mean = (1000 * W)
   Y=(rnorm(nobs,mean,10))
-  data.table(W=W, Y = Y)
+  data.table(D=D, W=W, Y = Y)
 }
 
 # TESTING:
-rv.W <- RandomVariable$new(formula = W ~ ., family = 'binomial')
+rv.W <- RandomVariable$new(formula = W ~ D, family = 'binomial')
 rv.Y <- RandomVariable$new(formula = Y ~ W, family = 'gaussian')
 
 
@@ -63,11 +64,11 @@ test_that("it should sample if from the cond densities once they've been fitted"
 
   Y_val <- 0
   for(W_val in c(0,1)) {
-    dat <- data.frame(W=c(W_val), Y=Y_val)
+    dat <- data.frame(D = 1, W=c(W_val), Y=Y_val)
     res <- subject$sample(dat)
     expect_true(is.a(res, 'list'))
     expect_true(length(res) == 2)
-    expect_true(is.null(res$W))
+    expect_false(is.null(res$W))
     expect_false(is.null(res$Y))
   }
 })
@@ -93,7 +94,7 @@ test_that("it should predict from the cond densities once it has been fitted", {
 
   Y_val <- 0
   for(W_val in c(0,1)) {
-    dat <- data.frame(W=c(W_val), Y=Y_val)
+    dat <- data.frame(D= 1, W=c(W_val), Y=Y_val)
     res <- subject$predict(dat, X=rv.Y$getX, Y=rv.Y$getY)
     expect_true(abs(res - W_val * 1000) < 50)
   }
@@ -110,7 +111,7 @@ test_that("it should predict from the cond densities once they've been fitted al
 
   Y_val <- NA 
   for(W_val in c(0,1)) {
-    dat <- data.frame(W=c(W_val), Y=Y_val)
+    dat <- data.frame(D= 1, W=c(W_val), Y=Y_val)
     suppressWarnings(res <- subject$predict(dat, X=rv.Y$getX, Y=rv.Y$getY))
     expect_true(abs(res - W_val * 1000) < 50)
   }
@@ -138,8 +139,7 @@ test_that("it should fit the conditional densities", {
   result <- subject$getConditionalDensities()
   expect_false(length(result) == 0)
 
-  # We only expect Y to be in here, because W is unpredictable now
-  expect_equal(names(result), unname(rv.Y$getY))
+  expect_equal(names(result), c(unname(rv.W$getY), unname(rv.Y$getY)))
 })
 
 test_that("it should throw when the list provided does not consist of randomvariables", {
@@ -164,7 +164,7 @@ test_that("it should return all CDs when no outcome is provided", {
 
   result <- subject$getConditionalDensities()
   expect_false(length(result) == 0)
-  expect_equal(names(result), unname(rv.Y$getY))
+  expect_equal(names(result), c(unname(rv.W$getY), unname(rv.Y$getY)))
 })
 
 test_that("it should provide just the CD with a given name when an outcome is provided", {

@@ -106,38 +106,38 @@ DensityEstimation <- R6Class ("DensityEstimation",
             })
         },
 
-        predict = function(datO, X = c("W1"), Y = c("Y")) {
+        predict = function(datO, X, Y) {
+          # TODO: Implement sampling from a non conditional distribution
+          if(length(X) == 0) return(NULL)
+          conditionalDensity <- self$getConditionalDensities(Y)
 
-          # TODO: BUGS!!!!!!!! For some weird reason, the code doesn't work with NA OR with 1 row of data. Fix on the correct location:
+
+          # TODO: BUGS!!!!!!!! For some weird reason, the code doesn't work with NA 
           if(anyNA(datO)) {
             warning('Some NA values were replaced with zeros!')
             datO[is.na(datO)] <- 0
           }
 
-          fixed <- FALSE
-          if(nrow(datO) == 1) {
-            datO <- rbind(datO, datO)
-            fixed <- TRUE
-          }
-
-          # TODO: Implement sampling from a non conditional distribution
-          if(length(X) == 0) return(NULL)
-
-          # Get the current conditional density
-          conditionalDensity <- self$getConditionalDensities(Y)
+          # This fix might not be necessary. It seems that whenever we have 1 row of data and 1 covariate, everythin
+          # crashes and burns. Using this simple fix actually fixes that problem. Unfortunately, when using this fix,
+          # it doesnt work when there are more than 1 covariate.
+          #fixed <- FALSE
+          #if(nrow(datO) == 1) {
+            #print('Fixing!')
+            #datO <- rbind(datO, datO)
+            #fixed <- TRUE
+          #}
 
           # Store the yValues for easy access
           yValues <- datO[[Y]]
 
           # Generate a datanet object (this needs to be refactored)
           nodeObjects <- private$defineNodeObjects(datO = datO, X = X, Y = Y)
-
-          # Sample from the cond dist given the provided data
           sampled_data <- conditionalDensity$sampleA(newdata = nodeObjects$datNetObs)
           #sampled_data <- conditionalDensity$getPsAsW.models()[[1]]$sampleA(newdata = nodeObjects$datNetObs)
 
           # TODO: We undo our fix here:
-          if(fixed) { sampled_data <- sampled_data[[1]] }
+          #if(fixed) { sampled_data <- sampled_data[[1]] }
 
           if(FALSE){
             # Testing code

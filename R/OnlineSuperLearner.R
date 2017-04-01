@@ -10,6 +10,7 @@
 #' @include DataSplitter.R
 #' @include SummaryMeasureGenerator.R
 #' @include WeightedCombinationComputer.R
+#' @include CrossValidationRiskCalculator.R
 #'
 #' @section Methods:
 #' \describe{
@@ -36,6 +37,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         # The R.cv score of the current fit
         cv_risk = NULL,
         cv_risk_count = NULL,
+        cv_risk_calculator = NULL,
 
         # The online discrete super learners. One for each outcome variable.
         odsl.estimators = NULL,
@@ -69,39 +71,14 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           })
         },
 
-        # Calculate the CV risk for each of the random variables provided
-        calculate_risk = function(predicted.outcome, observed.outcome, randomVariables, useAsLoss=TRUE){
-          cv_risk <- list()
-          for (rv in randomVariables) {
-            current.outcome <- predicted.outcome[[rv$getY]]
-            names(current.outcome) <- rownames(predicted.outcome)
-            lossFn <- Evaluation.get_evaluation_function(rv$getFamily, useAsLoss = useAsLoss)
-            cv_risk[[rv$getY]] <- lossFn(data.observed = observed.outcome[[rv$getY]],
-                                          data.predicted = current.outcome) 
-          }
-          return(cv_risk)
-        },
-
-        update_risk = function(predicted.outcome = predicted.outcome, observed.outcome = observed.outcome, randomVariables= randomVariables) {
-          updated_risk <- private$calculate_risk(predicted.outcome = predicted.outcome,
-                                                  observed.outcome = observed.outcome, 
-                                                  randomVariables= randomVariables)
-
-          t <- private$cv_risk_count
-          lapply(randomVariables, function(rv) {
-            #TODO: Is this calulation correct now?
-            current <- rv$getY 
-
-            # The score up to now needs to be calculated t times, the other score 1 time.
-            new_risk <- (1 / (t + 1)) * updated_risk[[current]] 
-            if(!is.null(self$get_cv_risk[[current]])){
-              new_risk <- new_risk +(t / (t + 1)) * self$get_cv_risk[[current]] 
-            }
-
-            private$cv_risk[[current]] <- new_risk
-          })
+        # Update the cross validation risk
+        update_risk = function(predicted.outcome, observed.outcome, randomVariables) {
+          private$cv_risk <- private$cv_risk_calculator$update_risk(predicted.outcome = predicted.outcome,
+                                                                    observed.outcome = observed.outcome,
+                                                                    randomVariables = randomVariables,
+                                                                    current_count = private$cv_risk_count,
+                                                                    current_risk = self$get_cv_risk)
           private$cv_risk_count <- private$cv_risk_count + 1
-          return(self$get_cv_risk)
         },
 
         # Predict using all estimators separately.
@@ -322,13 +299,17 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
     list(
         # Functions
         # =========
-        initialize = function(SL.library.definition = c('ML.Local.lm', 'ML.H2O.glm'), summaryMeasureGenerator, verbose = FALSE) {
+        initialize = function(SL.library.definition = c('ML.Local.lm', 'ML.H2O.glm'),
+                              summaryMeasureGenerator, verbose = FALSE) {
           private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
           private$fitted = FALSE
           private$summaryMeasureGenerator <- summaryMeasureGenerator
           private$dataSplitter <- DataSplitter$new()
+
+          # Cross validation initialization
           private$cv_risk = list()
           private$cv_risk_count = 0
+          private$cv_risk_calculator = CrossValidationRiskCalculator$new()
 
           libraryFactory <- LibraryFactory$new()
 
@@ -360,10 +341,11 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         evaluateModels = function(data, randomVariables) {
           predicted.outcome <- self$predict(data = data, randomVariables = randomVariables, discrete = TRUE)
           observed.outcome <- data[,names(predicted.outcome), with=FALSE]
-          private$calculate_risk(predicted.outcome = predicted.outcome,
-                                observed.outcome = observed.outcome, 
-                                randomVariables = randomVariables,
-                                useAsLoss = FALSE)
+          print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+          private$cv_risk_calculator$calculate_risk(predicted.outcome = predicted.outcome,
+                                                    observed.outcome = observed.outcome, 
+                                                    randomVariables = randomVariables,
+                                                    useAsLoss = FALSE)
         },
 
         # Samples the data iteratively from the fitted distribution, and applies an intervention if necessary
@@ -425,8 +407,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             return(NA)
           }
 
-          # TODO: This can be very inefficient, especially when we are updating both of them.
-          # We could perform the prediction only once, which saves time.
           if(discrete){
             # I'm using a for loop here because I want to set the name of the predictions.
             # It would be great if we could do this in a lapply, but I don't know if that's
@@ -436,8 +416,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             for (rv in randomVariables) {
               outcome <- rv$getY
               predictions[[outcome]] <- private$odsl.estimators[[outcome]]$predict(datO = data,
-                                                                                    X= rv$getX,
-                                                                                    Y= rv$getY)
+                                                           X = rv$getX,
+                                                           Y = rv$getY)
             }
             return(predictions)
           }
