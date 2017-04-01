@@ -5,7 +5,7 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
-#' @include Global.R
+#' @include zzz.R
 #' @include LibraryFactory.R
 #' @include DataSplitter.R
 #' @include SummaryMeasureGenerator.R
@@ -75,7 +75,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           for (rv in randomVariables) {
             current.outcome <- predicted.outcome[[rv$getY]]
             names(current.outcome) <- rownames(predicted.outcome)
-            lossFn <- EvaluationFunction(rv$getFamily, useAsLoss = useAsLoss)
+            lossFn <- Evaluation.get_evaluation_function(rv$getFamily, useAsLoss = useAsLoss)
             cv_risk[[rv$getY]] <- lossFn(data.observed = observed.outcome[[rv$getY]],
                                           data.predicted = current.outcome) 
           }

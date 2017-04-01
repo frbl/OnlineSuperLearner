@@ -10,6 +10,8 @@ packages <- c(
 "R.methodsS3",
 "R.oo",
 "testthat",
+"simcausal",
+"Metrics",
 "xgboost",
 "nnls",
 "nloptr",

@@ -24,12 +24,14 @@ Imports:
     R.oo,
     R6,
     tmlenet,
+    simcausal, 
     methods,
     magrittr,
     purrr,
     xgboost,
     nloptr,
-    nnls
+    nnls,
+    Metrics
 Suggests:
     roxygen2,
     testthat
@@ -45,7 +47,6 @@ Collate:
     'ML.Local.R'
     'DensityEstimation.R'
     'Evaluation.R'
-    'Global.R'
     'H2O.initializer.R'
     'ML.Local.lm.R'
     'ML.XGBoost.glm.R'
@@ -58,6 +59,7 @@ Collate:
     'WeightedCombinationComputer.R'
     'SMG.Mock.R'
     'SummaryMeasureGenerator.R'
+    'zzz.R'
     'OnlineSuperLearner.R'
     'RandomVariable.R'
     'OnlineSuperLearner.Simulation.R'

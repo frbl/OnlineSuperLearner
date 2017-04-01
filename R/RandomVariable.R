@@ -65,7 +65,7 @@ RandomVariable <- R6Class("RandomVariable",
           names(depvar) <- depvar
 
           indepvar <- tail(vars, -1)
-          if(indepvar == c('.')){
+          if(length(indepvar) == 1 & indepvar[1] == c('.')){
             indepvar <- c()
           } else {
             names(indepvar) <- indepvar
