@@ -13,4 +13,3 @@ H2O.Initializer(host = "localhost", port = 54321, runlocal = TRUE,
 H2O.Initializer
 Idealy I'd like to use a singletonpattern for this, but this also works.
 }
-

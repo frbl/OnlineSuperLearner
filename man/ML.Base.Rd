@@ -20,6 +20,7 @@ Base class for any machine learning model. Extend this class if you want to crea
 
 \item{\code{CV.risk}}{the calculated crossvalidated risk of the estimator}
 }}
+
 \section{Methods}{
 
 \describe{
@@ -30,5 +31,5 @@ Base class for any machine learning model. Extend this class if you want to crea
   \item{\code{getModel()}}{Getter for the latest model.}
 }
 }
-\keyword{datasets}
 
+\keyword{datasets}

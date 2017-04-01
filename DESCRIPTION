@@ -23,28 +23,32 @@ Imports:
     h2o (>=	3.10.3.2),
     R.oo,
     R6,
+    tmlenet,
+    simcausal, 
     methods,
     magrittr,
     purrr,
     xgboost,
     nloptr,
-    nnls
+    nnls,
+    Metrics
 Suggests:
     roxygen2,
     testthat
-RoxygenNote: 5.0.1
-Collate:
+RoxygenNote: 6.0.1
+Collate: 
+    'CrossValidationRiskCalculator.R'
     'Data.Base.R'
     'Data.Static.R'
     'Data.Stream.R'
     'Simulator.Simple.R'
     'Data.Stream.Simulator.R'
     'DataSplitter.R'
-    'Evaluation.R'
-    'Global.R'
-    'H2O.initializer.R'
     'ML.Base.R'
     'ML.Local.R'
+    'DensityEstimation.R'
+    'Evaluation.R'
+    'H2O.initializer.R'
     'ML.Local.lm.R'
     'ML.XGBoost.glm.R'
     'LibraryFactory.R'
@@ -56,12 +60,16 @@ Collate:
     'WeightedCombinationComputer.R'
     'SMG.Mock.R'
     'SummaryMeasureGenerator.R'
+    'zzz.R'
     'OnlineSuperLearner.R'
-    'OnlineSuperLearner.Simulation.R'
+    'SMG.Transformation.R'
     'SMG.Lag.R'
     'SMG.Latest.Entry.R'
+    'RandomVariable.R'
+    'OnlineSuperLearner.Simulation.R'
     'SMG.Mean.R'
     'Simulator.GAD.R'
     'Simulator.Slow.R'
     'WCC.NLopt.R'
     'WCC.NNLS.R'
+Remotes: frbl/tmlenet

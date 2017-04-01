@@ -24,59 +24,57 @@
 #'    \code{libraryNames} vector containing the names of the estimators
 #'   }
 #' }
-WCC.NLopt <-
-  R6Class (
-           "WCC.NLopt",
-           inherit = WeightedCombinationComputer,
-           private =
-             list(
-                  lossFunction = NULL,
-                  lossFunctionGradient = NULL,
-                  opts = NULL,
+WCC.NLopt <- R6Class("WCC.NLopt",
+  inherit = WeightedCombinationComputer,
+  private =
+    list(
+        lossFunction = NULL,
+        lossFunctionGradient = NULL,
+        opts = NULL,
 
-                  compute = function(Z, Y, libraryNames, opts = NULL ) {
-                    # Compute the best convex combination
-                    result <- nloptr(x0=self$getWeights,
-                                  eval_f=private$lossFunction,
-                                  eval_grad_f = private$lossFunctionGradient,
-                                  opts=private$opts,
-                                  X = Z,
-                                  Y = Y)
+        compute = function(Z, Y, libraryNames, opts = NULL ) {
+          # Compute the best convex combination
+          result <- nloptr(x0=self$getWeights,
+                        eval_f=private$lossFunction,
+                        eval_grad_f = private$lossFunctionGradient,
+                        opts=private$opts,
+                        X = Z,
+                        Y = Y)
 
-                    # Normalize the weights
-                    private$weights <- (result$solution / sum(result$solution))
-                  }
-                  ),
-           active = 
-             list(),
-           public =
-             list(
-                  initialize = function(weights.initial, lossFunction = NULL, lossFunctionGradient = NULL, opts = NULL) {
-                    super$initialize(weights.initial)
+          # Normalize the weights
+          private$weights <- (result$solution / sum(result$solution))
+        }
+        ),
+  active = 
+    list(),
+  public =
+    list(
+        initialize = function(weights.initial, lossFunction = NULL, lossFunctionGradient = NULL, opts = NULL) {
+          super$initialize(weights.initial)
 
-                    # TODO: These functions are probably incorrect / inefficient currently. Update them with the correct functions.
-                    if(is.null(lossFunction)){
-                      lossFunction <- function(coeff, X, Y) {
-                        pred <- as.matrix(X) %*% coeff
-                        1/2 * mean((pred - Y)^2)
-                      }
-                    }
+          # TODO: These functions are probably incorrect / inefficient currently. Update them with the correct functions.
+          if(is.null(lossFunction)){
+            lossFunction <- function(coeff, X, Y) {
+              pred <- as.matrix(X) %*% coeff
+              1/2 * mean((pred - Y)^2)
+            }
+          }
 
-                    if(is.null(lossFunctionGradient)){
-                      lossFunctionGradient <- function(coeff, X, Y) {
-                        pred <- as.matrix(X) %*% coeff
-                        t(X) %*% (1/length(Y) * (pred - Y))
-                      }
-                    }
+          if(is.null(lossFunctionGradient)){
+            lossFunctionGradient <- function(coeff, X, Y) {
+              pred <- as.matrix(X) %*% coeff
+              t(X) %*% (1/length(Y) * (pred - Y))
+            }
+          }
 
-                    if(is.null(opts)){
-                      opts <- list("algorithm"="NLOPT_LD_LBFGS",
-                                   "xtol_rel"=1.0e-8)
-                    }
+          if(is.null(opts)){
+            opts <- list("algorithm"="NLOPT_LD_LBFGS",
+                          "xtol_rel"=1.0e-8)
+          }
 
-                    private$lossFunction <- lossFunction
-                    private$lossFunctionGradient <- lossFunctionGradient
-                    private$opts <- opts
-                  }
-                  )
-           )
+          private$lossFunction <- lossFunction
+          private$lossFunctionGradient <- lossFunctionGradient
+          private$opts <- opts
+        }
+    )
+)

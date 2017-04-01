@@ -23,32 +23,30 @@
 #'    \code{libraryNames} vector containing the names of the estimators
 #'   }
 #' }
-WCC.NNLS <-
-  R6Class (
-           "WCC.NNLS",
-           inherit = WeightedCombinationComputer,
-           private =
-             list(
-                  compute = function(Z, Y, libraryNames ) {
-                    # Compute the best convex combination
-                    weights <- coef(nnls(Z,Y))
+WCC.NNLS <- R6Class("WCC.NNLS",
+  inherit = WeightedCombinationComputer,
+  private =
+    list(
+        compute = function(Z, Y, libraryNames ) {
+          # Compute the best convex combination
+          weights <- coef(nnls(Z,Y))
 
-                    if(all(weights == 0)) {
-                      warning('All algorithms have zero weight')
-                      return(weights)
-                    }
+          if(all(weights == 0)) {
+            warning('All algorithms have zero weight')
+            return(weights)
+          }
 
-                    # Normalize the weights and store them for later use
-                    private$weights <- weights/sum(weights)
-                    private$weights
-                  }
-                  ),
-           active =
-             list(),
-           public =
-             list(
-                  initialize = function(weights.initial) {
-                    super$initialize(weights.initial)
-                  }
-                  )
-           )
+          # Normalize the weights and store them for later use
+          private$weights <- weights/sum(weights)
+          private$weights
+        }
+        ),
+  active =
+    list(),
+  public =
+    list(
+        initialize = function(weights.initial) {
+          super$initialize(weights.initial)
+        }
+    )
+)

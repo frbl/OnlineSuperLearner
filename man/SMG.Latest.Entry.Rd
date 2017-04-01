@@ -12,4 +12,3 @@ SMG.Latest.Entry
 SMG.Latest.Entry
 }
 \keyword{datasets}
-

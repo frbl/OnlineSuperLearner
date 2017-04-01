@@ -147,6 +147,37 @@ test_that("it should combine the results of multiple summarizers" , {
   expect_equal(result, expected)
 })
 
+context(" checkEnoughDataAvailable")
+test_that("it should check if enough data is available for all formulae, and return true if all is available", {
+  f1 <- RandomVariable$new(formula = y ~ w + w2 + w3 + a, family='gaussian')
+  f2 <- RandomVariable$new(formula = w ~ a + a1 + a2, family='gaussian')
+  f3 <- RandomVariable$new(formula = a ~ x + y + z, family='gaussian')
+
+  variables = c('y','a','w', 'x', 'z')
+  exposed_variables1 <- c('1','2','3','4')
+  exposed_variables2 <- c('')
+  mySmgs <- c(SMG.Mock$new(variables=variables, exposedVariables=exposed_variables1),
+              SMG.Mock$new(variables=variables, exposedVariables=exposed_variables2))
+  subject <- described.class$new(SMG.list = mySmgs)
+  expect_true(subject$checkEnoughDataAvailable(c(f1,f2,f3)))
+})
+
+test_that("it should check if enough data is available for all formulae", {
+  f1 <- RandomVariable$new(formula = y ~ w + w2 + w3 + a, family='gaussian')
+  f2 <- RandomVariable$new(formula = w ~ a + a1 + a2, family='gaussian')
+  f3 <- RandomVariable$new(formula = a ~ x + y + z, family='gaussian')
+
+  variables = c('y', 'a', 'w')
+  exposed_variables1 <- c('1','2','3','4')
+  exposed_variables2 <- c('')
+  mySmgs <- c(SMG.Mock$new(variables=variables, exposedVariables=exposed_variables1),
+              SMG.Mock$new(variables=variables, exposedVariables=exposed_variables2))
+  subject <- described.class$new(SMG.list = mySmgs)
+  expect_false(subject$checkEnoughDataAvailable(c(f1,f2,f3)))
+  expect_true(subject$checkEnoughDataAvailable(c(f1,f2)))
+})
+
+
 context(" getNextN")
 test_that("it should be removed, this function is deprecated", {
  skip("Deprecated function, remove") 

@@ -13,39 +13,38 @@
 #'   \item{\code{predict(data, X)}}{Method to predict using the current model.}
 #'   \item{\code{getModel()}}{Getter for the latest model.}
 #'}
-ML.Base <-
-  R6Class (
-           "ML.Base",
-           private =
-             list(
-                  ),
-           public =
-             list(
-                  model = NULL,
+ML.Base <- R6Class("ML.Base",
+  private =
+    list(
+        ),
+  public =
+    list(
+        model = NULL,
 
-                  initialize = function() {
-                  },
+        initialize = function() {
+          model <- list()
+        },
 
-                  process = function(train, test, Y, A, W) {
-                    # DO NOT OVERRIDE THIS FUNCTION!
-                    # This function delegates the call to its subclass
-                    self$fit(train, Y, A, W)
+        process = function(train, test, Y, A, W) {
+          # DO NOT OVERRIDE THIS FUNCTION!
+          # This function delegates the call to its subclass
+          self$fit(train, Y, A, W)
 
-                    # Predict the outcome on the testset
-                    self$predict(test, A, W)
-                  },
+          # Predict the outcome on the testset
+          self$predict(test, A, W)
+        },
 
-                  fit = function(train, Y, A, W) {
-                    throw('The fit method needs to be inherited')
-                  },
+        fit = function(train, Y, A, W) {
+          throw('The fit method needs to be inherited')
+        },
 
-                  predict = function(data, A, W) {
-                    warning('You are using the base predict function, you\'d probably want to inherit and override this')
-                    if (is.null(self$model)) {
-                      throw('Train the model first')
-                    }
-                    X <- c(A, W)
-                    pred <- predict(self$model, as.matrix(data[, X, with = FALSE]))
-                  }
-                  )
-           )
+        predict = function(data, A, W) {
+          warning('You are using the base predict function, you\'d probably want to inherit and override this')
+          if (is.null(self$model)) {
+            throw('Train the model first')
+          }
+          X <- c(A, W)
+          pred <- predict(self$model, as.matrix(data[, X, with = FALSE]))
+        }
+    )
+)

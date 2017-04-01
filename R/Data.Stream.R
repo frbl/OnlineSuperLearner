@@ -12,26 +12,24 @@
 #'   \item{\code{getNext()}}{Method to retrieve the next observation from the stream.}
 #' }
 #' @export
-Data.Stream <-
-  R6Class (
-           "Data.Stream",
-           inherit = Data.Base,
-           private =
-             list(
-                  consumer = NULL
-                  ),
-           public =
-             list(
-                  initialize = function(kafka.host = 'imac.evionix.org:2181', kafka.stream = 'test' ) {
-                    ########## importFrom rkafka rkafka.read rkafka.createConsumer rkafka.closeConsumer
-                    throw('Currently removed because of the many problems with rJava')
-                    #private$consumer <- rkafka.createConsumer(zookeeperConnect = kafka.host,
-                                                              #topicName = kafka.stream,
-                                                              #consumerTimeoutMs = '100')
-                  },
+Data.Stream <- R6Class ("Data.Stream",
+  inherit = Data.Base,
+  private =
+    list(
+        consumer = NULL
+        ),
+  public =
+    list(
+        initialize = function(kafka.host = 'imac.evionix.org:2181', kafka.stream = 'test' ) {
+          ########## importFrom rkafka rkafka.read rkafka.createConsumer rkafka.closeConsumer
+          throw('Currently removed because of the many problems with rJava')
+          #private$consumer <- rkafka.createConsumer(zookeeperConnect = kafka.host,
+                                                    #topicName = kafka.stream,
+                                                    #consumerTimeoutMs = '100')
+        },
 
-                  getNext = function() {
-                    #rkafka.read(private$consumer)
-                  }
-                  )
-           )
+        getNext = function() {
+          #rkafka.read(private$consumer)
+        }
+  )
+)

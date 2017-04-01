@@ -12,4 +12,3 @@ SMG.Lag
 SMG.Lag
 }
 \keyword{datasets}
-

@@ -13,5 +13,39 @@ Simulator.GAD
 Simulator.GAD
 directed acyclic graph approach to simulation
 }
-\keyword{datasets}
+\section{Methods}{
 
+\describe{
+  \item{\code{new()}}{
+    Starts a new GAD based simulator.
+  }
+  \item{\code{simulateWAY(numberOfBlocks, qw, ga, Qy, intervention, verbose)}}{
+    Runs the simulation using the parameters provided.
+    \code{numberOfBlocks} integer is used to specify the number of required simulated observations.
+    \code{qw} is the underlying mechanism creating the covariate measurements.
+    \code{ga} is the underlying mechanism creating the exposure measurements.
+    \code{Qy} is the underlying mechanism creating the outcome measurements.
+    \code{intervention}
+    \code{verbose}
+   The each of the \code{qw}, \code{ga}, \code{Qy} requires a list as parmeter, each having 3 fields:
+   \code{stochMech} function the mechanism that is used to generate the underlying unmeasured confounders. These 'observations' form the basis of the data generative process.
+   \code{param} vector with memories used to generate the dataset. Each entry in this vector is a coefficient for that point in history.
+                Note that this also includes preceeding measurements within the current observation, i.e. W A Y -> A precedes Y, W precedes A, etc.
+                If we would thus have a memory of \code{c(0.1,0.5)} for \code{W}, that would mean that the current measurement of W is generated using the Y in the
+                previous measurment for 0.1, and A in the previous measurement for 0.5.
+   \code{rgen} function
+  }
+  \item{\code{simulateWAYiidTrajectories(numberOfBlocks, numberOfTrajectories, qw, ga, Qy, intervention, verbose)}}{
+    does the exact same as simulateWAY, however, this function also takes an numberOfTrajectories argument, in which one can specify how many concurrent time series should be generated.
+    \code{numberOfBlocks} integer is used to specify the number of required simulated observations.
+    \code{numberOfTrajectories} integer the number of concurrent time series should be generated
+    \code{qw} is the underlying mechanism creating the covariate measurements.
+    \code{ga} is the underlying mechanism creating the exposure measurements.
+    \code{Qy} is the underlying mechanism creating the outcome measurements.
+    \code{intervention}
+    \code{verbose}
+  }
+}
+}
+
+\keyword{datasets}
