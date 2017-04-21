@@ -1,3 +1,6 @@
+devtools::load_all('~/Workspace/frbl/tmlenet')
+
+
 #' OnlineSuperLearner
 #'
 #' This is the main super learner class. This class contains everything related
@@ -58,17 +61,21 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         verbose = FALSE,
 
         # The computer for the SuperLearner combination
-        weightedCombinationComputer = NULL,
+        weightedCombinationComputers = NULL,
 
         # Functions
         # =========
 
         # Find the best estimator among the current set, for each of the outcomes (WAY)
         find_current_best_estimator = function() {
-          lapply(self$get_cv_risk, function(risk) {
-            names(risk[which(risk == min(risk))])[1] %>%
-            private$SL.library.fabricated[[.]]
-          })
+          current_risk <- self$get_cv_risk
+          rbindlist(current_risk) %>%
+            # Get the first if there are multiple best ones
+            sapply(., function(x) which.min(x)[1]) %>%
+            lapply(., function(algorithm) {
+              names(current_risk)[algorithm] %>%
+                private$SL.library.fabricated[[.]]
+            })
         },
 
         # Update the cross validation risk
@@ -81,35 +88,42 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$cv_risk_count <- private$cv_risk_count + 1
         },
 
+        initialize_weighted_combination_calculators = function(randomVariables) {
+          lapply(randomVariables, function(rv) {
+            weights.initial <- rep(1 / length(private$SL.library.descriptions), length(private$SL.library.descriptions))
+
+            # TODO: DIP the WCC
+            private$weightedCombinationComputers[[rv$getY]] <- WCC.SGD$new(weights.initial = weights.initial)
+          })
+        },
+
         # Predict using all estimators separately.
         # Params:
         # @param data.initial: the initial dataset to train the estimators on
         # @param Y: the column names used for the outcome
         # @param A: the column names used for the treatment
         # @param W: the column names used for the covariates
-        # @return a vector of outcomes, each entry being the predicted outcome of an estimator
+        # @return a list of outcomes, each entry being a data.table with the outcomes of an estimator
         predictUsingAllEstimators = function(data) {
           private$verbose && enter(private$verbose, 'Predicting with all models')
           #dataH2o <- as.h2o(data)
           #private$verbose && cat(private$verbose, 'Uploaded data to h2o')
-
           result <- lapply(private$SL.library.fabricated,
             function(model) {
               #if(is.a(model, 'ML.H2O')){
                 #current <- dataH2o
               #} else {
-              current <- data
+                current <- data
               #}
+              # TODO: Unity in export formats. Probably the best is to enforce a data.table output
               model$sample(current)
             })
 
           # convert the list of results into a data.table
-          result <- rbindlist(result)
-          rownames(result) <- private$SL.library.descriptions
+          result <- lapply(result, function(res) as.data.table(do.call(cbind, res)))
           private$verbose && exit(private$verbose)
           result
         },
-
 
         # Train using all estimators separately.
         # Postcondition: each of our density estimators will have a fitted conditional
@@ -122,20 +136,20 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         # @param W: the column names used for the covariates
         # @return a vector of outcomes, each entry being the predicted outcome of an estimator on the test set
         trainAllEstimators = function(data, randomVariables) {
-          private$verbose && enter(private$verbose, 'Training all models')
+          private$verbose && enter(private$verbose, 'Training all estimators')
           #dataH2o <- as.h2o(data)
           #private$verbose && cat(private$verbose, 'Uploaded data to h2o')
 
           lapply(private$SL.library.fabricated,
-                  function(model) {
-                    #if(is.a(model, 'ML.H2O')){
-                      #current <- dataH2o
-                    #} else {
-                    current <- data
-                    #}
-                    model$process(current, randomVariables = randomVariables)
-                  }
-                  )
+            function(model) {
+              #if(is.a(model, 'ML.H2O')){
+                #current <- dataH2o
+              #} else {
+              current <- data
+              #}
+              model$process(current, randomVariables = randomVariables, update = self$isFitted)
+            }
+          )
           private$verbose && exit(private$verbose)
         },
 
@@ -155,26 +169,25 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$verbose && enter(private$verbose, 'Creating initial fits')
 
           data.splitted <- private$dataSplitter$split(data.initial)
+          outcome.variables <- sapply(randomVariables, function(rv) rv$getY)
 
           # Fit the initial models
           private$trainAllEstimators(data = data.splitted$train,
                                       randomVariables = randomVariables)
 
-          # TODO: Make sure that all predictions are returned in the same format
           predicted.outcome <- private$predictUsingAllEstimators(data = data.splitted$test)
-          observed.outcome <- data.splitted$test[,colnames(predicted.outcome), with=FALSE]
+          observed.outcome <- data.splitted$test[,outcome.variables, with=FALSE]
 
           # Calculate the error
           private$update_risk(predicted.outcome = predicted.outcome,
                                                   observed.outcome = observed.outcome, 
-                                                  randomVariables= randomVariables)
+                                                  randomVariables = randomVariables)
 
           # Fit the super learner on the current data
           #Ymat <- as.matrix(data.initial[, Y, with = FALSE])
-          #private$fit(predicted.outcome = predictions, observed.outcome = Ymat )
 
           # Update the discrete superlearner (take the first if there are multiple candidates)
-          private$odsl.estimators <- private$find_current_best_estimator()
+          private$fit(predicted.outcome = predicted.outcome, observed.outcome = observed.outcome )
           private$fitted = TRUE
           private$verbose && exit(private$verbose)
 
@@ -214,12 +227,13 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             # Update all models on the previous data set, and get their prediction on the current data.
             data.splitted <- private$dataSplitter$split(data.current)
             private$trainAllEstimators(data = data.splitted$train, randomVariables = randomVariables)
+            outcome_variables <- sapply(randomVariables, function(rv) rv$getY)
 
             # Make a prediction using our (super)learners
             predicted.outcome <- private$predictUsingAllEstimators(data = data.splitted$test)
-            observed.outcome <- data.splitted$test[,colnames(predicted.outcome), with=FALSE]
+            observed.outcome  <- data.splitted$test[,outcome_variables, with=FALSE]
 
-            #osl.prediction <- self$predict(data = data.splitted$test)
+            osl.prediction <- self$predict(data = data.splitted$test, randomVariables = randomVariables)
             odsl.prediction <- self$predict(data = data.splitted$test,
                                             randomVariables = randomVariables,
                                             discrete = TRUE)
@@ -232,14 +246,11 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
             # Update the cross-validated risk
             private$update_risk(predicted.outcome = predicted.outcome,
-                               observed.outcome = observed.outcome, 
-                               randomVariables = randomVariables)
+                                observed.outcome = observed.outcome, 
+                                randomVariables = randomVariables)
 
             # ReFit the super learner on the current data
-            #private$fit(predicted.outcome = CVpredictions, observed.outcome = observed.outcome)
-
-            # Update the discrete superlearner (take the first if there are multiple candidates)
-            private$odsl.estimators <- private$find_current_best_estimator()
+            private$fit(predicted.outcome = predicted.outcome, observed.outcome = observed.outcome)
 
             # Get the new row of data
             data.current <- private$summaryMeasureGenerator$getNextN(mini_batch_size)
@@ -271,9 +282,21 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           # If there is no model, we need to fit a model based on Nl observations.
           # If we already have a model, we update the old one, given the new measurement
-          private$weightedCombinationComputer$process(Z = predicted.outcome,
-                                                      Y = observed.outcome,
-                                                      private$SL.library.descriptions)
+          
+
+          lapply (colnames(observed.outcome), function(randomVariableName) {
+            observedRandomVariable <- observed.outcome[, randomVariableName, with=FALSE]
+
+            # Convert the predictions to wide format so we can use them per column
+            predictedRandomVariable <- do.call(cbind, predicted.outcome) %>%
+              subset(., select = grep(paste(randomVariableName,"$",sep=""), names(.)))
+            names(predictedRandomVariable) <- names(predicted.outcome)
+            private$weightedCombinationComputers[[randomVariableName]]$process(Z = predictedRandomVariable,
+                                                        Y = observedRandomVariable,
+                                                        private$SL.library.descriptions)
+          })
+
+          private$odsl.estimators <- private$find_current_best_estimator()
 
           # Do gradient descent update
           # Something like:
@@ -318,10 +341,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$SL.library.descriptions <- libraryFactory$getDescriptions(SL.library.definition)
           private$verbose && cat(private$verbose, paste('Creating super learner with a library:', private$SL.library.descriptions))
 
-
-          # TODO: DIP the WCC
-          weights.initial <- rep(1 / length(private$SL.library.descriptions), length(private$SL.library.descriptions))
-          private$weightedCombinationComputer <- WCC.NLopt$new(weights.initial = weights.initial)
+          # We need a weighted combination computer for each of the randomvariables.
+          # We could reuse the WCC, and just save the weights here. However, this way we do allow
+          # to use a different wcc for each of the random variables.
+          private$weightedCombinationComputers <- list()
 
           self$getValidity()
         },
@@ -333,19 +356,23 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           if (is.null(private$summaryMeasureGenerator) || class(private$summaryMeasureGenerator) != 'SummaryMeasureGenerator') {
             throw("You need to provide a summary measure generator of class SummaryMeasureGenerator")
           }
-          if (!is.a(private$weightedCombinationComputer, 'WeightedCombinationComputer')) {
-            throw("The provided WCC is not a WCC")
+          if (!is.a(private$weightedCombinationComputers, 'list')) {
+            throw("The WCC's should be in a list, one for each RV")
           }
         },
 
         evaluateModels = function(data, randomVariables) {
-          predicted.outcome <- self$predict(data = data, randomVariables = randomVariables, discrete = TRUE)
-          observed.outcome <- data[,names(predicted.outcome), with=FALSE]
-          print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-          private$cv_risk_calculator$calculate_risk(predicted.outcome = predicted.outcome,
-                                                    observed.outcome = observed.outcome, 
-                                                    randomVariables = randomVariables,
-                                                    useAsLoss = FALSE)
+          names_outcome <-  c('dosl','osl')
+          result <- lapply(names_outcome, function(sl_name) {
+            discrete <- ifelse(sl_name == 'dosl', TRUE, FALSE)
+            predicted.outcome <- self$predict(data = data, randomVariables = randomVariables, discrete = discrete)
+            observed.outcome <- data[,colnames(predicted.outcome), with=FALSE]
+            outcome <- private$cv_risk_calculator$calculate_evaluation(predicted.outcome = predicted.outcome,
+                                                      observed.outcome = observed.outcome, 
+                                                      randomVariables = randomVariables)
+          })
+          names(result) <- names_outcome
+          result
         },
 
         # Samples the data iteratively from the fitted distribution, and applies an intervention if necessary
@@ -354,6 +381,12 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                                       discrete = TRUE) {
 
           randomVariables <- RandomVariable.find_ordering(randomVariables)
+          valid_intervention <- is.numeric(intervention$when) &
+           is.numeric(intervention$what) &
+           is.character(intervention$variable) &
+           length(intervention$when) == length(intervention$what)
+          if(!valid_intervention) throw('The intervention specified is not correct! it should have a when (specifying t), a what (specifying the intervention) and a variable (specifying the name of the variable to intervene on).')
+          result <- data.table()
 
           for (t in seq(tau)) {
             data[,names(randomVariables)] <- NA
@@ -361,19 +394,18 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
               current_outcome <- rv$getY
               if (!is.null(intervention) & current_outcome == intervention$variable & t %in% intervention$when) {
                 when.idx <- which(intervention$when==t)
-                what <- intervention$what[when.idx]
-                private$verbose && cat(private$verbose, 'Setting intervention on ', current_outcome,' with ', what, ' on time ', t)
-                data[[current_outcome]] <- what
+                outcome <- intervention$what[when.idx]
+                private$verbose && cat(private$verbose, 'Setting intervention on ', current_outcome,' with ', outcome, ' on time ', t)
               } else {
+                outcome <- self$predict(data = data, randomVariables = c(rv), discrete = discrete)
                 private$verbose && cat(private$verbose,'Predicting ', current_outcome, ' using ', paste(rv$getX, collapse=', '))
-                data[[current_outcome]] <- self$predict(data = data,
-                                                         randomVariables = c(rv),
-                                                         discrete = discrete)
               }
+              data[,  (current_outcome) := outcome ]
             }
+            result <- rbind(result, data)
             if(t != tau) data <- private$summaryMeasureGenerator$getLatestCovariates(data)
           }
-          return(data[,names(randomVariables), with = FALSE])
+          return(result[,names(randomVariables), with = FALSE])
         },
 
 
@@ -387,6 +419,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           if(!private$summaryMeasureGenerator$checkEnoughDataAvailable(randomVariables = c(W, A, Y))) {
             throw('Not all provided variables are included in the SMGs, include the correct SMGs')
           }
+
+          # We initialize the WCC's here because we need to have the WAY's
+          private$initialize_weighted_combination_calculators(c(W,A,Y))
 
           # Get the initial data for fitting the first model and train the initial models
           private$summaryMeasureGenerator$getNextN(initial_data_size) %>%
@@ -403,39 +438,54 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         # Predict should return a nrow(data) * 1 matrix, where the predictions are multiplied by
         # the weights of each estimator.
         predict = function(data, randomVariables, discrete = FALSE) {
-          if(!self$isFitted){
+          if (!self$isFitted){
             return(NA)
           }
 
-          if(discrete){
-            # I'm using a for loop here because I want to set the name of the predictions.
-            # It would be great if we could do this in a lapply, but I don't know if that's
-            # possible. Another option is to do 2 lapply;s (1 for name, 1 for predict), but 
-            # that's worse than this I guess.
+          # I'm using a for loop here because I want to set the name of the predictions.
+          # It would be great if we could do this in a lapply, but I don't know if that's
+          # possible. Another option is to do 2 lapply;s (1 for name, 1 for predict), but 
+          # that's worse than this I guess.
+          if (discrete) {
             predictions <- list()
             for (rv in randomVariables) {
               outcome <- rv$getY
-              predictions[[outcome]] <- private$odsl.estimators[[outcome]]$predict(datO = data,
-                                                           X = rv$getX,
-                                                           Y = rv$getY)
+              prediction <- private$odsl.estimators[[outcome]]$predict(datO = data,
+                                                                       X = rv$getX,
+                                                                       Y = rv$getY)
+              predictions[[outcome]] <- prediction
             }
-            return(predictions)
+
+            do.call(cbind,predictions) %>%
+              as.data.table %>%
+              return(.)
           }
 
-          # This will be the convex combination of the data and the models (and weights)
-          # something like
-          # private$summaryMeasureGenerator$setData(data = data)
-          # data <- private$summaryMeasureGenerator$getNext()
-          #predictions <- as.matrix(private$predictUsingAllEstimators(data=data, A=A, W=W))
-          #weights <- as.matrix(private$weightedCombinationComputer$getWeights)
+          predictions <- private$predictUsingAllEstimators(data=data)
+          weights <- sapply(private$weightedCombinationComputers, function(wcc) wcc$get_weights)
 
-          #return(predictions %*% weights)
+          # TODO: What if A ends up not being binary?
+          # TODO: More important, what if a variable is discrete?
+          lapply(randomVariables, function(rv) {
+            current_rv_name <- rv$getY
+            result <- do.call(cbind, predictions) %>%
+              subset(., select = grep(paste(current_rv_name,"$",sep=""), names(.))) %>%
+              as.matrix(.) %*% weights[,current_rv_name]
+
+            colnames(result) <- current_rv_name
+            if(rv$getFamily == 'binomial') {
+              result2 <- ifelse(result > 0.5, 1,0)
+            }
+            result
+          }) %>% 
+            do.call(cbind, .) %>%
+            as.data.table %>%
+            return(.)
         },
 
         getModels = function() {
           return(private$SL.library.fabricated)
         }
-
   )
 )
 

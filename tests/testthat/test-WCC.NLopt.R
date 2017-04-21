@@ -1,12 +1,15 @@
 context("WCC.NLopt.R")
+devtools::load_all()
 described.class <- WCC.NLopt
 
 context(" process")
 # Initialize
+set.seed(12345)
 K <- 10
+libraryNames <- stringi::stri_rand_strings(K, 5)
+
 nobs <- 20
 obsWeights <- rep(1/K, K)
-subject<- described.class$new(obsWeights) 
 
 test_that("it should return a vector of weights, with a sum of 1", {
  set.seed(1234)
@@ -14,7 +17,8 @@ test_that("it should return a vector of weights, with a sum of 1", {
  Z <- matrix(rep(Y, K), byrow=F, ncol=K)
  Z <- Z + rnorm(K * nobs, mean=0, sd=0.001)
  subject<- described.class$new(obsWeights) 
- result <- subject$process(Z,Y)
+ result <- subject$process(Z,Y, libraryNames)
+
 
  expect_type(result,'double')
  expect_equal(length(result), K)
@@ -36,7 +40,9 @@ test_that("it should create the best weighted combination and should return the 
  Z[,8] <- Z[,8] + rnorm(nobs, mean=0, sd=0.01)
  Z[,9] <- Z[,9] + rnorm(nobs, mean=0, sd=0.0001)
  Z[,10] <- Z[,10] + rnorm(nobs, mean=0, sd=0.00000000001)
- result <- subject$process(Z,Y)
+
+ subject<- described.class$new(obsWeights) 
+ result <- subject$process(Z,Y, libraryNames)
 
  # The last two have the least noise, so they should have the highest weights
  best.idx <- which(result == max(result))
@@ -56,8 +62,8 @@ test_that("it should update the obsWeights in the object", {
  Z <- matrix(rep(Y, K), byrow=F, ncol=K)
  Z <- Z + rnorm(K * nobs, mean=0, sd=0.001)
  subject<- described.class$new(obsWeights) 
- result <- subject$process(Z,Y)
- expect_false(all(obsWeights == subject$getWeights))
- expect_true(all(result == subject$getWeights))
+ result <- subject$process(Z,Y, libraryNames)
+ expect_false(all(obsWeights == subject$get_weights))
+ expect_true(all(result == subject$get_weights))
 })
 

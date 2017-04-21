@@ -166,6 +166,9 @@ Simulator.GAD <- R6Class("Simulator.GAD",
             }
 
             # Create linear combination of the parameters / coefficients and the historical data
+            # This fix allows us to deal with memory of 1 (R converts the matrix to a vector)
+            if (!is.matrix(tempMAT)) tempMAT <- as.matrix(tempMAT)
+
             outcome <- entry$mech$rgen(tempMAT %*% entry$mech$param)
             if (is.vector(outcome)) {
               outcome <- matrix(outcome, ncol = 1)

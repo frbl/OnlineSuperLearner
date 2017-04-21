@@ -72,4 +72,5 @@ Collate:
     'Simulator.Slow.R'
     'WCC.NLopt.R'
     'WCC.NNLS.R'
+    'WCC.SGD.R'
 Remotes: frbl/tmlenet
