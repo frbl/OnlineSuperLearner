@@ -34,7 +34,7 @@ WCC.NLopt <- R6Class("WCC.NLopt",
 
         compute = function(Z, Y, libraryNames, opts = NULL ) {
           # Compute the best convex combination
-          result <- nloptr(x0=self$getWeights,
+          result <- nloptr(x0=self$get_weights,
                         eval_f=private$lossFunction,
                         eval_grad_f = private$lossFunctionGradient,
                         opts=private$opts,

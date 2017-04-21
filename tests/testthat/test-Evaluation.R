@@ -19,10 +19,10 @@ test_that("it should throw if an unknown lossfunction is requested", {
                paste('No loss function implemented for family', fake_fam))
 })
 
-test_that("it should give a mse function whenever a gaussian performance measure is requested", {
+test_that("it should give a rmse function whenever a gaussian performance measure is requested", {
   fn <- Evaluation.get_evaluation_function('gaussian', FALSE)
   expect_false(is.null(fn))
-  expect_equal(fn, Evaluation.mean_squared_error)
+  expect_equal(fn, Evaluation.root_mean_squared_error)
 })
 
 test_that("it should give a accuracy function whenever a binomial performance measure is requested", {
@@ -91,7 +91,7 @@ test_that("it should calculate the accuracy correctly", {
 
   accuracy <- Evaluation.accuracy(predicted.data, true.data)
   expected  <- 0.8
-  expect_equal(accuracy, expected)
+  expect_equal(unname(accuracy), expected)
 })
 
 test_that("it should also predict the accuracy correctly with boolean values", {
@@ -99,7 +99,15 @@ test_that("it should also predict the accuracy correctly with boolean values", {
   predicted.data <- c(T,F,T,T,T,F,F,F,F,T)
   accuracy <- Evaluation.accuracy(predicted.data, true.data)
   expected  <- 0.8
-  expect_equal(accuracy, expected)
+  expect_equal(unname(accuracy), expected)
+})
+
+test_that("it should set the name correctly", {
+  true.data <- c(T,F,T,F,T,F,F,T,F,T)
+  predicted.data <- c(T,F,T,T,T,F,F,F,F,T)
+  accuracy <- Evaluation.accuracy(predicted.data, true.data)
+  expected  <- 'accuracy'
+  expect_equal(names(accuracy), expected)
 })
 
 test_that("it should predict the accuracy correctly with matrices", {
@@ -107,17 +115,21 @@ test_that("it should predict the accuracy correctly with matrices", {
 })
 
 context(" Evaluation.mean_squared_error")
+true.data <-      c(1,1,6,4,6,4,1,1,4,9)
+predicted.data <- c(1,2,3,3,4,4,1,1,4,9)
+mse <- Evaluation.mean_squared_error(predicted.data, true.data)
 test_that("it should calculate the MSE correctly", {
-  true.data <-      c(1,1,6,4,6,4,1,1,4,9)
-  predicted.data <- c(1,2,3,3,4,4,1,1,4,9)
-
   diff <- (true.data - predicted.data)^2
   expect_equal(diff, c(0, 1, 9, 1, 4, 0, 0, 0, 0, 0))
   expect_equal(mean(diff), sum(c(0, 1, 9, 1, 4, 0, 0, 0, 0, 0) / length(c(0, 1, 9, 1, 4, 0, 0, 0, 0, 0))))
 
-  mse <- Evaluation.mean_squared_error(predicted.data, true.data)
   expected  <- mean(diff)
-  expect_equal(mse, expected)
+  expect_equal(unname(mse), expected)
+})
+
+test_that("it should set the names of the outcome correctly", {
+  expected  <- 'mse'
+  expect_equal(names(mse), expected)
 })
 
 test_that("it should predict the mse correctly with matrices", {
@@ -125,16 +137,21 @@ test_that("it should predict the mse correctly with matrices", {
 })
 
 context(" Evaluation.root_mean_squared_error")
+true.data <-      c(1,1,6,4,6,4,1,1,4,9)
+predicted.data <- c(1,2,3,3,4,4,1,1,4,9)
+
+# Assuming the MSE is correct
+mse <- Evaluation.mean_squared_error(predicted.data, true.data)
 test_that("it should calculate the RMSE correctly", {
-  true.data <-      c(1,1,6,4,6,4,1,1,4,9)
-  predicted.data <- c(1,2,3,3,4,4,1,1,4,9)
+  expected_value <- unname(sqrt(mse))
+  result <- unname(Evaluation.root_mean_squared_error(predicted.data, true.data))
+  expect_equal(result, expected_value)
+})
 
-  # Assuming the MSE is correct
-  mse <- Evaluation.mean_squared_error(predicted.data, true.data)
-  expected <- sqrt(mse)
-
+test_that("it should set the name correctly", {
+  expected_value <- 'r.mse'
   result <- Evaluation.root_mean_squared_error(predicted.data, true.data)
-  expect_equal(result, expected)
+  expect_equal(names(result), expected_value)
 })
 
 test_that("it should predict the rmse correctly with matrices", {

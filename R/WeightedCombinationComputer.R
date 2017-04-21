@@ -30,7 +30,7 @@ WeightedCombinationComputer <- R6Class("WeightedCombinationComputer",
         ),
   active = 
       list(
-        getWeights = function() {
+        get_weights = function() {
           return(private$weights)
         }
         ),
@@ -41,6 +41,8 @@ WeightedCombinationComputer <- R6Class("WeightedCombinationComputer",
         },
 
         process = function(Z, Y, libraryNames) {
+          if(!is.character(libraryNames)) throw('libraryNames should be a vector of names.')
+
           if (length(private$weigths) == 1) {
             private$weights <- c(1)
             return(private$weights)

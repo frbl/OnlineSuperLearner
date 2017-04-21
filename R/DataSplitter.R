@@ -28,7 +28,7 @@ DataSplitter <- R6Class("DataSplitter",
           # Use the last observation as test set
           test <- tail(data, 1)
 
-          if(is.null(self$model)){
+          if(is.null(private$data.previous)){
             if(nrow(data) < 2){
               throw('At least 2 rows of data are needed, 1 train and 1 test')
             }

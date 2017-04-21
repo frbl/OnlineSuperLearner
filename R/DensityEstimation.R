@@ -17,13 +17,19 @@ DensityEstimation <- R6Class ("DensityEstimation",
         nbins = NULL,
         verbose = NULL,
         randomVariables = NULL,
+        bin_estimator = NULL,
 
         # Functions
         # =========
-        fakeUpdate = function(newData, X = c("W1"), Y = c("Y")){
+        fake_update = function(newdata, X, Y){
           warning('This is not an online update! We fake  the online part!')
-          private$data <- rbindlist(list(private$data, newData))
-          self$fit(data, X,Y)
+          private$data <- rbindlist(list(private$data, newdata))
+          private$fit(private$data, X=X,Y=Y)
+        },
+
+        # Updates the used condistional density
+        update = function(newdata, X, Y) {
+          private$fake_update(newdata=newdata, X=X, Y=Y)
         },
 
         fit = function(datO, X, Y){
@@ -38,7 +44,8 @@ DensityEstimation <- R6Class ("DensityEstimation",
           outcome.class <- nodeObjects$datNetObs$datnetA$type.sVar[Y]
 
           # Put all est_params in RegressionClass (regression with speedglm package)
-          regclass <- RegressionClass$new(nbins=private$nbins,
+          regclass <- RegressionClass$new(bin_estimator = private$bin_estimator,
+                                          nbins=private$nbins,
                                           outvar.class = outcome.class,
                                           outvar = Y,
                                           predvars = X,
@@ -47,6 +54,16 @@ DensityEstimation <- R6Class ("DensityEstimation",
           # Create the conditional density, based on the regression just specified and fit it
           private$conditional_densities[Y] <- list(SummariesModel$new(reg = regclass, DatNet.sWsA.g0 = nodeObjects$datNetObs))
           self$getConditionalDensities(Y)$fit(data = nodeObjects$datNetObs)
+
+          if(Y == 'A') {
+            #browser()
+            # Our prediction
+            mean(self$predict(datO,X,Y) == datO$A)
+
+            # GLM prediction
+            model <- glm(A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family='binomial', data=datO)
+            mean((predict(model, datO, type='response')>0.5) == (datO$A == 1))
+          }
         },
 
         # Refactor:
@@ -87,9 +104,11 @@ DensityEstimation <- R6Class ("DensityEstimation",
         ),
   public =
     list(
-        initialize = function(nbins = 30, verbose = FALSE) {
-          private$verbose = verbose
+        initialize = function(nbins = 30, bin_estimator = tmlenet::speedglmR6$new(), verbose = FALSE) {
+          private$verbose <- Arguments$getVerbose(-8, timestamp=FALSE)
+          #private$verbose = verbose
           private$nbins <- Arguments$getIntegers(as.numeric(nbins), c(1, Inf))
+          private$bin_estimator <- bin_estimator
           private$conditional_densities <- list()
         },
 
@@ -163,8 +182,8 @@ DensityEstimation <- R6Class ("DensityEstimation",
         },
 
         # Fits the densities according to the provided randomVariables
-        process = function(data, randomVariables) {
-          private$verbose && cat(private$verbose, 'Fitting', length(randomVariables), 'densities')
+        process = function(data, randomVariables, update=FALSE) {
+          private$verbose && cat(private$verbose, 'Fitting ', length(randomVariables), ' densities')
 
           # Convert the formula in vectors (can probably be done easier)
           for (rv in randomVariables) {
@@ -178,17 +197,17 @@ DensityEstimation <- R6Class ("DensityEstimation",
           lapply(randomVariables, function(rv) {
             # TODO: Currently it is is not yet possible to sample from an non-conditional distribution!
             if(length(rv$getX) > 0) {
-              private$fit(datO = data, Y = rv$getY, X = rv$getX) 
+              if (update) {
+                private$verbose && cat(private$verbose, 'Updating ', rv$getY)
+                private$update(newdata = data, Y = rv$getY, X = rv$getX) 
+              } else {
+                private$verbose && cat(private$verbose, 'Fitting ', rv$getY)
+                private$fit(datO = data, Y = rv$getY, X = rv$getX) 
+              }
             }
           })
           TRUE
         },
-
-        # Updates the used condistional density
-        update = function(datO, X = c("W1"), Y = c("Y")) {
-          private$fakeUpdate(datO, X=X, Y=Y)
-        },
-
 
         getConditionalDensities = function(outcome = NULL) {
           if(length(private$conditional_densities) == 0) throw('Densities not yet fitted')
