@@ -98,6 +98,10 @@ DensityEstimation <- R6Class ("DensityEstimation",
         ),
   active =
     list(
+        get_bin_estimator = function() {
+          return(private$bin_estimator)
+        },
+
         get_nbins = function() {
           return(private$nbins)
         }

@@ -20,3 +20,8 @@ is.a <- function(obj, obj.class) {
   obj.class <- Arguments$getCharacter(obj.class)
   obj.class %in% class(obj)
 }
+
+create_object_from_string <- function(string_object_name, args=list()) {
+  return(do.call(eval(parse(text=string_object_name))$new, args = args))
+}
+
