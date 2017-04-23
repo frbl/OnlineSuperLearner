@@ -338,7 +338,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           # Initialization, Fabricate the various models
           private$SL.library.fabricated <- libraryFactory$fabricate(SL.library.definition)
-          private$SL.library.descriptions <- libraryFactory$getDescriptions(SL.library.definition)
+          private$SL.library.descriptions <- names(private$SL.library.fabricated)
           private$verbose && cat(private$verbose, paste('Creating super learner with a library:', private$SL.library.descriptions))
 
           # We need a weighted combination computer for each of the randomvariables.

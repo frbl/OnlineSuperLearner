@@ -17,13 +17,13 @@ ML.XGBoost.glm <- R6Class("ML.XGBoost.glm",
     list(),
   public =
     list(
-        initialize = function() {
+        initialize = function(booster = 'gblinear', alpha = 0, lambda = 0) {
           self$rounds <- 200
           self$param <- list(objective = 'binary:logistic',
-                                booster = "gblinear",
+                                booster = booster,
                                 nthread = 8,
-                                alpha = 0,
-                                lambda = 0)
+                                alpha = alpha,
+                                lambda = lambda)
 
           self$model.name <- 'gblinear'
           super$initialize()

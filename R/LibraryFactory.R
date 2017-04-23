@@ -23,16 +23,40 @@ LibraryFactory <- R6Class("LibraryFactory",
     list(
         ML.models.allowed = NULL,
 
-        isValidLibraryGrid = function(SL.library.entry) {
+        check_valid_library_grid = function(SL.library.entry) {
           errors = c()
-          if(!('algorithm' %in% names(SL.library.entry)))
+          allowed_entries <- c('algorithm', 'params', 'algorithm_params')
+          for(name in names(SL.library.entry)) {
+             if(!(name %in% allowed_entries)) {
+              errors <- c(errors, paste('Entry in SL specification:',name,'not supported!'))
+             }
+          }
+
+          if(!('algorithm' %in% names(SL.library.entry))) {
             errors <- c(errors, 'Algorithm not specified')
-          if(!('description' %in% names(SL.library.entry)))
-            errors <- c(errors, 'Description not specified')
+          }
+
+          check_valid_params <- function(SL.library.entry, entry_name) {
+            errors <- c()
+            if(entry_name %in% names(SL.library.entry)) {
+              if (!is(SL.library.entry[[entry_name]], 'list')){
+                errors <- c(errors, paste('The', entry_name, 'entry should be a list'))
+              } else if (is.null(SL.library.entry[[entry_name]])){
+                errors <- c(errors, paste('If you add a',entry_name,'entry, also add params to it.'))
+              } else if (length(SL.library.entry[[entry_name]]) == 0){
+                errors <- c(errors, paste('If you add a',entry_name,'entry, also add params to it.'))
+              } else if (!all(unlist(lapply(SL.library.entry[[entry_name]], length)) > 0)) {
+                errors <- c(errors, paste('If you add a',entry_name,'entry, also add params to it.'))
+              }
+            }
+            errors
+          }
+          errors <- c(errors, check_valid_params(SL.library.entry, 'params'))
+          errors <- c(errors, check_valid_params(SL.library.entry, 'algorithm_params'))
           errors
         },
 
-        isValidMlModel = function(ML.name) {
+        is_valid_ml_model = function(ML.name) {
           # TODO: Test if files actually exist.
           ML.name %in% private$ML.models.allowed
         },
@@ -42,47 +66,104 @@ LibraryFactory <- R6Class("LibraryFactory",
             return() 
           }
 
-          errors = private$isValidLibraryGrid(entry)
+          errors = private$check_valid_library_grid(entry)
           if (length(errors) != 0){
             throw(paste('The entry', entry, 'is not specified correctly:', errors ))
           }
 
-          if (!private$isValidMlModel(entry$algorithm)){
+          if (!private$is_valid_ml_model(entry$algorithm)){
             throw(paste('The model', entry$algorithm, 'is not a valid ML model algorithm'))
           }
         },
 
-        fabricateGrid = function(SL.library) {
-          # Create objects for each of the objects
-          instances <- lapply(SL.library, function(entry) {
-            private$check_entry_validity(entry)
+        create_estimator_grid = function(entry) {
+            name <- entry$algorithm
 
             # If no params are provided, treat the list as a vector
-            if (!('params' %in% names(entry))){
-              return(list(do.call(get(entry$algorithm)$new, 
-                                  args = list())))
+            if (!('algorithm_params' %in% names(entry)) | is.null(entry$algorithm_params)){
+              name <- paste(name, 'vanilla', sep = '-')
+              algorithm_instances <- list(create_object_from_string(entry$algorithm, args = list()))
+              names(algorithm_instances) <- name
+            } else {
+              algorithm_param_list <- entry$algorithm_params %>% purrr::cross_d()
+              data.table::setDT(algorithm_param_list)
+
+              # Initialize the actual algorithms
+              # We iterate over the numbers, we we still have a datatable when indexing.
+              algorithm_instances <- lapply(1:nrow(algorithm_param_list), function(i) {
+                current_params <- list()
+                params_name <- paste(name, 'vanilla' , sep='-')
+                if(nrow(algorithm_param_list[i]) > 0) {
+                  current_params <- as.list(algorithm_param_list[i])
+                  params_name <- paste(names(current_params), current_params, collapse='_',sep='-') %>%
+                    paste(name, ., sep='-')
+                }
+                result <- list(create_object_from_string(entry$algorithm, args = current_params))
+                names(result) <- params_name
+                result
+              })
+              algorithm_instances <- unlist(algorithm_instances)
             }
+            algorithm_instances
+        },
 
-            param.list <- entry$params %>% purrr::cross_d()
-            data.table::setDT(param.list)
-            lapply(1:nrow(param.list),
-                    function(i) {
-                      # Initialize the actual algorithms
-                      do.call(get(entry$algorithm)$new, args = list(param.list[i])) 
-                    })
+        create_density_estimator_grid = function(entry, algorithm_instances) {
+          result <- lapply(algorithm_instances, function(algorithm_instance) {
+              # We shouldn't do gridsearch when no parameters are specified, just use the defaults
+              if (!('params' %in% names(entry)) | is.null(entry$params)){
+                result <- list('vanillaDE' = DensityEstimation$new(bin_estimator = algorithm_instance))
+              } else {
+                param_list <- entry$params %>% purrr::cross_d()
+                data.table::setDT(param_list)
+
+                # We iterate over the numbers, we still keep the correct names when we pass the list
+                result <- lapply(1:nrow(param_list), function(i) {
+                  # TODO: Extract this to a function
+                  current_params <- list()
+                  params_name <- 'vanillaDE'
+                  if(nrow(param_list[i]) > 0) {
+                    current_params <- as.list(param_list[i])
+                    params_name <- paste(names(current_params), current_params, collapse='_',sep='-')
+                  }
+
+                  current_params$bin_estimator <- algorithm_instance
+                  result <- list(create_object_from_string('DensityEstimation', args = current_params))
+                  names(result) <- params_name
+                  result
+                })
+                result <- unlist(result)
+              }
+              result
+            })
+            unlist(result)
+        },
+
+        fabricateGrid = function(SL.library) {
+          # We have to fabricate a grid on two levels, 1st for the algorithm, then for the density estimatino
+          # algotithm_params contains the params for the algorithm
+          # params contains the params for the density estimation
+
+          # Create objects for each of the objects
+          #naming:
+          # algorithmname-paramname-param
+          instances <- lapply(SL.library, function(entry) {
+            private$check_entry_validity(entry)
+            algorithm_instances <- private$create_estimator_grid(entry)
+            result <- private$create_density_estimator_grid(entry, algorithm_instances)
           })
-
           unlist(instances)
         },
 
         fabricateDefault = function(SL.library) {
           # Create objects for each of the objects
-          lapply(SL.library, function(entry) {
-            if (!private$isValidMlModel(entry)){
+          fabricatedLibrary <- lapply(SL.library, function(entry) {
+            if (!private$is_valid_ml_model(entry)){
               throw(paste('The model', entry, 'is not a valid ML model algorithm'))
             }
             do.call(get(entry)$new, args = list())
           })
+          names(fabricatedLibrary) <- SL.library
+          return(fabricatedLibrary)
         }
         ),
   active = 
@@ -100,7 +181,8 @@ LibraryFactory <- R6Class("LibraryFactory",
         ),
   public =
     list(
-        initialize = function(ML.models.allowed = c('DensityEstimation',
+        initialize = function(ML.models.allowed = c('tmlenet::speedglmR6',
+                                                    'tmlenet::glmR6',
                                                     'ML.H2O.gbm',
                                                     'ML.H2O.glm',
                                                     'ML.H2O.randomForest',
@@ -108,16 +190,6 @@ LibraryFactory <- R6Class("LibraryFactory",
                                                     'ML.XGBoost.glm')) {
           private$ML.models.allowed = ML.models.allowed
           self$get_validity
-        },
-
-
-        getDescriptions = function(SL.library) {
-          # If we only have a vector, that itself is the description. Otherwise
-          # the list contains the descriptions
-          if(is.a(SL.library, 'list')){
-            SL.library <- sapply(SL.library, function(entry) entry$description )
-          } 
-          return(SL.library)
         },
 
         fabricate = function(SL.library) {
@@ -129,8 +201,6 @@ LibraryFactory <- R6Class("LibraryFactory",
             SL.library <- Arguments$getCharacters(SL.library)
             fabricatedLibrary <- private$fabricateDefault(SL.library)
           }
-          descriptions <- self$getDescriptions(SL.library)
-          names(fabricatedLibrary) <- descriptions
           return(fabricatedLibrary)
         }
   )

@@ -36,14 +36,16 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   #algorithm = 'ML.H2O.gbm')))
           algos <- list()
 
-          algos <- append(algos, list(list(description='DensityEstimation-50bins',
-                                  algorithm = 'DensityEstimation',
+          algos <- append(algos, list(list(description='speedglm-6bins',
+                                  algorithm = 'tmlenet::speedglmR6',
+                                  algorithm_params = list(),
                                   params = list(nbins = 6))))
 
 
-          algos <- append(algos, list(list(description='DensityEstimation-100bins',
-                                  algorithm = 'DensityEstimation',
-                                  params = list(nbins = 16)))) 
+          algos <- append(algos, list(list(description='glm-16bins',
+                                  algorithm = 'tmlenet::glmR6',
+                                  algorithm_params = list(),
+                                  params = list(nbins = c(16, 120))))) 
 
           private$SL.library.definition <- algos
 
