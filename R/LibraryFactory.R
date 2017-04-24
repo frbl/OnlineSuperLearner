@@ -32,7 +32,7 @@ LibraryFactory <- R6Class("LibraryFactory",
             name <- entry$algorithm
 
             # If no params are provided, treat the list as a vector
-            if (!('algorithm_params' %in% names(entry)) | is.null(entry$algorithm_params)){
+            if (!('algorithm_params' %in% names(entry))){
               name <- paste(name, 'vanilla', sep = '-')
               algorithm_instances <- list(create_object_from_string(entry$algorithm, args = list()))
               names(algorithm_instances) <- name
@@ -62,7 +62,7 @@ LibraryFactory <- R6Class("LibraryFactory",
         create_density_estimator_grid = function(entry, algorithm_instances) {
           result <- lapply(algorithm_instances, function(algorithm_instance) {
               # We shouldn't do gridsearch when no parameters are specified, just use the defaults
-              if (!('params' %in% names(entry)) | is.null(entry$params)){
+              if (!('params' %in% names(entry))){
                 result <- list('vanillaDE' = DensityEstimation$new(bin_estimator = algorithm_instance))
               } else {
                 param_list <- entry$params %>% purrr::cross_d()
