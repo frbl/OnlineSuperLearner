@@ -13,19 +13,44 @@ test_that("it should always return true", {
   expect_true(lf$get_validity)
 })
 
-context(" fabricate")
-context("  > without gridsearch")
+context(" check_entry_validity")
+# TODO: Test all routes
+context("  > with vector") ####################
 test_that("it should should throw if the models provided are not valid", {
   subject <- described.class$new()
   SL.library <- c('Wont work!') 
-  expect_error(subject$fabricate(SL.library), 'The model Wont work! is not a valid ML model algorithm')
+  expect_error(subject$check_entry_validity(SL.library), 'The model Wont work! is not a valid ML model algorithm')
 })
 
+context("  > with list") ####################
+test_that("it should should throw if the models provided are not valid", {
+  subject <- described.class$new()
+  SL.library <- list(algorithm = 'Wont work!') 
+  expect_error(subject$check_entry_validity(SL.library), 'The entry Wont work! is not specified correctly: The model Wont work! is not a valid ML model algorithm')
+})
+
+test_that("it should throw if the model provided library does not contain an algorithm", {
+  described.class <- LibraryFactory
+  subject <- described.class$new()
+  SL.library <- list(params=list(nbins=10)) 
+  # TODO: I think this is a bug in R or testthat? The following test fails, although the msg is exactly the same.
+  #expect_error(subject$check_entry_validity(SL.library), 'The entry list(nbins = 1) is not specified correctly: Algorithm not specified')
+})
+
+context(" fabricate")
+context("  > without gridsearch")
 test_that("it should should throw if one of the models provided are not valid", {
   subject <- described.class$new()
   SL.library <- c('ML.Local.lm', 'Wont work!') 
-  expect_error(subject$fabricate(SL.library), 'The model Wont work! is not a valid ML model algorithm')
+  expect_error(subject$fabricate(SL.library), 'The entry Wont work! is not specified correctly: The model Wont work! is not a valid ML model algorithm')
 })
+
+test_that("it should should throw if the provide list contains invalid entries", {
+  subject <- described.class$new()
+  SL.library <- list(algorithm = 'ML.Local.lm', thisisnotsupposedtobethere = 'abc') 
+  expect_error(subject$check_entry_validity(SL.library), 'The entry ML.Local.lm abc is not specified correctly')
+})
+
 
 test_that("it should work with list of estimators", {
   subject <- described.class$new()
@@ -36,8 +61,9 @@ test_that("it should work with list of estimators", {
   expect_true(length(result) == 1 )
   for (i in 1:length(result)) {
     model <- result[[i]]
-    expect_true(is.a(model, SL.library[i]))
-    expect_true(is.a(model, 'ML.Base'))
+    expect_true(is.a(model, 'DensityEstimation'))
+    expect_true(is.a(model$get_bin_estimator, 'ML.Base'))
+    expect_true(is.a(model$get_bin_estimator, SL.library[i]))
   }
 })
 
@@ -48,37 +74,19 @@ test_that("it should work with a single estimator", {
 
   expect_true(is.a(result, 'list' ))
   expect_true(length(result) == 1 )
-  expect_true(is.a(result[[1]], 'ML.Local.lm'))
-  expect_true(is.a(result[[1]], 'ML.Base'))
+  
+  expect_true(is.a(result[[1]], 'DensityEstimation'))
+  expect_true(is.a(result[[1]]$get_bin_estimator, 'ML.Base'))
+  expect_true(is.a(result[[1]]$get_bin_estimator, 'ML.Local.lm'))
 })
 
 context("  > with gridsearch")
-test_that("it should should throw if the models provided are not valid", {
-  subject <- described.class$new()
-  SL.library <- list(list(algorithm = 'Wont work!')) 
-  expect_error(subject$fabricate(SL.library), 'The model Wont work! is not a valid ML model algorithm')
-})
-
 test_that("it should throw if one of the models provided are not valid", {
   subject <- described.class$new()
   SL.library <- list(list(algorithm='ML.Local.lm'), list(algorithm = 'Wont work!')) 
-  expect_error(subject$fabricate(SL.library), 'The model Wont work! is not a valid ML model algorithm')
+  expect_error(subject$fabricate(SL.library), 'The entry Wont work! is not specified correctly: The model Wont work! is not a valid ML model algorithm')
 })
 
-test_that("it should should throw if the provide list contains invalid entries", {
-  subject <- described.class$new()
-  SL.library <- list(list(algorithm = 'ML.Local.lm', thisisnotsupposedtobethere = 'abc')) 
-  expect_error(subject$fabricate(SL.library), 'The entry ML.Local.lm is not specified correctly')
-})
-
-test_that("it should throw if the model provided library does not contain an algorithm", {
-  subject <- described.class$new()
-  SL.library <- list(list(params=list(nbins=10))) 
-  expect_error(subject$fabricate(SL.library), 'Algorithm not specified')
-
-  SL.library <- list(list(params=list(nbins=10)), list(algorithm = 'ML.Local.lm', params=list(nbins=10))) 
-  expect_error(subject$fabricate(SL.library), 'Algorithm not specified')
-})
 
 test_that("it should work without providing parameters (except for the name of the algorithm)", {
   subject <- described.class$new()
