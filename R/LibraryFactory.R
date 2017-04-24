@@ -23,57 +23,9 @@ LibraryFactory <- R6Class("LibraryFactory",
     list(
         ML.models.allowed = NULL,
 
-        check_valid_library_grid = function(SL.library.entry) {
-          errors = c()
-          allowed_entries <- c('algorithm', 'params', 'algorithm_params')
-          for(name in names(SL.library.entry)) {
-             if(!(name %in% allowed_entries)) {
-              errors <- c(errors, paste('Entry in SL specification:',name,'not supported!'))
-             }
-          }
-
-          if(!('algorithm' %in% names(SL.library.entry))) {
-            errors <- c(errors, 'Algorithm not specified')
-          }
-
-          check_valid_params <- function(SL.library.entry, entry_name) {
-            errors <- c()
-            if(entry_name %in% names(SL.library.entry)) {
-              if (!is(SL.library.entry[[entry_name]], 'list')){
-                errors <- c(errors, paste('The', entry_name, 'entry should be a list'))
-              } else if (is.null(SL.library.entry[[entry_name]])){
-                errors <- c(errors, paste('If you add a',entry_name,'entry, also add params to it.'))
-              } else if (length(SL.library.entry[[entry_name]]) == 0){
-                errors <- c(errors, paste('If you add a',entry_name,'entry, also add params to it.'))
-              } else if (!all(unlist(lapply(SL.library.entry[[entry_name]], length)) > 0)) {
-                errors <- c(errors, paste('If you add a',entry_name,'entry, also add params to it.'))
-              }
-            }
-            errors
-          }
-          errors <- c(errors, check_valid_params(SL.library.entry, 'params'))
-          errors <- c(errors, check_valid_params(SL.library.entry, 'algorithm_params'))
-          errors
-        },
 
         is_valid_ml_model = function(ML.name) {
           # TODO: Test if files actually exist.
-          ML.name %in% private$ML.models.allowed
-        },
-
-        check_entry_validity = function(entry) {
-          if (!is.a(entry, 'list')) {
-            return() 
-          }
-
-          errors = private$check_valid_library_grid(entry)
-          if (length(errors) != 0){
-            throw(paste('The entry', entry, 'is not specified correctly:', errors ))
-          }
-
-          if (!private$is_valid_ml_model(entry$algorithm)){
-            throw(paste('The model', entry$algorithm, 'is not a valid ML model algorithm'))
-          }
         },
 
         create_estimator_grid = function(entry) {
@@ -139,6 +91,7 @@ LibraryFactory <- R6Class("LibraryFactory",
         },
 
         fabricateGrid = function(SL.library) {
+          #SL.library <- Arguments$getList(SL.library)
           # We have to fabricate a grid on two levels, 1st for the algorithm, then for the density estimatino
           # algotithm_params contains the params for the algorithm
           # params contains the params for the density estimation
@@ -147,7 +100,7 @@ LibraryFactory <- R6Class("LibraryFactory",
           #naming:
           # algorithmname-paramname-param
           instances <- lapply(SL.library, function(entry) {
-            private$check_entry_validity(entry)
+            self$check_entry_validity(entry)
             algorithm_instances <- private$create_estimator_grid(entry)
             result <- private$create_density_estimator_grid(entry, algorithm_instances)
           })
@@ -155,12 +108,15 @@ LibraryFactory <- R6Class("LibraryFactory",
         },
 
         fabricateDefault = function(SL.library) {
+          SL.library <- Arguments$getCharacters(SL.library)
+
           # Create objects for each of the objects
           fabricatedLibrary <- lapply(SL.library, function(entry) {
-            if (!private$is_valid_ml_model(entry)){
-              throw(paste('The model', entry, 'is not a valid ML model algorithm'))
-            }
-            do.call(get(entry)$new, args = list())
+            self$check_entry_validity(entry)
+
+            bin_estimator <- create_object_from_string(entry, args = list())
+            result <- create_object_from_string('DensityEstimation',
+                                                args = list(bin_estimator = bin_estimator))
           })
           names(fabricatedLibrary) <- SL.library
           return(fabricatedLibrary)
@@ -198,10 +154,59 @@ LibraryFactory <- R6Class("LibraryFactory",
             fabricatedLibrary <- private$fabricateGrid(SL.library)
           } else {
             # if it is not a list, assume it is a vector or string
-            SL.library <- Arguments$getCharacters(SL.library)
             fabricatedLibrary <- private$fabricateDefault(SL.library)
           }
           return(fabricatedLibrary)
+        },
+
+        check_entry_validity = function(SL.library.entry) {
+          errors = c()
+          if (is.a(SL.library.entry, 'list')) {
+            allowed_entries <- c('algorithm', 'params', 'algorithm_params')
+            for(name in names(SL.library.entry)) {
+              if(!(name %in% allowed_entries)) {
+                errors <- c(errors, paste('Entry in SL specification:', name,'not supported!'))
+              }
+            }
+
+            if('algorithm' %in% names(SL.library.entry)) {
+              if (!(SL.library.entry$algorithm %in% private$ML.models.allowed)) {
+                errors <- c(errors, paste('The model', SL.library.entry$algorithm, 'is not a valid ML model algorithm'))
+              }
+            } else {
+              errors <- c(errors, 'Algorithm not specified')
+            }
+
+            check_valid_params <- function(SL.library.entry, entry_name) {
+              errors <- c()
+              if(entry_name %in% names(SL.library.entry)) {
+                if (!is(SL.library.entry[[entry_name]], 'list')){
+                  errors <- c(errors, paste('The', entry_name, 'entry should be a list'))
+                } else if (is.null(SL.library.entry[[entry_name]])){
+                  errors <- c(errors, paste('If you add a',entry_name,'entry, also add params to it.'))
+                } else if (length(SL.library.entry[[entry_name]]) == 0){
+                  errors <- c(errors, paste('If you add a',entry_name,'entry, also add params to it.'))
+                } else if (!all(unlist(lapply(SL.library.entry[[entry_name]], length)) > 0)) {
+                  errors <- c(errors, paste('If you add a',entry_name,'entry, also add params to it.'))
+                }
+              }
+              errors
+            }
+            errors <- c(errors, check_valid_params(SL.library.entry, 'params'))
+            errors <- c(errors, check_valid_params(SL.library.entry, 'algorithm_params'))
+
+          } else if (is.character(SL.library.entry)) {
+            if (!(SL.library.entry %in% private$ML.models.allowed)) {
+              errors <- c(errors, paste('The model', SL.library.entry, 'is not a valid ML model algorithm'))
+            }
+          } else {
+            errors <- c(errors, 'Entry is not a character nor a list')
+          }
+
+          if (length(errors) != 0){
+            message <- paste('The entry', paste(SL.library.entry, collapse=' '), 'is not specified correctly:', errors)
+            throw(message)
+          }
         }
   )
 )
