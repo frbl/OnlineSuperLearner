@@ -152,9 +152,7 @@ Simulator.GAD <- R6Class("Simulator.GAD",
           # The length of the list is therefore the number of memories, the value
           # the actual 'influence' of the memory at that moment of time in history.
           memories <- c(W = length(qw[[1]]$param)-1,
-                        A = length(ga$param)-1,
-                        Y = length(Qy$param)-1)
-
+                        A=length(ga$param)-1)
 
           if (is.null(intervention)) {
             msg <- paste("Simulating ", what, "...\n", sep = "")
