@@ -107,17 +107,44 @@ convexOptimization <- R6Class("convexOptimization",
 )
 
 
-n <- 1e4
+n <- 1e6
 X <- rnorm(n)
 Y <- .2*X+.8*X^2+rnorm(n)
 pred <- cbind(X, X^2, X^3, X^4)
-data <- list(Y=Y, pred=pred)
-fun <- function(alpha, data) {
-  -2*t(alpha)%*%(t(data$pred)%*%data$Y) +
-    t(alpha) %*% t(data$pred) %*% data$pred %*% alpha
-}
 
 cOpt <- convexOptimization$new()
+comp.time <- c()
+if (FALSE) {
+  ##
+  ## version 1
+  ##
+  data <- list(Y = Y, pred = pred)
+  fun <- function(alpha, data) {
+    -2*t(alpha) %*% (t(data$pred) %*% data$Y) +
+      t(alpha) %*% t(data$pred) %*% data$pred %*% alpha
+  }
+  tic <- Sys.time()
+  optFirst <- cOpt$convexOpt(fun,
+                             init = c(1/4, 1/4, 1/4, 1/4),
+                             epsilon = 1e-3,
+                             method = "Nelder-Mead",
+                             data = data)
+  optSecond <- cOpt$convexOpt(fun,
+                              init = optFirst$par,
+                              epsilon = 1e-3,
+                              method = "BFGS",
+                              data = data)
+  tac <- Sys.time()
+  comp.time <- c(compt.time, tac - tic)
+}
+##
+## version 2
+##
+data <- list(Qa = t(pred) %*% Y, Qb=t(pred) %*% pred)
+fun <- function(alpha, data) {
+  -2*t(alpha) %*% data$Qa + t(alpha) %*% data$Qb %*% alpha
+}
+tic <- Sys.time()
 optFirst <- cOpt$convexOpt(fun,
                            init = c(1/4, 1/4, 1/4, 1/4),
                            epsilon = 1e-3,
@@ -125,7 +152,9 @@ optFirst <- cOpt$convexOpt(fun,
                            data = data)
 optSecond <- cOpt$convexOpt(fun,
                             init = optFirst$par,
-                            epsilon = 1e-3,
+                            epsilon = 0,
                             method = "BFGS",
                             data = data)
+tac <- Sys.time()
+comp.time <- c(comp.time, tac - tic)
 
