@@ -8,8 +8,6 @@
 #' }
 #' @export
 
-## rm(list=ls(all = TRUE))
-
 convexOptimization <- R6Class("convexOptimization",
   private =
     list(
