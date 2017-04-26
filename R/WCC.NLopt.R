@@ -37,6 +37,10 @@ WCC.NLopt <- R6Class("WCC.NLopt",
           result <- nloptr(x0=self$get_weights,
                         eval_f=private$lossFunction,
                         eval_grad_f = private$lossFunctionGradient,
+                        # Lower bound is 0 for all columns
+                        lb=rep(0, ncol(Z)),
+                        # Upper bound is 1 for all columns
+                        ub=rep(1, ncol(Z)),
                         opts=private$opts,
                         X = Z,
                         Y = Y)
