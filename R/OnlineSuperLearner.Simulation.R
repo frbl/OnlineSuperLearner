@@ -197,7 +197,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           Y <- RandomVariable$new(formula = Y.eq, family = 'gaussian')
 
           # Generate a dataset we will use for testing.
-          private$sim$simulateWAY(20000, qw=llW, ga=llA, Qy=llY, verbose=private$log) %>%
+          private$sim$simulateWAY(25000, qw=llW, ga=llA, Qy=llY, verbose=private$log) %>%
             Data.Static$new(dataset = .) %>%
             summaryMeasureGenerator$setData(.)
 
@@ -226,8 +226,8 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                 mini_batch_size = 10)
 
           predictions <-osl$predict(data = copy(data.test), c(W,A,Y), discrete=TRUE) 
-          osl$evaluateModels(data = copy(data.test), randomVariables = c(W, A, Y)) %>%
-            c(iterations = i, performance = .) %>%
+          performance <- osl$evaluateModels(data = copy(data.test), randomVariables = c(W, A, Y)) %>%
+            c(iterations = i, performance = .) %T>%
             print
           #})
           #performances <- do.call(rbind, lapply(performances, data.frame)) %T>%
