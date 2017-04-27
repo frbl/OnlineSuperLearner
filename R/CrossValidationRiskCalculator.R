@@ -30,23 +30,28 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
         },
 
         calculate_evaluation = function(predicted.outcome, observed.outcome, randomVariables, add_evaluation_measure_name=TRUE) {
-          if (!is.a(predicted.outcome, 'data.table')) {
-            throw('Input predicted.outcome should be a data.table')
+          evaluate <- function(current.predicted.outcome) {
+            sapply(randomVariables, function(rv) {
+              current_outcome <- rv$getY
+              lossFn <- Evaluation.get_evaluation_function(rv$getFamily, useAsLoss = FALSE)
+              result <- lossFn(data.observed  = observed.outcome[,current_outcome, with=FALSE],
+                              data.predicted = current.predicted.outcome[,current_outcome, with=FALSE]) 
+              if (add_evaluation_measure_name){
+                names(result) <- paste(names(result), current_outcome, sep='.')
+              } else {
+                names(result) <- current_outcome
+              }
+              result
+            }) %>% as.list
           }
 
-          sapply(randomVariables, function(rv) {
-            current_outcome <- rv$getY
-            lossFn <- Evaluation.get_evaluation_function(rv$getFamily, useAsLoss = FALSE)
-            result <- lossFn(data.observed  = observed.outcome[,current_outcome, with=FALSE],
-                             data.predicted = predicted.outcome[,current_outcome, with=FALSE]) 
-            if (add_evaluation_measure_name){
-              names(result) <- paste(names(result), current_outcome, sep='.')
-            } else {
-              names(result) <- current_outcome
-            }
-            result
-          }) %>% as.list
-          
+          if (is.a(predicted.outcome, 'data.table')) {
+            return(evaluate(predicted.outcome))
+          } else if (is.a(predicted.outcome, 'list')) {
+            return(lapply(predicted.outcome, evaluate))
+          }
+
+          throw('Input predicted.outcome should be a data.table or list of data.tables')
         },
 
         # Calculate the CV risk for each of the random variables provided

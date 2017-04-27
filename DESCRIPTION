@@ -30,6 +30,8 @@ Imports:
     purrr,
     xgboost,
     nloptr,
+    optimr,
+    sgd,
     nnls,
     Metrics
 Suggests:
@@ -57,6 +59,7 @@ Collate:
     'ML.H2O.glm.R'
     'ML.H2O.randomForest.R'
     'ML.XGBoost.R'
+    'WCC.NMBFGS.R'
     'WeightedCombinationComputer.R'
     'SMG.Mock.R'
     'SummaryMeasureGenerator.R'

@@ -13,7 +13,8 @@ WCC.SGD <- R6Class("WCC.SGD",
           if(is.null(weights.initial)){
             throw('Please provide initial weights (or NA vector with the correct size)')
           }
-          weights.initial <- rnorm(length(weights.initial), mean=0, sd=1e-5)
+          weights.initial <- runif(length(weights.initial), 0, 1)
+          weights.initial <- weights.initial / sum(weights.initial)
           super$initialize(weights.initial)
         }
         ),

@@ -38,12 +38,12 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           algos <- append(algos, list(list(algorithm = 'tmlenet::speedglmR6',
                                   #algorithm_params = list(),
-                                  params = list(nbins = 6))))
+                                  params = list(nbins = c(6,40)))))
 
 
           algos <- append(algos, list(list(algorithm = 'tmlenet::glmR6',
                                   #algorithm_params = list(),
-                                  params = list(nbins = c(16, 120))))) 
+                                  params = list(nbins = c(16))))) 
 
           private$SL.library.definition <- algos
 
@@ -115,7 +115,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                         summaryMeasureGenerator = summaryMeasureGenerator,
                                         verbose = private$log)
 
-          estimators <- osl$run(data.train, Y = Y, A = A, W = W,
+          estimators <- osl$fit(data.train, Y = Y, A = A, W = W,
                                 initial_data_size = 2000, max_iterations = i,
                                 mini_batch_size = 3)
 
@@ -221,11 +221,12 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                         verbose = private$log)
 
           private$log && cat(private$log, 'Running OSL')
-          estimators <- osl$run(data.train, Y = Y, A = A, W = W,
+          estimators <- osl$fit(data.train, Y = Y, A = A, W = W,
                                 initial_data_size = 20000, max_iterations = i,
                                 mini_batch_size = 10)
 
-          predictions <-osl$predict(data = copy(data.test), c(W,A,Y), discrete=TRUE) 
+          predictions <- osl$predict(data = copy(data.test), c(W,A,Y), discrete=TRUE) 
+
           performance <- osl$evaluateModels(data = copy(data.test), randomVariables = c(W, A, Y)) %>%
             c(iterations = i, performance = .) %T>%
             print
@@ -235,9 +236,11 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           #plot(x=performances$iterations, y=performances$performance)
           #performances
+          browser()
           intervention <- list(variable = 'A', when = c(5, 7), what = c(1,0))
           result <- osl$sample_iteratively(data = data.test[1,], randomVariables = c(W,A,Y), intervention = intervention)
-          browser()
+          performance
+          result
         }
   )
 )

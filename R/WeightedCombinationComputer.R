@@ -37,19 +37,32 @@ WeightedCombinationComputer <- R6Class("WeightedCombinationComputer",
   public =
     list(
         initialize = function(weights.initial) {
-          private$weights <- weights.initial
+          private$weights <- Arguments$getNumerics(weights.initial, c(0, 1))
+          sum_of_weights <- sum(private$weights)
+          if (sum_of_weights != 1) {
+            throw("The sum of the initial weights, ", sum_of_weights, ", does not equal 1")
+          }
         },
 
-        process = function(Z, Y, libraryNames) {
+        process = function(Z, Y, libraryNames, ...) {
           if(!is.character(libraryNames)) throw('libraryNames should be a vector of names.')
+          browser()
+
+          Z <- Arguments$getInstanceOf(as.matrix(Z), 'matrix') 
+          Y <- Arguments$getInstanceOf(as.matrix(Y), 'matrix') 
 
           if (length(private$weigths) == 1) {
             private$weights <- c(1)
             return(private$weights)
           }
 
+          if (length(private$weights) != length(libraryNames)) {
+            throw('Not each estimator has exactly one weight: estimators: ', length(libraryNames) ,' weights: ',length(private$weights),'.')
+          }
+          libraryNames <- Arguments$getCharacters(libraryNames)
+
           # Call the subclass
-          private$compute(Z, Y, libraryNames)
+          private$compute(Z, Y, libraryNames, ...)
           return(private$weights)
         }
 
