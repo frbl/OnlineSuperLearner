@@ -126,7 +126,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                 current <- data
               #}
               # TODO: Unity in export formats. Probably the best is to enforce a data.table output
-              estimator$sample(current)
+              estimator$predict(current, sample = TRUE)
             })
 
           # convert the list of results into a data.table
@@ -332,7 +332,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$cv_risk_count = 0
           private$cv_risk_calculator = CrossValidationRiskCalculator$new()
 
-          libraryFactory <- LibraryFactory$new()
+          libraryFactory <- LibraryFactory$new(verbose = verbose)
 
           # Initialization, Fabricate the various models
           private$SL.library.fabricated <- libraryFactory$fabricate(SL.library.definition)

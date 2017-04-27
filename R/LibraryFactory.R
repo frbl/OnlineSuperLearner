@@ -22,6 +22,7 @@ LibraryFactory <- R6Class("LibraryFactory",
   private =
     list(
         ML.models.allowed = NULL,
+        verbose = NULL,
 
 
         is_valid_ml_model = function(ML.name) {
@@ -79,6 +80,7 @@ LibraryFactory <- R6Class("LibraryFactory",
                   }
 
                   current_params$bin_estimator <- algorithm_instance
+                  current_params$verbose <- private$verbose
                   result <- list(create_object_from_string('DensityEstimation', args = current_params))
                   names(result) <- params_name
                   result
@@ -143,8 +145,9 @@ LibraryFactory <- R6Class("LibraryFactory",
                                                     'ML.H2O.glm',
                                                     'ML.H2O.randomForest',
                                                     'ML.Local.lm',
-                                                    'ML.XGBoost.glm')) {
+                                                    'ML.XGBoost.glm'), verbose = FALSE) {
           private$ML.models.allowed = ML.models.allowed
+          private$verbose <- verbose
           self$get_validity
         },
 
