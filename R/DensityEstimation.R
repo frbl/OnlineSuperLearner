@@ -151,7 +151,6 @@ DensityEstimation <- R6Class ("DensityEstimation",
             #fixed <- TRUE
           #}
 
-          # Store the yValues for easy access
           yValues <- datO[[Y]]
 
           # Generate a datanet object (this needs to be refactored)

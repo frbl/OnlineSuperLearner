@@ -15,6 +15,7 @@ packages <- c(
 "xgboost",
 "nnls",
 "sgd",
+"optimr",
 "nloptr",
 "purrr",
 "roxygen2"
