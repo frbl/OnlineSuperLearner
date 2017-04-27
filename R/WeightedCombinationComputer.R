@@ -46,7 +46,6 @@ WeightedCombinationComputer <- R6Class("WeightedCombinationComputer",
 
         process = function(Z, Y, libraryNames, ...) {
           if(!is.character(libraryNames)) throw('libraryNames should be a vector of names.')
-          browser()
 
           Z <- Arguments$getInstanceOf(as.matrix(Z), 'matrix') 
           Y <- Arguments$getInstanceOf(as.matrix(Y), 'matrix') 

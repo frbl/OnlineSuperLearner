@@ -120,6 +120,8 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
 
       # Z and Y are always matrices
       compute = function(Z, Y, libraryNames, ...) {
+        # We have to store the new data in order to fake the online update (i.e., it gets trained on all 
+        # level 1 data
         private$update_data(list(Z=Z, Y=Y))
 
         Z = private$data$Z
