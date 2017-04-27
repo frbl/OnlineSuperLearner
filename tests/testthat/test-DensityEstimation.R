@@ -47,12 +47,18 @@ test_that("it should floor the number of bins if it is a float", {
   expect_equal(subject$get_nbins, 1)
 })
 
-context(' sample')
-test_that("it should throw if the cond densities have not yet been fitted", {
+context(' predict')
+test_that("it should throw if the provided data is not a datatable", {
   subject <- described.class$new(nbins = 10) 
-  expect_error(subject$sample(NULL), 'The conditional_densities need to be fit first!')
+  expect_error(subject$predict(NULL), "Argument 'data' is neither of nor inherits class data.table: NULL")
 })
 
+test_that("it should throw if the cond densities have not yet been fitted", {
+  subject <- described.class$new(nbins = 10) 
+  expect_error(subject$predict(defaultDataTable()), 'The conditional_densities need to be fit first!')
+})
+
+context(' > sample')
 test_that("it should sample if from the cond densities once they've been fitted", {
   set.seed(12345) 
   subject <- described.class$new(nbins = 10) 
@@ -64,8 +70,8 @@ test_that("it should sample if from the cond densities once they've been fitted"
 
   Y_val <- 0
   for(W_val in c(0,1)) {
-    dat <- data.frame(D = 1, W=c(W_val), Y=Y_val)
-    res <- subject$sample(dat)
+    dat <- data.table(D = 1, W=c(W_val), Y=Y_val)
+    res <- subject$predict(dat, sample=TRUE)
     expect_true(is.a(res, 'list'))
     expect_true(length(res) == 2)
     expect_false(is.null(res$W))
@@ -73,51 +79,26 @@ test_that("it should sample if from the cond densities once they've been fitted"
   }
 })
 
-test_that("it should work with multiple entries in the data", {
- # TODO: Implement test 
-})
-
-
-context(' predict')
-test_that("it should throw if the cond densities have not yet been fitted", {
-  
-})
-
-test_that("it should predict from the cond densities once it has been fitted", {
-  set.seed(12345) 
+test_that("it should sample from the cond densities once they've been fitted also with NA", {
+  # In this test we check what would happen if we'd want to *sample* Y given some predefined
+  # W. In this case, we provide Y as NA, and it should not crash. 
+  set.seed(1234) 
   subject <- described.class$new(nbins = 10) 
 
   # TODO: fix these warnings
   suppressWarnings(
     subject$process(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
   )
-
-  Y_val <- 0
-  for(W_val in c(0,1)) {
-    dat <- data.frame(D= 1, W=c(W_val), Y=Y_val)
-    res <- subject$predict(dat, X=rv.Y$getX, Y=rv.Y$getY)
-    expect_true(abs(res - W_val * 1000) < 50)
-  }
-})
-
-test_that("it should predict from the cond densities once they've been fitted also with NA", {
-  set.seed(12345) 
-  subject <- described.class$new(nbins = 10) 
-
-  # TODO: fix these warnings
-  suppressWarnings(
-    subject$process(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
-  )
-
+  accepted_error <- 20
   Y_val <- NA 
   for(W_val in c(0,1)) {
-    dat <- data.frame(D= 1, W=c(W_val), Y=Y_val)
-    suppressWarnings(res <- subject$predict(dat, X=rv.Y$getX, Y=rv.Y$getY))
-    expect_true(abs(res - W_val * 1000) < 50)
+    dat <- data.table(D = 1, W = c(W_val), Y = Y_val)
+    suppressWarnings(res <- subject$predict(dat, sample = TRUE))
+    expect_true(abs(res$Y - W_val * 1000) < accepted_error)
   }
 })
 
-test_that("it should when sampled with NA, it should give a warning", {
+test_that("it should, when sampled with NA, give a warning", {
   subject <- described.class$new(nbins = 3) 
 
   # TODO: fix these warnings
@@ -126,8 +107,45 @@ test_that("it should when sampled with NA, it should give a warning", {
   )
 
   W <- 1
-  dat <- data.frame(D = 1, W=c(W), Y=c(NA))
-  expect_warning(subject$predict(dat, X=rv.Y$getX, Y=rv.Y$getY))
+  dat <- data.table(D = 1, W=c(W), Y=c(NA))
+  expect_warning(subject$predict(dat, sample = TRUE))
+})
+
+context(' > predict')
+test_that("it should get the correct probabilities from the cond densities", {
+  set.seed(12345) 
+  subject <- described.class$new(nbins = 10) 
+
+  # TODO: fix these warnings
+  suppressWarnings(
+    subject$process(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
+  )
+
+  n <- 3
+  Y_val <- 0
+  dat <- data.table(D = rep(1,n), W=seq(n), Y=rep(Y_val, n))
+  res <- subject$predict(dat, sample=FALSE)
+  expect_true(is.a(res, 'list'))
+  expect_true(length(res) == 2)
+  expect_false(is.null(res$W))
+  expect_false(is.null(res$Y))
+  expect_equal(length(res$Y), n)
+  expect_equal(length(res$W), n)
+})
+
+test_that("it should throw if no output column is provided in the data", {
+  set.seed(12345) 
+  subject <- described.class$new(nbins = 10) 
+  expected_error <- 'In order to predict the probability of an outcome, we also need the outcome'
+
+  # TODO: fix these warnings
+  suppressWarnings(
+    subject$process(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
+  )
+
+  n <- 3
+  dat <- data.table(D = rep(1,n), W=seq(n))
+  res <- expect_error(subject$predict(dat, sample = FALSE), expected_error, fixed = TRUE)
 })
 
 context(' process')

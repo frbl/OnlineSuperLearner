@@ -56,6 +56,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
           self$getConditionalDensities(Y)$fit(data = nodeObjects$datNetObs)
 
           if(FALSE) {
+            # Test code
             #browser()
             # Our prediction
             mean(self$predict(datO,X,Y) == datO$A)
@@ -67,7 +68,6 @@ DensityEstimation <- R6Class ("DensityEstimation",
         },
 
         predict_probability = function(datO, X, Y, plot = FALSE) {
-          browser()
           if(!(Y %in% names(datO))) throw('In order to predict the probability of an outcome, we also need the outcome')
           yValues <- datO[[Y]]
           conditionalDensity <- self$getConditionalDensities(Y)
@@ -191,7 +191,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
             if(sample) {
               private$sample(datO=data, Y=rv$getY, X=rv$getX)
             } else {
-              private$predict_probability(datO=data, Y=rv$getY, X=rv$getX, plot=TRUE)
+              private$predict_probability(datO=data, Y=rv$getY, X=rv$getX, plot=FALSE)
             }
           })
         },
@@ -213,10 +213,10 @@ DensityEstimation <- R6Class ("DensityEstimation",
             # TODO: Currently it is is not yet possible to sample from an non-conditional distribution!
             if(length(rv$getX) > 0) {
               if (update) {
-                private$verbose && cat(private$verbose, 'Updating ', rv$getY)
+                private$verbose && cat(private$verbose, 'Updating density: ', rv$getY)
                 private$update(newdata = data, Y = rv$getY, X = rv$getX) 
               } else {
-                private$verbose && cat(private$verbose, 'Fitting ', rv$getY)
+                private$verbose && cat(private$verbose, 'Fitting density: ', rv$getY)
                 private$fit(datO = data, Y = rv$getY, X = rv$getX) 
               }
             }
@@ -229,6 +229,8 @@ DensityEstimation <- R6Class ("DensityEstimation",
 
           # If no outcome type is provided, just return all of them
           if(is.null(outcome)) return(private$conditional_densities)
+          outcome <- Arguments$getCharacters(outcome)
+
           if(!(all(outcome %in% names(private$conditional_densities)))) throw(paste(outcome, 'is not a fitted outcome'))
 
           if (length(outcome) == 1) {
