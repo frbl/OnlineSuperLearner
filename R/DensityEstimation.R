@@ -35,7 +35,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
         fit = function(datO, X, Y){
           #TODO: Make this step online (remove the following line)
           private$data <- datO
-          nodeObjects <- private$defineNodeObjects(datO = datO, X = X, Y = Y)
+          nodeObjects <- private$define_node_objects(datO = datO, X = X, Y = Y)
 
           # Define est_params_list:
           subset_vars <- lapply(Y, function(var) {var})
@@ -55,7 +55,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
           private$conditional_densities[Y] <- list(SummariesModel$new(reg = regclass, DatNet.sWsA.g0 = nodeObjects$datNetObs))
           self$getConditionalDensities(Y)$fit(data = nodeObjects$datNetObs)
 
-          if(Y == 'A') {
+          if(FALSE) {
             #browser()
             # Our prediction
             mean(self$predict(datO,X,Y) == datO$A)
@@ -66,8 +66,74 @@ DensityEstimation <- R6Class ("DensityEstimation",
           }
         },
 
-        # Refactor:
-        defineNodeObjects = function(datO, X, Y) {
+        predict_probability = function(datO, X, Y, plot = FALSE) {
+          browser()
+          if(!(Y %in% names(datO))) throw('In order to predict the probability of an outcome, we also need the outcome')
+          yValues <- datO[[Y]]
+          conditionalDensity <- self$getConditionalDensities(Y)
+          nodeObjects <- private$define_node_objects(datO = datO, X = X, Y = Y)
+
+          #TODO: Why would we want to use predict over Aeqa?
+
+          # Predict the instances where A=A (i.e., the outcome is the outcome)
+          estimated_probabilities <- conditionalDensity$predictAeqa(newdata = nodeObjects$datNetObs)
+
+          if (plot) {
+            # plot densitity first:
+            vals <- unique(yValues)
+            if(length(vals) == 2 ) {
+              # If the outcome is binary, we can see how well it managed to predict the whole distribution
+              # This error term should be small (~ 0.001)
+              abs(mean(estimated_probabilities[yValues == vals[1] ]) - mean(yValues == vals[1]))
+              abs(mean(estimated_probabilities[yValues == vals[2] ]) - mean(yValues == vals[2]))
+            }
+            plot(density(yValues), ylim=c(0,max(estimated_probabilities)+10.01))
+            lines(yValues, estimated_probabilities, type = "p", cex = .3, col = "red")
+          }
+          estimated_probabilities
+
+          #subs <- conditionalDensity$getPsAsW.models()[[1]]$getPsAsW.models()
+          #a <- lapply(seq(50), function(x) conditionalDensity$getPsAsW.models()[[1]]$sampleA(newdata = nodeObjectsSub$datNetObs))
+          #df <- as.data.frame(t(as.data.frame(a))); rownames(df)<-NULL
+
+          #subs <- conditionalDensity$getPsAsW.models()[[1]]$getPsAsW.models()
+          #conditionalDensity$predict(newdata = nodeObjectsSub$datNetObs)
+        },
+
+        # Generates a sample given the provided data.
+        sample = function(datO, X, Y) {
+          # TODO: Implement sampling from a non conditional distribution
+          if(length(X) == 0) throw('Sampling from non conditional distribution is not yet supported!')
+          conditionalDensity <- self$getConditionalDensities(Y)
+
+          # TODO: BUG! For some weird reason, the code doesn't work with NA 
+          if(anyNA(datO)) {
+            warning('Some NA values were replaced with zeros!')
+            datO[is.na(datO)] <- 0
+          }
+
+          # This fix might not be necessary. It seems that whenever we have 1 row of data and 1 covariate, everythin
+          # crashes and burns. Using this simple fix actually fixes that problem. Unfortunately, when using this fix,
+          # it doesnt work when there are more than 1 covariate.
+          #fixed <- FALSE
+          #if(nrow(datO) == 1) {
+            #print('Fixing!')
+            #datO <- rbind(datO, datO)
+            #fixed <- TRUE
+          #}
+
+          # Generate a datanet object (this needs to be refactored)
+          nodeObjects <- private$define_node_objects(datO = datO, X = X, Y = Y)
+          sampled_data <- conditionalDensity$sampleA(newdata = nodeObjects$datNetObs)
+
+          # We undo our fix here:
+          #if(fixed) { sampled_data <- sampled_data[[1]] }
+
+          sampled_data
+        },
+
+        # TODO: Refactor:
+        define_node_objects = function(datO, X, Y) {
           # Define the nodes in the network, Anodes are the outcome nodes,
           # Wnodes are the covariate nodes / predictors
           nodes <- list(Anodes = Y, Wnodes = X , nFnode = "nF")
@@ -109,79 +175,25 @@ DensityEstimation <- R6Class ("DensityEstimation",
   public =
     list(
         initialize = function(nbins = 30, bin_estimator = tmlenet::speedglmR6$new(), verbose = FALSE) {
-          private$verbose <- Arguments$getVerbose(-8, timestamp=FALSE)
-          #private$verbose = verbose
+          private$verbose <- verbose
           private$nbins <- Arguments$getIntegers(as.numeric(nbins), c(1, Inf))
           private$bin_estimator <- bin_estimator
           private$conditional_densities <- list()
         },
 
-        # Generates a sample given the provided data.
-        sample = function(data) {
+        predict = function(data, sample = FALSE) {
+          data <- Arguments$getInstanceOf(data, 'data.table')
           if (is.null(private$randomVariables) | length(private$conditional_densities) == 0) {
             throw('The conditional_densities need to be fit first!')
           }
 
           lapply(private$randomVariables, function(rv) {
-              self$predict(datO=data,
-                            Y=rv$getY,
-                            X=rv$getX)
-            })
-        },
-
-        predict = function(datO, X, Y) {
-          # TODO: Implement sampling from a non conditional distribution
-          if(length(X) == 0) return(NULL)
-          conditionalDensity <- self$getConditionalDensities(Y)
-
-
-          # TODO: BUGS!!!!!!!! For some weird reason, the code doesn't work with NA 
-          if(anyNA(datO)) {
-            warning('Some NA values were replaced with zeros!')
-            datO[is.na(datO)] <- 0
-          }
-
-          # This fix might not be necessary. It seems that whenever we have 1 row of data and 1 covariate, everythin
-          # crashes and burns. Using this simple fix actually fixes that problem. Unfortunately, when using this fix,
-          # it doesnt work when there are more than 1 covariate.
-          #fixed <- FALSE
-          #if(nrow(datO) == 1) {
-            #print('Fixing!')
-            #datO <- rbind(datO, datO)
-            #fixed <- TRUE
-          #}
-
-          yValues <- datO[[Y]]
-
-          # Generate a datanet object (this needs to be refactored)
-          nodeObjects <- private$defineNodeObjects(datO = datO, X = X, Y = Y)
-          sampled_data <- conditionalDensity$sampleA(newdata = nodeObjects$datNetObs)
-          #sampled_data <- conditionalDensity$getPsAsW.models()[[1]]$sampleA(newdata = nodeObjects$datNetObs)
-
-          # TODO: We undo our fix here:
-          #if(fixed) { sampled_data <- sampled_data[[1]] }
-
-          if(FALSE){
-            # Testing code
-            # Create predictions
-            #TODO: Why would we want to use predict over Aeqa?
-            # Predict the instances where A=A (i.e., the outcome is the outcome)
-            # plot densitity first:
-            plot(density(datO[[Y]]), ylim=c(0,max(estimated_densities)+0.01))
-            #plot(density(seq(min(yValues), max(yValues),length.out = length(estimated_densities))* estimated_densities[order(yValues)]))
-            estimated_densities <- conditionalDensity$predictAeqa(newdata = nodeObjects$datNetObs)
-
-            lines(yValues, estimated_densities, type = "p", cex = .3, col = "red")
-
-            subs <- conditionalDensity$getPsAsW.models()[[1]]$getPsAsW.models()
-            a <- lapply(seq(50), function(x) conditionalDensity$getPsAsW.models()[[1]]$sampleA(newdata = nodeObjectsSub$datNetObs))
-            df <- as.data.frame(t(as.data.frame(a))); rownames(df)<-NULL
-
-            subs <- conditionalDensity$getPsAsW.models()[[1]]$getPsAsW.models()
-            conditionalDensity$predict(newdata = nodeObjectsSub$datNetObs)
-          }
-
-          sampled_data
+            if(sample) {
+              private$sample(datO=data, Y=rv$getY, X=rv$getX)
+            } else {
+              private$predict_probability(datO=data, Y=rv$getY, X=rv$getX, plot=TRUE)
+            }
+          })
         },
 
         # Fits the densities according to the provided randomVariables
