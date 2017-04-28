@@ -3,6 +3,7 @@
 #' @docType class
 #' @importFrom R6 R6Class
 #' @include RandomVariable.R
+#' @include SMGFactory.R
 #' @include SMG.Latest.Entry.R
 #' @include SMG.Lag.R
 #' @include SMG.Transformation.R
@@ -20,7 +21,6 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
     list(
         initialize = function() {
           options(warn=1)
-          options(error = browser)
           private$sim  <- Simulator.GAD$new()
           private$training_set_size <- 1e5
           private$test_set_size <- 100
@@ -225,6 +225,8 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           Y  <- RandomVariable$new(family = 'gaussian', formula = Y  ~ A + W)
 
           randomVariables <- c(W, W1, W2, A, Y)
+          smg_factory <- SMGFactory$new()
+          smg_factory$fabricate(randomVariables)
 
           # We add a margin so we don't have to worry about the presence of enough history
           margin <- 100

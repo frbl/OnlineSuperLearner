@@ -128,6 +128,10 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
     list(
         getCache = function(){
           return(private$cache)
+        },
+
+        get_smg_list = function() {
+          return(private$SMG.list)
         }
         ),
   private =
