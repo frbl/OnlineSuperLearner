@@ -13,8 +13,6 @@
 #' @section Methods:
 #' \describe{
 #' }
-#' @export
-
 WCC.NMBFGS <- R6Class("WCC.NMBFGS",
   inherit = WeightedCombinationComputer,
   private =
