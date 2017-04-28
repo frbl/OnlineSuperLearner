@@ -67,6 +67,7 @@ Collate:
     'SMG.Transformation.R'
     'SMG.Lag.R'
     'SMG.Latest.Entry.R'
+    'SMGFactory.R'
     'RandomVariable.R'
     'OnlineSuperLearner.Simulation.R'
     'SMG.Mean.R'
