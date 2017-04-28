@@ -181,7 +181,8 @@ DensityEstimation <- R6Class ("DensityEstimation",
           private$conditional_densities <- list()
         },
 
-        predict = function(data, sample = FALSE) {
+        #TODO: Implement a way to run the prediction on a subset of outcomes
+        predict = function(data, sample = FALSE, subset = NULL) {
           data <- Arguments$getInstanceOf(data, 'data.table')
           if (is.null(private$randomVariables) | length(private$conditional_densities) == 0) {
             throw('The conditional_densities need to be fit first!')

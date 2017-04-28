@@ -1,6 +1,5 @@
 devtools::load_all('~/Workspace/frbl/tmlenet')
 
-
 #' OnlineSuperLearner
 #'
 #' This is the main super learner class. This class contains everything related
@@ -16,22 +15,60 @@ devtools::load_all('~/Workspace/frbl/tmlenet')
 #' @include WCC.NMBFGS.R
 #' @include CrossValidationRiskCalculator.R
 #'
-#' @section Methods:
-#' \describe{
-#'   \item{\code{new(SL.library.definition)}}{
-#'     starts a new OnlineSuperLearner. The provided /code{SL.library.definition} contains the machine learning models to use
-#'   }
-#'
-#'   \item{\code{run(data, Y, A, W,  initial_data_size = 10)}}{
-#'     Runs the actual OnlineSuperLearning calculation
-#'   }
-#'   \item{\code{getModel()}}{
-#'     Returns the final OnlineSuperLearner estimator
-#'   }
-#'   \item{\code{predict(data, X)}}{
-#'     returns an actual prediction using the superlearning estimator
-#'   }
-#' }
+#' @section Methods: 
+#' \describe{  
+#'   \item{\code{initialize(SL.library.definition = c("ML.Local.lm", "ML.H2O.glm", summaryMeasureGenerator, verbose = FALSE)}}{ 
+#'     starts a new OnlineSuperLearner. The provided \code{SL.library.definition} contains the machine learning models to use
+#'     @param SL.library.definition = a list of machine learning algorithms. This could be either a vector with 
+#'                                    with the name of each estimator or a list according to the libraryFactroy.
+#'                                    Look in the LibraryFactory class for the specification of this list.
+#'     @param summaryMeasureGenerator = an object of the type SummaryMeasureGenerator. This generator is used to
+#'                                      get new observations with the correct aggregated columns.
+#'     @param verbose = the verbosity (how much logging). Note that this might be propagated to other classes.
+#'   } 
+#' 
+#'   \item{\code{evaluateModels(data, randomVariables) }}{ 
+#'     Performs a basic evaluation on the data, given a list of random variables
+#'     @param data = the data to use for performing the evaluation
+#'     @param randomVariables = the randomVariables for which one wants to see the evaluation. Note that this needs
+#'                              to be equal to, or a subset of, the random variables used to train the estimators.
+#'   } 
+#' 
+#'   \item{\code{sample_iteratively(data, randomVariables, tau = 10, intervention = NULL}}{ 
+#'     Method to sample iteratively from the densities. It works by providing an initial observation (\code{data}), from which
+#'     iteretitatively the next measurement is estimated. This is done until \code{tau} steps in the future. Furthermore,
+#'     this sampling step can be augmented with an intervention. That is, we could set a given time step (or all)
+#'     to a certain value. The \code{intervention} provided should be a list containing a \code{when} and \code{what} entry.
+#'     the \code{when} entry should show when the intervention is performed, the \code{what} entry shows what should be done.
+#'     @param data = the initial data to start the sampling from. At most 1 row of data.
+#'     @param randomVariables = the randomvariables used when fitting the data
+#'     @param tau = the timestep at which you want to evaluate the output
+#'     @param intervention = the intervention, e.g.: \code{list(when = c(1,2), what = c(1,0))}
+#'   } 
+#' 
+#'   \item{\code{fit(data, randomVariables, initial_data_size = 5, max_iterations = 20, mini_batch_size = 20}}{ 
+#'     The actual method to fit the OnlineSuperLearner. This will fit the provided \code{SL.library.definition}
+#'     estimators as well as the OnlineSuperLearner and the DiscreteOnlineSuperLearner.
+#'     @param data = the data to fit the estimator on. Should be a \code{Data.Base} subclass.
+#'     @param randomVariables = the random variables to fit the densities / estmators for (W,A,Y)
+#'     @param initial_data_size = the size of the dataset to use for the initial fit (pre-update)
+#'     @param max_iterations = the number of iterations to run for updating the data
+#'     @param mini_batch_size = the size of the mini batch to use for each update.
+#'   } 
+#' 
+#'   \item{\code{predict(data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE}}{ 
+#'     Method to perform a prediction on the estimators. It can run in different configurations. It can be configured
+#'     to predict the outcome using all estimators (the \code{all_estimators} flag), using the discrete superlearner
+#'     (the \code{discrete} flag), or using the continuous online superlearner (the \code{continous} flag). At least
+#'     one of these three flags must be true.
+#'     @param data = the data to use for doing the predictions
+#'     @param randomVariables = the random variables used for doing the predictions (these should be the same as the 
+#'                              ones used for fitting).
+#'     @param all_estimators = whether or not to include the output of all candidate estimators in the output
+#'     @param discrete = whether or not to include the output of the discrete super learner in the output 
+#'     @param continuous = whether or not to include the output of the continuous super learner in the output 
+#'   } 
+#' }  
 #' @export
 OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
   private =
@@ -54,7 +91,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         fitted = NULL,
 
         # Splitter for the data
-        dataSplitter = NULL,
+        data_splitter = NULL,
 
         # Summary measures and a generator
         summaryMeasureGenerator = NULL,
@@ -98,6 +135,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$cv_risk_count <- private$cv_risk_count + 1
         },
 
+        # Initializes the weighted combination calculators. One for each randomvariable.
         initialize_weighted_combination_calculators = function(randomVariables) {
           lapply(randomVariables, function(rv) {
             weights.initial <- rep(1 / length(private$SL.library.descriptions), length(private$SL.library.descriptions))
@@ -170,7 +208,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         # @param W: the column names used for the covariates
         train_library = function(data_current, randomVariables) {
           # Fit or update the  estimators
-          data.splitted <- private$dataSplitter$split(data_current)
+          data.splitted <- private$data_splitter$split(data_current)
           private$train_all_estimators(data = data.splitted$train, randomVariables = randomVariables)
 
           outcome.variables <- sapply(randomVariables, function(rv) rv$getY)
@@ -192,9 +230,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                               observed.outcome = observed.outcome, 
                               randomVariables = randomVariables)
 
-          # Fit the super learner on the current data
-          #Ymat <- as.matrix(data_current[, Y, with = FALSE])
-
           # Update the discrete superlearner (take the first if there are multiple candidates)
           private$dosl.estimators <- private$find_current_best_estimator()
         },
@@ -206,7 +241,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         # @param W: the column names used for the covariates
         # @param max_iterations: the number of iterations we can maximaly run for training
         # @param mini_batch_size: size of the batch we use
-        updateLibrary = function(randomVariables, max_iterations, mini_batch_size){
+        update_library = function(randomVariables, max_iterations, mini_batch_size){
           private$verbose && enter(private$verbose, 'Starting estimator updating')
           if(!self$is_fitted){
             throw('Fit the inital D-OSL and OSL first')
@@ -300,6 +335,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$fitted
         },
 
+        get_estimators = function() {
+          return(private$SL.library.fabricated)
+        },
+
         get_cv_risk = function() {
           return(private$cv_risk)
         },
@@ -324,17 +363,16 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                               summaryMeasureGenerator, verbose = FALSE) {
           private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
           private$fitted = FALSE
-          private$summaryMeasureGenerator <- summaryMeasureGenerator
-          private$dataSplitter <- DataSplitter$new()
+          private$summaryMeasureGenerator <- Arguments$getInstanceOf(summaryMeasureGenerator, 'SummaryMeasureGenerator')
 
           # Cross validation initialization
           private$cv_risk = list()
           private$cv_risk_count = 0
           private$cv_risk_calculator = CrossValidationRiskCalculator$new()
-
-          libraryFactory <- LibraryFactory$new(verbose = verbose)
+          private$data_splitter <- DataSplitter$new()
 
           # Initialization, Fabricate the various models
+          libraryFactory <- LibraryFactory$new(verbose = verbose)
           private$SL.library.fabricated <- libraryFactory$fabricate(SL.library.definition)
           private$SL.library.descriptions <- names(private$SL.library.fabricated)
           private$verbose && cat(private$verbose, paste('Creating super learner with a library:', private$SL.library.descriptions))
@@ -364,7 +402,11 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         sample_iteratively = function(data, randomVariables, tau = 10, intervention = NULL,
                                       discrete = TRUE) {
 
+
+          randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
           randomVariables <- RandomVariable.find_ordering(randomVariables)
+
+          intervention <- Arguments$getInstanceOf(intervention, 'list')
           valid_intervention <- is.numeric(intervention$when) &
            is.numeric(intervention$what) &
            is.character(intervention$variable) &
@@ -400,24 +442,25 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         # Data = the data object from which the data can be retrieved
         # initial_data_size = the number of observations needed to fit the initial estimator
-        fit = function(data, W, A, Y, initial_data_size = 5, max_iterations = 20, mini_batch_size = 20) {
+        fit = function(data, randomVariables, initial_data_size = 5, max_iterations = 20, mini_batch_size = 20) {
 
+          data <- Arguments$getInstanceOf(data, 'Data.Base')
           private$summaryMeasureGenerator$setData(data = data)
 
           # TODO: Move to check validity? Needs moving of the equations as well.
-          if(!private$summaryMeasureGenerator$checkEnoughDataAvailable(randomVariables = c(W, A, Y))) {
-            throw('Not all provided variables are included in the SMGs, include the correct SMGs')
-          }
+          private$summaryMeasureGenerator$checkEnoughDataAvailable(randomVariables = randomVariables)
 
-          # We initialize the WCC's here because we need to have the WAY's
-          private$initialize_weighted_combination_calculators(c(W,A,Y))
+          # We initialize the WCC's here because we need to have the randomVriables
+          private$initialize_weighted_combination_calculators(randomVariables)
 
           # Get the initial data for fitting the first estimator and train the initial models
+          private$verbose && enter(private$verbose, 'Fitting initial models')
           private$summaryMeasureGenerator$getNextN(initial_data_size) %>%
-            private$train_library(data_current = ., randomVariables = c(W, A, Y))
+            private$train_library(data_current = ., randomVariables = randomVariables)
+          private$verbose && exit(private$verbose)
 
           # Update the library of models using a given number of max_iterations
-          private$updateLibrary(randomVariables = c(W, A, Y), max_iterations = max_iterations,
+          private$update_library(randomVariables = randomVariables, max_iterations = max_iterations,
                                 mini_batch_size = mini_batch_size)
 
           # Return the cross validated risk
@@ -480,9 +523,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
               if (outcome_name %in% names(private$dosl.estimators)) {
                 outcome_name
                 private$dosl.estimators
-                prediction <- private$dosl.estimators[[outcome_name]]$predict(datO = data,
-                                                                              X = rv$getX,
-                                                                              Y = rv$getY)
+                prediction <- private$dosl.estimators[[outcome_name]]$predict(data = data)[[outcome_name]]
               } else {
                 prediction <- c(outcome = NA)
               }
@@ -495,10 +536,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           }
           private$verbose && exit(private$verbose)
           result
-        },
-
-        get_estimators = function() {
-          return(private$SL.library.fabricated)
         }
   )
 )
