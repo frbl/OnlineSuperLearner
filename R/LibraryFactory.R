@@ -24,7 +24,6 @@ LibraryFactory <- R6Class("LibraryFactory",
         ML.models.allowed = NULL,
         verbose = NULL,
 
-
         is_valid_ml_model = function(ML.name) {
           # TODO: Test if files actually exist.
         },
