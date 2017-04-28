@@ -15,22 +15,60 @@ devtools::load_all('~/Workspace/frbl/tmlenet')
 #' @include WCC.NMBFGS.R
 #' @include CrossValidationRiskCalculator.R
 #'
-#' @section Methods:
-#' \describe{
-#'   \item{\code{new(SL.library.definition)}}{
+#' @section Methods: 
+#' \describe{  
+#'   \item{\code{initialize(SL.library.definition = c("ML.Local.lm", "ML.H2O.glm", summaryMeasureGenerator, verbose = FALSE)}}{ 
 #'     starts a new OnlineSuperLearner. The provided \code{SL.library.definition} contains the machine learning models to use
-#'   }
-#'
-#'   \item{\code{run(data, Y, A, W,  initial_data_size = 10)}}{
-#'     Runs the actual OnlineSuperLearning calculation
-#'   }
-#'   \item{\code{getModel()}}{
-#'     Returns the final OnlineSuperLearner estimator
-#'   }
-#'   \item{\code{predict(data, X)}}{
-#'     returns an actual prediction using the superlearning estimator
-#'   }
-#' }
+#'     @param SL.library.definition = a list of machine learning algorithms. This could be either a vector with 
+#'                                    with the name of each estimator or a list according to the libraryFactroy.
+#'                                    Look in the LibraryFactory class for the specification of this list.
+#'     @param summaryMeasureGenerator = an object of the type SummaryMeasureGenerator. This generator is used to
+#'                                      get new observations with the correct aggregated columns.
+#'     @param verbose = the verbosity (how much logging). Note that this might be propagated to other classes.
+#'   } 
+#' 
+#'   \item{\code{evaluateModels(data, randomVariables) }}{ 
+#'     Performs a basic evaluation on the data, given a list of random variables
+#'     @param data = the data to use for performing the evaluation
+#'     @param randomVariables = the randomVariables for which one wants to see the evaluation. Note that this needs
+#'                              to be equal to, or a subset of, the random variables used to train the estimators.
+#'   } 
+#' 
+#'   \item{\code{sample_iteratively(data, randomVariables, tau = 10, intervention = NULL}}{ 
+#'     Method to sample iteratively from the densities. It works by providing an initial observation (\code{data}), from which
+#'     iteretitatively the next measurement is estimated. This is done until \code{tau} steps in the future. Furthermore,
+#'     this sampling step can be augmented with an intervention. That is, we could set a given time step (or all)
+#'     to a certain value. The \code{intervention} provided should be a list containing a \code{when} and \code{what} entry.
+#'     the \code{when} entry should show when the intervention is performed, the \code{what} entry shows what should be done.
+#'     @param data = the initial data to start the sampling from. At most 1 row of data.
+#'     @param randomVariables = the randomvariables used when fitting the data
+#'     @param tau = the timestep at which you want to evaluate the output
+#'     @param intervention = the intervention, e.g.: \code{list(when = c(1,2), what = c(1,0))}
+#'   } 
+#' 
+#'   \item{\code{fit(data, randomVariables, initial_data_size = 5, max_iterations = 20, mini_batch_size = 20}}{ 
+#'     The actual method to fit the OnlineSuperLearner. This will fit the provided \code{SL.library.definition}
+#'     estimators as well as the OnlineSuperLearner and the DiscreteOnlineSuperLearner.
+#'     @param data = the data to fit the estimator on. Should be a \code{Data.Base} subclass.
+#'     @param randomVariables = the random variables to fit the densities / estmators for (W,A,Y)
+#'     @param initial_data_size = the size of the dataset to use for the initial fit (pre-update)
+#'     @param max_iterations = the number of iterations to run for updating the data
+#'     @param mini_batch_size = the size of the mini batch to use for each update.
+#'   } 
+#' 
+#'   \item{\code{predict(data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE}}{ 
+#'     Method to perform a prediction on the estimators. It can run in different configurations. It can be configured
+#'     to predict the outcome using all estimators (the \code{all_estimators} flag), using the discrete superlearner
+#'     (the \code{discrete} flag), or using the continuous online superlearner (the \code{continous} flag). At least
+#'     one of these three flags must be true.
+#'     @param data = the data to use for doing the predictions
+#'     @param randomVariables = the random variables used for doing the predictions (these should be the same as the 
+#'                              ones used for fitting).
+#'     @param all_estimators = whether or not to include the output of all candidate estimators in the output
+#'     @param discrete = whether or not to include the output of the discrete super learner in the output 
+#'     @param continuous = whether or not to include the output of the continuous super learner in the output 
+#'   } 
+#' }  
 #' @export
 OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
   private =
@@ -97,6 +135,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$cv_risk_count <- private$cv_risk_count + 1
         },
 
+        # Initializes the weighted combination calculators. One for each randomvariable.
         initialize_weighted_combination_calculators = function(randomVariables) {
           lapply(randomVariables, function(rv) {
             weights.initial <- rep(1 / length(private$SL.library.descriptions), length(private$SL.library.descriptions))
@@ -190,9 +229,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$update_risk(predicted.outcome = predicted.outcome,
                               observed.outcome = observed.outcome, 
                               randomVariables = randomVariables)
-
-          # Fit the super learner on the current data
-          #Ymat <- as.matrix(data_current[, Y, with = FALSE])
 
           # Update the discrete superlearner (take the first if there are multiple candidates)
           private$dosl.estimators <- private$find_current_best_estimator()
@@ -366,7 +402,11 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         sample_iteratively = function(data, randomVariables, tau = 10, intervention = NULL,
                                       discrete = TRUE) {
 
+
+          randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
           randomVariables <- RandomVariable.find_ordering(randomVariables)
+
+          intervention <- Arguments$getInstanceOf(intervention, 'list')
           valid_intervention <- is.numeric(intervention$when) &
            is.numeric(intervention$what) &
            is.character(intervention$variable) &
@@ -404,6 +444,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         # initial_data_size = the number of observations needed to fit the initial estimator
         fit = function(data, randomVariables, initial_data_size = 5, max_iterations = 20, mini_batch_size = 20) {
 
+          data <- Arguments$getInstanceOf(data, 'Data.Base')
           private$summaryMeasureGenerator$setData(data = data)
 
           # TODO: Move to check validity? Needs moving of the equations as well.
