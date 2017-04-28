@@ -149,7 +149,7 @@ Simulator.GAD <- R6Class("Simulator.GAD",
           # as a base for the stochasticMechanism. These observations are in
           # a later step used for creating the UA and UY observations.
           UW <- qw$stochMech(numberOfBlocksPrime)
-          UA <- ga$stoch(UW)
+          UA <- ga$stochMech(UW)
 
           configuration <- list(list(var = "W", mech = qw, U = UW),
                                 list(var = "A", mech = ga, U = UA))

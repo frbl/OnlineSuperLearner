@@ -45,7 +45,10 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
           diff <- setdiff(needed, available)
 
           # check if our set is empty, in that case we cover them all
-          length(diff) == 0
+          if (length(diff) != 0) { 
+            missing <- paste(diff, collapse = ', ', sep = ', ')
+            throw('Not all provided variables (', missing, ') are included in the SMGs, include the correct SMGs')
+          }
         },
 
         setData = function(data) {
