@@ -14,37 +14,48 @@
 #'   \item{\code{getModel()}}{Getter for the latest model.}
 #'}
 ML.Base <- R6Class("ML.Base",
-  private =
-    list(
-        ),
+  inherit = tmlenet::logisfitR6,
   public =
+    list(
+      fitfunname='glm',
+      lmclass='glmR6',
+      initialize = function() {
+        model <- list()
+      },
+
+      process = function(X_mat, Y_vals, X_mat_test, Y_vals_test) {
+        # DO NOT OVERRIDE THIS FUNCTION!
+        # This function delegates the call to its subclass
+        m.fit <- private$do.fit(X_mat = X_mat, Y_vals = Y_vals)
+
+        # Predict the outcome on the testset
+        private$do.predict(X_mat = X_mat_test, m.fit = m.fit$fit)
+      },
+
+      set_model = function(model) {
+        private$model <- model
+      }
+    ),
+  active = 
+    list(
+      get_model = function() {
+        return(private$model)
+      }
+      ),
+  private =
     list(
         model = NULL,
 
-        initialize = function() {
-          model <- list()
-        },
-
-        process = function(train, test, Y, A, W) {
-          # DO NOT OVERRIDE THIS FUNCTION!
-          # This function delegates the call to its subclass
-          self$fit(train, Y, A, W)
-
-          # Predict the outcome on the testset
-          self$predict(test, A, W)
-        },
-
-        fit = function(train, Y, A, W) {
+        do.fit = function(X_mat, Y_vals) {
           throw('The fit method needs to be inherited')
         },
 
-        predict = function(data, A, W) {
-          warning('You are using the base predict function, you\'d probably want to inherit and override this')
+        do.predict = function(X_mat, m.fit) {
+          warning("You are using the base predict function, you'd probably want to inherit and override this")
           if (is.null(self$model)) {
             throw('Train the model first')
           }
-          X <- c(A, W)
-          pred <- predict(self$model, as.matrix(data[, X, with = FALSE]))
+          pred <- predict(m.fit$fit, X_mat)
         }
     )
 )

@@ -49,6 +49,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
             missing <- paste(diff, collapse = ', ', sep = ', ')
             throw('Not all provided variables (', missing, ') are included in the SMGs, include the correct SMGs')
           }
+          TRUE
         },
 
         setData = function(data) {
