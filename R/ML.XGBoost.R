@@ -3,47 +3,105 @@
 #' @docType class
 #' @importFrom R6 R6Class
 #' @include ML.Base.R
+#' @section Methods: 
+#' \describe{  
+#'   \item{\code{initialize(booster = "gblinear", alpha = 0, lambda = 0, rounds = 200}}{ 
+#'     Initializes a new XGBoosted estimator. See the underlying xgboost packages for more details. This estimator
+#'     allows to tweak several hyperparameters (see params). By default XGBoost uses elasticnet for penalizing the
+#'     fitted model, the amount of penalization can be tweaked using the alpha (L1 regularization) and lambda (L2
+#'     regularization). See https://github.com/dmlc/xgboost/blob/master/doc/parameter.md 
+#'     @param booster = the booster to use for fitting the booster. Can be either of \code{gbtree},
+#'                      \code{gblinear} or \code{dart}.
+#'     @param eta = the stepsize used
+#'     @param alpha = L1 regularization parameter
+#'     @param lambda = L2 regularization parameter 
+#'     @param gamma = minimum loss reduction required to make a further partition on a leaf node of the tree.
+#'                    The larger, the more conservative the algorithm will be.
+#'     @param rounds = The number of rounds for boosting 
+#'   } 
+#'   \item{\code{get_validity}}{ 
+#'     Function that shows wheter the current configuration of the booster is valid
+#'   } 
+#' }  
 ML.XGBoost <- R6Class("ML.XGBoost",
   inherit = ML.Base,
-  private =
-    list(
-          ),
   public =
     list(
-          param = NULL,
-          rounds = NULL,
-          model.name = NULL,
-          verbosity = 0,
+      fitfunname='xgboost',
+      lmclass='xgboostR6',
+      initialize = function(booster = 'gblinear', alpha = 0, lambda = 0, rounds = 200, gamma = 0, eta = 0.3, verbose = FALSE) {
 
-          initialize = function(){
-          },
+        private$rounds <- Arguments$getInteger(rounds, c(1, Inf))
+        private$verbosity <- Arguments$getVerbose(verbose)
 
-          fit = function (train, Y, A, W) {
-            # If we have not yet fit a model, we are using the first n observations as the training set,
-            # and use the last observation as test set.  If we have fitted a model before, we use the set
-            # we previously used as a test set as the new training set to update the current model using
-            # this set.
-            X  <- c(A, W)
+        private$params <- list(objective = 'binary:logistic',
+                              booster = Arguments$getCharacter(booster),
+                              nthread = 8,
+                              alpha   = Arguments$getNumeric(alpha, c(0, 1)),
+                              gamma   = Arguments$getNumeric(gamma, c(0, Inf)),
+                              eta     = Arguments$getNumeric(eta, c(1e-10, Inf)),
+                              lambda  = Arguments$getNumeric(lambda, c(0, 1)))
 
-            # Set the test set we used now as the trainingset for the next iteration.
-            # This could probably be done more general, by giving it as input everytime (all ML models need this)
+        self$get_validity
+        super$initialize()
+      }
+    ),
+  active =
+    list(
+      get_validity = function() {
+        errors <- c()
+        allowed_boosters <- c('gbtree', 'gblinear', 'dart')
+        if(!(private$params$booster %in% allowed_boosters)) {
+          errors <- c(errors, paste('Booster',private$params$booster,'is not in list of allowed boosters:', paste(allowed_boosters, collapse=' ')))
+        }
+        if(length(errors) > 0) throw(errors)
+        TRUE
+      }
+    ),
+  private =
+    list(
+      params = NULL,
+      rounds = NULL,
+      verbosity = NULL,
 
-            # Create train and test matrices
-            dtrain <- xgb.DMatrix(data = as.matrix(train[, X, with = FALSE]),
-                                  label = train[, Y, with = FALSE][[Y]])
+      do.predict = function(X_mat, m.fit) {
+        # TODO: We are not using the passed in m.fit for now, as for some
+        # reason it does not always contain the correct attributes. 
+        predict(private$model, X_mat, missing = NA)
+      },
 
-            #dtest <- xgb.DMatrix(data = as.matrix(test[, X, with = FALSE]),
-            #label = test[, Y, with = FALSE][[Y]])
+      do.update = function() {
 
-            #watchlist <- list(eval = dtest, train = dtrain)
+      },
 
-            # Fit the model, giving the previously fitted model as a parameter
-            self$model <- xgb.train(data = dtrain,
-                                    params = self$param,
-                                    nrounds = self$rounds,
-                                    #watchlist = watchlist,
-                                    xgb_model = self$model,
-                                    verbose = self$verbosity)
-          }
+      do.fit = function (X_mat, Y_vals) {
+        # If we have not yet fit a model, we are using the first n observations as the training set,
+        # and use the last observation as test set.  If we have fitted a model before, we use the set
+        # we previously used as a test set as the new training set to update the current model using
+        # this set.
+        # Set the test set we used now as the trainingset for the next iteration.
+        # This could probably be done more general, by giving it as input everytime (all ML models need this)
+
+        # Create train and test matrices
+        dtrain <- xgb.DMatrix(data = X_mat,
+                              label = Y_vals)
+
+        #dtest <- xgb.DMatrix(data = as.matrix(test[, X, with = FALSE]),
+        #label = test[, Y, with = FALSE][[Y]])
+
+        #watchlist <- list(eval = dtest, train = dtrain)
+
+        # Fit the model, giving the previously fitted model as a parameter
+        private$model <- xgb.train(data    = dtrain,
+                                params     = private$params,
+                                nrounds    = private$rounds,
+                                #watchlist = watchlist,
+                                #xgb_model  = private$model,
+                                verbose    = private$verbosity)
+
+        if(is.null(private$model)) browser()
+        private$model
+    }
     )
 )
+

@@ -173,7 +173,8 @@ test_that("it should check if enough data is available for all formulae", {
   mySmgs <- c(SMG.Mock$new(variables=variables, exposedVariables=exposed_variables1),
               SMG.Mock$new(variables=variables, exposedVariables=exposed_variables2))
   subject <- described.class$new(SMG.list = mySmgs)
-  expect_false(subject$checkEnoughDataAvailable(c(f1,f2,f3)))
+  expected_msg <-'Not all provided variables (x, z) are included in the SMGs, include the correct SMGs'
+  expect_error(subject$checkEnoughDataAvailable(c(f1,f2,f3)), expected_msg, fixed = TRUE)
   expect_true(subject$checkEnoughDataAvailable(c(f1,f2)))
 })
 
