@@ -198,10 +198,10 @@ test_that("it should set the correct names", {
     initialization.random=c(FALSE, TRUE))
 
 
-  algorithm2 <- 'ML.XGBoost.glm'
+  algorithm2 <- 'ML.XGBoost'
   nbins2 <- c(1,2,3,100)
   algorithm_params2 <- list(
-    lambda = c(1,2,3), 
+    lambda = c(0.1,0.2,0.3), 
     alpha = c(0.5,0.6))
   
   SL.library <- list(list(params = list(nbins = nbins1),

@@ -11,4 +11,27 @@ ML.XGBoost
 \description{
 Base class for any XGBoost machine learning model.
 }
+\section{Methods}{
+ 
+\describe{  
+  \item{\code{initialize(booster = "gblinear", alpha = 0, lambda = 0, rounds = 200}}{ 
+    Initializes a new XGBoosted estimator. See the underlying xgboost packages for more details. This estimator
+    allows to tweak several hyperparameters (see params). By default XGBoost uses elasticnet for penalizing the
+    fitted model, the amount of penalization can be tweaked using the alpha (L1 regularization) and lambda (L2
+    regularization). See https://github.com/dmlc/xgboost/blob/master/doc/parameter.md 
+    @param booster = the booster to use for fitting the booster. Can be either of \code{gbtree},
+                     \code{gblinear} or \code{dart}.
+    @param eta = the stepsize used
+    @param alpha = L1 regularization parameter
+    @param lambda = L2 regularization parameter 
+    @param gamma = minimum loss reduction required to make a further partition on a leaf node of the tree.
+                   The larger, the more conservative the algorithm will be.
+    @param rounds = The number of rounds for boosting 
+  } 
+  \item{\code{get_validity}}{ 
+    Function that shows wheter the current configuration of the booster is valid
+  } 
+}
+}
+
 \keyword{datasets}

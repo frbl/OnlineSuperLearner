@@ -4,7 +4,7 @@
 #' @importFrom R6 R6Class
 #' @import data.table
 #' @import purrr
-#' @include ML.XGBoost.glm.R
+#' @include ML.XGBoost.R
 #' @include ML.Local.lm.R
 #' @section Methods:
 #' \describe{
@@ -145,7 +145,7 @@ LibraryFactory <- R6Class("LibraryFactory",
                                                     'ML.H2O.glm',
                                                     'ML.H2O.randomForest',
                                                     'ML.Local.lm',
-                                                    'ML.XGBoost.glm'), verbose = FALSE) {
+                                                    'ML.XGBoost'), verbose = FALSE) {
           private$ML.models.allowed = ML.models.allowed
           private$verbose <- verbose
           self$get_validity

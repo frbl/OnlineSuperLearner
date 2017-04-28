@@ -15,10 +15,10 @@ ML.Local.lm <- R6Class("ML.Local.lm",
   active =
     list(
         score = function() {
-          if(is.null(self$model)) {
+          if(is.null(self$get_model)) {
             throw('Fit a model first!')
           }
-          summary(self$model)
+          summary(self$get_model)
         },
 
         getValidity = function() {
@@ -45,10 +45,10 @@ ML.Local.lm <- R6Class("ML.Local.lm",
           Xmat <- as.matrix(cbind(rep(1, nrow(data)), Xmat))
 
           if(private$family %in% c('binomial')) {
-            return(expit(Xmat %*% self$model))
+            return(expit(Xmat %*% self$get_model))
           }
           if(private$family %in% c('gaussian')) {
-            return(Xmat %*% self$model)
+            return(Xmat %*% self$get_model)
           }
           throw('Family not found')
         },
@@ -57,12 +57,12 @@ ML.Local.lm <- R6Class("ML.Local.lm",
           formula <- as.formula(self$createFormula(Y = Y, A = A, W = W))
           # If there is no model, we need to fit a model based on Nl observations.
           # If we already have a model, we update the old one, given the new measurement
-          if(is.null(self$model)){
+          if(is.null(self$get_model)){
 
             # Instead of using a GLM for initialization, we can also do a random initialization
             if(private$initialization.random) {
               Xmat <- model.matrix(formula, train)
-              self$model <- runif(ncol(Xmat))
+              self$set_model(runif(ncol(Xmat)))
             } else {
               model.fitted <- glm(formula, data=train, family=private$family)$coefficients
 
@@ -70,7 +70,7 @@ ML.Local.lm <- R6Class("ML.Local.lm",
               nas <- is.na(model.fitted)
               if(length(nas) > 0) { model.fitted[nas] <- runif(length(nas) - 1) }
 
-              self$model <- model.fitted
+              self$set_model(model.fitted)
             }
 
           } else {
@@ -83,7 +83,7 @@ ML.Local.lm <- R6Class("ML.Local.lm",
             # Note that this could throw warnings if the model has not converged yet
             suppressWarnings(prediction <- self$predict(train, A, W))
             gradient <- (t(Xmat) %*% (prediction - Ymat))
-            self$model <- self$model - private$learning.rate * gradient
+            self$set_model(self$get_model - private$learning.rate * gradient)
           }
         }
     )
