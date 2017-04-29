@@ -25,6 +25,10 @@ test_that("it should be tested properly", {
 
   sim <- described.class$new()
 
+  ## -----------------
+  ## W one-dimensional
+  ## -----------------
+  
   ## One trajectory
   tic <- Sys.time()
   nobs <- 1e2
@@ -77,5 +81,41 @@ test_that("it should be tested properly", {
   ## 'psi.approx' approximates the parameter of interest
   toc <- Sys.time()
   comp.time <- c(comp.time, toc-tic)
+
+  ## -------------------
+  ## W two-dimensional
+  ## -------------------
+  ##
+  ## only (W_1(t) : t)  from ((W_1(t), W_2(t) : t) is  'relevant', ie, plays a
+  ## role in the random generation of (A(t) : t) and (Y(t) : t)
+
+  ## One trajectory
+  tic <- Sys.time()
+  nobs <- 1e2
+  llW <- list(list(stochMech = rnorm,
+                   param = c(0, 0.5, -0.25, 0.1),
+                   rgen = identity),
+              list(stochMech = runif,
+                   param = c(0, 0.5),
+                   rgen = identity))
   
+  llA <- list (stochMech = function(ww) {
+    rbinom(length(ww), 1, expit(ww))
+  }, 
+  param = c(-0.1, 0.1, 0.25),
+  rgen = function(xx, delta = 0.05){
+    rbinom(length(xx), 1, delta+(1-2*delta)*expit(xx))
+  })
+
+  llY <- list(rgen = {function(AW){
+    aa <- AW[, "A"]
+    ww <- AW[, grep("[^A]", colnames(AW))]
+    mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
+      (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
+    rnorm(length(mu), mu, sd = 1)}})
+  ##
+  data.1.2d <- sim$simulateWAY(nobs, qw = llW, ga = llA, Qy = llY, verbose = log)
+  toc <- Sys.time()
+  comp.time <- c(comp.time, toc-tic)
+    
 })
