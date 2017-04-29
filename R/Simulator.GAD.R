@@ -92,27 +92,48 @@ Simulator.GAD <- R6Class("Simulator.GAD",
           return(ll)
         },
 
-        #TODO: Change the parameters qw ga en Qy to an object
+      ##TODO: Change the parameters qw ga en Qy to an object
+      ## Antoine:
+      ##
+      ## Now, argument  'qw' can  be a list  of what used  to be  the argument
+      ## 'qw'. The entries  of the list are  each used in the  same fashion to
+      ## create  a sequence  (W(t) :  t) of  (every W(t)  is one-dimensional).
+      ## Only the first sequence plays a  role in the random generation of the
+      ## sequences  (A(t)  :  t)  and  (Y(t) :  t).   This  sequence  and  the
+      ## corresponding mechanism are said 'relevant'.
+      
         simulateWAYOneTrajectory = function(numberOfBlocks = 1,
-                                            qw = list(stochMech = rnorm,
-                                                    param = rep(1, 2),
-                                                    rgen = identity),
+                                            qw = list(
+                                              ## this  describes the  'relevant' mechanism
+                                              list(stochMech = rnorm,
+                                                   param = rep(1, 2),
+                                                   rgen = identity),
+                                              list(
+                                                stochMech = rnorm,
+                                                param = rep(1, 2),
+                                                rgen = identity)),
                                             ga = list(stochMech ={ function(ww){rbinom(length(ww), 1, expit(ww))}},
-                                                    param = rep(1, 2),
-                                                    rgen ={ function(xx, delta = 0.05){rbinom(length(xx), 1, delta+(1-2*delta)*expit(xx))}}),
+                                                      param = rep(1, 2),
+                                                      rgen ={ function(xx, delta = 0.05){rbinom(length(xx), 1, delta+(1-2*delta)*expit(xx))}}),
                                             Qy = list(rgen ={ function(AW){
-                                                      aa <- AW[, "A"]
-                                                      ww <- AW[, grep("[^A]", colnames(AW))]
-                                                      mu <- aa*(0.4-0.2*sin(ww[,1])+0.05*ww[,1]) +
-                                                        (1-aa)*(0.2+0.1*cos(ww[,1])-0.03*ww[,1])
-                                                      rnorm(length(mu), mu, sd = 1)}}),
+                                              aa <- AW[, "A"]
+                                              ww <- AW[, grep("[^A]", colnames(AW))]
+                                              mu <- aa*(0.4-0.2*sin(ww[,1])+0.05*ww[,1]) +
+                                                (1-aa)*(0.2+0.1*cos(ww[,1])-0.03*ww[,1])
+                                              rnorm(length(mu), mu, sd = 1)}}),
                                             intervention = NULL,
                                             verbose = FALSE,
                                             msg = NULL) {
-
+          
           ## retrieving arguments
           numberOfBlocks <- Arguments$getInteger(numberOfBlocks, c(1, Inf))
-          qw <- private$validateMechanism(qw, what = "qw")
+          if (!is.null(names(qw)) && names(qw)[1] == "stochMech") {
+            ## only a 'relevant' mechanism
+            qw <- list(private$validateMechanism(qw, what = "qw"))
+          } else {
+            ## a 'relevant' mechanism and at least an 'irrelevant' mechanism
+            qw <- lapply(qw, private$validateMechanism, what = "qw")
+          }
           ga <- private$validateMechanism(ga, what = "ga")
           Qy <- private$validateMechanism(Qy, what = "Qy")
 
@@ -127,10 +148,10 @@ Simulator.GAD <- R6Class("Simulator.GAD",
             what <- Arguments$getCharacter(msg)
           }
 
-          # Each observation has n memories, which are provided in the list params.
-          # The length of the list is therefore the number of memories, the value
-          # the actual 'influence' of the memory at that moment of time in history.
-          memories <- c(W = length(qw$param)-1,
+          ## Each observation has n memories, which are provided in the list params.
+          ## The length of the list is therefore the number of memories, the value
+          ## the actual 'influence' of the memory at that moment of time in history.
+          memories <- c(W = length(qw[[1]]$param)-1,
                         A = length(ga$param)-1,
                         Y = length(Qy$param)-1)
 
@@ -145,17 +166,21 @@ Simulator.GAD <- R6Class("Simulator.GAD",
           numberOfBlocksPrime <- numberOfBlocks+max(memories)
 
           ## backbone
-          # Create #by (actually unmeasured) confounder observations to serve
-          # as a base for the stochasticMechanism. These observations are in
-          # a later step used for creating the UA and UY observations.
-          UW <- qw$stochMech(numberOfBlocksPrime)
+          ## Create #by (actually unmeasured) confounder observations to serve
+          ## as a base for the stochasticMechanism. These observations are in
+          ## a later step used for creating the UA and UY observations.
+
+          ## only the 'relevant'  sequence is considered here;  if needed, the
+          ## 'irrelevant' sequences will be generated later
+          
+          UW <- (qw[[1]])$stochMech(numberOfBlocksPrime)
           UA <- ga$stoch(UW)
 
-          configuration <- list(list(var = "W", mech = qw, U = UW),
+          configuration <- list(list(var = "W", mech = qw[[1]], U = UW),
                                 list(var = "A", mech = ga, U = UA))
 
           WA <- lapply(configuration, function(entry) {
-            # TODO: Describe why we take the max here, instead of just the memory of the current variable.
+            ## TODO: Describe why we take the max here, instead of just the memory of the current variable.
             idx <- (max(memories)+1):length(entry$U)
             tempMAT <- entry$U[idx]
             if (memories[entry$var] >= 1) {
@@ -165,8 +190,8 @@ Simulator.GAD <- R6Class("Simulator.GAD",
               }
             }
 
-            # Create linear combination of the parameters / coefficients and the historical data
-            # This fix allows us to deal with memory of 1 (R converts the matrix to a vector)
+            ## Create linear combination of the parameters / coefficients and the historical data
+            ## This fix allows us to deal with memory of 1 (R converts the matrix to a vector)
             if (!is.matrix(tempMAT)) tempMAT <- as.matrix(tempMAT)
 
             outcome <- entry$mech$rgen(tempMAT %*% entry$mech$param)
@@ -203,51 +228,96 @@ Simulator.GAD <- R6Class("Simulator.GAD",
           Y <- Qy$rgen(WA.mat)
           WAY.mat <- cbind(WA.mat, Y = Y)
 
+          browser()
+          
+          if (length(qw) > 1) {
+            ## 'irrelevant' sequences
+            for (cov in 2:length(qw)) {
+              UW <- qw[[cov]]$stochMech(numberOfBlocksPrime)
+
+              configuration <- list(list(var = paste("W", cov, sep=""), mech = qw[[cov]], U = UW))
+              irrelevantW <- lapply(configuration, function(entry) {
+                ## see above
+                idx <- (max(memories)+1):length(entry$U)
+                tempMAT <- entry$U[idx]
+                thisMemory <- length(qw[[cov]]$param)-1
+                ## if (memories[entry$var] >= 1) {
+                if (thisMemory >= 1) {                
+                  for (ii in 1:thisMemory) {
+                    idx <- idx-1
+                    tempMAT <- cbind(tempMAT, entry$U[idx])
+                  }
+                }
+                
+                if (!is.matrix(tempMAT)) tempMAT <- as.matrix(tempMAT)
+                outcome <- entry$mech$rgen(tempMAT %*% entry$mech$param)
+                if (is.vector(outcome)) {
+                  outcome <- matrix(outcome, ncol = 1)
+                }
+                ## naming
+                if (ncol(outcome) == 1) {
+                  col.names <- entry$var
+                } else if (ncol(outcome) >= 2) {## this should not happen, yet
+                  col.names <- paste(entry$var, seq(ncol(outcome)), sep = "")
+                } else {## nor this, ever
+                  throw("Matrix 'outcome' should have at least one column...")
+                }
+                attr(outcome, "col.names") <- col.names
+                return(outcome)
+              })
+              
+              irrelevantW.mat <- matrix(unlist(irrelevantW), nrow = numberOfBlocks, byrow = FALSE)
+              colnames(irrelevantW.mat) <- sapply(irrelevantW, function(ll){attr(ll, "col.names")})
+
+              WAY.mat <- cbind(irrelevantW.mat, WAY.mat)
+            }
+          }
+          
           return(as.data.table(WAY.mat))
         }
-        ),
+    ),
   public =
     list(
-        initialize = function() {
-        },
+      initialize = function() {
+      },
 
-        simulateWAY = function(numberOfBlocks = 1,
-                               numberOfTrajectories = 1,
-                               qw = list(stochMech = rnorm,
+      simulateWAY = function(numberOfBlocks = 1,
+                             numberOfTrajectories = 1,
+                             qw = list(stochMech = rnorm,
                                        param = rep(1, 2),
                                        rgen = identity),
-                               ga = list(stochMech = {function(ww){rbinom(length(ww), 1, expit(ww))}},
+                             ga = list(stochMech = {function(ww){rbinom(length(ww), 1, expit(ww))}},
                                        param = rep(1, 2),
                                        rgen = {function(xx, delta = 0.05){rbinom(length(xx), 1, delta+(1-2*delta)*expit(xx))}}),
-                               Qy = list(rgen = {function(AW){
-                                         aa <- AW[, "A"]
-                                         ww <- AW[, grep("[^A]", colnames(AW))]
-                                         mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
-                                           (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
-                                         rnorm(length(mu), mu, sd = 1)}}),
-                               intervention = NULL,
-                               verbose = FALSE) {
-          ## retrieving arguments
-          numberOfTrajectories <- Arguments$getInteger(numberOfTrajectories, c(1, Inf))
-          if (numberOfTrajectories == 1) {
-            return(private$simulateWAYOneTrajectory(numberOfBlocks = numberOfBlocks,
-                                          qw = qw, ga = ga, Qy = Qy,
-                                          intervention = intervention,
-                                          verbose = verbose))
-          }
-
-          what <- paste(numberOfTrajectories, "trajectories")
-          WAYs <- lapply(rep(numberOfBlocks, numberOfTrajectories),
-                          private$simulateWAYOneTrajectory,
-                          qw = qw, ga = ga, Qy = Qy, intervention = intervention, verbose = verbose, msg = what)
-
-          col.names <- colnames(WAYs[[1]])
-          WAYs <- Reduce(rbind, WAYs)
-          WAYs <- matrix(unlist(WAYs), ncol = length(col.names)*numberOfTrajectories)
-          colnames(WAYs) <- paste(rep(col.names, each = numberOfTrajectories),
-                                  1:numberOfTrajectories, sep = ".")
-
-          return(WAYs)
+                             Qy = list(rgen = {function(AW){
+                               aa <- AW[, "A"]
+                               ww <- AW[, grep("[^A]", colnames(AW))]
+                               mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
+                                 (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
+                               rnorm(length(mu), mu, sd = 1)}}),
+                             intervention = NULL,
+                             verbose = FALSE) {
+        ## retrieving arguments
+        numberOfTrajectories <- Arguments$getInteger(numberOfTrajectories, c(1, Inf))
+        if (numberOfTrajectories == 1) {
+          return(private$simulateWAYOneTrajectory(numberOfBlocks = numberOfBlocks,
+                                                  qw = qw, ga = ga, Qy = Qy,
+                                                  intervention = intervention,
+                                                  verbose = verbose))
         }
+
+        what <- paste(numberOfTrajectories, "trajectories")
+        WAYs <- lapply(rep(numberOfBlocks, numberOfTrajectories),
+                       private$simulateWAYOneTrajectory,
+                       qw = qw, ga = ga, Qy = Qy, intervention = intervention, verbose = verbose, msg = what)
+
+        col.names <- colnames(WAYs[[1]])
+        WAYs <- Reduce(rbind, WAYs)
+        WAYs <- matrix(unlist(WAYs), ncol = length(col.names)*numberOfTrajectories)
+        colnames(WAYs) <- paste(rep(col.names, each = numberOfTrajectories),
+                                1:numberOfTrajectories, sep = ".")
+
+        return(WAYs)
+      }
     )
-)
+  )
