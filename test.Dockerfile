@@ -13,5 +13,6 @@ ADD ./ /OnlineSuperLearner
 RUN R --no-save --quiet -e 'devtools::document()'
 RUN R CMD INSTALL --no-multiarch --with-keep.source /OnlineSuperLearner
 RUN R CMD build /OnlineSuperLearner
-
+RUN R CMD check /OnlineSuperLearner/`ls *.gz | tail -1` --no-manual --no-build-vignettes
+RUN Rscript -e 'covr::codecov()'
 CMD R CMD check /OnlineSuperLearner/`ls *.gz | tail -1` --no-manual --no-build-vignettes
