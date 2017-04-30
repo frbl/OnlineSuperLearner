@@ -16,7 +16,7 @@ dependencies:
 
 test:
   override:
-    - docker run roqua/onlinesuperlearner-test
+    - docker run frbl/onlinesuperlearner-test
 
 #machine:
   #environment:
