@@ -11,12 +11,12 @@ dependencies:
     - "~/docker"
   override:
     - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
-    - docker build -t frbl/OnlineSuperLearner-test -f test.Dockerfile .
-    - mkdir -p ~/docker; docker save frbl/OnlineSuperLearner-test > ~/docker/image.tar
+    - docker build -t frbl/onlinesuperlearner-test -f test.Dockerfile .
+    - mkdir -p ~/docker; docker save frbl/onlinesuperlearner-test > ~/docker/image.tar
 
 test:
   override:
-    - docker run roqua/OnlineSuperLearner-test
+    - docker run roqua/onlinesuperlearner-test
 
 #machine:
   #environment:
