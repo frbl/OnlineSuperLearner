@@ -92,6 +92,41 @@ Simulator.GAD <- R6Class("Simulator.GAD",
           return(ll)
         },
 
+        calclate_configuration = function(configuration, memory_max, numberOfBlocks) {
+          outcomes <- lapply(configuration, function(entry) {
+            # TODO: Describe why we take the max here, instead of just the memory of the current variable.
+            # TODO: Deine memory_max variable
+            idx <- memory_max:length(entry$U)
+            tempMAT <- entry$U[idx]
+            if (entry$memory >= 1) {                
+              for (ii in 1:entry$memory) {
+                idx <- idx-1
+                tempMAT <- cbind(tempMAT, entry$U[idx])
+              }
+            }
+            if (!is.matrix(tempMAT)) tempMAT <- as.matrix(tempMAT)
+            outcome <- entry$mech$rgen(tempMAT %*% entry$mech$param)
+
+            if (is.vector(outcome)) {
+              outcome <- matrix(outcome, ncol = 1)
+            }
+            # naming
+            if (ncol(outcome) == 1) {
+              col.names <- entry$var
+            } else if (ncol(outcome) >= 2) {# this should not happen, yet
+              col.names <- paste(entry$var, seq(ncol(outcome)), sep = "")
+            } else {# nor this, ever
+              throw("Matrix 'outcome' should have at least one column...")
+            }
+            attr(outcome, "col.names") <- col.names
+            return(outcome)
+          }) %>% 
+            unlist %>%
+            matrix(unlist(.), nrow = numberOfBlocks, byrow = FALSE)
+          colnames(outcomes) <- sapply(outcomes, function(ll){attr(ll, "col.names")})
+          outcomes
+        },
+
       #TODO: Change the parameters qw ga en Qy to an object
       # Antoine:
       #
@@ -101,7 +136,6 @@ Simulator.GAD <- R6Class("Simulator.GAD",
       # Only the first sequence plays a  role in the random generation of the
       # sequences  (A(t)  :  t)  and  (Y(t) :  t).   This  sequence  and  the
       # corresponding mechanism are said 'relevant'.
-      
         simulateWAYOneTrajectory = function(numberOfBlocks = 1,
                                             qw = list(
                                               # this  describes the  'relevant' mechanism
@@ -173,42 +207,12 @@ Simulator.GAD <- R6Class("Simulator.GAD",
           UW <- (qw[[1]])$stochMech(numberOfBlocksPrime)
           UA <- ga$stoch(UW)
 
-          configuration <- list(list(var = "W", mech = qw[[1]], U = UW),
-                                list(var = "A", mech = ga, U = UA))
+          configuration <- list(list(var = "W", mech = qw[[1]], U = UW, memory = memories['W']),
+                                list(var = "A", mech = ga, U = UA, memory = memories["A"]))
 
-          WA <- lapply(configuration, function(entry) {
-            # TODO: Describe why we take the max here, instead of just the memory of the current variable.
-            idx <- (max(memories)+1):length(entry$U)
-            tempMAT <- entry$U[idx]
-            if (memories[entry$var] >= 1) {
-              for (ii in 1:memories[entry$var]) {
-                idx <- idx-1
-                tempMAT <- cbind(tempMAT, entry$U[idx])
-              }
-            }
-
-            # Create linear combination of the parameters / coefficients and the historical data
-            # This fix allows us to deal with memory of 1 (R converts the matrix to a vector)
-            if (!is.matrix(tempMAT)) tempMAT <- as.matrix(tempMAT)
-
-            outcome <- entry$mech$rgen(tempMAT %*% entry$mech$param)
-            if (is.vector(outcome)) {
-              outcome <- matrix(outcome, ncol = 1)
-            }
-            # naming
-            if (ncol(outcome) == 1) {
-              col.names <- entry$var
-            } else if (ncol(outcome) >= 2) {# this should not happen, yet
-              col.names <- paste(entry$var, seq(ncol(outcome)), sep = "")
-            } else {# nor this, ever
-              throw("Matrix 'outcome' should have at least one column...")
-            }
-            attr(outcome, "col.names") <- col.names
-            return(outcome)
-          })
-
-          WA.mat <- matrix(unlist(WA), nrow = numberOfBlocks, byrow = FALSE)
-          colnames(WA.mat) <- sapply(WA, function(ll){attr(ll, "col.names")})
+          WA.mat <- private$calclate_configuration(configuration  = configuration,
+                                                   memory_max = max(memories)+1,
+                                                   numberOfBlocks = numberOfBlocks)
 
           if (!is.null(intervention)) {
             # column 'A' is the last one, but nevertheless:
@@ -225,49 +229,21 @@ Simulator.GAD <- R6Class("Simulator.GAD",
           Y <- Qy$rgen(WA.mat)
           WAY.mat <- cbind(WA.mat, Y = Y)
 
+          # TODO: We can probbly merge this whole calculation with the previous one. In that case we just define
+          # one big 'configuration' object, and run that through the data generator (instead of two small configs).
           if (length(qw) > 1) {
             # 'irrelevant' sequences
             for (cov in 2:length(qw)) {
               UW <- qw[[cov]]$stochMech(numberOfBlocksPrime)
+              configuration <- list(list(var = paste("W", cov, sep=""), mech = qw[[cov]],
+                                         U = UW, memory = length(qw[[cov]]$param)-1))
 
-              configuration <- list(list(var = paste("W", cov, sep=""), mech = qw[[cov]], U = UW))
-              irrelevantW <- lapply(configuration, function(entry) {
-                # see above
-                idx <- (max(memories)+1):length(entry$U)
-                tempMAT <- entry$U[idx]
-                thisMemory <- length(qw[[cov]]$param)-1
-                # if (memories[entry$var] >= 1) {
-                if (thisMemory >= 1) {                
-                  for (ii in 1:thisMemory) {
-                    idx <- idx-1
-                    tempMAT <- cbind(tempMAT, entry$U[idx])
-                  }
-                }
-                
-                if (!is.matrix(tempMAT)) tempMAT <- as.matrix(tempMAT)
-                outcome <- entry$mech$rgen(tempMAT %*% entry$mech$param)
-                if (is.vector(outcome)) {
-                  outcome <- matrix(outcome, ncol = 1)
-                }
-                # naming
-                if (ncol(outcome) == 1) {
-                  col.names <- entry$var
-                } else if (ncol(outcome) >= 2) {# this should not happen, yet
-                  col.names <- paste(entry$var, seq(ncol(outcome)), sep = "")
-                } else {# nor this, ever
-                  throw("Matrix 'outcome' should have at least one column...")
-                }
-                attr(outcome, "col.names") <- col.names
-                return(outcome)
-              })
-              
-              irrelevantW.mat <- matrix(unlist(irrelevantW), nrow = numberOfBlocks, byrow = FALSE)
-              colnames(irrelevantW.mat) <- sapply(irrelevantW, function(ll){attr(ll, "col.names")})
-
+              irrelevantW.mat <- private$calclate_configuration(configuration  = configuration,
+                                                                memory_max = max(memories)+1,
+                                                                numberOfBlocks = numberOfBlocks)
               WAY.mat <- cbind(irrelevantW.mat, WAY.mat)
             }
           }
-          
           return(as.data.table(WAY.mat))
         }
     ),
