@@ -2,7 +2,7 @@ FROM roqua/opencpu-base
 
 WORKDIR /OnlineSuperLearner
 
-RUN apt-get update && apt-get -f install -y openssl libcurl4-openssl-dev curl libxml2-dev libssl-dev libcairo-dev
+RUN apt-get update && apt-get -f install -y openssl libcurl4-openssl-dev curl libxml2-dev libssl-dev libcairo-dev libnlopt0
 
 ADD ./inst/bash/install-package-dependencies.sh /OnlineSuperLearner/inst/bash/install-package-dependencies.sh
 
