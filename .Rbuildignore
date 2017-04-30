@@ -3,6 +3,7 @@
 \.gitignore
 Makefile
 ^circleci\.yml$
+\.RData
 #----------------------------
 # Git and SVN related
 #----------------------------
