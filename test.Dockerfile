@@ -1,4 +1,4 @@
-FROM roqua/opencpu-base
+FROM r-base
 
 WORKDIR /OnlineSuperLearner
 
