@@ -22,8 +22,7 @@ dependencies:
     #- gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
     #- gpg -a --export E084DAB9 | sudo apt-key add -
     #- sudo apt-get update
-    #- sudo apt-get -y install r-base libnlopt0
-    - sudo apt-get -y install libnlopt0
+    - sudo apt-get -y install r-base libnlopt0
     # Install the R dependencies
     - mkdir -p ~/lib/R/library
     - ./inst/bash/install-package-dependencies.sh
