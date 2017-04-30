@@ -16,7 +16,7 @@ dependencies:
 
 test:
   override:
-    - echo 'test' #docker run frbl/onlinesuperlearner-test
+    - docker run frbl/onlinesuperlearner-test
 
 #machine:
   #environment:
