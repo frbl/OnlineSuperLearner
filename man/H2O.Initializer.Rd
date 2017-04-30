@@ -9,6 +9,15 @@ Idealy I'd like to use a singletonpattern for this, but this also works.}
 H2O.Initializer(host = "localhost", port = 54321, runlocal = TRUE,
   verbose = FALSE)
 }
+\arguments{
+\item{host}{the host on which H2O is or should be running}
+
+\item{port}{the port for that host}
+
+\item{runlocal}{boolean whether or not we should start an H2O cluster}
+
+\item{verbose}{the verbosity to run with}
+}
 \description{
 H2O.Initializer
 Idealy I'd like to use a singletonpattern for this, but this also works.

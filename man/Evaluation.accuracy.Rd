@@ -6,6 +6,11 @@
 \usage{
 Evaluation.accuracy(data.observed, data.predicted)
 }
+\arguments{
+\item{data.observed}{the true data (Y)}
+
+\item{data.predicted}{the Y outcome from the estimator}
+}
 \description{
 Accuracy caluclator
 }

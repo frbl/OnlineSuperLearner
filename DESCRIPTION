@@ -9,7 +9,7 @@ Author: Frank Blaauw [aut, cre]
     Antoine Chambaz [aut, cre]
 Maintainer: Frank Blaauw <f.j.blaauw@rug.nl>
 Description: Package that enabling online super learning
-License: MIT
+License: MIT + file LICENSE
 LazyLoad: yes
 LazyData: yes
 Depends:
@@ -30,8 +30,7 @@ Imports:
     nloptr,
     optimr,
     sgd,
-    nnls,
-    Metrics
+    nnls
 Suggests:
     roxygen2,
     testthat

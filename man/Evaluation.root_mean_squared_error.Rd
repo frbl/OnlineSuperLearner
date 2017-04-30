@@ -6,6 +6,11 @@
 \usage{
 Evaluation.root_mean_squared_error(data.observed, data.predicted)
 }
+\arguments{
+\item{data.observed}{the true data (Y)}
+
+\item{data.predicted}{the Y outcome from the estimator}
+}
 \description{
 RMSE caluclator
 }

@@ -2,6 +2,7 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
+#' @importFrom R.utils throw
 #' @export
 RandomVariable <- R6Class("RandomVariable",
   private =

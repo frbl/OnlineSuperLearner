@@ -11,7 +11,6 @@ packages <- c(
 "R.oo",
 "testthat",
 "simcausal",
-"Metrics",
 "xgboost",
 "nnls",
 "sgd",
