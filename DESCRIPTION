@@ -8,7 +8,10 @@ Authors@R: c(person("Frank", "Blaauw", role=c("aut", "cre"), email="f.j.blaauw@r
 Author: Frank Blaauw [aut, cre]
     Antoine Chambaz [aut, cre]
 Maintainer: Frank Blaauw <f.j.blaauw@rug.nl>
-Description: Package that enabling online super learning
+Description: Package that enabling online super learning. This package runs a set of estimators
+    and tries to find the conditional densities of randomvariables provided to it. Then,
+    using a set of machine learning algorithms, it will find the best convex combination of
+    algorithms to predict these conditional densities.
 License: MIT + file LICENSE
 LazyLoad: yes
 LazyData: yes
@@ -21,6 +24,7 @@ Imports:
     R.utils (>= 1.4.1),
     h2o (>=	3.10.3.2),
     R.oo,
+    R.methodsS3,
     tmlenet,
     simcausal, 
     methods,
@@ -73,4 +77,5 @@ Collate:
     'WCC.NLopt.R'
     'WCC.NNLS.R'
     'WCC.SGD.R'
-Remotes: frbl/tmlenet
+Remotes: 
+    frbl/tmlenet

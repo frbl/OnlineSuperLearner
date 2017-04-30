@@ -16,10 +16,4 @@ param -> marap
 fun -> nuf
 etc
 }
-\section{Methods}{
-
-\describe{
-}
-}
-
 \keyword{datasets}

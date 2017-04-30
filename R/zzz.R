@@ -2,7 +2,8 @@
 #' @import methods
 #' @import R.oo
 #' @import R.utils
-#' @importFrom R.utils Arguments throw
+#' @importFrom R.utils Arguments
+#' @importFrom R.methodsS3 throw
 #' @import magrittr
 #' @import parallel
 generalImports <- list()
