@@ -3,7 +3,6 @@ machine:
     R_LIBS_USER: ~/lib/R/library
     _R_CHECK_FORCE_SUGGESTS_: FALSE
     _R_CHECK_ASCII_DATA_: FALSE
-    PACKAGE_NAME: OnlineSuperLearner
   services:
     - docker
 
@@ -12,12 +11,12 @@ dependencies:
     - "~/docker"
   override:
     - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
-    - docker build -t frbl/$PACKAGE_NAME-test -f test.Dockerfile .
-    - mkdir -p ~/docker; docker save frbl/$PACKAGE_NAME-test > ~/docker/image.tar
+    - docker build -t frbl/OnlineSuperLearner-test -f test.Dockerfile .
+    - mkdir -p ~/docker; docker save frbl/OnlineSuperLearner-test > ~/docker/image.tar
 
 test:
   override:
-    - docker run roqua/$PACKAGE_NAME-test
+    - docker run roqua/OnlineSuperLearner-test
 
 #machine:
   #environment:
