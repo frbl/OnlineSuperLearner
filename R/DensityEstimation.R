@@ -79,16 +79,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
           estimated_probabilities <- conditionalDensity$predictAeqa(newdata = nodeObjects$datNetObs)
 
           if (plot) {
-            # plot densitity first:
-            vals <- unique(yValues)
-            if(length(vals) == 2 ) {
-              # If the outcome is binary, we can see how well it managed to predict the whole distribution
-              # This error term should be small (~ 0.001)
-              abs(mean(estimated_probabilities[yValues == vals[1] ]) - mean(yValues == vals[1]))
-              abs(mean(estimated_probabilities[yValues == vals[2] ]) - mean(yValues == vals[2]))
-            }
-            plot(density(yValues), ylim=c(0,max(estimated_probabilities)+10.01))
-            lines(yValues, estimated_probabilities, type = "p", cex = .3, col = "red")
+            private$output_plots(yValues = yValues, estimated_probabilities = estimated_probabilities)
           }
           estimated_probabilities
 
@@ -160,7 +151,27 @@ DensityEstimation <- R6Class ("DensityEstimation",
           datNetObs <- datNetObs$make.dat.sWsA()
 
           return(list(datNetObs = datNetObs, Y = Y, sW = X, nodes = nodes))
+        },
+
+        # Function to output the density estimations on top of the actual density to a series of pdfs
+        output_plots = function(yValues, estimated_probabilities, dir = '/tmp/osl/') {
+          # plot densitity first:
+          vals <- unique(yValues)
+          if(length(vals) == 2 ) {
+            # If the outcome is binary, we can see how well it managed to predict the whole distribution
+            # This error term should be small (~ 0.001)
+            abs(mean(estimated_probabilities[yValues == vals[1] ]) - mean(yValues == vals[1]))
+            abs(mean(estimated_probabilities[yValues == vals[2] ]) - mean(yValues == vals[2]))
+          }
+          dir.create(dir, showWarnings = FALSE)
+          date <- as.integer(format(Sys.time(), "%y%m%d%H%M"))
+          name <- runif(1,0,10000)
+          pdf(paste(dir,date,'-',name,'.pdf',sep = ''))
+          plot(density(yValues), ylim=c(0,max(estimated_probabilities)+.5))
+          lines(yValues, estimated_probabilities, type = "p", cex = .3, col = "red")
+          dev.off()
         }
+
         ),
   active =
     list(
@@ -182,8 +193,9 @@ DensityEstimation <- R6Class ("DensityEstimation",
         },
 
         #TODO: Implement a way to run the prediction on a subset of outcomes
-        predict = function(data, sample = FALSE, subset = NULL) {
+        predict = function(data, sample = FALSE, subset = NULL, plot = TRUE) {
           data <- Arguments$getInstanceOf(data, 'data.table')
+          plot <- Arguments$getLogical(plot)
           if (is.null(private$randomVariables) | length(private$conditional_densities) == 0) {
             throw('The conditional_densities need to be fit first!')
           }
@@ -192,7 +204,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
             if(sample) {
               private$sample(datO=data, Y=rv$getY, X=rv$getX)
             } else {
-              private$predict_probability(datO=data, Y=rv$getY, X=rv$getX, plot=FALSE)
+              private$predict_probability(datO=data, Y=rv$getY, X=rv$getX, plot = plot)
             }
           })
         },
