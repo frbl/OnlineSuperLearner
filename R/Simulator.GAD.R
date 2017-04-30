@@ -92,7 +92,7 @@ Simulator.GAD <- R6Class("Simulator.GAD",
           return(ll)
         },
 
-        calclate_configuration = function(configuration, memory_max, numberOfBlocks) {
+        calculate_configuration = function(configuration, memory_max, numberOfBlocks) {
           outcomes <- lapply(configuration, function(entry) {
             # TODO: Describe why we take the max here, instead of just the memory of the current variable.
             # TODO: Deine memory_max variable
@@ -120,11 +120,13 @@ Simulator.GAD <- R6Class("Simulator.GAD",
             }
             attr(outcome, "col.names") <- col.names
             return(outcome)
-          }) %>% 
+          }) 
+          
+          outcomes.mat <- outcomes %>% 
             unlist %>%
-            matrix(unlist(.), nrow = numberOfBlocks, byrow = FALSE)
-          colnames(outcomes) <- sapply(outcomes, function(ll){attr(ll, "col.names")})
-          outcomes
+            matrix(., nrow = numberOfBlocks, byrow = FALSE)
+          colnames(outcomes.mat) <- sapply(outcomes, function(ll){attr(ll, "col.names")})
+          outcomes.mat
         },
 
       #TODO: Change the parameters qw ga en Qy to an object
@@ -148,8 +150,9 @@ Simulator.GAD <- R6Class("Simulator.GAD",
                                                 rgen = identity)),
                                             ga = list(stochMech ={ function(ww){rbinom(length(ww), 1, expit(ww))}},
                                                       param = rep(1, 2),
-                                                      rgen ={ function(xx, delta = 0.05){rbinom(length(xx), 1, delta+(1-2*delta)*expit(xx))}}),
-                                            Qy = list(rgen ={ function(AW){
+                                                      rgen = {function(xx, delta = 0.05){
+                                                        rbinom(length(xx), 1, delta+(1-2*delta)*expit(xx))}}),
+                                            Qy = list(rgen = {function(AW){
                                               aa <- AW[, "A"]
                                               ww <- AW[, grep("[^A]", colnames(AW))]
                                               mu <- aa*(0.4-0.2*sin(ww[,1])+0.05*ww[,1]) +
@@ -210,7 +213,7 @@ Simulator.GAD <- R6Class("Simulator.GAD",
           configuration <- list(list(var = "W", mech = qw[[1]], U = UW, memory = memories['W']),
                                 list(var = "A", mech = ga, U = UA, memory = memories["A"]))
 
-          WA.mat <- private$calclate_configuration(configuration  = configuration,
+          WA.mat <- private$calculate_configuration(configuration  = configuration,
                                                    memory_max = max(memories)+1,
                                                    numberOfBlocks = numberOfBlocks)
 
@@ -238,7 +241,7 @@ Simulator.GAD <- R6Class("Simulator.GAD",
               configuration <- list(list(var = paste("W", cov, sep=""), mech = qw[[cov]],
                                          U = UW, memory = length(qw[[cov]]$param)-1))
 
-              irrelevantW.mat <- private$calclate_configuration(configuration  = configuration,
+              irrelevantW.mat <- private$calculate_configuration(configuration  = configuration,
                                                                 memory_max = max(memories)+1,
                                                                 numberOfBlocks = numberOfBlocks)
               WAY.mat <- cbind(irrelevantW.mat, WAY.mat)
