@@ -8,7 +8,6 @@ described.class <- DensityEstimation
 
 # This is data for testing purposes only
 
-suppressWarnings(devtools::load_all())
 defaultDataTable = function() {
   nobs = 1000
   W = rbinom(n=nobs,size=1, prob=0.5)

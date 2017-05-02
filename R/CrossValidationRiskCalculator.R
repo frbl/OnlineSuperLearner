@@ -2,6 +2,7 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
+#' @import R.utils R.oo
 #'
 #' @section Methods:
 #' \describe{

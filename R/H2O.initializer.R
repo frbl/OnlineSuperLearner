@@ -5,15 +5,19 @@ setOldClass("h2o")
 #'
 #' @docType class
 #' @import h2o
+#' @param host the host on which H2O is or should be running
+#' @param port the port for that host
+#' @param runlocal boolean whether or not we should start an H2O cluster
+#' @param verbose the verbosity to run with
 H2O.Initializer <- function(host = "localhost", port = 54321, runlocal = TRUE, verbose = FALSE) {
   if(H2O.Available()) {
     verbose && cat(verbose, 'Cluster is up, not initializing.')
     return(FALSE)
   }
   verbose && enter(verbose, 'Initializing cluster...')
-  GlobalH2OCluster <<- h2o.init(ip = host,
-                                port = port,
-                                startH2O = runlocal)
+  GlobalH2OCluster <- h2o.init(ip = host,
+                               port = port,
+                               startH2O = runlocal)
 
   if(!h2o.clusterIsUp()) {
     throw('Connecting to cluster failed, at host', host)

@@ -3,6 +3,8 @@
 \.gitignore
 Makefile
 ^circleci\.yml$
+\.RData
+test.Dockerfile
 #----------------------------
 # Git and SVN related
 #----------------------------

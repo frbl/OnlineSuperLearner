@@ -11,7 +11,6 @@ packages <- c(
 "R.oo",
 "testthat",
 "simcausal",
-"Metrics",
 "xgboost",
 "nnls",
 "sgd",
@@ -21,23 +20,21 @@ packages <- c(
 "roxygen2"
 )
 
-gh_packages <- c(
-"frbl/tmlenet"
+gh_packages <- list(
+  list(repo = "frbl/tmlenet", branch = 'fb-different-estimation-algorithms'),
+  list(repo = "jimhester/covr", branch = 'master') #,
+  #list(repo = 'cran/rkafka', branch = 'master')
 )
 
-install <- function(packages, installfunc){
+install <- function(packages, installfunc, ...){
   new.packages <- packages[!(packages %in% installed.packages()[, "Package"])]
   if (length(new.packages))
-    installfunc(new.packages)
+    installfunc(new.packages, ...)
   update.packages(lib.loc = Sys.getenv("R_LIBS_USER"), ask = FALSE)
 }
 
 install(packages, install.packages)
-install(gh_packages, devtools::install_github)
-#new.packages <- packages[!(packages %in% installed.packages()[, "Package"])]
-#if (length(new.packages))
-  #install.packages(new.packages)
-#update.packages(lib.loc = Sys.getenv("R_LIBS_USER"), ask = FALSE)
+lapply(gh_packages, function(pkg) install(pkg$repo, devtools::install_github, ref = pkg$branch))
 
 # Specific packages
 # Finds and remove any previously installed H2O packages for R.
@@ -48,4 +45,3 @@ if ("h2o" %in% rownames(installed.packages())) { remove.packages("h2o") }
 #install.packages("h2o", repos=(c("http://s3.amazonaws.com/h2o-release/h2o/rel-kahan/5/R", getOption("repos"))))
 install.packages("h2o", type="source", repos=(c("http://h2o-release.s3.amazonaws.com/h2o/rel-tverberg/2/R")))
 
-#devtools::install_github('cran/rkafka')

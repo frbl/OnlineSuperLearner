@@ -13,4 +13,26 @@ SMG.Transformation
 SMG.Transformation
 Transforms the current value of a variable using the given function
 }
+\section{Methods}{
+ 
+\describe{  
+  \item{\code{initialize(function_to_use = sin, suffix = "sin", colnames_to_use) }}{ 
+    <<description>> 
+    @param function_to_use = sin 
+    @param suffix = "sin" 
+    @param colnames_to_use  
+  } 
+
+  \item{\code{update(data.current) }}{ 
+    <<description>> 
+    @param data.current  
+  } 
+
+  \item{\code{process(data.current) }}{ 
+    <<description>> 
+    @param data.current  
+  } 
+}
+}
+
 \keyword{datasets}

@@ -1,5 +1,4 @@
 context("WCC.NLopt.R")
-devtools::load_all()
 described.class <- WCC.NLopt
 
 context(" process")
