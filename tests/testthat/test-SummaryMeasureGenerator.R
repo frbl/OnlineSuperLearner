@@ -167,6 +167,30 @@ test_that("it should combine the results of multiple summarizers" , {
   expect_equal(result, expected)
 })
 
+test_that("it should scale the data if scaling is provided", {
+  data <- Data.Static$new(dataset = dataset)
+  bounds <-list(A=list(min=0, max=1000))
+
+  needed <- 1
+  mylist <- c(SMG.Mock$new(needed))
+  subject <- described.class$new(SMG.list = mylist, data = data, bounds = bounds)
+  for (i in 1:6) {
+    result <- subject$getNext()
+    cache  <- subject$getCache
+    expected  <- dataset[i,]
+
+    expect_true(is.a(result, 'data.frame'))
+
+    expect_equal(nrow(result), 1)
+    expect_equal(ncol(result), ncol(dataset))
+    expect_equal(result[,'Y'], expected[,'Y'])
+    expect_equal(result[,'W'], expected[,'W'])
+
+    # No explicit check for now, but at least it should not be the same (this one is scaled)
+    expect_false(result[,'A'] ==  expected[,'A'])
+  }
+})
+
 context(" checkEnoughDataAvailable")
 test_that("it should check if enough data is available for all formulae, and return true if all is available", {
   f1 <- RandomVariable$new(formula = y ~ w + w2 + w3 + a, family='gaussian')

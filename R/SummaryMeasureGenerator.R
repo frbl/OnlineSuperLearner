@@ -116,7 +116,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
           current <- private$data$getNextN(n = n)
           if (is.null(current)) return(NULL)
 
-          if (self$is_normalized) current %<>% public$normalize
+          if (self$is_normalized) current %<>% self$normalize(.)
 
           # Now, this combined with the cache, should be enough to get the new observations
           private$cache <- rbindlist(list(private$cache, current))
