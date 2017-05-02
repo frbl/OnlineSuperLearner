@@ -22,10 +22,18 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
     list(
         minimal.measurements.needed = NULL,
 
-        initialize = function(data = NULL, SMG.list, verbose = FALSE) {
+        initialize = function(data = NULL, SMG.list, verbose = FALSE, bounds = NULL) {
           private$data <- data
           private$SMG.list <- SMG.list
           private$verbose <- verbose
+
+          if (is.null(bounds)) {
+            private$normalized <- FALSE
+          } else {
+            private$bounds <- Arguments$getInstanceOf(bounds, 'list')
+            private$normalized <- TRUE
+          }
+
 
           # Determine the minimal number of measurements we need in order to be able to
           # support all our SMGs
@@ -108,6 +116,8 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
           current <- private$data$getNextN(n = n)
           if (is.null(current)) return(NULL)
 
+          if (self$is_normalized) current %<>% public$normalize
+
           # Now, this combined with the cache, should be enough to get the new observations
           private$cache <- rbindlist(list(private$cache, current))
 
@@ -122,10 +132,33 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
           toc <- Sys.time()
           private$verbose && exit(private$verbose, paste('This took', (toc - tic), 'seconds!!'))
           data
+        },
+
+        normalize = function(data, bounds = private$bounds) {
+          data <- Arguments$getInstanceOf(data, 'data.table')
+          bounds <- Arguments$getInstanceOf(bounds, 'list')
+
+          scale_data <- function(data, min_bound,max_bound) (data - min_bound) / (max_bound - min_bound)
+
+          # TODO: Make this more efficient
+          for(name in names(bounds)) {
+            min_bound <- bounds[[name]]$min
+            max_bound <- bounds[[name]]$max
+            data[, (name) := lapply(.SD, function(x) scale_data(x, min_bound, max_bound) ), .SDcols = (name)]
+          }
+          data
+
         }
         ),
   active =
     list(
+        get_bounds = function() {
+          private$bounds
+        },
+        is_normalized = function() {
+          private$normalized
+        },
+
         getCache = function(){
           return(private$cache)
         },
@@ -140,6 +173,8 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
         cache = data.table(),
         SMG.list = NULL,
         verbose = NULL,
+        normalized = NULL,
+        bounds = NULL,
         checkDataAvailable = function() {
           if(is.null(private$data)) {
             throw('Please set the data of the summary measure generator first')
