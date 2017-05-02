@@ -118,3 +118,22 @@ test_that("it should throw if the observed outcomes are empty", {
                                      current_risk = 0, current_count = 0), expected_msg)
   }
 })
+
+test_that("it should throw if the observed outcomes are empty", {
+  m <- mock(function(...) 42, cycle=TRUE)
+  with_mock(self$calculate_risk = m, 
+  subject$update_risk(predicted.outcome = predicted.outcome, 
+                          observed.outcome = observed.outcome, 
+                          randomVariables = randomVariables,
+                          current_count = 0, current_risk = 0))
+
+  erroneous_inputs <- list(NULL, list())
+
+  expected_msg <- 'Observed outcome is empty!'
+  for (input in erroneous_inputs) {
+    expect_error(subject$update_risk(predicted.outcome = predicted.outcome,
+                                     observed.outcome = input, 
+                                     randomVariables = randomVariables,
+                                     current_risk = 0, current_count = 0), expected_msg)
+  }
+})
