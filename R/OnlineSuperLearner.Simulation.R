@@ -15,7 +15,61 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
         training_set_size = NULL,
         test_set_size = NULL,
         log = NULL,
-        SL.library.definition = NULL
+        SL.library.definition = NULL,
+
+        generate_bounds = function(data) {
+          bounds <- list()
+          for(name in colnames(data)) {
+            min_bound = min(data[, name, with=FALSE] )
+            max_bound = max(data[, name, with=FALSE] )
+            bounds <- append(bounds, list(list(max_bound = max_bound, min_bound = min_bound)))
+          }
+          names(bounds) <- colnames(data)
+          bounds
+        },
+
+        train = function(data.test, data.train, bounds, randomVariables, max_iterations) {
+          smg_factory <- SMGFactory$new()
+          summaryMeasureGenerator <- smg_factory$fabricate(randomVariables, bounds = bounds)
+
+          margin <- 100
+          Data.Static$new(dataset = data.test) %>% 
+            summaryMeasureGenerator$setData(.)
+          data.test <- summaryMeasureGenerator$getNextN(private$test_set_size)
+
+          data.train <- Data.Static$new(dataset = data.train)
+
+          private$log && cat(private$log, 'Initializing OSL')
+          osl <- OnlineSuperLearner$new(private$SL.library.definition,
+                                        summaryMeasureGenerator = summaryMeasureGenerator,
+                                        verbose = private$log)
+
+          private$log && cat(private$log, 'Running OSL')
+
+          # Divide by two here just so the initial size is a lot larger then each iteration, not really important
+          estimators <- osl$fit(data.train, randomVariables = randomVariables,
+                                initial_data_size = private$training_set_size / 2, max_iterations = max_iterations,
+                                mini_batch_size = (private$training_set_size / 2) / max_iterations)
+
+
+          private$log && cat(private$log, 'Predicting using all estimators')
+          predictions <- osl$predict(data = copy(data.test), randomVariables)
+
+          performance <- osl$evaluateModels(data = copy(data.test), randomVariables = randomVariables) %>%
+            c(iterations = max_iterations, performance = .) %T>%
+            print
+          #})
+          #performances <- do.call(rbind, lapply(performances, data.frame)) %T>%
+          #print
+
+          #plot(x=performances$iterations, y=performances$performance)
+          #performances
+          browser()
+          intervention <- list(variable = 'A', when = c(5, 7), what = c(1,0))
+          result <- osl$sample_iteratively(data = data.test[1,], randomVariables = randomVariables, intervention = intervention)
+          performance
+          result
+        }
         ),
   public =
     list(
@@ -104,71 +158,24 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
             rnorm(length(mu), mu, sd=0.1)}})
           
 
+          # We'd like to use the following features in our estimation:
+          W <- RandomVariable$new(formula = Y ~ A + W, family = 'gaussian')
+          A <- RandomVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
+          Y <- RandomVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
+          randomVariables <- c(W, A, Y)
+
+          # Generate a dataset we will use for testing.
+          margin <- 100
+          data.test <- private$sim$simulateWAY(private$test_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
+          data.train <- private$sim$simulateWAY(private$training_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
+
+          # Create the bounds
+          bounds <- private$generate_bounds(data.train)
+
           # Create the measures we'd like to include in our model
           # In this simulation we will include 2 lags and the latest data (non lagged)
           # Define the variables in the initial dataset we'd like to use
-          Y = "Y"
-          W = "W"
-          A = "A"
-          SMG.list <- list()
-          SMG.list <- c(SMG.list, SMG.Lag$new(lags = 2, colnames.to.lag = (c(A, W, Y))))
-          SMG.list <- c(SMG.list, SMG.Latest.Entry$new(colnames.to.use = (c(A, W, Y))))
-          summaryMeasureGenerator = SummaryMeasureGenerator$new(SMG.list = SMG.list, verbose = private$log) 
-
-
-          # We'd like to use the following features in our estimation:
-          Y.eq <- Y ~ A + W
-          A.eq <- A ~ W + Y_lag_1 + A_lag_1 + W_lag_1
-          W.eq <- W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2
-          W <- RandomVariable$new(formula = W.eq, family = 'gaussian')
-          A <- RandomVariable$new(formula = A.eq, family = 'binomial')
-          Y <- RandomVariable$new(formula = Y.eq, family = 'gaussian')
-
-          # Generate a dataset we will use for testing.
-          private$sim$simulateWAY(200, qw=llW, ga=llA, Qy=llY, verbose=private$log) %>%
-            Data.Static$new(dataset = .) %>%
-            summaryMeasureGenerator$setData(.)
-
-          data.test <- summaryMeasureGenerator$getNextN(80)
-
-          # Generate a dataset, from the same statistical model, which we will use to train our model
-          data.train <-
-            private$sim$simulateWAY(private$training_set_size, qw=llW, ga=llA, Qy=llY, verbose=private$log) %>%
-            Data.Static$new(dataset = .)
-
-          # Now run several iterations on the data
-          #performances <- mclapply(seq(5,201,20), function(i) {
-
-          i = 20
-          data.train$reset()
-
-
-          private$log && cat(private$log, 'Initializing OSL')
-          osl <- OnlineSuperLearner$new(private$SL.library.definition,
-                                        summaryMeasureGenerator = summaryMeasureGenerator,
-                                        verbose = private$log)
-
-          private$log && cat(private$log, 'Running OSL')
-          estimators <- osl$fit(data.train, Y = Y, A = A, W = W,
-                                initial_data_size = 20000, max_iterations = i,
-                                mini_batch_size = 10)
-
-          predictions <- osl$predict(data = copy(data.test), c(W,A,Y), discrete=TRUE) 
-
-          performance <- osl$evaluateModels(data = copy(data.test), randomVariables = c(W, A, Y)) %>%
-            c(iterations = i, performance = .) %T>%
-            print
-          #})
-          #performances <- do.call(rbind, lapply(performances, data.frame)) %T>%
-          #print
-
-          #plot(x=performances$iterations, y=performances$performance)
-          #performances
-          browser()
-          intervention <- list(variable = 'A', when = c(5, 7), what = c(1,0))
-          result <- osl$sample_iteratively(data = data.test[1,], randomVariables = c(W,A,Y), intervention = intervention)
-          performance
-          result
+          private$train(data.test, data.train, bounds, randomVariables, 20)
         },
 
         basicRegressionWithLags = function() {
@@ -202,95 +209,37 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
             mu <- aa*(0.9) + (1-aa)*(0.3)
             rnorm(length(mu), mu, sd=0.1)}})
 
-
-          # Create the measures we'd like to include in our model
-          # In this simulation we will include 2 lags and the latest data (non lagged)
-          # Define the variables in the initial dataset we'd like to use
-          W = "W"
-          W1 = "W1"
-          W2 = "W2"
-          A = "A"
-          Y = "Y"
-          SMG.list <- list()
-          SMG.list <- c(SMG.list, SMG.Lag$new(lags = 2, colnames.to.lag = (c(A, W, W1, Y))))
-          SMG.list <- c(SMG.list, SMG.Latest.Entry$new(colnames.to.use = (c(A, W, W1, W2, Y))))
-          summaryMeasureGenerator = SummaryMeasureGenerator$new(SMG.list = SMG.list, verbose = private$log)
-
-
           # We'd like to use the following features in our estimation:
           W  <- RandomVariable$new(family = 'gaussian', formula = W  ~ Y_lag_1 + W1_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2)
           W1 <- RandomVariable$new(family = 'gaussian', formula = W1 ~ W_lag_1)
           W2 <- RandomVariable$new(family = 'gaussian', formula = W2 ~ Y_lag_1)
           A  <- RandomVariable$new(family = 'binomial', formula = A  ~ W + Y_lag_1 + A_lag_1 + W_lag_1)
           Y  <- RandomVariable$new(family = 'gaussian', formula = Y  ~ A + W)
-
           randomVariables <- c(W, W1, W2, A, Y)
-          smg_factory <- SMGFactory$new()
-          smg_factory$fabricate(randomVariables)
 
-          # We add a margin so we don't have to worry about the presence of enough history
-          margin <- 100
+          # Create the measures we'd like to include in our model
+          # In this simulation we will include 2 lags and the latest data (non lagged)
+          # Define the variables in the initial dataset we'd like to use
 
           # Generate a dataset we will use for testing.
-          dataset <- private$sim$simulateWAY(private$test_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
+          # We add a margin so we don't have to worry about the presence of enough history
+          margin <- 100
+          data.test <- private$sim$simulateWAY(private$test_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
+          data.test[, W1 := rnorm(private$test_set_size + margin, 10, 1)]
+          data.test[, W2 := rbinom(private$test_set_size + margin, 1, 0.5)]
 
-          # Generate some unrelated columns
-          dataset[, W1 := rnorm(private$test_set_size + margin, 10, 1)]
-          dataset[, W2 := rbinom(private$test_set_size + margin, 1, 0.5)]
+          data.train <- private$sim$simulateWAY(private$training_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
+          data.train[, W1 := rnorm(private$training_set_size + margin, 10, 1)]
+          data.train[, W2 := rbinom(private$training_set_size + margin, 1, 0.5)]
 
-          Data.Static$new(dataset = dataset) %>%
-            summaryMeasureGenerator$setData(.)
+          # Create the bounds
+          bounds <- private$generate_bounds(data.train)
 
-          data.test <- summaryMeasureGenerator$getNextN(private$test_set_size)
-
-          # Generate a dataset, from the same statistical model, which we will use to train our model
-          dataset <- private$sim$simulateWAY(private$training_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
-
-          # Generate some unrelated columns
-          dataset[, W1 := rnorm(private$training_set_size + margin, 10, 1)]
-          dataset[, W2 := rbinom(private$training_set_size + margin, 1, 0.5)]
-
-          data.train <- Data.Static$new(dataset = dataset)
-
-          # Now run several iterations on the data
-          #performances <- mclapply(seq(5,201,20), function(i) {
-
-          i = 20
-          data.train$reset()
-
-
-          private$log && cat(private$log, 'Initializing OSL')
-          osl <- OnlineSuperLearner$new(private$SL.library.definition,
-                                        summaryMeasureGenerator = summaryMeasureGenerator,
-                                        verbose = private$log)
-
-          private$log && cat(private$log, 'Running OSL')
-
-          # Divide by two here just so the initial size is a lot larger then each iteration, not really important
-          estimators <- osl$fit(data.train, randomVariables = randomVariables,
-                                initial_data_size = private$training_set_size / 2, max_iterations = i,
-                                mini_batch_size = (private$training_set_size / 2) / i)
-
-
-          private$log && cat(private$log, 'Predicting using all estimators')
-          predictions <- osl$predict(data = copy(data.test), c(W,A,Y))
-
-          performance <- osl$evaluateModels(data = copy(data.test), randomVariables = randomVariables) %>%
-            c(iterations = i, performance = .) %T>%
-            print
-          #})
-          #performances <- do.call(rbind, lapply(performances, data.frame)) %T>%
-          #print
-
-          #plot(x=performances$iterations, y=performances$performance)
-          #performances
-          browser()
-          intervention <- list(variable = 'A', when = c(5, 7), what = c(1,0))
-          result <- osl$sample_iteratively(data = data.test[1,], randomVariables = randomVariables, intervention = intervention)
-          performance
-          result
+          # Create the measures we'd like to include in our model
+          # In this simulation we will include 2 lags and the latest data (non lagged)
+          # Define the variables in the initial dataset we'd like to use
+          private$train(data.test, data.train, bounds, randomVariables, 20)
         }
   )
 )
-
 

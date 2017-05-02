@@ -14,7 +14,7 @@
 #'     Fabricates the actual SMG's. Given a list of \code{RandomVariable}s all covariates are selected and merged.
 #'     These are used as a basis for selecting the needed variables in the dataframe.
 #'     @param randomVariables = a list of \code{RandomVariable} objects, from which the X variables are selected
-#'     @param verbose = \code{Verbose} object or \code{FALSE} to define the verbosity of the creation
+#'     @param ... = data to get passed to the SMG
 #'   }
 #' }
 #' @export
@@ -29,8 +29,7 @@ SMGFactory <- R6Class("SMGFactory",
           # This allows for flexible, new SMG's to be added outside of the package.
         },
 
-        fabricate = function(randomVariables, verbose = FALSE) {
-          verbose <- Arguments$getVerbose(verbose)
+        fabricate = function(randomVariables, ...) {
           SMG.list <- list()
           variables_found <- FALSE
 
@@ -53,7 +52,7 @@ SMGFactory <- R6Class("SMGFactory",
             needed_variables %<>% setdiff(. ,smg_lag_params$covered_variables)
           }
           SMG.list <- c(SMG.list, SMG.Latest.Entry$new(colnames.to.use = needed_variables))
-          summaryMeasureGenerator = SummaryMeasureGenerator$new(SMG.list = SMG.list, verbose = verbose) 
+          SummaryMeasureGenerator$new(SMG.list = SMG.list, ...) 
         }
         ),
   active =
