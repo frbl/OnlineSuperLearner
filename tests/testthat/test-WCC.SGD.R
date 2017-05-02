@@ -2,7 +2,6 @@ context("WCC.SGD.R")
 described.class <- WCC.SGD
 
 test_that("it should work on a simple testcase", {
-  suppressWarnings(devtools::load_all()) 
   described.class <- WCC.SGD
     # Dimensions
   N <- 1e3
