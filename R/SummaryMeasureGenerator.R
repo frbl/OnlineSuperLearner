@@ -34,7 +34,6 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
             private$normalized <- TRUE
           }
 
-
           # Determine the minimal number of measurements we need in order to be able to
           # support all our SMGs
           # TODO: We do the -1 so we can just get new measurements, without caring about the cache getting filled or not.
