@@ -101,6 +101,9 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
         update_risk = function(predicted.outcome, observed.outcome, randomVariables,
                                current_count, current_risk) {
 
+          current_count <- Arguments$getInteger(current_count, c(0, Inf))
+          current_risk <- Arguments$getNumeric(current_count, c(0, Inf))
+
           if(is.null(predicted.outcome) | length(predicted.outcome) == 0) throw('Predicted outcome is empty!')
           if(is.null(observed.outcome) | all(dim(observed.outcome) == c(0,0))) throw('Observed outcome is empty!')
 
@@ -120,6 +123,7 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
               if(!is.null(current_risk[[current]])){
                 new_risk <- new_risk +(current_count / (current_count + 1)) * algorithm_risks[[current]] 
               }
+
               names(new_risk) <- current
               new_risk
             })))
