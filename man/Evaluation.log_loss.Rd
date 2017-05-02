@@ -6,6 +6,13 @@
 \usage{
 Evaluation.log_loss(data.observed, data.predicted, eps = 1e-15)
 }
+\arguments{
+\item{data.observed}{the true data (Y)}
+
+\item{data.predicted}{the Y outcome from the estimator}
+
+\item{eps}{is a small offset to let the log not go to Inf}
+}
 \description{
 Log loss evaluation metric
 }

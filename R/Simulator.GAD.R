@@ -80,7 +80,7 @@ Simulator.GAD <- R6Class("Simulator.GAD",
 
         return(WAYs)
       }
-    )
+    ),
   private =
     list(
       validateMechanism = function(ll, what = c("qw", "ga", "Qy")) {

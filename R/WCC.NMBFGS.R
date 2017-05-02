@@ -10,9 +10,6 @@
 #' @docType class
 #' @importFrom R6 R6Class
 #' @import optimr
-#' @section Methods:
-#' \describe{
-#' }
 WCC.NMBFGS <- R6Class("WCC.NMBFGS",
   inherit = WeightedCombinationComputer,
   private =

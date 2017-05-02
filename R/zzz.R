@@ -3,6 +3,7 @@
 #' @import R.oo
 #' @import R.utils
 #' @importFrom R.utils Arguments
+#' @importFrom R.methodsS3 throw
 #' @import magrittr
 #' @import parallel
 generalImports <- list()
@@ -10,7 +11,7 @@ generalImports <- list()
 # General fixes, for usability
 expit <- plogis
 logit <- qlogis
-throw <- stop
+#throw <- stop
 
 # Helper functions
 #' Checks whether an object is an instance of the provided class

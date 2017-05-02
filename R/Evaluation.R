@@ -1,4 +1,7 @@
-#' @import Metrics
+#' Returns the correct evaluation function given the family of the data
+#' # @import Metrics
+#' @param family the family of the data (binomial for binary, gaussian for cts)
+#' @param useAsLoss should we use the loss function or the performance function?
 Evaluation.get_evaluation_function = function(family, useAsLoss=TRUE) {
   if(useAsLoss){
     if (family == 'gaussian') {
@@ -19,6 +22,8 @@ Evaluation.get_evaluation_function = function(family, useAsLoss=TRUE) {
 }
 
 #' Accuracy caluclator
+#' @param data.observed the true data (Y)
+#' @param data.predicted the Y outcome from the estimator 
 Evaluation.accuracy <- function(data.observed, data.predicted) {
   boolean.predicted <- as.numeric(data.predicted >= 0.5)
   boolean.observed <- as.numeric(data.observed >= 0.5)
@@ -31,16 +36,24 @@ Evaluation.accuracy <- function(data.observed, data.predicted) {
 }
 
 #' Log loss evaluation metric
+#' @param data.observed the true data (Y)
+#' @param data.predicted the Y outcome from the estimator 
+#' @param eps is a small offset to let the log not go to Inf
 Evaluation.log_loss <- function(data.observed, data.predicted, eps = 1e-15) {
   data.predicted = pmin(pmax(data.predicted, eps), 1-eps)
   c(log_loss = -mean(data.observed * log(data.predicted) + (1 - data.observed) * log(1 - data.predicted)))
 }
 
+#' Mean squared error loss
+#' @param data.observed the true data (Y)
+#' @param data.predicted the Y outcome from the estimator 
 Evaluation.mse_loss <-  function(data.observed, data.predicted) {
   c(mse_loss = mean((data.predicted - data.observed)^2))
 }
 
 #' MSE caluclator
+#' @param data.observed the true data (Y)
+#' @param data.predicted the Y outcome from the estimator 
 Evaluation.mean_squared_error <- function(data.observed, data.predicted) {
   # Calculate the MSE
   se <- Evaluation.mse_loss(data.predicted, data.observed)
@@ -53,6 +66,8 @@ Evaluation.mean_squared_error <- function(data.observed, data.predicted) {
 }
 
 #' RMSE caluclator
+#' @param data.observed the true data (Y)
+#' @param data.predicted the Y outcome from the estimator 
 Evaluation.root_mean_squared_error <- function(data.observed, data.predicted) {
   mse <- Evaluation.mean_squared_error(data.observed = data.observed, data.predicted = data.predicted)
 

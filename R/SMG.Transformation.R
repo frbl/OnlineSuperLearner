@@ -22,9 +22,6 @@
 #'     <<description>> 
 #'     @param data.current  
 #'   } 
-#' 
-#'   } 
-#' 
 #' }  
 SMG.Transformation <- R6Class("SMG.Transformation",
   public =
