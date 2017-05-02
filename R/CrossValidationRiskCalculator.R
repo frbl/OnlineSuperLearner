@@ -58,9 +58,7 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
         # Calculate the CV risk for each of the random variables provided
         # Output is a list of lists
         calculate_risk = function(predicted.outcome, observed.outcome, randomVariables){
-          if (!is.a(predicted.outcome, 'list')) {
-            throw('Input predicted.outcome should be a list, where each entry is the outcome of an estimator')
-          }
+          predicted.outcome <- Arguments$getInstanceOf(predicted.outcome, 'list')
 
           cv_risk <- lapply(predicted.outcome, function(algorithm_outcome) {
             # The as.list unlist is a hack to flatten the result, but to keep the correct names
