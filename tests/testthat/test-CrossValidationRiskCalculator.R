@@ -20,8 +20,8 @@ names(predicted.outcome[[length(predicted.outcome)]]) <- sapply(randomVariables,
 names(predicted.outcome) <- c('a','b')
 
 # Create observed outcomes
-observed.outcome <- list(c(1,2,3,4), c(-1,-2,-3,-4), c(0.1,0.2,0.3,0.4))
-names(observed.outcome) <-  sapply(randomVariables, function(x) x$getY)
+observed.outcome <- data.table(c(1,2,3,4), c(-1,-2,-3,-4), c(0.1,0.2,0.3,0.4))
+colnames(observed.outcome) <-  randomVariable_names
 
 context(" calculate_evaluation")
 
@@ -119,21 +119,66 @@ test_that("it should throw if the observed outcomes are empty", {
   }
 })
 
-test_that("it should throw if the observed outcomes are empty", {
-  m <- mock(function(...) 42, cycle=TRUE)
-  with_mock(self$calculate_risk = m, 
-  subject$update_risk(predicted.outcome = predicted.outcome, 
+test_that("it should update (set) the risk properly when there is no risk", {
+  subject <- described.class$new()
+
+  # TODO: Very weird why this doesn't work. Look into it.
+  # https://github.com/n-s-f/mockery/blob/380d81e1439969908a767e484939450b17b1b9ad/tests/testthat/test_stub.R#L197-L230
+  #stub(subject$update_risk, 'self$calculate_risk', list(a = c(1,2,3), b = c(3,2,1)))
+  # print(lapply(randomVariables, function(abc) {abc$getY}))
+
+  expected_risk <- list(A = list(A = 1, W = 2, Y=3), B = list(A = 4, W = 5, Y = 6))
+  lossFn_mock <- mock(1,2,3,4,5,6)
+
+  evaluation_mock <- mock(lossFn_mock, cycle = TRUE)
+
+  a <- list()
+  with_mock(Evaluation.get_evaluation_function = evaluation_mock, 
+    updated_risk <- subject$update_risk(predicted.outcome = predicted.outcome, 
                           observed.outcome = observed.outcome, 
                           randomVariables = randomVariables,
-                          current_count = 0, current_risk = 0))
+                          current_count = 0, current_risk = list())
 
-  erroneous_inputs <- list(NULL, list())
+  )
 
-  expected_msg <- 'Observed outcome is empty!'
-  for (input in erroneous_inputs) {
-    expect_error(subject$update_risk(predicted.outcome = predicted.outcome,
-                                     observed.outcome = input, 
-                                     randomVariables = randomVariables,
-                                     current_risk = 0, current_count = 0), expected_msg)
+  expect_true(is.a(updated_risk, 'list'))
+  expect_equal(names(updated_risk), names(predicted.outcome))
+  expect_equivalent(updated_risk, expected_risk)
+})
+
+test_that("it should update the risk properly when there already was a risk", {
+  subject <- described.class$new()
+
+  # TODO: Very weird why this doesn't work. Look into it.
+  # https://github.com/n-s-f/mockery/blob/380d81e1439969908a767e484939450b17b1b9ad/tests/testthat/test_stub.R#L197-L230
+  #stub(subject$update_risk, 'self$calculate_risk', list(a = c(1,2,3), b = c(3,2,1)))
+  # print(lapply(randomVariables, function(abc) {abc$getY}))
+
+  current_risk <- list(a = list(A = 1, W = 2, Y=3), b = list(A = 4, W = 5, Y = 6))
+  lossFn_mock <- mock(1,1,1,1,1,1)
+
+  expected_risk <- current_risk
+  for(algo in names(current_risk)) {
+    for (rsk in names(current_risk[[algo]])) {
+      expected_risk[[algo]][[rsk]] <- (expected_risk[[algo]][[rsk]] * 20) + 1
+      expected_risk[[algo]][[rsk]] <- expected_risk[[algo]][[rsk]] / 21 
+    }
   }
+
+
+
+  evaluation_mock <- mock(lossFn_mock, cycle = TRUE)
+
+
+  with_mock(Evaluation.get_evaluation_function = evaluation_mock, 
+    updated_risk <- subject$update_risk(predicted.outcome = predicted.outcome, 
+                          observed.outcome = observed.outcome, 
+                          randomVariables = randomVariables,
+                          current_count = 20, current_risk = current_risk)
+
+  )
+
+  expect_true(is.a(updated_risk, 'list'))
+  expect_equal(names(updated_risk), names(predicted.outcome))
+  expect_equal(updated_risk, expected_risk)
 })

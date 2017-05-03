@@ -59,6 +59,7 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
         # Output is a list of lists
         calculate_risk = function(predicted.outcome, observed.outcome, randomVariables){
           predicted.outcome <- Arguments$getInstanceOf(predicted.outcome, 'list')
+          observed.outcome <- Arguments$getInstanceOf(observed.outcome, 'data.table')
 
           cv_risk <- lapply(predicted.outcome, function(algorithm_outcome) {
             # The as.list unlist is a hack to flatten the result, but to keep the correct names
@@ -102,10 +103,12 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
                                current_count, current_risk) {
 
           current_count <- Arguments$getInteger(current_count, c(0, Inf))
-          current_risk <- Arguments$getNumeric(current_count, c(0, Inf))
 
           if(is.null(predicted.outcome) | length(predicted.outcome) == 0) throw('Predicted outcome is empty!')
           if(is.null(observed.outcome) | all(dim(observed.outcome) == c(0,0))) throw('Observed outcome is empty!')
+
+          predicted.outcome <- Arguments$getInstanceOf(predicted.outcome, 'list')
+          observed.outcome <- Arguments$getInstanceOf(observed.outcome, 'data.table')
 
           updated_risk <- self$calculate_risk(predicted.outcome = predicted.outcome,
                                               observed.outcome = observed.outcome, 
@@ -114,21 +117,28 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
 
           # Note that we need to update the risk for every algorithm and every RV
           # TODO: Is this calulation correct now?
-          current_risk <- lapply(updated_risk, function(algorithm_risks) {
-            as.list(unlist(lapply(randomVariables, function(rv) {
+          algorithm_names <- names(updated_risk)
+          current_risk <- lapply(algorithm_names, function(algorithm_name) {
+            new_risks <- updated_risk[[algorithm_name]]
+            old_risk <- current_risk[[algorithm_name]]
+            
+            lapply(randomVariables, function(rv) {
               current <- rv$getY 
 
               # The score up to now needs to be calculated current_count times, the other score 1 time.
-              new_risk <- (1 / (current_count + 1)) * algorithm_risks[[current]] 
-              if(!is.null(current_risk[[current]])){
-                new_risk <- new_risk +(current_count / (current_count + 1)) * algorithm_risks[[current]] 
+              #new_risk <- (1 / (current_count + 1)) * new_risks[[current]] 
+              new_risk <- new_risks[[current]] 
+
+              if(!is.null(old_risk)){
+                new_risk <- (new_risk + (current_count * old_risk[[current]])) / (current_count + 1)
               }
 
               names(new_risk) <- current
               new_risk
-            })))
+            }) %>% unlist %>% as.list
           })
           
+          names(current_risk) <- algorithm_names
           return(current_risk)
         }
         ),
