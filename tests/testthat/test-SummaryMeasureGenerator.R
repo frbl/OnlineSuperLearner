@@ -222,12 +222,6 @@ test_that("it should check if enough data is available for all formulae", {
   expect_true(subject$checkEnoughDataAvailable(c(f1,f2)))
 })
 
-
-context(" getNextN")
-test_that("it should be removed, this function is deprecated", {
- skip("Deprecated function, remove") 
-})
-
 context(" normalize")
 test_that("it should work with multi dimensional data", {
   data <- data.table(

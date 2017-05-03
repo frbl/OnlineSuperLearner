@@ -453,7 +453,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           # Get the initial data for fitting the first estimator and train the initial models
           private$verbose && enter(private$verbose, 'Fitting initial models')
-          private$summaryMeasureGenerator$getNextN(initial_data_size) %>%
+          private$summaryMeasureGenerator$getNext(initial_data_size) %>%
             private$train_library(data_current = ., randomVariables = randomVariables)
           private$verbose && exit(private$verbose)
 
