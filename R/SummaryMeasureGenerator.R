@@ -125,12 +125,6 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
         },
 
         getNextN = function(n = 1){
-          tic <- Sys.time()
-          private$verbose && enter(private$verbose, paste('Generating subset of',n,'observations'))
-          data <- self$getNext(n=n)
-          toc <- Sys.time()
-          private$verbose && exit(private$verbose, paste('This took', (toc - tic), 'seconds!!'))
-          data
         },
 
         normalize = function(data, bounds = private$bounds) {
