@@ -18,23 +18,32 @@ DensityEstimation <- R6Class ("DensityEstimation",
         verbose = NULL,
         randomVariables = NULL,
         bin_estimator = NULL,
+        is_online_estimator = NULL,
 
         # Functions
         # =========
-        fake_update = function(newdata, X, Y){
-          #warning('This is not an online update! We fake  the online part!')
+        fake_update = function(newdata, X, Y) {
+          ##warning('This is not an online update! We fake  the online part!')
           private$data <- rbindlist(list(private$data, newdata))
           private$fit(private$data, X=X,Y=Y)
         },
 
         # Updates the used condistional density
         update = function(newdata, X, Y) {
-          private$fake_update(newdata=newdata, X=X, Y=Y)
+          if (self$is_online) {
+            nodeObjects <- private$define_node_objects(datO = newdata, X = X, Y = Y)
+            self$getConditionalDensities(Y)$update(newdata = nodeObjects$datNetObs)
+          } else {
+            private$fake_update(newdata = newdata, X = X, Y = Y)
+          }
         },
 
         fit = function(datO, X, Y){
-          #TODO: Make this step online (remove the following line)
-          private$data <- datO
+          if (!self$is_online) {
+            # If the actual algorithm is not online, we fake the online part
+            private$data <- datO
+          }
+
           nodeObjects <- private$define_node_objects(datO = datO, X = X, Y = Y)
 
           # Define est_params_list:
@@ -52,7 +61,8 @@ DensityEstimation <- R6Class ("DensityEstimation",
                                           subset = subset_vars)
 
           # Create the conditional density, based on the regression just specified and fit it
-          private$conditional_densities[Y] <- list(SummariesModel$new(reg = regclass, DatNet.sWsA.g0 = nodeObjects$datNetObs))
+          private$conditional_densities[Y] <- list(SummariesModel$new(reg = regclass,
+                                                                      DatNet.sWsA.g0 = nodeObjects$datNetObs))
           self$getConditionalDensities(Y)$fit(data = nodeObjects$datNetObs)
         },
 
@@ -167,6 +177,10 @@ DensityEstimation <- R6Class ("DensityEstimation",
         ),
   active =
     list(
+        is_online = function() {
+          return(private$is_online_estimator)
+        },
+
         get_bin_estimator = function() {
           return(private$bin_estimator)
         },
@@ -177,10 +191,11 @@ DensityEstimation <- R6Class ("DensityEstimation",
         ),
   public =
     list(
-        initialize = function(nbins = 30, bin_estimator = tmlenet::speedglmR6$new(), verbose = FALSE) {
-          private$verbose <- verbose
+        initialize = function(nbins = 30, bin_estimator = tmlenet::speedglmR6$new(), is_online = FALSE, verbose = FALSE) {
+          private$verbose <- Arguments$getVerbose(verbose)
+          private$is_online_estimator <- Arguments$getLogical(is_online)
           private$nbins <- Arguments$getIntegers(as.numeric(nbins), c(1, Inf))
-          private$bin_estimator <- bin_estimator
+          private$bin_estimator <- Arguments$getInstanceOf(bin_estimator, 'logisfitR6')
           private$conditional_densities <- list()
         },
 

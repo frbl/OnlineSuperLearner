@@ -102,18 +102,18 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   #algorithm = 'ML.H2O.gbm')))
           algos <- list()
 
-          algos <- append(algos, list(list(algorithm = 'tmlenet::speedglmR6',
-                                  #algorithm_params = list(),
-                                  params = list(nbins = c(6,7,18)))))
+          #algos <- append(algos, list(list(algorithm = 'tmlenet::speedglmR6',
+                                  ##algorithm_params = list(),
+                                  #params = list(nbins = c(6,7,18), online = FALSE))))
 
           algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
                                   algorithm_params = list(alpha = 0),
-                                  params = list(nbins = c(6,40)))))
+                                  params = list(nbins = c(6,40), online = TRUE))))
 
 
           #algos <- append(algos, list(list(algorithm = 'tmlenet::glmR6',
                                   ##algorithm_params = list(),
-                                  #params = list(nbins = c(16)))))
+                                  #params = list(nbins = c(16), online = FALSE))))
 
           private$SL.library.definition <- algos
 

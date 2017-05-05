@@ -21,7 +21,12 @@
 #'   }
 #'
 #'   \item{\code{getNextN(n)}}{
-#'     Method that returns the next \code{n} observations. This function can be used to bootstrap an initial model.
+#'     Method that returns the next \code{n} observations. This function can be used to bootstrap 
+#'     an initial model or to get a minibatch of observations. Note that the function will always
+#'     try to return data. If one asks for n observations, it will check if there are still n new
+#'     observations. If not, it will return all observations still available. If there are no 
+#'     observations available, it will return null.
+#'     @param n = the number of measurements requested
 #'   }
 #' }
 #' @export
@@ -76,11 +81,12 @@ Data.Static <-
         },
 
         getNextN = function(n = 1) {
-          max <- nrow(private$dataset) - private$currentrow + 1
+          max <- nrow(private$dataset) - private$currentrow + 1 %>%
+           Arguments$getInteger(., c(1, Inf))
 
           # Check if the max value > 0
-          Arguments$getInteger(max, c(1, Inf))
-          n <- Arguments$getInteger(n, c(1, max))
+          n <- min(n, max)
+          if(n <= 0) return(NULL)
 
           temp <- private$dataset[private$currentrow:((private$currentrow + n)-1), ]
           private$currentrow <- private$currentrow + n

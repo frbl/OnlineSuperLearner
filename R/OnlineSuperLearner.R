@@ -1,3 +1,4 @@
+devtools::load_all('~/Workspace/frbl/tmlenet/')
 #' OnlineSuperLearner
 #'
 #' This is the main super learner class. This class contains everything related
@@ -87,6 +88,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         SL.library.descriptions = NULL,
         SL.library.fabricated = NULL,
         fitted = NULL,
+
+        # Options for fitting
+        should_fit_osl = NULL,
+        should_fit_dosl = NULL,
 
         # Splitter for the data
         data_splitter = NULL,
@@ -253,6 +258,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         },
 
         fit_osl = function(predicted.outcome, observed.outcome){
+          if(!self$fits_osl) return(NULL)
           # If we have 1 estimator, the weighted combination of that estimator
           # is just the estimator itself.
           # Actually fit a estimator here
@@ -289,6 +295,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         # Find the best estimator among the current set, for each of the densities (WAY)
         fit_dosl = function() {
+          if(!self$fits_dosl) return(NULL)
+
           private$verbose && enter(private$verbose, 'Finding best estimators from the candidates')
           current_risk <- self$get_cv_risk
           private$dosl.estimators <- rbindlist(current_risk) %>%
@@ -330,8 +338,16 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ),
   active =
     list(
-        is_fitted = function(){
+        is_fitted = function() {
           private$fitted
+        },
+
+        fits_osl = function() {
+          private$should_fit_osl
+        },
+
+        fits_dosl = function() {
+          private$should_fit_dosl
         },
 
         get_estimators = function() {
@@ -359,10 +375,13 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         # Functions
         # =========
         initialize = function(SL.library.definition = c('ML.Local.lm', 'ML.H2O.glm'),
-                              summaryMeasureGenerator, verbose = FALSE) {
+                              summaryMeasureGenerator, should_fit_osl = TRUE, should_fit_dosl = TRUE, 
+                              verbose = FALSE) {
           private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
           private$fitted = FALSE
           private$summaryMeasureGenerator <- Arguments$getInstanceOf(summaryMeasureGenerator, 'SummaryMeasureGenerator')
+          private$should_fit_dosl <- Arguments$getLogical(should_fit_dosl)
+          private$should_fit_osl <- Arguments$getLogical(should_fit_osl)
 
           # Cross validation initialization
           private$cv_risk = list()
@@ -460,6 +479,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           if (!self$is_fitted){
             return(NA)
           }
+          all_estimators <- Arguments$getLogical(all_estimators)
+          discrete <- Arguments$getLogical(discrete) & self$fits_dosl
+          continuous <- Arguments$getLogical(continuous) & self$fits_osl
 
           if (!any(c(discrete, all_estimators, continuous))) {
             throw('At least one option should be selected: discrete, all_estimators, or continuous')
