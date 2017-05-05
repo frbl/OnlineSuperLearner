@@ -71,8 +71,11 @@ ML.XGBoost <- R6Class("ML.XGBoost",
         predict(private$model, X_mat, missing = NA)
       },
 
-      do.update = function() {
-
+      do.update = function(X_mat, Y_vals, ...) {
+        # By default the xgbtrain function uses the old model as a parameter. Therefore we can just simply call
+        # the fit function
+        X_mat
+        private$do.fit(X_mat, Y_vals)
       },
 
       do.fit = function (X_mat, Y_vals) {
@@ -97,7 +100,7 @@ ML.XGBoost <- R6Class("ML.XGBoost",
                                 params     = private$params,
                                 nrounds    = private$rounds,
                                 #watchlist = watchlist,
-                                #xgb_model  = private$model,
+                                xgb_model  = private$model,
                                 verbose    = private$verbosity)
 
         if(is.null(private$model)) browser()

@@ -100,9 +100,23 @@ test_that("it should get the next n  entries from the dataset", {
   expect_equal(result, expected)
 })
 
-test_that("it should throw if more data is requested and all data was collected", {
+test_that("it should return only the available data if more data was requested then available", {
   data <- data.table(x=c(1,2,3,4), y=c(4,3,2,1))
   ds <- described.class$new(dataset = data)
-  lapply(seq(nrow(data)), function(i) ds$getNext())
-  expect_error(ds$getNextN(n=100))
+  result <- ds$getNextN(n=3)
+  expect_false(is.null(result))
+  expect_error(result <- ds$getNextN(n=100), NA)
+  expect_equal(dim(result), c(1,2))
+  expect_equal(result, data.table(x=4,y=1))
 })
+
+test_that("it should return null if no data is available", {
+  data <- data.table(x=c(1,2,3,4), y=c(4,3,2,1))
+  ds <- described.class$new(dataset = data)
+  result <- ds$getNextN(n=4)
+  expect_false(is.null(result))
+  expect_equal(result, data)
+  expect_error(result <- ds$getNextN(n=100), NA)
+  expect_true(is.null(result))
+})
+
