@@ -22,7 +22,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
         # Functions
         # =========
         fake_update = function(newdata, X, Y){
-          warning('This is not an online update! We fake  the online part!')
+          #warning('This is not an online update! We fake  the online part!')
           private$data <- rbindlist(list(private$data, newdata))
           private$fit(private$data, X=X,Y=Y)
         },
@@ -45,7 +45,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
 
           # Put all est_params in RegressionClass (regression with speedglm package)
           regclass <- RegressionClass$new(bin_estimator = private$bin_estimator,
-                                          nbins=private$nbins,
+                                          nbins = private$nbins,
                                           outvar.class = outcome.class,
                                           outvar = Y,
                                           predvars = X,
@@ -54,33 +54,36 @@ DensityEstimation <- R6Class ("DensityEstimation",
           # Create the conditional density, based on the regression just specified and fit it
           private$conditional_densities[Y] <- list(SummariesModel$new(reg = regclass, DatNet.sWsA.g0 = nodeObjects$datNetObs))
           self$getConditionalDensities(Y)$fit(data = nodeObjects$datNetObs)
-
-          if(FALSE) {
-            # Test code
-            #browser()
-            # Our prediction
-            mean(self$predict(datO,X,Y) == datO$A)
-
-            # GLM prediction
-            model <- glm(A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family='binomial', data=datO)
-            mean((predict(model, datO, type='response')>0.5) == (datO$A == 1))
-          }
         },
 
         predict_probability = function(datO, X, Y, plot = FALSE) {
           if(!(Y %in% names(datO))) throw('In order to predict the probability of an outcome, we also need the outcome')
           yValues <- datO[[Y]]
           conditionalDensity <- self$getConditionalDensities(Y)
-          nodeObjects <- private$define_node_objects(datO = datO, X = X, Y = Y)
 
           #TODO: Why would we want to use predict over Aeqa?
+          # This fix might not be necessary. It seems that whenever we have 1 row of data and 1 covariate, everythin
+          # crashes and burns. Using this simple fix actually fixes that problem. Unfortunately, when using this fix,
+          # it doesnt work when there are more than 1 covariate.
+          fixed <- FALSE
+          if(nrow(datO) == 1) {
+            print('Fixing!')
+            datO <- rbind(datO, datO)
+            fixed <- TRUE
+          }
+
+          nodeObjects <- private$define_node_objects(datO = datO, X = X, Y = Y)
 
           # Predict the instances where A=A (i.e., the outcome is the outcome)
           estimated_probabilities <- conditionalDensity$predictAeqa(newdata = nodeObjects$datNetObs)
 
-          if (plot) {
+          # We undo our fix here:
+          if(fixed) { estimated_probabilities <- estimated_probabilities[[1]] }
+
+          if (plot & length(yValues) > 1) {
             private$output_plots(yValues = yValues, estimated_probabilities = estimated_probabilities)
           }
+
           estimated_probabilities
 
           #subs <- conditionalDensity$getPsAsW.models()[[1]]$getPsAsW.models()
@@ -103,22 +106,11 @@ DensityEstimation <- R6Class ("DensityEstimation",
             datO[is.na(datO)] <- 0
           }
 
-          # This fix might not be necessary. It seems that whenever we have 1 row of data and 1 covariate, everythin
-          # crashes and burns. Using this simple fix actually fixes that problem. Unfortunately, when using this fix,
-          # it doesnt work when there are more than 1 covariate.
-          #fixed <- FALSE
-          #if(nrow(datO) == 1) {
-            #print('Fixing!')
-            #datO <- rbind(datO, datO)
-            #fixed <- TRUE
-          #}
 
           # Generate a datanet object (this needs to be refactored)
           nodeObjects <- private$define_node_objects(datO = datO, X = X, Y = Y)
           sampled_data <- conditionalDensity$sampleA(newdata = nodeObjects$datNetObs)
 
-          # We undo our fix here:
-          #if(fixed) { sampled_data <- sampled_data[[1]] }
 
           sampled_data
         },
@@ -199,7 +191,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
           if (is.null(private$randomVariables) | length(private$conditional_densities) == 0) {
             throw('The conditional_densities need to be fit first!')
           }
-
+          
           lapply(private$randomVariables, function(rv) {
             if(sample) {
               private$sample(datO=data, Y=rv$getY, X=rv$getX)
