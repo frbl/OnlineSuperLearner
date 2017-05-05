@@ -141,6 +141,7 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
           names(current_risk) <- algorithm_names
           return(current_risk)
         }
+
         ),
   active =
     list(

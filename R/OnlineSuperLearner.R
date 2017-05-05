@@ -103,26 +103,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         # Functions
         # =========
 
-        # Find the best estimator among the current set, for each of the densities (WAY)
-        find_current_best_estimator = function() {
-          private$verbose && enter(private$verbose, 'Finding best estimators from the candidates')
-          current_risk <- self$get_cv_risk
-          result <- rbindlist(current_risk) %>%
-            # Get the first if there are multiple best ones
-            sapply(., function(algorithm_scores) {
-              # We do it this way as the OSL might also get selected. This might be something we want, but for now
-              # the discrete SL can only be one of the candidates, and not the OSL.
-              ids <- sort(algorithm_scores, index.return=TRUE)$ix
-              for(name in names(current_risk)[ids]) {
-                if(name %in% names(private$SL.library.fabricated)) {
-                  return(private$SL.library.fabricated[[name]])
-                }
-              } 
-            }) 
-          private$verbose && exit(private$verbose)
-          return(result)
-        },
-
         # Update the cross validation risk
         update_risk = function(predicted.outcome, observed.outcome, randomVariables) {
           private$cv_risk <- private$cv_risk_calculator$update_risk(predicted.outcome = predicted.outcome,
@@ -154,6 +134,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$verbose && enter(private$verbose, 'Predicting with all models')
           #dataH2o <- as.h2o(data)
           #private$verbose && cat(private$verbose, 'Uploaded data to h2o')
+
           result <- lapply(private$SL.library.fabricated,
             function(estimator) {
               #if(is.a(estimator, 'ML.H2O')){
@@ -162,7 +143,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                 current <- data
               #}
               # TODO: Unity in export formats. Probably the best is to enforce a data.table output
-              estimator$predict(current, sample = TRUE)
+              estimator$predict(current, sample = FALSE)
             })
 
           # convert the list of results into a data.table
@@ -229,7 +210,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                               randomVariables = randomVariables)
 
           # Update the discrete superlearner (take the first if there are multiple candidates)
-          private$dosl.estimators <- private$find_current_best_estimator()
+          private$fit_dosl()
         },
 
         # Function to update the models with the available data
@@ -246,15 +227,15 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           }
 
           # Set the current timestep to 1
-          t <- mini_batch_size
+          t <- 0
 
-          data_current <- private$summaryMeasureGenerator$getNextN(mini_batch_size)
+          data_current <- private$summaryMeasureGenerator$getNext(mini_batch_size)
 
           # TODO: Check wether the stopping criteria are met (e.g., improvement < theta)
           while(t < max_iterations && nrow(data_current) >= 1 && !is.null(data_current)) {
 
-            # Only show this log every X times (X * mini_batch_size)
-            if(t %% (1 * mini_batch_size) == 0 && private$verbose) {
+            # Only show this log every 5 times
+            if(t %% 5 == 0 && private$verbose) {
               lapply(names(self$get_cv_risk), function(cv_name) {
                         cat(private$verbose, paste('Updating OSL at iteration', t,
                                                   'error for', cv_name,
@@ -265,8 +246,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             private$train_library(data_current = data_current, randomVariables = randomVariables)
 
             # Get the new row of data
-            data_current <- private$summaryMeasureGenerator$getNextN(mini_batch_size)
-            t <- t + mini_batch_size
+            data_current <- private$summaryMeasureGenerator$getNext(mini_batch_size)
+            t <- t + 1
           }
           private$verbose && exit(private$verbose)
         },
@@ -304,7 +285,27 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                                                         Y = as.matrix(observed_outcome),
                                                         private$SL.library.descriptions)
           })
+        },
+
+        # Find the best estimator among the current set, for each of the densities (WAY)
+        fit_dosl = function() {
+          private$verbose && enter(private$verbose, 'Finding best estimators from the candidates')
+          current_risk <- self$get_cv_risk
+          private$dosl.estimators <- rbindlist(current_risk) %>%
+            # Get the first if there are multiple best ones
+            sapply(., function(algorithm_scores) {
+              # We do it this way as the OSL might also get selected. This might be something we want, but for now
+              # the discrete SL can only be one of the candidates, and not the OSL.
+              ids <- sort(algorithm_scores, index.return=TRUE)$ix
+              for(name in names(current_risk)[ids]) {
+                if(name %in% names(private$SL.library.fabricated)) {
+                  return(private$SL.library.fabricated[[name]])
+                }
+              } 
+            }) 
+          private$verbose && exit(private$verbose)
         }
+
 
         ## Fit the actual super learner on all models in the current set of models
         ##
@@ -314,7 +315,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         #fit = function(predicted.outcome, observed.outcome) {
 
           #fit_dosl(predicted.outcome, observed.outcome)
-          #private$dosl.estimators <- private$find_current_best_estimator()
+          #private$dosl.estimators <- private$fit_dosl()
 
           ## Do gradient descent update
           ## Something like:
@@ -381,18 +382,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$weightedCombinationComputers <- list()
 
           self$get_validity
-        },
-
-        evaluateModels = function(data, randomVariables) {
-          predicted.outcome <- self$predict(data = data, randomVariables = randomVariables, 
-                                            discrete = TRUE, continuous = TRUE, all_estimators = TRUE)
-
-          outcome.variables <- sapply(randomVariables, function(rv) rv$getY)
-          observed.outcome <- data[, outcome.variables, with=FALSE]
-
-          private$cv_risk_calculator$calculate_evaluation(predicted.outcome = predicted.outcome,
-                                                          observed.outcome = observed.outcome, 
-                                                          randomVariables = randomVariables)
         },
 
         # Samples the data iteratively from the fitted distribution, and applies an intervention if necessary
@@ -521,7 +510,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
               if (outcome_name %in% names(private$dosl.estimators)) {
                 outcome_name
                 private$dosl.estimators
-                prediction <- private$dosl.estimators[[outcome_name]]$predict(data = data)[[outcome_name]]
+                prediction <- private$dosl.estimators[[outcome_name]]$predict(data = data, sample = FALSE)[[outcome_name]]
               } else {
                 prediction <- c(outcome = NA)
               }

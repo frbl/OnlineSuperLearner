@@ -78,6 +78,7 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
         }
         nuf <- function(marap, fn=optimizable_function, eps = epsilon, do_check = check,
                                          back_transform_param_function=private$back_transform_parameters) {
+
           param <- back_transform_param_function(marap, epsilon = eps, check = do_check)
           param <- c(param, 1-sum(param))
           fn(param, data= data,...)
@@ -93,7 +94,7 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
         if (any(is.infinite(sthgiew))) {
           msg <- "Trying to start from the border, so doing nothing..."
           warning(paste("\n", msg, "\n"))
-          value <- private$function_to_optimize(weights, ...)
+          value <- private$function_to_optimize(alpha = weights, data = data, ...)
           value <- value[1, drop = TRUE]
           opt <- list(par = weights,
                       value = value,
@@ -102,7 +103,7 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
                       message = msg)
         } else {
           nuf <- private$transform_function(private$function_to_optimize, 
-                                                       epsilon = epsilon, check = FALSE, data= data, ...)
+                                                       epsilon = epsilon, check = FALSE, data = data, ...)
 
           # Note that after optimizing we still need to transform the weights back to the parameter world
           tpo <- optimr(sthgiew, fn = nuf, method = method)
@@ -129,12 +130,13 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
                                   method = "Nelder-Mead",
                                   data = data, ...)
 
-        optSecond <- private$perform_optimization(weights = optFirst$par,
-                                    epsilon = 0,
-                                    method = "BFGS",
-                                    data = data, ...)
+        private$weights <- optFirst$par
+        #optSecond <- private$perform_optimization(weights = optFirst$par,
+                                    #epsilon = private$epsilon,
+                                    #method = "BFGS",
+                                    #data = data, ...)
 
-        private$weights <- optSecond$par
+        #private$weights <- optSecond$par
         names(private$weights) <- libraryNames
         invisible(self)
       }

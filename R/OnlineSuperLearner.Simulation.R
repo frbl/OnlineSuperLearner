@@ -16,6 +16,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
         test_set_size = NULL,
         log = NULL,
         SL.library.definition = NULL,
+        cv_risk_calculator = NULL,
 
         generate_bounds = function(data) {
           bounds <- list()
@@ -29,13 +30,14 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
         },
 
         train = function(data.test, data.train, bounds, randomVariables, max_iterations) {
+          outcome.variables <- sapply(randomVariables, function(rv) rv$getY)
           smg_factory <- SMGFactory$new()
           summaryMeasureGenerator <- smg_factory$fabricate(randomVariables, bounds = bounds)
 
           margin <- 100
           Data.Static$new(dataset = data.test) %>% 
             summaryMeasureGenerator$setData(.)
-          data.test <- summaryMeasureGenerator$getNextN(private$test_set_size)
+          data.test <- summaryMeasureGenerator$getNext(private$test_set_size)
 
           data.train <- Data.Static$new(dataset = data.train)
 
@@ -47,17 +49,25 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           private$log && cat(private$log, 'Running OSL')
 
           # Divide by two here just so the initial size is a lot larger then each iteration, not really important
-          estimators <- osl$fit(data.train, randomVariables = randomVariables,
-                                initial_data_size = private$training_set_size / 2, max_iterations = max_iterations,
-                                mini_batch_size = (private$training_set_size / 2) / max_iterations)
+          risk <- osl$fit(data.train, randomVariables = randomVariables,
+                                initial_data_size = private$training_set_size / 2, 
+                                max_iterations = max_iterations,
+                                mini_batch_size = (private$training_set_size / 2) / max_iterations) %T>%
+            print
 
 
           private$log && cat(private$log, 'Predicting using all estimators')
-          predictions <- osl$predict(data = copy(data.test), randomVariables)
+          browser()
 
-          performance <- osl$evaluateModels(data = copy(data.test), randomVariables = randomVariables) %>%
+          # Calculate prediction quality
+          observed.outcome <- data.test[, outcome.variables, with=FALSE]
+          predicted.outcome <- osl$predict(data = copy(data.test), randomVariables)
+          performance <- private$cv_risk_calculator$calculate_evaluation(predicted.outcome = predicted.outome,
+                                                          observed.outcome = observed.outcome, 
+                                                          randomVariables = randomVariables) %>%
             c(iterations = max_iterations, performance = .) %T>%
             print
+
           #})
           #performances <- do.call(rbind, lapply(performances, data.frame)) %T>%
           #print
@@ -77,6 +87,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           options(warn=1)
           private$sim  <- Simulator.GAD$new()
           private$training_set_size <- 1e5
+          private$cv_risk_calculator <- CrossValidationRiskCalculator$new()
           private$test_set_size <- 100
           private$log <- Arguments$getVerbose(-8, timestamp=TRUE)
           #algos <- list(list(description='ML.H2O.randomForest-1tree',
@@ -93,7 +104,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           algos <- append(algos, list(list(algorithm = 'tmlenet::speedglmR6',
                                   #algorithm_params = list(),
-                                  params = list(nbins = c(6,40)))))
+                                  params = list(nbins = c(6,7,18)))))
 
           algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
                                   algorithm_params = list(alpha = 0),
@@ -107,23 +118,8 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           private$SL.library.definition <- algos
 
           # Run the simulations
-          self$basicRegression()
           self$basicRegressionWithLags()
-          self$basicClassification()
-          self$basicClassificationWithLags()
           #self$verySimpleSimulation()
-        },
-
-        basicClassification = function() {
-          set.seed(12345)
-        },
-
-        basicClassificationWithLags = function() {
-          set.seed(12345)
-        },
-
-        basicRegression = function() {
-          set.seed(12345)
         },
 
         basicRegressionWithLagsAndJustWAY = function() {

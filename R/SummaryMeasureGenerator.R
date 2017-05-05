@@ -15,7 +15,6 @@
 #'
 #'   \item{\code{fillCache()}}{}
 #'   \item{\code{getNext()}}{}
-#'   \item{\code{getNextN()}}{}
 #' }
 SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
   public =
