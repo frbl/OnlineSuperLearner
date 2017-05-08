@@ -116,12 +116,11 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
 
 
           # Note that we need to update the risk for every algorithm and every RV
-          # TODO: Is this calulation correct now?
           algorithm_names <- names(updated_risk)
           current_risk <- lapply(algorithm_names, function(algorithm_name) {
             new_risks <- updated_risk[[algorithm_name]]
             old_risk <- current_risk[[algorithm_name]]
-            
+
             lapply(randomVariables, function(rv) {
               current <- rv$getY 
 
@@ -129,7 +128,15 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
               #new_risk <- (1 / (current_count + 1)) * new_risks[[current]] 
               new_risk <- new_risks[[current]] 
 
-              if(!is.null(old_risk)){
+              if(!is.null(old_risk) && is.na(old_risk[[current]])) {
+                # If our previous risk is NA, that means that we had a previous iteration in which we could
+                # not calculate the risk. Most likely because of the initialization of the DOSL. In the next
+                # iteration we can make a prediction, but it is out of sync with the provided count. Therefore,
+                # set the old risk to the new risk and resync with the count.
+                old_risk[[current]] <- new_risk 
+              }
+
+              if(!is.null(old_risk)) {
                 new_risk <- (new_risk + (current_count * old_risk[[current]])) / (current_count + 1)
               }
 

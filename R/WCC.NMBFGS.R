@@ -28,6 +28,9 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
         lengthOfParam <- length(param)
         epsilon <- Arguments$getNumeric(epsilon, c(0, 0.1 / lengthOfParam))
         if (check) {
+          # There are rounding erros, and because of that the get numerics fails. Work around that for now.
+          param <- sapply(param, function(x) min(max(x,epsilon), 1 - lengthOfParam * epsilon))
+
           param <- Arguments$getNumerics(param, c(epsilon, 1 - lengthOfParam * epsilon))
           sumOfParam <- sum(param)
           if (sumOfParam > 1 - epsilon) {
@@ -63,7 +66,8 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
         if (check) {
           sumOfParam <- sum(param)
 
-          if (sumOfParam > 1 - epsilon) {
+          if (sumOfParam + epsilon > 1 + 1e-10) {
+            browser()
             throw("'check' is 'TRUE' and 'sum(param)', ", sumOfParam, " is larger than '1 - epsilon', with 'epsilon' set to ", epsilon)
           }
         }
@@ -87,6 +91,7 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
       },
 
       perform_optimization = function(weights, epsilon,  method = 'Nelder-Mead', data, ...) {
+
         sthgiew <- private$transform_parameters(weights[-length(weights)], epsilon = epsilon, check = TRUE)
 
         # It could be the case that one of the weights was right on the border (0 for example), and this will

@@ -71,7 +71,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
 
           extraMeasurementsNeeded <- nrow(self$getCache) - self$minimal.measurements.needed
           if(extraMeasurementsNeeded < 0) {
-            private$cache <- private$data$getNextN(abs(extraMeasurementsNeeded))
+            private$cache <- private$get_next_normalized(n=abs(extraMeasurementsNeeded))
             return(TRUE)
           }
           FALSE
@@ -109,21 +109,12 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
             # Remove the first n measurements from the dataframe
             private$cache <- tail(private$cache, -n)
           }
-
-          # Get the next N observations, rely on the data source to get this data efficient
-          current <- private$data$getNextN(n = n)
-          if (is.null(current)) return(NULL)
-
-          if (self$is_normalized) current %<>% self$normalize(.)
-
+          current <- private$get_next_normalized(n=n)
           # Now, this combined with the cache, should be enough to get the new observations
           private$cache <- rbindlist(list(private$cache, current))
 
           self$summarizeData(private$cache, n=n)
 
-        },
-
-        getNextN = function(n = 1){
         },
 
         normalize = function(data, bounds = private$bounds) {
@@ -167,6 +158,16 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
         verbose = NULL,
         normalized = NULL,
         bounds = NULL,
+
+        get_next_normalized = function(n) {
+          # Get the next N observations, rely on the data source to get this data efficient
+          current <- private$data$getNextN(n = n)
+          if (is.null(current)) return(NULL)
+
+          if (self$is_normalized) current %<>% self$normalize(.)
+          current
+        },
+
         checkDataAvailable = function() {
           if(is.null(private$data)) {
             throw('Please set the data of the summary measure generator first')

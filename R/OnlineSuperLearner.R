@@ -136,7 +136,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         # @param W: the column names used for the covariates
         # @return a list of outcomes, each entry being a data.table with the outcomes of an estimator
         predictUsingAllEstimators = function(data) {
-          private$verbose && enter(private$verbose, 'Predicting with all models')
+          private$verbose && enter(private$verbose, 'Predicting with all estimators')
           #dataH2o <- as.h2o(data)
           #private$verbose && cat(private$verbose, 'Uploaded data to h2o')
 
@@ -450,6 +450,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         # initial_data_size = the number of observations needed to fit the initial estimator
         fit = function(data, randomVariables, initial_data_size = 5, max_iterations = 20, mini_batch_size = 20) {
 
+          tic <- Sys.time()
           data <- Arguments$getInstanceOf(data, 'Data.Base')
           private$summaryMeasureGenerator$setData(data = data)
 
@@ -460,16 +461,20 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$initialize_weighted_combination_calculators(randomVariables)
 
           # Get the initial data for fitting the first estimator and train the initial models
-          private$verbose && enter(private$verbose, 'Fitting initial models')
+          private$verbose && enter(private$verbose, 'Fitting initial estimators')
           private$summaryMeasureGenerator$getNext(initial_data_size) %>%
             private$train_library(data_current = ., randomVariables = randomVariables)
           private$verbose && exit(private$verbose)
 
+          private$verbose && enter(private$verbose, 'Updating estimators')
           # Update the library of models using a given number of max_iterations
           private$update_library(randomVariables = randomVariables, max_iterations = max_iterations,
                                 mini_batch_size = mini_batch_size)
 
           # Return the cross validated risk
+          private$verbose && exit(private$verbose)
+          toc <- Sys.time()
+          private$verbose && cat(private$verbose, 'The whole procedure took ', (toc - tic), ' seconds.')
           return(self$get_cv_risk)
         },
 
