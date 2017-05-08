@@ -191,9 +191,9 @@ DensityEstimation <- R6Class ("DensityEstimation",
         ),
   public =
     list(
-        initialize = function(nbins = 30, bin_estimator = tmlenet::speedglmR6$new(), is_online = FALSE, verbose = FALSE) {
+        initialize = function(nbins = 30, bin_estimator = tmlenet::speedglmR6$new(), online = FALSE, verbose = FALSE) {
           private$verbose <- Arguments$getVerbose(verbose)
-          private$is_online_estimator <- Arguments$getLogical(is_online)
+          private$is_online_estimator <- Arguments$getLogical(online)
           private$nbins <- Arguments$getIntegers(as.numeric(nbins), c(1, Inf))
           private$bin_estimator <- Arguments$getInstanceOf(bin_estimator, 'logisfitR6')
           private$conditional_densities <- list()

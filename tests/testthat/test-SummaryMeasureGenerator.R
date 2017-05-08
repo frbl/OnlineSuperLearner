@@ -90,6 +90,28 @@ test_that("it should fill the cache with the correct number of measurments", {
   expect_true(nrow(subject$getCache) == needed -1)  
 })
 
+test_that("it should normalize the data provided to it, if bounds are available", {
+  my_dataset <- copy(dataset)
+  my_dataset <- my_dataset + rnorm(nrow(dataset), 0, 1000)
+  expect_true(max(my_dataset) > 1)
+  expect_true(min(my_dataset) < 1)
+  data <- Data.Static$new(dataset = my_dataset)
+  bounds <-list(
+    A=list(min=min(my_dataset$A), max=max(my_dataset$A)),
+    Y=list(min=min(my_dataset$Y), max=max(my_dataset$Y)),
+    W=list(min=min(my_dataset$W), max=max(my_dataset$W))
+  )
+
+  needed <- 3
+  mylist <- c(SMG.Mock$new(needed))
+  subject <- described.class$new(SMG.list = mylist, data = data, bounds = bounds)
+  expect_true(nrow(subject$getCache) == 0)  
+
+  subject$fillCache()
+  expect_true(max(subject$getCache) <= 1)  
+  expect_true(min(subject$getCache) >= 0)  
+})
+
 context(" getNext")
 test_that("it should return the measurements requested without params", {
   data <- Data.Static$new(dataset = dataset)
