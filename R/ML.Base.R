@@ -17,30 +17,18 @@ ML.Base <- R6Class("ML.Base",
   inherit = tmlenet::logisfitR6,
   public =
     list(
-      fitfunname='glm',
-      lmclass='glmR6',
-      initialize = function() {
-        self$set_model(list())
-      },
+      fitfunname='ml.base',
+      lmclass='ML.BaseR6',
 
       process = function(X_mat, Y_vals, X_mat_test, Y_vals_test) {
         throw('Deprecated!')
-      },
-
-      set_model = function(model) {
-        private$model <- model
       }
     ),
   active = 
     list(
-      get_model = function() {
-        throw('Deprecated! Dont use this function! The ML objects are reused, overwriting the model in there')
-      }
       ),
   private =
     list(
-        model = NULL,
-
         do.fit = function(X_mat, Y_vals) {
           throw('The fit method needs to be inherited')
         },
@@ -54,3 +42,4 @@ ML.Base <- R6Class("ML.Base",
         }
     )
 )
+
