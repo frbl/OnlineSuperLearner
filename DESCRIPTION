@@ -50,7 +50,6 @@ Collate:
     'Simulator.Simple.R'
     'Data.Stream.Simulator.R'
     'DataSplitter.R'
-    'ML.Local.R'
     'DensityEstimation.R'
     'H2O.initializer.R'
     'H2O.Interactor.R'

@@ -3,7 +3,6 @@
 #'
 #' @import tmlenet
 #' @importFrom tmlenet def_sW def_sA
-#' @include ML.Local.R
 #' @docType class
 #' @importFrom R6 R6Class
 #' @importFrom simcausal NetIndClass

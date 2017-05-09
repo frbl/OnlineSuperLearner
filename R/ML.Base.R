@@ -24,6 +24,7 @@ ML.Base <- R6Class("ML.Base",
         throw('Deprecated!')
       },
 
+      # Functions for testing only
       perform_prediction = function(...) {
         private$do.predict(...)
       },
