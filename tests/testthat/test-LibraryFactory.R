@@ -233,3 +233,4 @@ test_that("it should set the correct names", {
   expect_true(all_in_there)
   expect_equal(length(result), length(expected))
 })
+

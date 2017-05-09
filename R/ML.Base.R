@@ -20,16 +20,11 @@ ML.Base <- R6Class("ML.Base",
       fitfunname='glm',
       lmclass='glmR6',
       initialize = function() {
-        model <- list()
+        self$set_model(list())
       },
 
       process = function(X_mat, Y_vals, X_mat_test, Y_vals_test) {
-        # DO NOT OVERRIDE THIS FUNCTION!
-        # This function delegates the call to its subclass
-        m.fit <- private$do.fit(X_mat = X_mat, Y_vals = Y_vals)
-
-        # Predict the outcome on the testset
-        private$do.predict(X_mat = X_mat_test, m.fit = m.fit$fit)
+        throw('Deprecated!')
       },
 
       set_model = function(model) {
@@ -39,7 +34,7 @@ ML.Base <- R6Class("ML.Base",
   active = 
     list(
       get_model = function() {
-        return(private$model)
+        throw('Deprecated! Dont use this function! The ML objects are reused, overwriting the model in there')
       }
       ),
   private =
@@ -52,10 +47,10 @@ ML.Base <- R6Class("ML.Base",
 
         do.predict = function(X_mat, m.fit) {
           warning("You are using the base predict function, you'd probably want to inherit and override this")
-          if (is.null(self$model)) {
+          if (is.null(m.fit)) {
             throw('Train the model first')
           }
-          pred <- predict(m.fit$fit, X_mat)
+          pred <- predict(m.fit, X_mat)
         }
     )
 )

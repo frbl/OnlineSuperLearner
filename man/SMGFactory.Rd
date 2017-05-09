@@ -22,7 +22,7 @@ Factory for creating a set of SummaryMeasureGenerators, based on the needed vari
     Fabricates the actual SMG's. Given a list of \code{RandomVariable}s all covariates are selected and merged.
     These are used as a basis for selecting the needed variables in the dataframe.
     @param randomVariables = a list of \code{RandomVariable} objects, from which the X variables are selected
-    @param verbose = \code{Verbose} object or \code{FALSE} to define the verbosity of the creation
+    @param ... = data to get passed to the SMG
   }
 }
 }

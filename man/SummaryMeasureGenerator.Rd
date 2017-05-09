@@ -21,7 +21,6 @@ to the super learner machine learning model.
 
   \item{\code{fillCache()}}{}
   \item{\code{getNext()}}{}
-  \item{\code{getNextN()}}{}
 }
 }
 

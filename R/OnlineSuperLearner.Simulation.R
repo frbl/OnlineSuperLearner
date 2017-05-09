@@ -102,14 +102,22 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   #algorithm = 'ML.H2O.gbm')))
           algos <- list()
 
+
+          #algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
+                                  #algorithm_params = list(alpha = 0),
+                                  #params = list(nbins = c(6,40), online = TRUE))))
+
+          algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
+                                  algorithm_params = list(ntrees=c(10,20), min_rows=1),
+                                  params = list(nbins = c(6), online = TRUE))))
+
+          algos <- append(algos, list(list(algorithm = 'ML.H2O.randomForest',
+                                  algorithm_params = list(ntrees=c(10,20)),
+                                  params = list(nbins = c(6), online = TRUE))))
+
           algos <- append(algos, list(list(algorithm = 'tmlenet::speedglmR6',
                                   #algorithm_params = list(),
                                   params = list(nbins = c(6,7,18), online = FALSE))))
-
-          algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                                  algorithm_params = list(alpha = 0),
-                                  params = list(nbins = c(6,40), online = TRUE))))
-
 
           #algos <- append(algos, list(list(algorithm = 'tmlenet::glmR6',
                                   ##algorithm_params = list(),
@@ -180,11 +188,28 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           ######################################
           # Generate observations for training #
           #####################################
-          llW <- list(stochMech=function(numberOfBlocks) {
+          #llW <- list(stochMech=function(numberOfBlocks) {
+                        #rnorm(numberOfBlocks, 0, 10)
+                      #},
+                      #param=c(0, 0.5, -0.25, 0.1),
+                      #rgen=identity)
+
+          llW <- list(list(stochMech = function(numberOfBlocks) {
                         rnorm(numberOfBlocks, 0, 10)
                       },
                       param=c(0, 0.5, -0.25, 0.1),
-                      rgen=identity)
+                      rgen=identity),
+                    list(stochMech = function(numberOfBlocks) {
+                        runif(numberOfBlocks, 0, 1)
+                      },
+                      param = c(0, 0.5),
+                      rgen = identity),
+                    list(stochMech = function(numberOfBlocks) {
+                        runif(numberOfBlocks, 0, 1)
+                      },
+                      param = c(0, 0.5),
+                      rgen = identity)
+                    )
 
           llA <- list(
             stochMech=function(ww) {
@@ -206,12 +231,12 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
             rnorm(length(mu), mu, sd=0.1)}})
 
           # We'd like to use the following features in our estimation:
-          W  <- RandomVariable$new(family = 'gaussian', formula = W  ~ Y_lag_1 + W1_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2)
-          W1 <- RandomVariable$new(family = 'gaussian', formula = W1 ~ W_lag_1)
-          W2 <- RandomVariable$new(family = 'gaussian', formula = W2 ~ Y_lag_1)
+          W  <- RandomVariable$new(family = 'gaussian', formula = W  ~ Y_lag_1 + W2_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2)
+          W2 <- RandomVariable$new(family = 'gaussian', formula = W2 ~ W_lag_1)
+          W3 <- RandomVariable$new(family = 'gaussian', formula = W3 ~ Y_lag_1)
           A  <- RandomVariable$new(family = 'binomial', formula = A  ~ W + Y_lag_1 + A_lag_1 + W_lag_1)
           Y  <- RandomVariable$new(family = 'gaussian', formula = Y  ~ A + W)
-          randomVariables <- c(W, W1, W2, A, Y)
+          randomVariables <- c(W, W2, W3, A, Y)
 
           # Create the measures we'd like to include in our model
           # In this simulation we will include 2 lags and the latest data (non lagged)
@@ -221,12 +246,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           # We add a margin so we don't have to worry about the presence of enough history
           margin <- 100
           data.test <- private$sim$simulateWAY(private$test_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
-          data.test[, W1 := rnorm(private$test_set_size + margin, 10, 1)]
-          data.test[, W2 := rbinom(private$test_set_size + margin, 1, 0.5)]
-
           data.train <- private$sim$simulateWAY(private$training_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
-          data.train[, W1 := rnorm(private$training_set_size + margin, 10, 1)]
-          data.train[, W2 := rbinom(private$training_set_size + margin, 1, 0.5)]
 
           # Create the bounds
           bounds <- private$generate_bounds(data.train)
@@ -234,7 +254,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           # Create the measures we'd like to include in our model
           # In this simulation we will include 2 lags and the latest data (non lagged)
           # Define the variables in the initial dataset we'd like to use
-          private$train(data.test, data.train, bounds, randomVariables, 20)
+          private$train(data.test, data.train, bounds, randomVariables, 5)
         }
   )
 )

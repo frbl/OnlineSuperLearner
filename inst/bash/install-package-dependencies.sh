@@ -18,6 +18,7 @@ packages <- c(
 "optimr",
 "nloptr",
 "purrr",
+"digest",
 "roxygen2"
 )
 

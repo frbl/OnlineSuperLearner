@@ -77,7 +77,6 @@ DensityEstimation <- R6Class ("DensityEstimation",
           # it doesnt work when there are more than 1 covariate.
           fixed <- FALSE
           if(nrow(datO) == 1) {
-            print('Fixing!')
             datO <- rbind(datO, datO)
             fixed <- TRUE
           }
@@ -91,17 +90,10 @@ DensityEstimation <- R6Class ("DensityEstimation",
           if(fixed) { estimated_probabilities <- estimated_probabilities[[1]] }
 
           if (plot & length(yValues) > 1) {
-            private$output_plots(yValues = yValues, estimated_probabilities = estimated_probabilities)
+            private$create_output_plots(yValues = yValues, estimated_probabilities = estimated_probabilities)
           }
 
           estimated_probabilities
-
-          #subs <- conditionalDensity$getPsAsW.models()[[1]]$getPsAsW.models()
-          #a <- lapply(seq(50), function(x) conditionalDensity$getPsAsW.models()[[1]]$sampleA(newdata = nodeObjectsSub$datNetObs))
-          #df <- as.data.frame(t(as.data.frame(a))); rownames(df)<-NULL
-
-          #subs <- conditionalDensity$getPsAsW.models()[[1]]$getPsAsW.models()
-          #conditionalDensity$predict(newdata = nodeObjectsSub$datNetObs)
         },
 
         # Generates a sample given the provided data.
@@ -116,11 +108,9 @@ DensityEstimation <- R6Class ("DensityEstimation",
             datO[is.na(datO)] <- 0
           }
 
-
           # Generate a datanet object (this needs to be refactored)
           nodeObjects <- private$define_node_objects(datO = datO, X = X, Y = Y)
           sampled_data <- conditionalDensity$sampleA(newdata = nodeObjects$datNetObs)
-
 
           sampled_data
         },
@@ -156,7 +146,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
         },
 
         # Function to output the density estimations on top of the actual density to a series of pdfs
-        output_plots = function(yValues, estimated_probabilities, dir = '/tmp/osl/') {
+        create_output_plots = function(yValues, estimated_probabilities, dir = '/tmp/osl/') {
           # plot densitity first:
           vals <- unique(yValues)
           if(length(vals) == 2 ) {
@@ -222,14 +212,11 @@ DensityEstimation <- R6Class ("DensityEstimation",
 
           # Convert the formula in vectors (can probably be done easier)
           for (rv in randomVariables) {
-            if (!is.a(rv, 'RandomVariable')) {
-             throw('Please provide a list of randomvariables when running this function') 
-            }
-            private$randomVariables[[rv$getY]] <- rv
+            private$randomVariables[[rv$getY]] <- Arguments$getInstanceOf(rv, 'RandomVariable')
           }
 
           # Fit conditional density for all of the randomVariables
-          lapply(randomVariables, function(rv) {
+          lapply(private$randomVariables, function(rv) {
             # TODO: Currently it is is not yet possible to sample from an non-conditional distribution!
             if(length(rv$getX) > 0) {
               if (update) {

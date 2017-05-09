@@ -28,10 +28,11 @@ SMG.Latest.Entry <- R6Class("SMG.Latest.Entry",
         process = function(data.current){
           nobs <- nrow(data.current)
           if(nobs < self$minimalObservations){
-            stop(paste('At least', self$minimalObservations, 'observations required'))
+            throw('At least ', self$minimalObservations, ' observations required')
           }
-          if(self$minimalObservations == 1) return(data.current)
-          return(tail(data.current, -(self$minimalObservations - 1)))
+          
+          if(self$minimalObservations == 1) return(self$update(data.current))
+          return(tail(self$update(data.current), -(self$minimalObservations - 1)))
         }
     )
 )

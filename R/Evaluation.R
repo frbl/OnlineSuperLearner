@@ -2,6 +2,7 @@
 #' # @import Metrics
 #' @param family the family of the data (binomial for binary, gaussian for cts)
 #' @param useAsLoss should we use the loss function or the performance function?
+#' @export
 Evaluation.get_evaluation_function = function(family, useAsLoss=TRUE) {
   return(Evaluation.log_likelihood_loss)
 
