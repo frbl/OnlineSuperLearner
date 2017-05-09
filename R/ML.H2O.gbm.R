@@ -36,8 +36,7 @@ ML.H2O.gbm <- R6Class("ML.H2O.gbm",
                 nfolds = self$nfolds,
                 ntrees = private$ntrees,
                 min_rows = private$min_rows,
-                checkpoint = checkpoint) %T>%
-          self$set_model(.) %T>%
+                checkpoint = checkpoint) %>%
           return
       }
     ),
