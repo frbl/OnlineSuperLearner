@@ -33,8 +33,7 @@ SMGFactory <- R6Class("SMGFactory",
           SMG.list <- list()
           variables_found <- FALSE
 
-          randomVariables
-          needed_variables <- lapply(randomVariables, function(rv) rv$getX) %>%
+          needed_variables <- lapply(randomVariables, function(rv) c(rv$getX, rv$getY)) %>%
             unlist %>%
             unique
 
@@ -51,8 +50,8 @@ SMGFactory <- R6Class("SMGFactory",
           if (variables_found) {
             needed_variables %<>% setdiff(. ,smg_lag_params$covered_variables)
           }
-          SMG.list <- c(SMG.list, SMG.Latest.Entry$new(colnames.to.use = needed_variables))
-          SummaryMeasureGenerator$new(SMG.list = SMG.list, ...) 
+          c(SMG.list, SMG.Latest.Entry$new(colnames.to.use = needed_variables)) %>%
+            SummaryMeasureGenerator$new(SMG.list = ., ...) 
         }
         ),
   active =

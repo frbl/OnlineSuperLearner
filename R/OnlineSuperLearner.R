@@ -1,4 +1,3 @@
-devtools::load_all('~/Workspace/frbl/tmlenet/')
 #' OnlineSuperLearner
 #'
 #' This is the main super learner class. This class contains everything related
@@ -376,7 +375,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         # =========
         initialize = function(SL.library.definition = c('ML.Local.lm', 'ML.H2O.glm'),
                               summaryMeasureGenerator, should_fit_osl = TRUE, should_fit_dosl = TRUE, 
-                              verbose = FALSE) {
+                              verbose = FALSE ) {
           private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
           private$fitted = FALSE
           private$summaryMeasureGenerator <- Arguments$getInstanceOf(summaryMeasureGenerator, 'SummaryMeasureGenerator')

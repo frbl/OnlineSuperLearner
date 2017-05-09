@@ -34,13 +34,15 @@ Imports:
     nloptr,
     optimr,
     sgd,
-    nnls
+    nnls,
+    digest
 Suggests:
     roxygen2,
     testthat,
     mockery
 RoxygenNote: 6.0.1
 Collate: 
+    'Evaluation.R'
     'CrossValidationRiskCalculator.R'
     'Data.Base.R'
     'Data.Static.R'
@@ -51,8 +53,8 @@ Collate:
     'ML.Base.R'
     'ML.Local.R'
     'DensityEstimation.R'
-    'Evaluation.R'
     'H2O.initializer.R'
+    'H2O.Interactor.R'
     'ML.Local.lm.R'
     'ML.XGBoost.R'
     'LibraryFactory.R'
@@ -78,5 +80,5 @@ Collate:
     'WCC.NLopt.R'
     'WCC.NNLS.R'
     'WCC.SGD.R'
-Remotes: 
-    frbl/tmlenet
+/*Remotes: frbl/tmlenet*/
+Remotes: local::~/Workspace/frbl/tmlenet/

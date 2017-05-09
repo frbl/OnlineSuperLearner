@@ -162,7 +162,7 @@ test_that("it should fit the conditional densities", {
 test_that("it should throw when the list provided does not consist of randomvariables", {
   subject <- described.class$new(nbins = 3) 
   expect_error(subject$process(defaultDataTable(), randomVariables = c(rv.W, 'not-an-rv!')),
-               'Please provide a list of randomvariables when running this function')
+               "Argument 'rv' is neither of nor inherits class RandomVariable: character", fixed=TRUE)
   
 })
 

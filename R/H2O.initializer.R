@@ -10,6 +10,7 @@ setOldClass("h2o")
 #' @param runlocal boolean whether or not we should start an H2O cluster
 #' @param verbose the verbosity to run with
 H2O.Initializer <- function(host = "localhost", port = 54321, runlocal = TRUE, verbose = FALSE) {
+  h2o.no_progress()
   if(H2O.Available()) {
     verbose && cat(verbose, 'Cluster is up, not initializing.')
     return(FALSE)

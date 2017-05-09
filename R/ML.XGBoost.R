@@ -68,17 +68,16 @@ ML.XGBoost <- R6Class("ML.XGBoost",
       do.predict = function(X_mat, m.fit) {
         # TODO: We are not using the passed in m.fit for now, as for some
         # reason it does not always contain the correct attributes. 
-        predict(private$model, X_mat, missing = NA)
+        predict(self$get_model, X_mat, missing = NA)
       },
 
-      do.update = function(X_mat, Y_vals, ...) {
+      do.update = function(X_mat, Y_vals, m.fit, ...) {
         # By default the xgbtrain function uses the old model as a parameter. Therefore we can just simply call
         # the fit function
-        X_mat
-        private$do.fit(X_mat, Y_vals)
+        private$do.fit(X_mat, Y_vals, m.fit$coef)
       },
 
-      do.fit = function (X_mat, Y_vals) {
+      do.fit = function (X_mat, Y_vals, coef = NULL) {
         # If we have not yet fit a model, we are using the first n observations as the training set,
         # and use the last observation as test set.  If we have fitted a model before, we use the set
         # we previously used as a test set as the new training set to update the current model using
@@ -96,15 +95,13 @@ ML.XGBoost <- R6Class("ML.XGBoost",
         #watchlist <- list(eval = dtest, train = dtrain)
 
         # Fit the model, giving the previously fitted model as a parameter
-        private$model <- xgb.train(data    = dtrain,
-                                params     = private$params,
-                                nrounds    = private$rounds,
-                                #watchlist = watchlist,
-                                xgb_model  = private$model,
-                                verbose    = private$verbosity)
-
-        if(is.null(private$model)) browser()
-        private$model
+        xgb.train(data       = dtrain,
+                  params     = private$params,
+                  nrounds    = private$rounds,
+                  #watchlist = watchlist,
+                  xgb_model  = coef,
+                  verbose    = private$verbosity) %>%
+          return 
     }
     )
 )
