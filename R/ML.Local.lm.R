@@ -3,7 +3,6 @@
 #' @docType class
 #' @importFrom R6 R6Class
 #' @importFrom stats lm
-#' @include ML.Local.R
 ML.Local.lm <- R6Class("ML.Local.lm",
   inherit = ML.Base,
   private =
