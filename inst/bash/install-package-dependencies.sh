@@ -23,7 +23,7 @@ packages <- c(
 )
 
 gh_packages <- list(
-  list(repo = "frbl/tmlenet", branch = 'fb-different-estimation-algorithms'),
+  list(repo = "frbl/tmlenet", branch = 'fb-add-update'),
   list(repo = "jimhester/covr", branch = 'master') #,
   #list(repo = 'cran/rkafka', branch = 'master')
 )
