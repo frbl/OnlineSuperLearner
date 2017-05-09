@@ -107,9 +107,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   #algorithm_params = list(alpha = 0),
                                   #params = list(nbins = c(6,40), online = TRUE))))
 
-          algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
-                                  algorithm_params = list(ntrees=c(10,20), min_rows=1),
-                                  params = list(nbins = c(6), online = TRUE))))
+          #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
+                                  #algorithm_params = list(ntrees=c(10,20), min_rows=1),
+                                  #params = list(nbins = c(6), online = TRUE))))
 
           algos <- append(algos, list(list(algorithm = 'ML.H2O.randomForest',
                                   algorithm_params = list(ntrees=c(10,20)),
