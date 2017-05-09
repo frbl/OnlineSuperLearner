@@ -5,22 +5,64 @@
 #' @importFrom stats lm
 #' @include ML.Local.R
 ML.Local.lm <- R6Class("ML.Local.lm",
-  inherit = ML.Local,
+  inherit = ML.Base,
   private =
     list(
-        learning.rate = NULL,
-        family = NULL,
-        initialization.random = NULL
-        ),
+      learning.rate = NULL,
+      family = NULL,
+      initialization.random = NULL,
+
+      do.predict = function(X_mat, m.fit) {
+        X_mat <- as.matrix(cbind(rep(1, nrow(X_mat)), X_mat))
+
+        if(private$family %in% c('binomial')) {
+          return(expit(X_mat %*% m.fit$coef$coefficients))
+        }
+        if(private$family %in% c('gaussian')) {
+          return(X_mat %*% m.fit$coef$coefficients)
+        }
+        throw('Family not found')
+      },
+
+      do.update = function(X_mat, Y_vals, m.fit, ...) {
+        Y <- 'Y_vals'
+        X <- colnames(X_mat)
+        formula <- as.formula(self$create_formula(Y = Y, X = X))
+        # If we already have a model, we update the old one, given the new measurement
+        # Add the intercept to the matrix
+        X_mat <- model.matrix(formula, X_mat)
+
+        # Make a prediction.
+        # Note that this could throw warnings if the model has not converged yet
+        suppressWarnings(prediction <- self$predict(train, A, W))
+        gradient <- (t(X_mat) %*% (prediction - Y_vals))
+        m.fit$coef - private$learning.rate * gradient
+      },
+
+      do.fit = function (X_mat, Y_vals) {
+        Y <- 'Y_vals'
+        X <- colnames(X_mat)
+        formula <- as.formula(self$create_formula(Y = Y, X = X))
+        # If there is no model, we need to fit a model based on Nl observations.
+
+        # Instead of using a GLM for initialization, we can also do a random initialization
+        if(private$initialization.random) {
+          X_mat <- model.matrix(formula, X_mat)
+          return(runif(ncol(X_mat)))
+        } 
+
+        model.fitted <- glm(formula, data=train, family=private$family)$coefficients
+
+        # TODO: do something with the NA's
+        nas <- is.na(model.fitted)
+        if(length(nas) > 0) { model.fitted[nas] <- runif(length(nas) - 1) }
+
+        model.fitted
+      }
+
+      ),
   active =
     list(
-        score = function() {
-          if(is.null(self$get_model)) {
-            throw('Fit a model first!')
-          }
-          summary(self$get_model)
-        },
-
         getValidity = function() {
           if (!(private$family %in% c('binomial', 'gaussian'))) {
             throw('Family not supported', private$family)
@@ -32,59 +74,16 @@ ML.Local.lm <- R6Class("ML.Local.lm",
         ),
   public =
     list(
-        initialize = function(learning.rate = 0.1, family='gaussian', initialization.random=FALSE) {
-          private$learning.rate = learning.rate
-          private$family = family
-          private$initialization.random = initialization.random
-          self$getValidity
-        },
+      initialize = function(learning.rate = 0.1, family='gaussian', initialization.random=FALSE) {
+        private$learning.rate = learning.rate
+        private$family = family
+        private$initialization.random = initialization.random
+        self$getValidity
+      },
 
-        predict = function(data, A, W) {
-          X <- c(A, W)
-          Xmat <- data[, X, with = FALSE]
-          Xmat <- as.matrix(cbind(rep(1, nrow(data)), Xmat))
-
-          if(private$family %in% c('binomial')) {
-            return(expit(Xmat %*% self$get_model))
-          }
-          if(private$family %in% c('gaussian')) {
-            return(Xmat %*% self$get_model)
-          }
-          throw('Family not found')
-        },
-
-        fit = function(train, Y, A, W){
-          formula <- as.formula(self$createFormula(Y = Y, A = A, W = W))
-          # If there is no model, we need to fit a model based on Nl observations.
-          # If we already have a model, we update the old one, given the new measurement
-          if(is.null(self$get_model)){
-
-            # Instead of using a GLM for initialization, we can also do a random initialization
-            if(private$initialization.random) {
-              Xmat <- model.matrix(formula, train)
-              self$set_model(runif(ncol(Xmat)))
-            } else {
-              model.fitted <- glm(formula, data=train, family=private$family)$coefficients
-
-              # TODO: do something with the NA's
-              nas <- is.na(model.fitted)
-              if(length(nas) > 0) { model.fitted[nas] <- runif(length(nas) - 1) }
-
-              self$set_model(model.fitted)
-            }
-
-          } else {
-            Ymat <- as.matrix(train[, Y, with = FALSE])
-
-            # Add the intercept to the matrix
-            Xmat <- model.matrix(formula, train)
-
-            # Make a prediction.
-            # Note that this could throw warnings if the model has not converged yet
-            suppressWarnings(prediction <- self$predict(train, A, W))
-            gradient <- (t(Xmat) %*% (prediction - Ymat))
-            self$set_model(self$get_model - private$learning.rate * gradient)
-          }
-        }
+      create_formula = function(Y, X) {
+        X <- paste(X, collapse = ' + ')
+        paste(Y, '~', X)
+      }
     )
 )

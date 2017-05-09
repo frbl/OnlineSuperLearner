@@ -22,6 +22,18 @@ ML.Base <- R6Class("ML.Base",
 
       process = function(X_mat, Y_vals, X_mat_test, Y_vals_test) {
         throw('Deprecated!')
+      },
+
+      perform_prediction = function(...) {
+        private$do.predict(...)
+      },
+
+      perform_fit = function(...) {
+        private$do.fit(...)
+      },
+
+      perform_update = function(...) {
+        private$do.update(...)
       }
     ),
   active = 
