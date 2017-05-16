@@ -2,6 +2,7 @@
 #' @import methods
 #' @import R.oo
 #' @import R.utils
+#' @import foreach
 #' @importFrom R.utils Arguments
 #' @importFrom R.methodsS3 throw
 #' @import magrittr
