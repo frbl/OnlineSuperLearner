@@ -1,7 +1,8 @@
 context('Integration test: Test the whole SuperLearner routine')
 
 test_that("it should estimate the true treatment", {
-  #if(Sys.getenv('CI') == "") skip('Only running this test on Circle. It takes very long.')
+  library('foreach')
+  if(Sys.getenv('CI') == "") skip('Only running this test on Circle. It takes very long.')
   # This very basic example shows how well the intervention estimation works. The procedure is as follows. We
   # have 3 variables, W A and Y, of which W is cts, A is binary and Y is gaussian. We will generate a number of
   # samples from this distribution with which the estimators are trained. Then we will simulate an interverntion
@@ -16,7 +17,7 @@ test_that("it should estimate the true treatment", {
   set.seed(12345)
 
   # Number of cores available
-  cores = 8
+  cores = detectCores()
 
   # Create the simulator
   simulator  <- Simulator.GAD$new()
