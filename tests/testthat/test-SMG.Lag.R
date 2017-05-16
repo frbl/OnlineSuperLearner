@@ -1,5 +1,7 @@
 context("SMG.Lag.R")
 context(" Initializer")
+described.class <- SMG.Lag
+
 test_that("it should be able to initialize an objest with the correct attributes ", {
             lags  <- 2
             colnames <- c('x1')
@@ -18,6 +20,15 @@ test_that("it should return a list with the correct colnames, in the correct ord
                 'x3_lag_1', 'x3_lag_2', 'x3_lag_3',
                 'x4_lag_1', 'x4_lag_2', 'x4_lag_3')
   expect_equal(result, expected)
+})
+
+context(" update")
+test_that("it should work with a set of columns that are similar", {
+  data <- data.table(x = c(1,2,3,4), x2 = c(5,4,3,2), x_lag_1 = c(6,5,4,3), x2_lag_1 = c(2,3,4,5))
+  colnames <- c('x', 'x2')
+  subject <- described.class$new(lags = 1, colnames.to.lag = colnames)
+  result <- subject$update(data[1,]) 
+  expect_equal(length(names(result)), length(colnames))
 })
 
 context(" Process")

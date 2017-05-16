@@ -119,23 +119,23 @@ DensityEstimation <- R6Class ("DensityEstimation",
           # Wnodes are the covariate nodes / predictors
           nodes <- list(Anodes = Y, Wnodes = X , nFnode = "nF")
 
-          X <- do.call(def_sW, as.list(X))
-          Y <- do.call(def_sA, as.list(Y))
+          X <- do.call(tmlenet::def_sW, as.list(X))
+          Y <- do.call(tmlenet::def_sA, as.list(Y))
 
           # Create an empty friend matrix (simcausal package dependency)
           netind_cl <- NetIndClass$new(nobs = nrow(datO))
 
           # Define datNetObs:
 
-          OdataDT_R6 <- OdataDT$new(Odata = datO, nFnode = "nF", iid_data_flag = FALSE)
+          OdataDT_R6 <- tmlenet::OdataDT$new(Odata = datO, nFnode = "nF", iid_data_flag = FALSE)
 
-          covariateDatNet <- DatNet$new(Odata = OdataDT_R6, netind_cl = netind_cl, nodes = nodes)
+          covariateDatNet <- tmlenet::DatNet$new(Odata = OdataDT_R6, netind_cl = netind_cl, nodes = nodes)
           covariateDatNet <- covariateDatNet$make.sVar(Odata = OdataDT_R6, sVar.object = X)
 
-          outcomeDatNet   <- DatNet$new(Odata = OdataDT_R6, netind_cl = netind_cl, nodes = nodes)
+          outcomeDatNet   <- tmlenet::DatNet$new(Odata = OdataDT_R6, netind_cl = netind_cl, nodes = nodes)
           outcomeDatNet   <- outcomeDatNet$make.sVar(Odata = OdataDT_R6, sVar.object = Y)
 
-          datNetObs <- DatNet.sWsA$new(Odata = OdataDT_R6,
+          datNetObs <- tmlenet::DatNet.sWsA$new(Odata = OdataDT_R6,
                                         datnetW = covariateDatNet,
                                         datnetA = outcomeDatNet)
           datNetObs <- datNetObs$make.dat.sWsA()
@@ -188,7 +188,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
         },
 
         #TODO: Implement a way to run the prediction on a subset of outcomes
-        predict = function(data, sample = FALSE, subset = NULL, plot = TRUE) {
+        predict = function(data, sample = FALSE, subset = NULL, plot = FALSE) {
           data <- Arguments$getInstanceOf(data, 'data.table')
           plot <- Arguments$getLogical(plot)
           if (is.null(private$randomVariables) | length(private$conditional_densities) == 0) {

@@ -30,12 +30,12 @@ SMG.Lag <- R6Class("SMG.Lag",
           private$colnames.lagged  <- self$laggedColnames()
         },
 
-        laggedColnames = function() {
+        laggedColnames = function(colnames = private$colnames) {
           # This will create a list like this:
           # A_lag_1 A_lag_2  W_lag_1   W_lag_2  Y_lag_1   Y_lag_2
           # If we want to have a different ordering, note that the update function also
           # needs to be updated!
-          unlist(lapply(private$colnames, function(col){
+          unlist(lapply(colnames, function(col){
             paste(col, 'lag', seq(private$lags), sep = "_")
           })
           )
@@ -43,9 +43,12 @@ SMG.Lag <- R6Class("SMG.Lag",
 
         update = function(data.current) {
           # The data we have is 1 row, with all lags available. We only focus on the lags
+          
           subset.to.lag <- data.current[, c(private$colnames, private$colnames.lagged), with=FALSE]
           data.new <- lapply(private$colnames, function(cn) {
-            current <- subset(subset.to.lag, select=grep(cn, names(subset.to.lag)))
+            cnms <- c(cn, self$laggedColnames(cn))
+            current <- subset(subset.to.lag, select=cnms)
+
             current.names <- shift(names(current), type='lead')
             current.names[is.na(current.names)] <- 'REMOVE'
             names(current) <- current.names

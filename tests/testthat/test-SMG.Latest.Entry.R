@@ -20,7 +20,10 @@ test_that("it should expose an update function that returns the correct columns 
   subject <- described.class$new(colnames.to.use = colnames)
   result <- subject$update(data) 
   expected <- data[, 'x1', with=FALSE]
-  expect_equal(result, expected)
+  expect_true(is.a(result, 'data.table'))
+  expect_equal(ncol(result), length(colnames))
+  expect_equal(nrow(result), 1)
+  expect_true(all(is.na(result)))
 })
 
 context(" process")

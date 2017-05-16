@@ -1,4 +1,4 @@
-#devtools::load_all('~/Workspace/frbl/tmlenet')
+devtools::load_all('~/Workspace/frbl/tmlenet')
 #' OnlineSuperLearner
 #'
 #' This is the main super learner class. This class contains everything related
@@ -6,6 +6,7 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
+#' @import future
 #' @include zzz.R
 #' @include LibraryFactory.R
 #' @include DataSplitter.R
@@ -135,7 +136,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         # @param A: the column names used for the treatment
         # @param W: the column names used for the covariates
         # @return a list of outcomes, each entry being a data.table with the outcomes of an estimator
-        predictUsingAllEstimators = function(data) {
+        predictUsingAllEstimators = function(data, sample = FALSE) {
           private$verbose && enter(private$verbose, 'Predicting with all estimators')
           #dataH2o <- as.h2o(data)
           #private$verbose && cat(private$verbose, 'Uploaded data to h2o')
@@ -148,7 +149,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                 current <- data
               #}
               # TODO: Unity in export formats. Probably the best is to enforce a data.table output
-              estimator$predict(current, sample = FALSE)
+              estimator$predict(current, sample = sample)
             })
 
           # convert the list of results into a data.table
@@ -171,8 +172,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$verbose && enter(private$verbose, 'Training all estimators')
           #dataH2o <- as.h2o(data)
           #private$verbose && cat(private$verbose, 'Uploaded data to h2o')
-
-          lapply(private$SL.library.fabricated, function(estimator) {
+          result <- lapply(private$SL.library.fabricated, function(estimator) {
             #if(is.a(estimator, 'ML.H2O')){
               #current <- dataH2o
             #} else {
@@ -181,6 +181,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             estimator$process(current, randomVariables = randomVariables, update = self$is_fitted)
           })
           private$verbose && exit(private$verbose)
+          result
         },
 
         # Functions
@@ -242,10 +243,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             # Only show this log every 5 times
             if(t %% 5 == 0 && private$verbose) {
               lapply(names(self$get_cv_risk), function(cv_name) {
-                        cat(private$verbose, paste('Updating OSL at iteration', t,
-                                                  'error for', cv_name,
-                                                  'is', self$get_cv_risk[cv_name]))
-                  })
+                cat(private$verbose, paste('Updating OSL at iteration', t,
+                                          'error for', cv_name,
+                                          'is', self$get_cv_risk[cv_name]))
+              })
             }
 
             private$train_library(data_current = data_current, randomVariables = randomVariables)
@@ -405,19 +406,21 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         # Samples the data iteratively from the fitted distribution, and applies an intervention if necessary
         # @param tau is the time at which we want to measure the outcome
-        sample_iteratively = function(data, randomVariables, tau = 10, intervention = NULL,
-                                      discrete = TRUE) {
-
+        sample_iteratively = function(data, randomVariables, tau = 10, intervention = NULL, discrete = TRUE) {
 
           randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
           randomVariables <- RandomVariable.find_ordering(randomVariables)
 
-          intervention <- Arguments$getInstanceOf(intervention, 'list')
-          valid_intervention <- is.numeric(intervention$when) &
-           is.numeric(intervention$what) &
-           is.character(intervention$variable) &
-           length(intervention$when) == length(intervention$what)
-          if(!valid_intervention) throw('The intervention specified is not correct! it should have a when (specifying t), a what (specifying the intervention) and a variable (specifying the name of the variable to intervene on).')
+          if(!is.null(intervention)) {
+            intervention <- Arguments$getInstanceOf(intervention, 'list')
+            valid_intervention <- is.numeric(intervention$when) &
+            is.numeric(intervention$what) &
+            is.character(intervention$variable) &
+            length(intervention$when) == length(intervention$what)
+
+            if(!valid_intervention) throw('The intervention specified is not correct! it should have a when (specifying t), a what (specifying the intervention) and a variable (specifying the name of the variable to intervene on).')
+          }
+
           result <- data.table()
 
           # We need to sample sequentially here, just so we can plugin the value everytime in the next evaluation
@@ -426,21 +429,21 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             for (rv in randomVariables) {
               current_outcome <- rv$getY
               if (!is.null(intervention) & current_outcome == intervention$variable & t %in% intervention$when) {
-                when.idx <- which(intervention$when==t)
+                when.idx <- which(intervention$when == t)
                 outcome <- intervention$what[when.idx]
                 private$verbose && cat(private$verbose, 'Setting intervention on ', current_outcome,' with ', outcome, ' on time ', t)
               } else {
                 outcome <- self$predict(data = data, randomVariables = c(rv), 
                                         discrete = discrete, 
                                         continuous = !discrete,
-                                        all_estimators = FALSE)[[1]]
+                                        all_estimators = FALSE, sample = TRUE)[[1]]
 
                 private$verbose && cat(private$verbose,'Predicting ', current_outcome, ' using ', paste(rv$getX, collapse=', '))
               }
               data[,  (current_outcome) := outcome ]
             }
             result <- rbind(result, data)
-            if(t != tau) data <- private$summaryMeasureGenerator$getLatestCovariates(data)
+            if(t != tau)  data <- private$summaryMeasureGenerator$getLatestCovariates(data)
           }
           return(result[,names(randomVariables), with = FALSE])
         },
@@ -480,7 +483,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         # Predict should return a nrow(data) * 1 matrix, where the predictions are multiplied by
         # the weights of each estimator.
-        predict = function(data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE) {
+        predict = function(data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE) {
           if (!self$is_fitted){
             return(NA)
           }
@@ -500,7 +503,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           result <- list()
 
           if (all_estimators | continuous) {
-            predictions <- private$predictUsingAllEstimators(data = data)
+            predictions <- private$predictUsingAllEstimators(data = data, sample = sample)
 
             if (all_estimators) {
               private$verbose && cat(private$verbose, 'All Estimators')
@@ -537,7 +540,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
               if (outcome_name %in% names(private$dosl.estimators)) {
                 outcome_name
                 private$dosl.estimators
-                prediction <- private$dosl.estimators[[outcome_name]]$predict(data = data, sample = FALSE)[[outcome_name]]
+                prediction <- private$dosl.estimators[[outcome_name]]$predict(data = data, sample = sample)[[outcome_name]]
               } else {
                 prediction <- c(outcome = NA)
               }

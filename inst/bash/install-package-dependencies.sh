@@ -15,10 +15,15 @@ packages <- c(
 "xgboost",
 "nnls",
 "sgd",
+"dplyr",
+"magrittr",
 "optimr",
 "nloptr",
 "purrr",
+"doParallel",
+"foreach",
 "digest",
+"future",
 "roxygen2"
 )
 

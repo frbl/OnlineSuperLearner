@@ -128,7 +128,7 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
         Z = private$data$Z
         Y = private$data$Y
 
-        data <- list(Qa = t(Z) %*% Y, Qb=t(Z) %*% Z)
+        data <- list(Y =Y, Z = Z, Qa = t(Z) %*% Y, Qb=t(Z) %*% Z)
         # dimensions: Qa = x * 1, Qb = x * x
         optFirst <- private$perform_optimization(weights = private$weights,
                                   epsilon = private$epsilon,
@@ -154,6 +154,15 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
           function_to_optimize <- function(alpha, data) {
             -2 * t(alpha) %*% data$Qa + t(alpha) %*% data$Qb %*% alpha
           }
+          #function_to_optimize <- function(alpha, data) {
+            #Z <- data$Z %*% alpha
+            #Y <- data$Y
+            ##Z <- sapply(Z, function(x) min(x, 0.9999))
+            ##browser()
+            #browser()
+            #print( Y %*% log((Z)) + (1- Y) %*% log((1 - Z)))
+            #Y %*% log((Z)) + (1- Y) %*% log((1 - Z))
+          #}
         }
 
         function_mode <- mode(function_to_optimize)
