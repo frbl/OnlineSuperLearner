@@ -1,4 +1,4 @@
-devtools::load_all('~/Workspace/frbl/tmlenet')
+#devtools::load_all('~/Workspace/frbl/tmlenet')
 #' OnlineSuperLearner
 #'
 #' This is the main super learner class. This class contains everything related
@@ -15,26 +15,26 @@ devtools::load_all('~/Workspace/frbl/tmlenet')
 #' @include WCC.NMBFGS.R
 #' @include CrossValidationRiskCalculator.R
 #'
-#' @section Methods: 
-#' \describe{  
-#'   \item{\code{initialize(SL.library.definition = c("ML.Local.lm", "ML.H2O.glm", summaryMeasureGenerator, verbose = FALSE)}}{ 
+#' @section Methods:
+#' \describe{
+#'   \item{\code{initialize(SL.library.definition = c("ML.Local.lm", "ML.H2O.glm", summaryMeasureGenerator, verbose = FALSE)}}{
 #'     starts a new OnlineSuperLearner. The provided \code{SL.library.definition} contains the machine learning models to use
-#'     @param SL.library.definition = a list of machine learning algorithms. This could be either a vector with 
+#'     @param SL.library.definition = a list of machine learning algorithms. This could be either a vector with
 #'                                    with the name of each estimator or a list according to the libraryFactroy.
 #'                                    Look in the LibraryFactory class for the specification of this list.
 #'     @param summaryMeasureGenerator = an object of the type SummaryMeasureGenerator. This generator is used to
 #'                                      get new observations with the correct aggregated columns.
 #'     @param verbose = the verbosity (how much logging). Note that this might be propagated to other classes.
-#'   } 
-#' 
-#'   \item{\code{evaluateModels(data, randomVariables) }}{ 
+#'   }
+#'
+#'   \item{\code{evaluateModels(data, randomVariables) }}{
 #'     Performs a basic evaluation on the data, given a list of random variables
 #'     @param data = the data to use for performing the evaluation
 #'     @param randomVariables = the randomVariables for which one wants to see the evaluation. Note that this needs
 #'                              to be equal to, or a subset of, the random variables used to train the estimators.
-#'   } 
-#' 
-#'   \item{\code{sample_iteratively(data, randomVariables, tau = 10, intervention = NULL}}{ 
+#'   }
+#'
+#'   \item{\code{sample_iteratively(data, randomVariables, tau = 10, intervention = NULL}}{
 #'     Method to sample iteratively from the densities. It works by providing an initial observation (\code{data}), from which
 #'     iteretitatively the next measurement is estimated. This is done until \code{tau} steps in the future. Furthermore,
 #'     this sampling step can be augmented with an intervention. That is, we could set a given time step (or all)
@@ -44,9 +44,9 @@ devtools::load_all('~/Workspace/frbl/tmlenet')
 #'     @param randomVariables = the randomvariables used when fitting the data
 #'     @param tau = the timestep at which you want to evaluate the output
 #'     @param intervention = the intervention, e.g.: \code{list(when = c(1,2), what = c(1,0))}
-#'   } 
-#' 
-#'   \item{\code{fit(data, randomVariables, initial_data_size = 5, max_iterations = 20, mini_batch_size = 20}}{ 
+#'   }
+#'
+#'   \item{\code{fit(data, randomVariables, initial_data_size = 5, max_iterations = 20, mini_batch_size = 20}}{
 #'     The actual method to fit the OnlineSuperLearner. This will fit the provided \code{SL.library.definition}
 #'     estimators as well as the OnlineSuperLearner and the DiscreteOnlineSuperLearner.
 #'     @param data = the data to fit the estimator on. Should be a \code{Data.Base} subclass.
@@ -54,21 +54,21 @@ devtools::load_all('~/Workspace/frbl/tmlenet')
 #'     @param initial_data_size = the size of the dataset to use for the initial fit (pre-update)
 #'     @param max_iterations = the number of iterations to run for updating the data
 #'     @param mini_batch_size = the size of the mini batch to use for each update.
-#'   } 
-#' 
-#'   \item{\code{predict(data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE}}{ 
+#'   }
+#'
+#'   \item{\code{predict(data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE}}{
 #'     Method to perform a prediction on the estimators. It can run in different configurations. It can be configured
 #'     to predict the outcome using all estimators (the \code{all_estimators} flag), using the discrete superlearner
 #'     (the \code{discrete} flag), or using the continuous online superlearner (the \code{continous} flag). At least
 #'     one of these three flags must be true.
 #'     @param data = the data to use for doing the predictions
-#'     @param randomVariables = the random variables used for doing the predictions (these should be the same as the 
+#'     @param randomVariables = the random variables used for doing the predictions (these should be the same as the
 #'                              ones used for fitting).
 #'     @param all_estimators = whether or not to include the output of all candidate estimators in the output
-#'     @param discrete = whether or not to include the output of the discrete super learner in the output 
-#'     @param continuous = whether or not to include the output of the continuous super learner in the output 
-#'   } 
-#' }  
+#'     @param discrete = whether or not to include the output of the discrete super learner in the output
+#'     @param continuous = whether or not to include the output of the continuous super learner in the output
+#'   }
+#' }
 #' @export
 OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
   private =
@@ -212,7 +212,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           # Calculate the error
           private$update_risk(predicted.outcome = predicted.outcome,
-                              observed.outcome = observed.outcome, 
+                              observed.outcome = observed.outcome,
                               randomVariables = randomVariables)
 
           # Update the discrete superlearner (take the first if there are multiple candidates)
@@ -310,8 +310,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                 if(name %in% names(private$SL.library.fabricated)) {
                   return(private$SL.library.fabricated[[name]])
                 }
-              } 
-            }) 
+              }
+            })
           private$verbose && exit(private$verbose)
         }
 
@@ -376,7 +376,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         # Functions
         # =========
         initialize = function(SL.library.definition = c('ML.Local.lm', 'ML.H2O.glm'),
-                              summaryMeasureGenerator, should_fit_osl = TRUE, should_fit_dosl = TRUE, 
+                              summaryMeasureGenerator, should_fit_osl = TRUE, should_fit_dosl = TRUE,
                               verbose = FALSE ) {
           private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
           private$fitted = FALSE
@@ -433,8 +433,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                 outcome <- intervention$what[when.idx]
                 private$verbose && cat(private$verbose, 'Setting intervention on ', current_outcome,' with ', outcome, ' on time ', t)
               } else {
-                outcome <- self$predict(data = data, randomVariables = c(rv), 
-                                        discrete = discrete, 
+                outcome <- self$predict(data = data, randomVariables = c(rv),
+                                        discrete = discrete,
                                         continuous = !discrete,
                                         all_estimators = FALSE, sample = TRUE)[[1]]
 
@@ -507,7 +507,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
             if (all_estimators) {
               private$verbose && cat(private$verbose, 'All Estimators')
-              result <- append(result, predictions) 
+              result <- append(result, predictions)
             }
 
             if(continuous) {
@@ -524,9 +524,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
                 colnames(result) <- current_rv_name
                 result
-              }) %>% 
+              }) %>%
                do.call(cbind, .) %>%
-                as.data.table 
+                as.data.table
             }
           }
 
@@ -549,11 +549,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
               prediction
             }) %>%
                 do.call(cbind, .) %>%
-                as.data.table 
+                as.data.table
           }
           private$verbose && exit(private$verbose)
           result
         }
   )
 )
-
