@@ -102,7 +102,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
 
           # TODO: BUG! For some weird reason, the code doesn't work with NA 
           if(anyNA(datO)) {
-            warning('Some NA values were replaced with zeros!')
+            # TODO: warning('Some NA values were replaced with zeros!')
             datO[is.na(datO)] <- 0
           }
 

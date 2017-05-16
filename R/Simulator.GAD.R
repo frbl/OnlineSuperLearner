@@ -122,8 +122,8 @@ Simulator.GAD <- R6Class("Simulator.GAD",
           throw("The argument should be a list, not ", mode(ll))
         }
         nms <- names(ll)
-        if (!identical(nms, c("when", "what"))) {
-          thow("The argument should be a list with two tags, 'when' and 'what', not ", nms)
+        if (!all(c("when", "what") %in% nms)) {
+          throw("The argument should be a list with two tags, 'when' and 'what', not ", nms)
         }
         when <- Arguments$getIntegers(ll$when, c(1, Inf))
         what <- Arguments$getIntegers(ll$what, c(0, 1))

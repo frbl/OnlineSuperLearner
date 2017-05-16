@@ -1,7 +1,7 @@
 context('Integration test: Test the whole SuperLearner routine')
 
-test_that("it should be tested", {
-  if(Sys.getenv('CI') == "") skip('Only running this test on Circle. It takes very long.')
+test_that("it should estimate the true treatment", {
+  #if(Sys.getenv('CI') == "") skip('Only running this test on Circle. It takes very long.')
   # This very basic example shows how well the intervention estimation works. The procedure is as follows. We
   # have 3 variables, W A and Y, of which W is cts, A is binary and Y is gaussian. We will generate a number of
   # samples from this distribution with which the estimators are trained. Then we will simulate an interverntion
@@ -12,7 +12,7 @@ test_that("it should be tested", {
   # Generate the mehanisms
   # we generate number of blocks observations
   tmlenet_options(parfit=TRUE)
-  options(warn=1)
+  options(warn=-1)
   set.seed(12345)
 
   # Number of cores available
@@ -22,7 +22,7 @@ test_that("it should be tested", {
   simulator  <- Simulator.GAD$new()
 
   # Number of items we have in our testset
-  training_set_size <- 1e3
+  training_set_size <- 2000
 
   # Number of iterations we want to use
   max_iterations = 3
@@ -35,10 +35,10 @@ test_that("it should be tested", {
   algos <- list()
 
   # Number of iterations for approximation of the true parameter of interest
-  B <- 1e4
+  B <- 1e3
 
   # The intervention we are interested in
-  intervention  <- list(when = c(2), what = c(1))
+  intervention  <- list(when = c(2), what = c(0), variable ='A')
 
   # The time of the outcome
   tau = 2
@@ -68,7 +68,7 @@ test_that("it should be tested", {
 
   algos <- append(algos, list(list(algorithm = 'tmlenet::speedglmR6',
                           #algorithm_params = list(),
-                          params = list(nbins = c(3,4), online = FALSE))))
+                          params = list(nbins = c(3,4, 5), online = FALSE))))
 
   #algos <- append(algos, list(list(algorithm = 'tmlenet::glmR6',
                           ##algorithm_params = list(),
@@ -111,7 +111,7 @@ test_that("it should be tested", {
     psi.approx <- 0.2991661 #with intervention = 0
     psi.approx <- 0.9021478 #with intervention = 1
   } else {
-    psi.approx <- mclapply(1:B, function(bb) {
+    psi.approx <- mclapply(seq(B), function(bb) {
       when <- max(intervention$when)
       data.int <- simulator$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
                                   intervention = intervention, verbose = FALSE)
@@ -126,7 +126,7 @@ test_that("it should be tested", {
   ##############
   # Estimation #
   ##############
-  data.train <- simulator$simulateWAY(training_set_size, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
+  data.train <- simulator$simulateWAY(training_set_size + B, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
     Data.Static$new(dataset = .)
 
   # We use the following covariates in our estimators
@@ -149,28 +149,29 @@ test_that("it should be tested", {
 
   osl <- OnlineSuperLearner$new(algos, summaryMeasureGenerator = summaryMeasureGenerator, verbose = log)
   risk <- osl$fit(data.train, randomVariables = randomVariables,
-                        initial_data_size = private$training_set_size / 2,
+                        initial_data_size = training_set_size / 2,
                         max_iterations = max_iterations,
-                        mini_batch_size = (private$training_set_size / 2) / max_iterations)
-  print(risk)
+                        mini_batch_size = (training_set_size / 2) / max_iterations)
 
-  pre <- options('warn')$warn
-  options(warn=-1)
+  summaryMeasureGenerator$reset
+  datas <- summaryMeasureGenerator$getNext(n = B)
   result <- mclapply(seq(B), function(i) {
-    osl$sample_iteratively(data = data.test[1,],
-                            randomVariables = randomVariables,
-                            intervention = intervention,
-                            tau = tau)
-  }, mc.cores=cores)
-  options(warn=pre)
+   osl$sample_iteratively(data = datas[i,],
+                          randomVariables = randomVariables,
+                          intervention = intervention,
+                          tau = tau)
+  }, mc.cores=cores) %>%
+    lapply(., function(x) { tail(x, 1)$Y }) %>%
+    unlist
 
-  psi.estimation <- lapply(result, function(x) {
-    tail(x, 1)$Y
-  }) %>%
-    unlist %>%
-    mean
+  #plot(cumsum(result)/seq(along=result))
 
-  expect_true(psi.approx - psi.estimation < 0.01)
+  psi.estimation <- mean(result)
+
+  #print(psi.estimation)
+  #print(abs(psi.approx - psi.estimation))
+
+  expect_true((abs(psi.approx - psi.estimation)) < 0.1)
 
 })
 
