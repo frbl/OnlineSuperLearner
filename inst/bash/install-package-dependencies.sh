@@ -22,6 +22,7 @@ packages <- c(
 "purrr",
 "doParallel",
 "foreach",
+"matrixStats",
 "digest",
 "future",
 "roxygen2"
