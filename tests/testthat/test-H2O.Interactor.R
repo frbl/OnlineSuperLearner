@@ -10,7 +10,10 @@ test_that("it should generate a hash fast", {
   subject$generate_hash(data)
   toc <- Sys.time()
   result <- toc - tic
-  expect_true(result < 0.1)
+  if(result >= 0.2) {
+    fail(paste(result, 'is to high!'))
+  }
+  expect_true(result < 0.2)
 })
 
 test_that("it should generate a hash correctly", {
