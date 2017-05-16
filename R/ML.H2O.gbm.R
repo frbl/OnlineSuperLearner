@@ -30,6 +30,9 @@ ML.H2O.gbm <- R6Class("ML.H2O.gbm",
           Y_vals[1] = ifelse(unique_val == 0, 1, 0)
         }
 
+        print(head(Y_vals))
+        print(head(X_mat))
+
         pointer <- private$interactor$get_data_pointer(cbind(X_mat, Y_vals))
         private$catch_warning(h2o.gbm, x = colnames(X_mat), y = 'Y_vals',
                 training_frame = pointer,

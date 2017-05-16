@@ -57,12 +57,12 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
 
           private$log && cat(private$log, 'Predicting using all estimators')
-          browser()
 
           # Calculate prediction quality
           observed.outcome <- data.test[, outcome.variables, with=FALSE]
           predicted.outcome <- osl$predict(data = copy(data.test), randomVariables)
-          performance <- private$cv_risk_calculator$calculate_evaluation(predicted.outcome = predicted.outome,
+
+          performance <- private$cv_risk_calculator$calculate_evaluation(predicted.outcome = predicted.outcome,
                                                           observed.outcome = observed.outcome, 
                                                           randomVariables = randomVariables) %>%
             c(iterations = max_iterations, performance = .) %T>%
@@ -75,15 +75,32 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           #plot(x=performances$iterations, y=performances$performance)
           #performances
           browser()
-          intervention <- list(variable = 'A', when = c(5, 7), what = c(1,0))
-          result <- osl$sample_iteratively(data = data.test[1,], randomVariables = randomVariables, intervention = intervention)
-          performance
-          result
+          intervention <- list(variable = 'A', when = c(1), what = c(0))
+          tau = 2
+          B <- 10
+          pre <- options('warn')$warn
+          options(warn=-1)
+          result <-mclapply(seq(B), function(i) { 
+            osl$sample_iteratively(data = data.test[1,], 
+                                   randomVariables = randomVariables,
+                                   intervention = intervention,
+                                   tau = tau) 
+          }, mc.cores=8)
+          options(warn=pre)
+
+          lapply(result, function(x) {
+            tail(x, 1)$Y
+          }) %>%
+            unlist %>%
+            mean
+
+          lapply(performance, function(x) {lapply(x,mean)})
         }
         ),
   public =
     list(
         initialize = function() {
+          tmlenet_options(parfit=TRUE)
           options(warn=1)
           private$sim  <- Simulator.GAD$new()
           private$training_set_size <- 1e5
@@ -111,17 +128,17 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   #algorithm_params = list(ntrees=c(10,20), min_rows=1),
                                   #params = list(nbins = c(6), online = TRUE))))
 
-          algos <- append(algos, list(list(algorithm = 'ML.H2O.randomForest',
-                                  algorithm_params = list(ntrees=c(10,20)),
-                                  params = list(nbins = c(6), online = TRUE))))
+          #algos <- append(algos, list(list(algorithm = 'ML.H2O.randomForest',
+                                  #algorithm_params = list(ntrees=c(10,20)),
+                                  #params = list(nbins = c(6), online = TRUE))))
 
           algos <- append(algos, list(list(algorithm = 'tmlenet::speedglmR6',
                                   #algorithm_params = list(),
-                                  params = list(nbins = c(6,7,18), online = FALSE))))
+                                  params = list(nbins = c(3,4), online = FALSE))))
 
           #algos <- append(algos, list(list(algorithm = 'tmlenet::glmR6',
                                   ##algorithm_params = list(),
-                                  #params = list(nbins = c(16), online = FALSE))))
+                                  #params = list(nbins = c(16, 20, 24, 30, 34, 40), online = FALSE))))
 
           private$SL.library.definition <- algos
 
@@ -179,7 +196,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           # Create the measures we'd like to include in our model
           # In this simulation we will include 2 lags and the latest data (non lagged)
           # Define the variables in the initial dataset we'd like to use
-          private$train(data.test, data.train, bounds, randomVariables, 20)
+          private$train(data.test, data.train, bounds, randomVariables, 2)
         },
 
         basicRegressionWithLags = function() {
