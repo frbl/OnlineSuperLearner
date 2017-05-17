@@ -100,7 +100,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
   public =
     list(
         initialize = function() {
-          tmlenet_options(parfit=TRUE)
+          tmlenet_options(parfit=FALSE)
           options(warn=1)
           private$sim  <- Simulator.GAD$new()
           private$training_set_size <- 1e5

@@ -1,7 +1,6 @@
 context('Integration test: Test the whole SuperLearner routine')
 
 test_that("it should estimate the true treatment", {
-  library('foreach')
   if(Sys.getenv('CI') == "") skip('Only running this test on Circle. It takes very long.')
   # This very basic example shows how well the intervention estimation works. The procedure is as follows. We
   # have 3 variables, W A and Y, of which W is cts, A is binary and Y is gaussian. We will generate a number of
@@ -12,7 +11,7 @@ test_that("it should estimate the true treatment", {
   ## INITIALIZATION
   # Generate the mehanisms
   # we generate number of blocks observations
-  tmlenet_options(parfit=TRUE)
+  tmlenet_options(parfit=FALSE)
   options(warn=-1)
   set.seed(12345)
 

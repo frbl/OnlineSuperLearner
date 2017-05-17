@@ -3,10 +3,10 @@
 #' @import R.oo
 #' @import R.utils
 #' @import foreach
+#' @import parallel
 #' @importFrom R.utils Arguments
 #' @importFrom R.methodsS3 throw
 #' @import magrittr
-#' @import parallel
 generalImports <- list()
 
 # General fixes, for usability
