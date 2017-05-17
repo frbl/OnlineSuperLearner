@@ -175,3 +175,19 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
         }
     )
 )
+
+#' Static function
+#' @param data the data for which to generate the bounds
+#' @param eps an extra margin to add to the estimated bounds
+#' @export
+SummaryMeasureGenerator.generate_bounds <- function(data, eps = 0) {
+  data <- Arguments$getInstanceOf(data, 'data.table')
+  bounds <- list()
+  for(name in colnames(data)) {
+    min_bound = min(data[, name, with=FALSE] )
+    max_bound = max(data[, name, with=FALSE] )
+    bounds <- append(bounds, list(list(max_bound = max_bound + eps, min_bound = min_bound - eps)))
+  }
+  names(bounds) <- colnames(data)
+  bounds
+}

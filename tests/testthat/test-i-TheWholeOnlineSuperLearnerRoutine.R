@@ -96,7 +96,6 @@ test_that("it should estimate the true treatment", {
     ww <- AW[, grep("[^A]", colnames(AW))]
     mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
       (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
-    mu <- aa*(0.9) + (1-aa)*(0.3)
     rnorm(length(mu), mu, sd=0.1)}})
 
 
@@ -168,7 +167,7 @@ test_that("it should estimate the true treatment", {
 
   psi.estimation <- mean(result)
 
-  #print(psi.estimation)
+  print(psi.estimation)
   #print(abs(psi.approx - psi.estimation))
 
   expect_true((abs(psi.approx - psi.estimation)) < 0.1)
