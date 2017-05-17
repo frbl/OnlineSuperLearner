@@ -40,7 +40,6 @@ H2O.Available <- function() {
     print('Warning!')
     return(FALSE) 
   }, error = function(e) {
-    print('Error!')
     return(FALSE) 
   })
   return(result)
