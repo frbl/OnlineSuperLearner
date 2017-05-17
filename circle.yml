@@ -19,8 +19,8 @@ dependencies:
     # Install the latest R and nlopt version
     - sudo apt-get -y remove --purge r-base
     - sudo sh -c 'echo "deb http://cran.rstudio.com/bin/linux/ubuntu trusty/" >> /etc/apt/sources.list'
-    - gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
-    - gpg -a --export E084DAB9 | sudo apt-key add -
+    - sudo apt-key adv --keyserver pgp.mit.edu --recv-keys 5072E1F5 # MySql (https://bugs.mysql.com/bug.php?id=85029)
+    - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5072E1F5 # R
     - sudo apt-get update
     - sudo apt-get -y install r-base libnlopt0
     # Install the R dependencies
