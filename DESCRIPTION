@@ -82,4 +82,4 @@ Collate:
     'WCC.NLopt.R'
     'WCC.NNLS.R'
     'WCC.SGD.R'
-Remotes: osofr/condensier
+Remotes: osofr/condensier@fb-add-update

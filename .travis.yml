@@ -1,0 +1,35 @@
+#----------------------------------------------------------------
+# Travis-CI configuration for R packages
+#
+# REFERENCES:
+# * Travis CI: https://docs.travis-ci.com/user/languages/r
+# * covr: https://github.com/jimhester/covr
+#
+# Validate your .travis.yml file at http://lint.travis-ci.org/
+#----------------------------------------------------------------
+language: r
+os:
+  - linux
+
+r_build_args: "--no-build-vignettes --no-manual"
+
+sudo: false
+cache: packages
+warnings_are_errors: false
+latex: true
+
+addons:
+  apt:
+    packages:
+      - libnlopt0
+
+after_success:
+  - Rscript -e 'library(covr);coveralls()'
+
+on_failure:
+  - ./travis-tool.sh dump_logs
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change
