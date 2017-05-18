@@ -82,4 +82,5 @@ Collate:
     'WCC.NLopt.R'
     'WCC.NNLS.R'
     'WCC.SGD.R'
-Remotes: frbl/tmlenet
+Remotes: 
+    frbl/tmlenet@fb-add-update
