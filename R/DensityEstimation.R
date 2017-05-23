@@ -1,10 +1,7 @@
 #' Density.Estimation
 #'
-#' @import tmlenet
-#' @importFrom tmlenet def_sW def_sA
 #' @docType class
 #' @importFrom R6 R6Class
-#' @importFrom simcausal NetIndClass
 DensityEstimation <- R6Class ("DensityEstimation",
   private =
     list(
@@ -29,8 +26,8 @@ DensityEstimation <- R6Class ("DensityEstimation",
         # Updates the used condistional density
         update = function(newdata, X, Y) {
           if (self$is_online) {
-            nodeObjects <- private$define_node_objects(datO = newdata, X = X, Y = Y)
-            self$getConditionalDensities(Y)$update(newdata = nodeObjects$datNetObs)
+            data_obj <- condensier::DataStore$new(input_data = newdata, Y = Y, X = X, auto_typing = FALSE)
+            self$getConditionalDensities(Y)$update(newdata = data_obj)
           } else {
             private$fake_update(newdata = newdata, X = X, Y = Y)
           }
@@ -42,26 +39,13 @@ DensityEstimation <- R6Class ("DensityEstimation",
             private$data <- datO
           }
 
-          nodeObjects <- private$define_node_objects(datO = datO, X = X, Y = Y)
+          dens_fit <- condensier::fit_density(X = X,
+                                  Y = Y,
+                                  input_data = datO,
+                                  nbins = private$nbins,
+                                  bin_estimator = private$bin_estimator)
+          private$conditional_densities[Y] <- list(dens_fit)
 
-          # Define est_params_list:
-          subset_vars <- lapply(Y, function(var) {var})
-
-          # Find the class of the provided variable
-          outcome.class <- nodeObjects$datNetObs$datnetA$type.sVar[Y]
-
-          # Put all est_params in RegressionClass (regression with speedglm package)
-          regclass <- RegressionClass$new(bin_estimator = private$bin_estimator,
-                                          nbins = private$nbins,
-                                          outvar.class = outcome.class,
-                                          outvar = Y,
-                                          predvars = X,
-                                          subset = subset_vars)
-
-          # Create the conditional density, based on the regression just specified and fit it
-          private$conditional_densities[Y] <- list(SummariesModel$new(reg = regclass,
-                                                                      DatNet.sWsA.g0 = nodeObjects$datNetObs))
-          self$getConditionalDensities(Y)$fit(data = nodeObjects$datNetObs)
         },
 
         predict_probability = function(datO, X, Y, plot = FALSE) {
@@ -73,19 +57,20 @@ DensityEstimation <- R6Class ("DensityEstimation",
           # This fix might not be necessary. It seems that whenever we have 1 row of data and 1 covariate, everythin
           # crashes and burns. Using this simple fix actually fixes that problem. Unfortunately, when using this fix,
           # it doesnt work when there are more than 1 covariate.
-          fixed <- FALSE
-          if(nrow(datO) == 1) {
-            datO <- rbind(datO, datO)
-            fixed <- TRUE
-          }
-
-          nodeObjects <- private$define_node_objects(datO = datO, X = X, Y = Y)
+          ##
+          ## THIS WAS A TOUGH ONE, BUT NOW APPEARS FIXED. ALSO ADDED TEST FOR PREDICTIONS WITH ONLY ONE ROW OF DATA.
+          ##
+          # fixed <- FALSE
+          # if(nrow(datO) == 1) {
+          #   # datO <- rbind(datO, datO)
+          #   # fixed <- TRUE
+          # }
 
           # Predict the instances where A=A (i.e., the outcome is the outcome)
-          estimated_probabilities <- conditionalDensity$predictAeqa(newdata = nodeObjects$datNetObs)
+          estimated_probabilities <- condensier::predict_probability(conditionalDensity, datO)
 
           # We undo our fix here:
-          if(fixed) { estimated_probabilities <- estimated_probabilities[[1]] }
+          # if(fixed) { estimated_probabilities <- estimated_probabilities[[1]] }
 
           if (plot & length(yValues) > 1) {
             private$create_output_plots(yValues = yValues, estimated_probabilities = estimated_probabilities)
@@ -100,47 +85,16 @@ DensityEstimation <- R6Class ("DensityEstimation",
           if(length(X) == 0) throw('Sampling from non conditional distribution is not yet supported!')
           conditionalDensity <- self$getConditionalDensities(Y)
 
-          # TODO: BUG! For some weird reason, the code doesn't work with NA 
-          if(anyNA(datO)) {
-            # TODO: warning('Some NA values were replaced with zeros!')
-            datO[is.na(datO)] <- 0
-          }
+          # TODO: BUG! For some weird reason, the code doesn't work with NA
+          ## FIXED
+          # if(anyNA(datO)) {
+          #   # TODO: warning('Some NA values were replaced with zeros!')
+          #   # datO[is.na(datO)] <- 0
+          # }
 
-          # Generate a datanet object (this needs to be refactored)
-          nodeObjects <- private$define_node_objects(datO = datO, X = X, Y = Y)
-          sampled_data <- conditionalDensity$sampleA(newdata = nodeObjects$datNetObs)
+          sampled_data <- condensier::sample_value(conditionalDensity, datO)
 
           sampled_data
-        },
-
-        # TODO: Refactor:
-        define_node_objects = function(datO, X, Y) {
-          # Define the nodes in the network, Anodes are the outcome nodes,
-          # Wnodes are the covariate nodes / predictors
-          nodes <- list(Anodes = Y, Wnodes = X , nFnode = "nF")
-
-          X <- do.call(tmlenet::def_sW, as.list(X))
-          Y <- do.call(tmlenet::def_sA, as.list(Y))
-
-          # Create an empty friend matrix (simcausal package dependency)
-          netind_cl <- NetIndClass$new(nobs = nrow(datO))
-
-          # Define datNetObs:
-
-          OdataDT_R6 <- tmlenet::OdataDT$new(Odata = datO, nFnode = "nF", iid_data_flag = FALSE)
-
-          covariateDatNet <- tmlenet::DatNet$new(Odata = OdataDT_R6, netind_cl = netind_cl, nodes = nodes)
-          covariateDatNet <- covariateDatNet$make.sVar(Odata = OdataDT_R6, sVar.object = X)
-
-          outcomeDatNet   <- tmlenet::DatNet$new(Odata = OdataDT_R6, netind_cl = netind_cl, nodes = nodes)
-          outcomeDatNet   <- outcomeDatNet$make.sVar(Odata = OdataDT_R6, sVar.object = Y)
-
-          datNetObs <- tmlenet::DatNet.sWsA$new(Odata = OdataDT_R6,
-                                        datnetW = covariateDatNet,
-                                        datnetA = outcomeDatNet)
-          datNetObs <- datNetObs$make.dat.sWsA()
-
-          return(list(datNetObs = datNetObs, Y = Y, sW = X, nodes = nodes))
         },
 
         # Function to output the density estimations on top of the actual density to a series of pdfs
@@ -179,7 +133,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
         ),
   public =
     list(
-        initialize = function(nbins = 30, bin_estimator = tmlenet::speedglmR6$new(), online = FALSE, verbose = FALSE) {
+        initialize = function(nbins = 30, bin_estimator = condensier::speedglmR6$new(), online = FALSE, verbose = FALSE) {
           private$verbose <- Arguments$getVerbose(verbose)
           private$is_online_estimator <- Arguments$getLogical(online)
           private$nbins <- Arguments$getIntegers(as.numeric(nbins), c(1, Inf))
@@ -194,7 +148,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
           if (is.null(private$randomVariables) | length(private$conditional_densities) == 0) {
             throw('The conditional_densities need to be fit first!')
           }
-          
+
           lapply(private$randomVariables, function(rv) {
             if(sample) {
               private$sample(datO=data, Y=rv$getY, X=rv$getX)
@@ -216,13 +170,16 @@ DensityEstimation <- R6Class ("DensityEstimation",
           # Fit conditional density for all of the randomVariables
           lapply(private$randomVariables, function(rv) {
             # TODO: Currently it is is not yet possible to sample from an non-conditional distribution!
+            ## OS: Maybe the following hack (its probably not a very good one):
+            ## 1) Fit unconditional density using the same method (histogram) with intercept only GLMs
+            ## 2) Sample from that fit just like conditional density
             if(length(rv$getX) > 0) {
               if (update) {
                 private$verbose && cat(private$verbose, 'Updating density: ', rv$getY)
-                private$update(newdata = data, Y = rv$getY, X = rv$getX) 
+                private$update(newdata = data, Y = rv$getY, X = rv$getX)
               } else {
                 private$verbose && cat(private$verbose, 'Fitting density: ', rv$getY)
-                private$fit(datO = data, Y = rv$getY, X = rv$getX) 
+                private$fit(datO = data, Y = rv$getY, X = rv$getX)
               }
             }
           })
