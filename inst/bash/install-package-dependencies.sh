@@ -11,7 +11,6 @@ packages <- c(
 "R.methodsS3",
 "R.oo",
 "testthat",
-"simcausal",
 "xgboost",
 "nnls",
 "sgd",

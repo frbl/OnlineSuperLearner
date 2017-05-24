@@ -14,7 +14,7 @@
 #'   \item{\code{getModel()}}{Getter for the latest model.}
 #'}
 ML.Base <- R6Class("ML.Base",
-  inherit = tmlenet::logisfitR6,
+  inherit = condensier::logisfitR6,
   public =
     list(
       fitfunname='ml.base',
@@ -37,7 +37,7 @@ ML.Base <- R6Class("ML.Base",
         private$do.update(...)
       }
     ),
-  active = 
+  active =
     list(
       ),
   private =

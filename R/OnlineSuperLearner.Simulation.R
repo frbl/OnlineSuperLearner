@@ -35,7 +35,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           summaryMeasureGenerator <- smg_factory$fabricate(randomVariables, bounds = bounds)
 
           margin <- 100
-          Data.Static$new(dataset = data.test) %>% 
+          Data.Static$new(dataset = data.test) %>%
             summaryMeasureGenerator$setData(.)
           data.test <- summaryMeasureGenerator$getNext(private$test_set_size)
 
@@ -50,7 +50,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           # Divide by two here just so the initial size is a lot larger then each iteration, not really important
           risk <- osl$fit(data.train, randomVariables = randomVariables,
-                                initial_data_size = private$training_set_size / 2, 
+                                initial_data_size = private$training_set_size / 2,
                                 max_iterations = max_iterations,
                                 mini_batch_size = (private$training_set_size / 2) / max_iterations) %T>%
             print
@@ -63,7 +63,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           predicted.outcome <- osl$predict(data = copy(data.test), randomVariables)
 
           performance <- private$cv_risk_calculator$calculate_evaluation(predicted.outcome = predicted.outcome,
-                                                          observed.outcome = observed.outcome, 
+                                                          observed.outcome = observed.outcome,
                                                           randomVariables = randomVariables) %>%
             c(iterations = max_iterations, performance = .) %T>%
             print
@@ -80,11 +80,11 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           B <- 10
           pre <- options('warn')$warn
           options(warn=-1)
-          result <-mclapply(seq(B), function(i) { 
-            osl$sample_iteratively(data = data.test[1,], 
+          result <-mclapply(seq(B), function(i) {
+            osl$sample_iteratively(data = data.test[1,],
                                    randomVariables = randomVariables,
                                    intervention = intervention,
-                                   tau = tau) 
+                                   tau = tau)
           }, mc.cores=8)
           options(warn=pre)
 
@@ -100,7 +100,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
   public =
     list(
         initialize = function() {
-          tmlenet_options(parfit=FALSE)
+          condensier_options(parfit=FALSE)
           options(warn=1)
           private$sim  <- Simulator.GAD$new()
           private$training_set_size <- 1e5
@@ -132,11 +132,11 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   #algorithm_params = list(ntrees=c(10,20)),
                                   #params = list(nbins = c(6), online = TRUE))))
 
-          algos <- append(algos, list(list(algorithm = 'tmlenet::speedglmR6',
+          algos <- append(algos, list(list(algorithm = 'condensier::speedglmR6',
                                   #algorithm_params = list(),
                                   params = list(nbins = c(3,4), online = FALSE))))
 
-          #algos <- append(algos, list(list(algorithm = 'tmlenet::glmR6',
+          #algos <- append(algos, list(list(algorithm = 'condensier::glmR6',
                                   ##algorithm_params = list(),
                                   #params = list(nbins = c(16, 20, 24, 30, 34, 40), online = FALSE))))
 
@@ -177,7 +177,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
               (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
             mu <- aa*(0.9) + (1-aa)*(0.3)
             rnorm(length(mu), mu, sd=0.1)}})
-          
+
 
           # We'd like to use the following features in our estimation:
           W <- RandomVariable$new(formula = Y ~ A + W, family = 'gaussian')

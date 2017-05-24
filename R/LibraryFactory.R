@@ -123,7 +123,7 @@ LibraryFactory <- R6Class("LibraryFactory",
           return(fabricatedLibrary)
         }
         ),
-  active = 
+  active =
     list(
         get_validity = function() {
           errors <- character()
@@ -138,8 +138,8 @@ LibraryFactory <- R6Class("LibraryFactory",
         ),
   public =
     list(
-        initialize = function(ML.models.allowed = c('tmlenet::speedglmR6',
-                                                    'tmlenet::glmR6',
+        initialize = function(ML.models.allowed = c('condensier::speedglmR6',
+                                                    'condensier::glmR6',
                                                     'ML.H2O.gbm',
                                                     'ML.H2O.glm',
                                                     'ML.H2O.randomForest',
