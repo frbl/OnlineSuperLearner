@@ -11,7 +11,7 @@ test_that("it should estimate the true treatment", {
   ## INITIALIZATION
   # Generate the mehanisms
   # we generate number of blocks observations
-  tmlenet_options(parfit=FALSE)
+  condensier_options(parfit=FALSE)
   options(warn=-1)
   set.seed(12345)
 
@@ -66,11 +66,11 @@ test_that("it should estimate the true treatment", {
                           #algorithm_params = list(ntrees=c(10,20)),
                           #params = list(nbins = c(6), online = TRUE))))
 
-  algos <- append(algos, list(list(algorithm = 'tmlenet::speedglmR6',
+  algos <- append(algos, list(list(algorithm = 'condensier::speedglmR6',
                           #algorithm_params = list(),
                           params = list(nbins = c(3,4, 5), online = FALSE))))
 
-  #algos <- append(algos, list(list(algorithm = 'tmlenet::glmR6',
+  #algos <- append(algos, list(list(algorithm = 'condensier::glmR6',
                           ##algorithm_params = list(),
                           #params = list(nbins = c(16, 20, 24, 30, 34, 40), online = FALSE))))
 

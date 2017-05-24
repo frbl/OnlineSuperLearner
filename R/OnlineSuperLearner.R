@@ -1,4 +1,4 @@
-#devtools::load_all('~/Workspace/frbl/tmlenet')
+#devtools::load_all('~/Workspace/frbl/condensier')
 #' OnlineSuperLearner
 #'
 #' This is the main super learner class. This class contains everything related
