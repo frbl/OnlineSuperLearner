@@ -29,7 +29,7 @@ packages <- c(
 )
 
 gh_packages <- list(
-  list(repo = "frbl/tmlenet", branch = 'fb-add-update'),
+  list(repo = "osofr/condensier", branch = 'master'),
   list(repo = "jimhester/covr", branch = 'master') #,
   #list(repo = 'cran/rkafka', branch = 'master')
 )
