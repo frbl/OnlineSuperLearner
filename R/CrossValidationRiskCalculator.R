@@ -37,7 +37,7 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
               current_outcome <- rv$getY
               lossFn <- Evaluation.get_evaluation_function(rv$getFamily, useAsLoss = FALSE)
               result <- lossFn(data.observed  = observed.outcome[,current_outcome, with=FALSE],
-                              data.predicted = current.predicted.outcome[,current_outcome, with=FALSE]) 
+                              data.predicted = current.predicted.outcome[,current_outcome, with=FALSE])
               if (add_evaluation_measure_name){
                 names(result) <- paste(names(result), current_outcome, sep='.')
               } else {
@@ -74,15 +74,15 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
               risk
             })))
           })
-          
+
           # cv_risk <- list()
           #if (is.a(predicted.outcome, 'list')) {
             ## MOVE TO SEPARTE FUNCTION
             #for (rv in randomVariables) {
-              #current.outcome <- 
+              #current.outcome <-
               #lossFn <- Evaluation.get_evaluation_function(rv$getFamily, useAsLoss = useAsLoss)
               #cv_risk[[rv$getY]] <- lossFn(data.observed = observed.outcome[[rv$getY]],
-                                            #data.predicted = predicted.outcome[[rv$getY]]) 
+                                            #data.predicted = predicted.outcome[[rv$getY]])
             #}
           #} else {
             #algorithms <- rownames(predicted.outcome)
@@ -92,7 +92,7 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
               #lossFn <- Evaluation.get_evaluation_function(rv$getFamily, useAsLoss = useAsLoss)
               #for (algorithm in algorithms) {
                 #cv_risk[[rv$getY]][[algorithm]] <- lossFn(data.observed = observed.outcome[[rv$getY]],
-                                              #data.predicted = current.outcome[[algorithm]]) 
+                                              #data.predicted = current.outcome[[algorithm]])
               #}
             #}
           #}
@@ -112,7 +112,7 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
           observed.outcome <- Arguments$getInstanceOf(observed.outcome, 'data.table')
 
           updated_risk <- self$calculate_risk(predicted.outcome = predicted.outcome,
-                                              observed.outcome = observed.outcome, 
+                                              observed.outcome = observed.outcome,
                                               randomVariables = randomVariables)
 
 
@@ -123,18 +123,18 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
             old_risk <- current_risk[[algorithm_name]]
 
             lapply(randomVariables, function(rv) {
-              current <- rv$getY 
+              current <- rv$getY
 
               # The score up to now needs to be calculated current_count times, the other score 1 time.
-              #new_risk <- (1 / (current_count + 1)) * new_risks[[current]] 
-              new_risk <- new_risks[[current]] 
+              #new_risk <- (1 / (current_count + 1)) * new_risks[[current]]
+              new_risk <- new_risks[[current]]
 
               if(!is.null(old_risk) && is.na(old_risk[[current]])) {
                 # If our previous risk is NA, that means that we had a previous iteration in which we could
                 # not calculate the risk. Most likely because of the initialization of the DOSL. In the next
                 # iteration we can make a prediction, but it is out of sync with the provided count. Therefore,
                 # set the old risk to the new risk and resync with the count.
-                old_risk[[current]] <- new_risk 
+                old_risk[[current]] <- new_risk
               }
 
               if(!is.null(old_risk)) {
@@ -145,7 +145,7 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
               new_risk
             }) %>% unlist %>% as.list
           })
-          
+
           names(current_risk) <- algorithm_names
           return(current_risk)
         }
