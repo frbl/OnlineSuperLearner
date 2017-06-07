@@ -66,15 +66,23 @@ ML.XGBoost <- R6Class("ML.XGBoost",
       verbosity = NULL,
 
       do.predict = function(X_mat, m.fit) {
-        # TODO: We are not using the passed in m.fit for now, as for some
-        # reason it does not always contain the correct attributes.
-        predict(self$get_model, X_mat, missing = NA)
+
+        #result <- ifelse(any(is.na(m.fit$coef)),
+                         #super$do.predict(X_mat, m.fit),
+                         #predict(m.fit$coef, X_mat))
+        if (any(is.na(m.fit$coef))) {
+          result <- super$do.predict(X_mat, m.fit)
+        } else {
+          result <- predict(m.fit$coef, X_mat)
+        }
+        return(result)
       },
 
       do.update = function(X_mat, Y_vals, m.fit, ...) {
         # By default the xgbtrain function uses the old model as a parameter. Therefore we can just simply call
         # the fit function
         private$do.fit(X_mat, Y_vals, m.fit$coef)
+
       },
 
       do.fit = function (X_mat, Y_vals, coef = NULL) {
@@ -95,13 +103,19 @@ ML.XGBoost <- R6Class("ML.XGBoost",
         #watchlist <- list(eval = dtest, train = dtrain)
 
         # Fit the model, giving the previously fitted model as a parameter
-        xgb.train(data       = dtrain,
+        if (any(is.null(coef) || is.na(coef))) {
+          coef <- NULL
+        }
+
+        estimator <- xgb.train(data = dtrain,
                   params     = private$params,
                   nrounds    = private$rounds,
                   #watchlist = watchlist,
                   xgb_model  = coef,
-                  verbose    = private$verbosity) %>%
-          return
+                  verbose    = private$verbosity)
+        if(any(is.na(estimator))) browser()
+
+        return(estimator)
     }
     )
 )

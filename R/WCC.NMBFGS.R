@@ -33,7 +33,7 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
 
           param <- Arguments$getNumerics(param, c(epsilon, 1 - lengthOfParam * epsilon))
           sumOfParam <- sum(param)
-          if (sumOfParam > 1 - epsilon) {
+          if ((sumOfParam - (1 - epsilon)) > 0.00001) {
             throw("'check' is 'TRUE' and 'sum(param) ',", sumOfParam, " is larger than '1 - epsilon', with 'epsilon' set to ", epsilon)
           }
         } else {

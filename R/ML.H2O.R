@@ -9,8 +9,6 @@ ML.H2O <- R6Class("ML.H2O",
   inherit = ML.Base,
   public =
     list(
-      initialize = function(verbose = FALSE) {
-      }
     ),
   active = 
     list(

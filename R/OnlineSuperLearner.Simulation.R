@@ -2,6 +2,9 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
+#' @importFrom condensier condensier_options
+#' @importFrom doParallel registerDoParallel
+#' @importFrom foreach foreach dopar
 #' @include RandomVariable.R
 #' @include SMGFactory.R
 #' @include SMG.Latest.Entry.R
@@ -74,25 +77,62 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           #plot(x=performances$iterations, y=performances$performance)
           #performances
-          browser()
-          intervention <- list(variable = 'A', when = c(1), what = c(0))
+          intervention <- list(variable = 'A', when = c(2), what = c(1))
           tau = 2
-          B <- 10
+          B <- 100
           pre <- options('warn')$warn
           options(warn=-1)
-          result <-mclapply(seq(B), function(i) {
-            osl$sample_iteratively(data = data.test[1,],
+          doParallel::registerDoParallel(cores = 8)
+
+          browser()
+
+          # Note that this won't work when we have an H2O estimator in the set. The parallelization will fail.
+          result <- foreach(i=seq(B), .combine=rbind) %dopar% {
+            osl$sample_iteratively(data = data.test[i,],
                                    randomVariables = randomVariables,
                                    intervention = intervention,
-                                   tau = tau)
-          }, mc.cores=8)
+                                   tau = tau)[tau, 'Y']
+          }
+
           options(warn=pre)
 
-          lapply(result, function(x) {
-            tail(x, 1)$Y
-          }) %>%
+          result %>% 
             unlist %>%
             mean
+
+          rv <- randomVariables[[5]]
+          rv$getX
+          dir <- '/tmp/osl/'
+          pdf(paste(dir,'YY','.pdf',sep = ''))
+          plot(density(sample(osl$get_estimators, 1)[[1]]$predict(data= data.aisset, sample = FALSE, subset='Y')$Y))
+          dev.off()
+          osl$get_dosl$Y$get_estimator_type
+
+          osl$info
+          data.aisset <- copy(data.test)
+          result <- osl$predict(data = data.aisset,
+                        randomVariables = randomVariables,
+                        all_estimators = FALSE,
+                        discrete = TRUE,
+                        continuous = FALSE,
+                        sample = FALSE,
+                        plot = TRUE)[[1]]
+
+          result$Y > 0.5
+
+
+          dir.create(dir, showWarnings = FALSE)
+          for (name in colnames(result)) {
+            print(name)
+            pdf(paste(dir,name,'.pdf',sep = ''))
+            estimated_probabilities <- result[, name, with=FALSE] %>% unlist
+            true_values <-   data.test[, name, with=FALSE] %>% unlist
+            ylim <-c(0,max(c(density(estimated_probabilities)$y, density(true_probabilities)$y)))
+            print(ylim)
+            plot(density(true_values), ylim=ylim)
+            lines(true_probabilities,estimated_probabilities, cex = .3, col = "red")
+            dev.off()
+          }
 
           lapply(performance, function(x) {lapply(x,mean)})
         }
@@ -103,7 +143,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           condensier_options(parfit=FALSE)
           options(warn=1)
           private$sim  <- Simulator.GAD$new()
-          private$training_set_size <- 1e5
+          private$training_set_size <- 1e3
           private$cv_risk_calculator <- CrossValidationRiskCalculator$new()
           private$test_set_size <- 100
           private$log <- Arguments$getVerbose(-8, timestamp=TRUE)
@@ -120,17 +160,17 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           algos <- list()
 
 
-          #algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                                  #algorithm_params = list(alpha = 0),
-                                  #params = list(nbins = c(6,40), online = TRUE))))
+          algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
+                                  algorithm_params = list(alpha = 0),
+                                  params = list(nbins = c(6,40), online = TRUE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
                                   #algorithm_params = list(ntrees=c(10,20), min_rows=1),
                                   #params = list(nbins = c(6), online = TRUE))))
 
-          #algos <- append(algos, list(list(algorithm = 'ML.H2O.randomForest',
-                                  #algorithm_params = list(ntrees=c(10,20)),
-                                  #params = list(nbins = c(6), online = TRUE))))
+          algos <- append(algos, list(list(algorithm = 'ML.H2O.randomForest',
+                                  algorithm_params = list(ntrees=c(10,20)),
+                                  params = list(nbins = c(6), online = TRUE))))
 
           algos <- append(algos, list(list(algorithm = 'condensier::speedglmR6',
                                   #algorithm_params = list(),
