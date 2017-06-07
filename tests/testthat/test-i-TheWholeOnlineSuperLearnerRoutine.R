@@ -105,20 +105,14 @@ test_that("it should estimate the true treatment", {
   # 'psi.approx' is a Monte-Carlo approximation of the parameter of interest.
   # This is a little slow, because 'simulateWAY' is designed to simulate quickly a long time series,
   # as opposed to many short time series.
-  if (FALSE) {
-    # Calculated based on 1e4
-    psi.approx <- 0.2991661 #with intervention = 0
-    psi.approx <- 0.9021478 #with intervention = 1
-  } else {
-    psi.approx <- mclapply(seq(B), function(bb) {
-      when <- max(intervention$when)
-      data.int <- simulator$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
-                                  intervention = intervention, verbose = FALSE)
-      data.int$Y[tau]
-    }, mc.cores = cores) %>%
-      unlist %>%
-      mean
-  }
+  psi.approx <- mclapply(seq(B), function(bb) {
+    when <- max(intervention$when)
+    data.int <- simulator$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
+                                intervention = intervention, verbose = FALSE)
+    data.int$Y[tau]
+  }, mc.cores = cores) %>%
+    unlist %>%
+    mean
 
   print(psi.approx)
 
