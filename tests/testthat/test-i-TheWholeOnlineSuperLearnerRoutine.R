@@ -160,7 +160,7 @@ test_that("it should estimate the true treatment", {
 
   psi.estimation <- mean(result)
 
-  print(paste('Approximation:', psi.approx, 'estimation:', psi.estimation, 'difference:', abs(psi.approx - psi.estimation))
+  print(paste('Approximation:', psi.approx, 'estimation:', psi.estimation, 'difference:', abs(psi.approx - psi.estimation)))
 
   expect_true((abs(psi.approx - psi.estimation)) < 0.1)
 
