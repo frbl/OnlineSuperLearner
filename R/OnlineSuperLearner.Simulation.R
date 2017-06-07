@@ -4,7 +4,7 @@
 #' @importFrom R6 R6Class
 #' @importFrom condensier condensier_options
 #' @importFrom doParallel registerDoParallel
-#' @importFrom foreach foreach dopar
+#' @importFrom foreach foreach
 #' @include RandomVariable.R
 #' @include SMGFactory.R
 #' @include SMG.Latest.Entry.R
@@ -162,7 +162,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
                                   algorithm_params = list(alpha = 0),
-                                  params = list(nbins = c(6,40), online = TRUE))))
+                                  params = list(nbins = c(16,40), online = TRUE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
                                   #algorithm_params = list(ntrees=c(10,20), min_rows=1),
@@ -170,11 +170,11 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           algos <- append(algos, list(list(algorithm = 'ML.H2O.randomForest',
                                   algorithm_params = list(ntrees=c(10,20)),
-                                  params = list(nbins = c(6), online = TRUE))))
+                                  params = list(nbins = c(16), online = TRUE))))
 
           algos <- append(algos, list(list(algorithm = 'condensier::speedglmR6',
                                   #algorithm_params = list(),
-                                  params = list(nbins = c(3,4), online = FALSE))))
+                                  params = list(nbins = c(13,14), online = FALSE))))
 
           #algos <- append(algos, list(list(algorithm = 'condensier::glmR6',
                                   ##algorithm_params = list(),
