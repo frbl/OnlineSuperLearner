@@ -129,7 +129,15 @@ DensityEstimation <- R6Class ("DensityEstimation",
 
         get_nbins = function() {
           return(private$nbins)
+        },
+
+        get_estimator_type = function() {
+          list(
+            fitfunname = private$bin_estimator$fitfunname,
+            lmclass = private$bin_estimator$lmclass
+          )
         }
+
         ),
   public =
     list(
@@ -149,13 +157,18 @@ DensityEstimation <- R6Class ("DensityEstimation",
             throw('The conditional_densities need to be fit first!')
           }
 
-          lapply(private$randomVariables, function(rv) {
+          results <- lapply(private$randomVariables, function(rv) {
+            current_outcome <- rv$getY
+
+            # Return NA if we want to skip this iteration (next is not available in lapply)
+            if (!is.null(subset) && !(current_outcome %in% subset)) return(NA)
             if(sample) {
-              private$sample(datO=data, Y=rv$getY, X=rv$getX)
+              private$sample(datO=data, Y = current_outcome, X = rv$getX)
             } else {
-              private$predict_probability(datO=data, Y=rv$getY, X=rv$getX, plot = plot)
+              private$predict_probability(datO = data, Y = current_outcome, X = rv$getX, plot = plot)
             }
-          })
+          }) 
+          results[!is.na(results)]
         },
 
         # Fits the densities according to the provided randomVariables

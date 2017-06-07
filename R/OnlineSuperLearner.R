@@ -1,4 +1,4 @@
-#devtools::load_all('~/Workspace/frbl/condensier')
+#devtools::load_all('~/Workspace/osofr/condensier')
 #' OnlineSuperLearner
 #'
 #' This is the main super learner class. This class contains everything related
@@ -136,7 +136,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         # @param A: the column names used for the treatment
         # @param W: the column names used for the covariates
         # @return a list of outcomes, each entry being a data.table with the outcomes of an estimator
-        predictUsingAllEstimators = function(data, sample = FALSE) {
+        predictUsingAllEstimators = function(data, sample = FALSE, plot = FALSE) {
           private$verbose && enter(private$verbose, 'Predicting with all estimators')
           #dataH2o <- as.h2o(data)
           #private$verbose && cat(private$verbose, 'Uploaded data to h2o')
@@ -149,7 +149,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                 current <- data
               #}
               # TODO: Unity in export formats. Probably the best is to enforce a data.table output
-              estimator$predict(current, sample = sample)
+              estimator$predict(current, sample = sample, plot = plot)
             })
 
           # convert the list of results into a data.table
@@ -351,8 +351,33 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$should_fit_dosl
         },
 
+        info = function() {
+          if (!self$is_fitted) {
+            print('Fit the algorithm first')
+            return(-1)
+          }
+          print('Information about the current OSL fit')
+          print('=====================================')
+          print('The online super learner (CTS) was fit using the following weights:')
+          weights <- sapply(private$weightedCombinationComputers, function(wcc) wcc$get_weights)
+          print(weights)
+          print('\n-------------------------------------')
+          print('The online super learner (DSC) was fit using the following estimators:')
+          print('-------------------------------------')
+          print(self$get_dosl)
+          print('\n-------------------------------------')
+          print('The cross validated risk of each estimator is')
+          print('-------------------------------------')
+          print(self$get_cv_risk)
+          print('=====================================')
+        },
+
         get_estimators = function() {
           return(private$SL.library.fabricated)
+        },
+
+        get_dosl = function() {
+          return(private$dosl.estimators)
         },
 
         get_cv_risk = function() {
@@ -394,7 +419,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           libraryFactory <- LibraryFactory$new(verbose = verbose)
           private$SL.library.fabricated <- libraryFactory$fabricate(SL.library.definition)
           private$SL.library.descriptions <- names(private$SL.library.fabricated)
-          private$verbose && cat(private$verbose, paste('Creating super learner with a library:', private$SL.library.descriptions))
 
           # We need a weighted combination computer for each of the randomvariables.
           # We could reuse the WCC, and just save the weights here. However, this way we do allow
@@ -454,6 +478,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         fit = function(data, randomVariables, initial_data_size = 5, max_iterations = 20, mini_batch_size = 20) {
 
           tic <- Sys.time()
+          initial_data_size <- Arguments$getInteger(initial_data_size, c(1,Inf))
+          max_iterations <- Arguments$getInteger(max_iterations, c(1,Inf))
+          mini_batch_size <- Arguments$getInteger(mini_batch_size, c(1,Inf))
+
           data <- Arguments$getInstanceOf(data, 'Data.Base')
           private$summaryMeasureGenerator$setData(data = data)
 
@@ -462,6 +490,11 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           # We initialize the WCC's here because we need to have the randomVriables
           private$initialize_weighted_combination_calculators(randomVariables)
+
+          print(paste('Fitting OnlineSuperLearner with a library:', paste(private$SL.library.descriptions, collapse = ', '),
+                      'and we use an initial data size of', initial_data_size,
+                      'with',max_iterations,'iterations,',
+                      'and a minibatch of',mini_batch_size))
 
           # Get the initial data for fitting the first estimator and train the initial models
           private$verbose && enter(private$verbose, 'Fitting initial estimators')
@@ -483,7 +516,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         # Predict should return a nrow(data) * 1 matrix, where the predictions are multiplied by
         # the weights of each estimator.
-        predict = function(data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE) {
+        predict = function(data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE) {
           if (!self$is_fitted){
             return(NA)
           }
@@ -502,8 +535,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                                  )
           result <- list()
 
-          if (all_estimators | continuous) {
-            predictions <- private$predictUsingAllEstimators(data = data, sample = sample)
+          if (all_estimators || continuous) {
+            predictions <- private$predictUsingAllEstimators(data = data, sample = sample, plot = plot)
 
             if (all_estimators) {
               private$verbose && cat(private$verbose, 'All Estimators')
@@ -538,9 +571,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
               # This is for the first iteration, we don't have a dosl yet as it get's selected based
               # on the other estimator's CV score
               if (outcome_name %in% names(private$dosl.estimators)) {
-                outcome_name
-                private$dosl.estimators
-                prediction <- private$dosl.estimators[[outcome_name]]$predict(data = data, sample = sample)[[outcome_name]]
+                prediction <- private$dosl.estimators[[outcome_name]]$predict(data = data,
+                                                                              sample = sample,
+                                                                              subset = outcome_name,
+                                                                              plot = plot)[[outcome_name]]
               } else {
                 prediction <- c(outcome = NA)
               }

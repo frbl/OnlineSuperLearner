@@ -27,3 +27,7 @@ create_object_from_string <- function(string_object_name, args=list()) {
   return(do.call(eval(parse(text=string_object_name))$new, args = args))
 }
 
+.onAttach <- function(...) {
+  packageStartupMessage('OnlineSuperLearner')
+  packageStartupMessage('The OnlineSuperLearner package is still in beta testing. Interpret results with caution.')
+}

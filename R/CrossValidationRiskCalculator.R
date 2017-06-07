@@ -25,6 +25,7 @@
 #'   }
 #'
 #' }
+#' @export
 CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
   public =
     list(

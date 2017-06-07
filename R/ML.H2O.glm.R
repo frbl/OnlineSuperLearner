@@ -3,7 +3,6 @@
 #' @docType class
 #' @importFrom R6 R6Class
 #' @include ML.H2O.R
-#' @export
 ML.H2O.glm <- R6Class("ML.H2O.glm",
   inherit = ML.H2O,
   public =

@@ -29,10 +29,10 @@ data.
   }
 
   \item{\code{getNextN(n)}}{
-    Method that returns the next \code{n} observations. This function can be used to bootstrap 
+    Method that returns the next \code{n} observations. This function can be used to bootstrap
     an initial model or to get a minibatch of observations. Note that the function will always
     try to return data. If one asks for n observations, it will check if there are still n new
-    observations. If not, it will return all observations still available. If there are no 
+    observations. If not, it will return all observations still available. If there are no
     observations available, it will return null.
     @param n = the number of measurements requested
   }

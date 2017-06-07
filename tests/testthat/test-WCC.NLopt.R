@@ -37,13 +37,14 @@ test_that("it should create the best weighted combination and should return the 
  Z[,6] <- Z[,6] + rnorm(nobs, mean=0, sd=0.01)
  Z[,7] <- Z[,7] + rnorm(nobs, mean=0, sd=0.01)
  Z[,8] <- Z[,8] + rnorm(nobs, mean=0, sd=0.01)
- Z[,9] <- Z[,9] + rnorm(nobs, mean=0, sd=0.0001)
+ Z[,9] <- Z[,9] + rnorm(nobs, mean=0, sd=0.001)
  Z[,10] <- Z[,10] + rnorm(nobs, mean=0, sd=0.00000000001)
 
  subject<- described.class$new(obsWeights) 
  result <- subject$process(Z,Y, libraryNames)
 
  # The last two have the least noise, so they should have the highest weights
+ print(result)
  best.idx <- which(result == max(result))
  expect_equal(best.idx, 10)
 

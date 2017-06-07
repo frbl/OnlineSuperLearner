@@ -16,6 +16,7 @@
 #'   \item{\code{fillCache()}}{}
 #'   \item{\code{getNext()}}{}
 #' }
+#' @export
 SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
   public =
     list(
@@ -138,12 +139,17 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
         get_bounds = function() {
           private$bounds
         },
+
         is_normalized = function() {
           private$normalized
         },
 
         getCache = function(){
           return(private$cache)
+        },
+
+        get_data_object = function() {
+          return(private$data)
         },
 
         get_smg_list = function() {

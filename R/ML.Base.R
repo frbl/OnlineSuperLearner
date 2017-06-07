@@ -20,6 +20,10 @@ ML.Base <- R6Class("ML.Base",
       fitfunname='ml.base',
       lmclass='ML.BaseR6',
 
+      initialize = function() {
+        super$initialize()
+      },
+
       process = function(X_mat, Y_vals, X_mat_test, Y_vals_test) {
         throw('Deprecated!')
       },
@@ -42,17 +46,9 @@ ML.Base <- R6Class("ML.Base",
       ),
   private =
     list(
-        do.fit = function(X_mat, Y_vals) {
-          throw('The fit method needs to be inherited')
-        },
-
-        do.predict = function(X_mat, m.fit) {
-          warning("You are using the base predict function, you'd probably want to inherit and override this")
-          if (is.null(m.fit)) {
-            throw('Train the model first')
-          }
-          pred <- predict(m.fit, X_mat)
-        }
+      do.fit = function(X_mat, Y_vals) {
+        throw('The fit method needs to be inherited')
+      }
     )
 )
 
