@@ -5,13 +5,13 @@
 OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
   public =
     list(
-      initialize = function(verbose, preprocessor = NULL) {
+      initialize = function(pre_processor = NULL, verbose = FALSE) {
+          private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
+
           if (!is.null(pre_processor)) {
             private$verbose && cat(private$verbose,'Adding a preprocessor for changing the data.')
             private$pre_processor <- Arguments$getInstanceOf(pre_processor, 'PreProcessor')
           }
-
-          private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
       },
 
       predict = function(osl, data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE, denormalize = TRUE) {
@@ -85,7 +85,7 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
 
       predict_dosl = function(dosl, data, randomVariables, sample = FALSE, plot = FALSE, denormalize = TRUE) {
         private$verbose && cat(private$verbose, 'discrete SL')
-        lapply(randomVariables, function(rv) {
+        result <- lapply(randomVariables, function(rv) {
             outcome_name <- rv$getY
 
             # This is for the first iteration, we don't have a dosl yet as it get's selected based
@@ -102,8 +102,8 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
             colnames(prediction) <- outcome_name
             prediction
           }) %>%
-            do.call(cbind, .) %>%
-            as.data.table
+          do.call(cbind, .) %>%
+          as.data.table
 
         if(denormalize) result <- private$denormalize(result)
         return(result)
@@ -117,7 +117,7 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
       # @param A: the column names used for the treatment
       # @param W: the column names used for the covariates
       # @return a list of outcomes, each entry being a data.table with the outcomes of an estimator
-      predict_using_all_estimators = function(data, sl_library, sample = FALSE, plot = FALSE) {
+      predict_using_all_estimators = function(data, sl_library, sample = FALSE, plot = FALSE, denormalize = TRUE) {
         private$verbose && enter(private$verbose, 'Predicting with all estimators')
         #dataH2o <- as.h2o(data)
         #private$verbose && cat(private$verbose, 'Uploaded data to h2o')
@@ -136,9 +136,9 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
         # convert the list of results into a data.table
         result <- lapply(result, function(res) as.data.table(do.call(cbind, res)))
         private$verbose && exit(private$verbose)
+
         if(denormalize) result <- lapply(result, private$denormalize)
         return(result)
-              
       }
     ),
   active =
@@ -147,6 +147,7 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
   private =
     list(
       verbose = NULL,
+      pre_processor = NULL,
 
       # denormalize the data
       denormalize = function(data) {

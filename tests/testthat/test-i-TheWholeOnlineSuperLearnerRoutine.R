@@ -118,8 +118,8 @@ test_that("it should estimate the true treatment", {
   ##############
   # Estimation #
   ##############
-  data.train <- simulator$simulateWAY(training_set_size + B, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
-    Data.Static$new(dataset = .)
+  data <- simulator$simulateWAY(training_set_size + B, qw=llW, ga=llA, Qy=llY, verbose=log)
+  data.train <- Data.Static$new(dataset = data)
 
   # We use the following covariates in our estimators
   W <- RandomVariable$new(formula = Y ~ A + W, family = 'gaussian')
@@ -128,16 +128,11 @@ test_that("it should estimate the true treatment", {
   randomVariables <- c(W, A, Y)
 
   # Generate some bounds to use for the data (scale it between 0 and 1)
-  bounds <- list()
-  for(name in colnames(data)) {
-    min_bound = min(data[, name, with=FALSE] )
-    max_bound = max(data[, name, with=FALSE] )
-    bounds <- append(bounds, list(list(max_bound = max_bound, min_bound = min_bound)))
-  }
-  names(bounds) <- colnames(data)
+  bounds <- PreProcessor.generate_bounds(data)
+  pre_processor <- PreProcessor$initialize(bounds)
 
   smg_factory <- SMGFactory$new()
-  summaryMeasureGenerator <- smg_factory$fabricate(randomVariables, bounds = bounds)
+  summaryMeasureGenerator <- smg_factory$fabricate(randomVariables, pre_processor = pre_processor)
 
   osl <- OnlineSuperLearner$new(algos, summaryMeasureGenerator = summaryMeasureGenerator, verbose = log)
   risk <- osl$fit(data.train, randomVariables = randomVariables,
