@@ -28,6 +28,7 @@ PreProcessor <- R6Class("PreProcessor",
     list(
       bounds = NULL,
 
+      # Note that data is normalized in place!
       normalization = function(data, denormalize) {
         data <- Arguments$getInstanceOf(data, 'data.table')
 

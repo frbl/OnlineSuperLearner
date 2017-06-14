@@ -64,6 +64,7 @@ Collate:
     'ML.H2O.gbm.R'
     'ML.H2O.glm.R'
     'ML.H2O.randomForest.R'
+    'OnlineSuperLearner.Predict.R'
     'WCC.SGD.Simplex.R'
     'WCC.NMBFGS.R'
     'WeightedCombinationComputer.R'

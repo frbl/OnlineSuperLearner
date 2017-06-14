@@ -181,8 +181,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           outcome.variables <- sapply(randomVariables, function(rv) rv$getY)
 
           # Extract the level 1 data and use it to fit the osl
-          fail
-          predicted.outcome <- private$predict_using_all_estimators(data = data.splitted$train, sl_library = private$SL.library.fabricated)
+          predicted.outcome <- private$predict_using_all_estimators(data = data.splitted$train,
+                                                                    sl_library = private$SL.library.fabricated,
+                                                                    denormalize = TRUE)
+
           observed.outcome <- data.splitted$train[,outcome.variables, with=FALSE]
           private$fit_osl(predicted.outcome = predicted.outcome, observed.outcome = observed.outcome)
           private$fitted <- TRUE
