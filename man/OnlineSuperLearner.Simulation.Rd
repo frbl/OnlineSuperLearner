@@ -3,12 +3,16 @@
 \docType{class}
 \name{OnlineSuperLearner.Simulation}
 \alias{OnlineSuperLearner.Simulation}
-\title{OnlineSuperLearner.Simulation runs different simulations on the superlearner object.}
+\title{OnlineSuperLearner.Simulation runs different simulations on the superlearner object.
+You can run an example using:
+suppressWarnings(devtools::load_all()); OnlineSuperLearner.Simulation$new()}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 OnlineSuperLearner.Simulation
 }
 \description{
 OnlineSuperLearner.Simulation runs different simulations on the superlearner object.
+You can run an example using:
+suppressWarnings(devtools::load_all()); OnlineSuperLearner.Simulation$new()
 }
 \keyword{datasets}
