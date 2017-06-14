@@ -40,7 +40,6 @@ test_that("it should estimate the true treatment", {
   # The intervention we are interested in
   intervention  <- list(when = c(2), what = c(1), variable ='A')
 
-
   # The time of the outcome
   tau = 2
 

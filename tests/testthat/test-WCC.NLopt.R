@@ -44,7 +44,6 @@ test_that("it should create the best weighted combination and should return the 
  result <- subject$process(Z,Y, libraryNames)
 
  # The last two have the least noise, so they should have the highest weights
- print(result)
  best.idx <- which(result == max(result))
  expect_equal(best.idx, 10)
 

@@ -2,6 +2,7 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
+#' @importFrom condensier DataStore fit_density predict_probability sample_value speedglmR6
 DensityEstimation <- R6Class ("DensityEstimation",
   private =
     list(
@@ -169,10 +170,12 @@ DensityEstimation <- R6Class ("DensityEstimation",
         ),
   public =
     list(
-        initialize = function(nbins = 30, bin_estimator = condensier::speedglmR6$new(), online = FALSE, verbose = FALSE) {
+        initialize = function(nbins = 30, bin_estimator = NULL, online = FALSE, verbose = FALSE) {
           private$verbose <- Arguments$getVerbose(verbose)
           private$is_online_estimator <- Arguments$getLogical(online)
           private$nbins <- Arguments$getIntegers(as.numeric(nbins), c(1, Inf))
+
+          if (is.null(bin_estimator)) { bin_estimator <- condensier::speedglmR6$new() }
           private$bin_estimator <- Arguments$getInstanceOf(bin_estimator, 'logisfitR6')
           private$conditional_densities <- list()
         },
