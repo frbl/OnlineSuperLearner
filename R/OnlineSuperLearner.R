@@ -1,4 +1,4 @@
-devtools::load_all('~/Workspace/osofr/condensier')
+#devtools::load_all('~/Workspace/osofr/condensier')
 #' OnlineSuperLearner
 #'
 #' This is the main super learner class. This class contains everything related

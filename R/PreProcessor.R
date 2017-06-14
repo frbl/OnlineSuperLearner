@@ -43,7 +43,11 @@ PreProcessor <- R6Class("PreProcessor",
         fn <- ifelse(denormalize, un_scale_data, scale_data)
 
         # TODO: Make this more efficient
-        for(name in colnames(data)) {
+        # It could be the case that we don't want to normalize all columns. Therefore, loop over the bound names
+        # instead of the data names. The reverse is also true, we could also normalize only 1 column at a certain
+        # moment in time, hence the intersection.
+        normalization_names <- intersect(names(private$bounds), colnames(data))
+        for(name in normalization_names) {
           min_bound <- private$bounds[[name]]$min
           max_bound <- private$bounds[[name]]$max
           data[, (name) := lapply(.SD, function(x) fn(x, min_bound, max_bound) ), .SDcols = (name)]
