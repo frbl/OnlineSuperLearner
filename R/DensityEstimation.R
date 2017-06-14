@@ -72,17 +72,20 @@ DensityEstimation <- R6Class ("DensityEstimation",
           # We undo our fix here:
           # if(fixed) { estimated_probabilities <- estimated_probabilities[[1]] }
 
-          if (plot & length(yValues) > 1) {
-            private$create_output_plots(yValues = yValues, estimated_probabilities = estimated_probabilities)
+          if (plot && length(yValues) > 1) {
+            private$create_output_plots(yValues = yValues, 
+                                        estimated_probabilities = estimated_probabilities, 
+                                        output = Y)
           }
 
           estimated_probabilities
         },
 
         # Generates a sample given the provided data.
-        sample = function(datO, X, Y) {
+        sample = function(datO, X, Y, plot = FALSE) {
           # TODO: Implement sampling from a non conditional distribution
           if(length(X) == 0) throw('Sampling from non conditional distribution is not yet supported!')
+          yValues <- datO[[Y]]
           conditionalDensity <- self$getConditionalDensities(Y)
 
           # TODO: BUG! For some weird reason, the code doesn't work with NA
@@ -94,11 +97,18 @@ DensityEstimation <- R6Class ("DensityEstimation",
 
           sampled_data <- condensier::sample_value(conditionalDensity, datO)
 
+          if (plot && length(yValues) > 1) {
+            private$create_output_plots(yValues = yValues, 
+                                        estimated_probabilities = density(sampled_data)$y,
+                                        estimated_y_values = density(sampled_data)$x,
+                                        output = Y)
+          }
+
           sampled_data
         },
 
         # Function to output the density estimations on top of the actual density to a series of pdfs
-        create_output_plots = function(yValues, estimated_probabilities, dir = '/tmp/osl/') {
+        create_output_plots = function(yValues, estimated_probabilities, estimated_y_values = NULL, output, dir = '/tmp/osl/') {
           # plot densitity first:
           vals <- unique(yValues)
           if(length(vals) == 2 ) {
@@ -107,12 +117,30 @@ DensityEstimation <- R6Class ("DensityEstimation",
             abs(mean(estimated_probabilities[yValues == vals[1] ]) - mean(yValues == vals[1]))
             abs(mean(estimated_probabilities[yValues == vals[2] ]) - mean(yValues == vals[2]))
           }
-          dir.create(dir, showWarnings = FALSE)
-          date <- as.integer(format(Sys.time(), "%y%m%d%H%M"))
-          name <- runif(1,0,10000)
-          pdf(paste(dir,date,'-',name,'.pdf',sep = ''))
-          plot(density(yValues), ylim=c(0,max(estimated_probabilities)+.5))
-          lines(yValues, estimated_probabilities, type = "p", cex = .3, col = "red")
+          true_density <- density(yValues)
+
+          # Normalize the density to 1
+          #true_density$y <- diff(true_density$x) * true_density$y
+
+          # Draw a line by default, instead of dots
+          type = "l"
+
+          if (is.null(estimated_y_values)) {
+            estimated_y_values <- yValues 
+            type = "p"
+          }
+
+          # Normalize to sum to one, to make it an actual density
+
+          # Save the output in a dir so we can access it later
+          date <- format(Sys.time(), "%y%m%d%H%M")
+          full_dir <- paste(dir, date, '/', sep ='')
+          dir.create(full_dir, showWarnings = FALSE)
+
+          pdf(paste(full_dir,output,'.pdf',sep = ''))
+          plot(true_density, ylim=c(0,max(estimated_probabilities)+.5))
+          lines(estimated_y_values, estimated_probabilities, type = type, cex = .3, col = "red",
+                ylim=c(0,max(estimated_probabilities)+.5))
           dev.off()
         }
 
@@ -163,7 +191,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
             # Return NA if we want to skip this iteration (next is not available in lapply)
             if (!is.null(subset) && !(current_outcome %in% subset)) return(NA)
             if(sample) {
-              private$sample(datO=data, Y = current_outcome, X = rv$getX)
+              private$sample(datO=data, Y = current_outcome, X = rv$getX, plot = plot)
             } else {
               private$predict_probability(datO = data, Y = current_outcome, X = rv$getX, plot = plot)
             }

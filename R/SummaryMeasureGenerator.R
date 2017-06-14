@@ -22,15 +22,15 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
     list(
         minimal.measurements.needed = NULL,
 
-        initialize = function(data = NULL, SMG.list, verbose = FALSE, bounds = NULL) {
+        initialize = function(data = NULL, SMG.list, verbose = FALSE, pre_processor = NULL) {
           private$data <- data
           private$SMG.list <- SMG.list
           private$verbose <- verbose
 
-          if (is.null(bounds)) {
+          if (is.null(pre_processor)) {
             private$normalized <- FALSE
           } else {
-            private$bounds <- Arguments$getInstanceOf(bounds, 'list')
+            private$pre_processor <- Arguments$getInstanceOf(pre_processor, 'PreProcessor')
             private$normalized <- TRUE
           }
 
@@ -116,28 +116,12 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
 
           self$summarizeData(private$cache, n=n)
 
-        },
-
-        normalize = function(data, bounds = private$bounds) {
-          data <- Arguments$getInstanceOf(data, 'data.table')
-          bounds <- Arguments$getInstanceOf(bounds, 'list')
-
-          scale_data <- function(data, min_bound,max_bound) (data - min_bound) / (max_bound - min_bound)
-
-          # TODO: Make this more efficient
-          for(name in names(bounds)) {
-            min_bound <- bounds[[name]]$min
-            max_bound <- bounds[[name]]$max
-            data[, (name) := lapply(.SD, function(x) scale_data(x, min_bound, max_bound) ), .SDcols = (name)]
-          }
-          data
-
         }
         ),
   active =
     list(
-        get_bounds = function() {
-          private$bounds
+        get_pre_processor = function() {
+          private$pre_processor
         },
 
         is_normalized = function() {
@@ -163,14 +147,14 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
         SMG.list = NULL,
         verbose = NULL,
         normalized = NULL,
-        bounds = NULL,
+        pre_processor = NULL,
 
         get_next_normalized = function(n) {
           # Get the next N observations, rely on the data source to get this data efficient
           current <- private$data$getNextN(n = n)
           if (is.null(current)) return(NULL)
 
-          if (self$is_normalized) current %<>% self$normalize(.)
+          if (self$is_normalized) current %<>% self$get_pre_processor$normalize(.)
           current
         },
 
@@ -181,19 +165,3 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
         }
     )
 )
-
-#' Static function
-#' @param data the data for which to generate the bounds
-#' @param eps an extra margin to add to the estimated bounds
-#' @export
-SummaryMeasureGenerator.generate_bounds <- function(data, eps = 0) {
-  data <- Arguments$getInstanceOf(data, 'data.table')
-  bounds <- list()
-  for(name in colnames(data)) {
-    min_bound = min(data[, name, with=FALSE] )
-    max_bound = max(data[, name, with=FALSE] )
-    bounds <- append(bounds, list(list(max_bound = max_bound + eps, min_bound = min_bound - eps)))
-  }
-  names(bounds) <- colnames(data)
-  bounds
-}
