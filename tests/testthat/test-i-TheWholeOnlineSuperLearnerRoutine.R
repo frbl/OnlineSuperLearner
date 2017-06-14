@@ -38,7 +38,7 @@ test_that("it should estimate the true treatment", {
   B <- 1e2
 
   # The intervention we are interested in
-  intervention  <- list(when = c(2), what = c(0), variable ='A')
+  intervention  <- list(when = c(2), what = c(1), variable ='A')
 
   # The time of the outcome
   tau = 2
@@ -94,7 +94,7 @@ test_that("it should estimate the true treatment", {
   llY <- list(rgen={function(AW){
     aa <- AW[, "A"]
     ww <- AW[, grep("[^A]", colnames(AW))]
-    mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
+    mu <- 100 + aa*(0.4-0.2*sin(ww)+0.05*ww) +
       (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
     rnorm(length(mu), mu, sd=0.1)}})
 
@@ -122,19 +122,20 @@ test_that("it should estimate the true treatment", {
   data.train <- Data.Static$new(dataset = data)
 
   # We use the following covariates in our estimators
-  W <- RandomVariable$new(formula = Y ~ A + W, family = 'gaussian')
+  W <- RandomVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
   A <- RandomVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
-  Y <- RandomVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
+  Y <- RandomVariable$new(formula = Y ~ A + W, family = 'gaussian')
   randomVariables <- c(W, A, Y)
 
   # Generate some bounds to use for the data (scale it between 0 and 1)
   bounds <- PreProcessor.generate_bounds(data)
-  pre_processor <- PreProcessor$initialize(bounds)
+  pre_processor <- PreProcessor$new(bounds)
 
   smg_factory <- SMGFactory$new()
   summaryMeasureGenerator <- smg_factory$fabricate(randomVariables, pre_processor = pre_processor)
 
-  osl <- OnlineSuperLearner$new(algos, summaryMeasureGenerator = summaryMeasureGenerator, verbose = log)
+  osl <- OnlineSuperLearner$new(algos, summaryMeasureGenerator = summaryMeasureGenerator, verbose = log, 
+                                pre_processor = pre_processor)
   risk <- osl$fit(data.train, randomVariables = randomVariables,
                         initial_data_size = training_set_size / 2,
                         max_iterations = max_iterations,
@@ -142,12 +143,23 @@ test_that("it should estimate the true treatment", {
 
   summaryMeasureGenerator$reset
   datas <- summaryMeasureGenerator$getNext(n = B)
-  result <- mclapply(seq(B), function(i) {
+
+  #result <- mclapply(seq(B), function(i) {
+   #osl$sample_iteratively(data = datas[i,],
+                          #randomVariables = randomVariables,
+                          #intervention = intervention,
+                          #variable_of_interest = Y,
+                          #tau = tau)
+  #}, mc.cores=cores)
+  result <- lapply(seq(B), function(i) {
    osl$sample_iteratively(data = datas[i,],
                           randomVariables = randomVariables,
                           intervention = intervention,
+                          variable_of_interest = Y,
                           tau = tau)
-  }, mc.cores=cores) %>%
+  })
+  
+  result %<>%
     lapply(., function(x) { tail(x, 1)$Y }) %>%
     unlist
 

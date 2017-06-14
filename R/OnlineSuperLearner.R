@@ -181,9 +181,11 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           outcome.variables <- sapply(randomVariables, function(rv) rv$getY)
 
           # Extract the level 1 data and use it to fit the osl
-          predicted.outcome <- private$predict_using_all_estimators(data = data.splitted$train,
-                                                                    sl_library = private$SL.library.fabricated,
-                                                                    denormalize = TRUE)
+          predicted.outcome <- private$online_super_learner_predict$predict_using_all_estimators(
+            data = data.splitted$train,
+            sl_library = private$SL.library.fabricated,
+            denormalize = TRUE
+          )
 
           observed.outcome <- data.splitted$train[,outcome.variables, with=FALSE]
           private$fit_osl(predicted.outcome = predicted.outcome, observed.outcome = observed.outcome)
@@ -422,7 +424,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           # We could reuse the WCC, and just save the weights here. However, this way we do allow
           # to use a different wcc for each of the random variables.
           private$weightedCombinationComputers <- list()
-          private$online_super_learner_predict <- OnlineSuperLearner.Predict$new(verbose, pre_processor)
+          private$online_super_learner_predict <- OnlineSuperLearner.Predict$new(pre_processor = pre_processor,
+                                                                                 verbose = verbose)
 
           self$get_validity
         },
@@ -433,6 +436,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
           randomVariables <- RandomVariable.find_ordering(randomVariables)
+
+          if (is(variable_of_interest, 'RandomVariable')) {
+            variable_of_interest <- variable_of_interest$getY
+          }
 
           if(!is.null(intervention)) {
             intervention <- Arguments$getInstanceOf(intervention, 'list')
@@ -451,13 +458,13 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             data[,names(randomVariables)] <- NA
             for (rv in randomVariables) {
               current_outcome <- rv$getY
-              if (!is.null(intervention) & current_outcome == intervention$variable & t %in% intervention$when) {
+              if (!is.null(intervention) && current_outcome == intervention$variable && t %in% intervention$when) {
                 when.idx <- which(intervention$when == t)
                 outcome <- intervention$what[when.idx]
                 private$verbose && cat(private$verbose, 'Setting intervention on ', current_outcome,' with ', outcome, ' on time ', t)
               } else {
                 # We only want to denormalize the eventual outcome
-                denormalize = t == tau && rv == variable_of_interest
+                denormalize = (t == tau && current_outcome == variable_of_interest)
 
                 outcome <- self$predict(data = data, randomVariables = c(rv),
                                         discrete = discrete,
@@ -478,7 +485,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         # Data = the data object from which the data can be retrieved
         # initial_data_size = the number of observations needed to fit the initial estimator
         fit = function(data, randomVariables, initial_data_size = 5, max_iterations = 20, mini_batch_size = 20) {
-
           tic <- Sys.time()
           initial_data_size <- Arguments$getInteger(initial_data_size, c(1,Inf))
           max_iterations <- Arguments$getInteger(max_iterations, c(0,Inf))
@@ -521,7 +527,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         predict = function(data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE, denormalize = TRUE) {
 
           # Pass the function to the separate class so it won't fill up this class
-          private$online_super_learner_predict(osl = self, data = data, randomVariables = randomVariables,
+          private$online_super_learner_predict$predict(osl = self, data = data, randomVariables = randomVariables,
                                                all_estimators = all_estimators, discrete = discrete, continuous = continuous,
                                                sample = sample, plot = plot, denormalize = denormalize)
 

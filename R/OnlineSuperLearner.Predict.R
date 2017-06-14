@@ -14,7 +14,8 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
           }
       },
 
-      predict = function(osl, data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE, denormalize = TRUE) {
+      predict = function(osl, data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, 
+                         sample = FALSE, plot = FALSE, denormalize = TRUE) {
         if (!osl$is_fitted){
           return(NA)
         }
@@ -35,7 +36,8 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
         result <- list()
 
         if (all_estimators || continuous) {
-          predictions <- self$predict_using_all_estimators(data = data, sample = sample, 
+          predictions <- self$predict_using_all_estimators(data = data, sl_library = osl$get_estimators,
+                                                           sample = sample, 
                                                            plot = plot, denormalize = FALSE)
 
           if (all_estimators) {
@@ -151,10 +153,10 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
 
       # denormalize the data
       denormalize = function(data) {
-        if (!is.null(private$pre_processor)) {
-          return(private$pre_processor$denormalize(data))
+        if (is.null(private$pre_processor)) {
+          return(data)
         }
-        data
+        return(private$pre_processor$denormalize(data))
       }
 
     )
