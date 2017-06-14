@@ -28,6 +28,7 @@ packages <- c(
 )
 
 gh_packages <- list(
+  list(repo = "jeroenooms/jsonlite", branch = 'master'),
   list(repo = "osofr/condensier", branch = 'fb-add-update'),
   list(repo = "jimhester/covr", branch = 'master') #,
   #list(repo = 'cran/rkafka', branch = 'master')
