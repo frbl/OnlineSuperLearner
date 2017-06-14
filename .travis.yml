@@ -13,7 +13,8 @@ os:
 
 r_build_args: "--no-build-vignettes --no-manual"
 
-sudo: true
+dist: trusty
+sudo: required
 cache: packages
 warnings_are_errors: false
 latex: true
