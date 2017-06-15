@@ -38,7 +38,7 @@ test_that("it should estimate the true treatment", {
   B <- 1e2
 
   # The intervention we are interested in
-  intervention  <- list(when = c(2), what = c(0), variable ='A')
+  intervention  <- list(when = c(2), what = c(1), variable ='A')
 
   # The time of the outcome
   tau = 2
@@ -94,9 +94,8 @@ test_that("it should estimate the true treatment", {
   llY <- list(rgen={function(AW){
     aa <- AW[, "A"]
     ww <- AW[, grep("[^A]", colnames(AW))]
-    mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
+    mu <- 100 + aa*(0.4-0.2*sin(ww)+0.05*ww) +
       (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
-    mu <- aa*(0.9) + (1-aa)*(0.3)
     rnorm(length(mu), mu, sd=0.1)}})
 
 
@@ -106,48 +105,37 @@ test_that("it should estimate the true treatment", {
   # 'psi.approx' is a Monte-Carlo approximation of the parameter of interest.
   # This is a little slow, because 'simulateWAY' is designed to simulate quickly a long time series,
   # as opposed to many short time series.
-  if (FALSE) {
-    # Calculated based on 1e4
-    psi.approx <- 0.2991661 #with intervention = 0
-    psi.approx <- 0.9021478 #with intervention = 1
-  } else {
-    psi.approx <- mclapply(seq(B), function(bb) {
-      when <- max(intervention$when)
-      data.int <- simulator$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
-                                  intervention = intervention, verbose = FALSE)
-      data.int$Y[tau]
-    }, mc.cores = cores) %>%
-      unlist %>%
-      mean
-  }
+  psi.approx <- mclapply(seq(B), function(bb) {
+    when <- max(intervention$when)
+    data.int <- simulator$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
+                                intervention = intervention, verbose = FALSE)
+    data.int$Y[tau]
+  }, mc.cores = cores) %>%
+    unlist %>%
+    mean
 
-  print(psi.approx)
 
   ##############
   # Estimation #
   ##############
-  data.train <- simulator$simulateWAY(training_set_size + B, qw=llW, ga=llA, Qy=llY, verbose=log) %>%
-    Data.Static$new(dataset = .)
+  data <- simulator$simulateWAY(training_set_size + B, qw=llW, ga=llA, Qy=llY, verbose=log)
+  data.train <- Data.Static$new(dataset = data)
 
   # We use the following covariates in our estimators
-  W <- RandomVariable$new(formula = Y ~ A + W, family = 'gaussian')
+  W <- RandomVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
   A <- RandomVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
-  Y <- RandomVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
+  Y <- RandomVariable$new(formula = Y ~ A + W, family = 'gaussian')
   randomVariables <- c(W, A, Y)
 
   # Generate some bounds to use for the data (scale it between 0 and 1)
-  bounds <- list()
-  for(name in colnames(data)) {
-    min_bound = min(data[, name, with=FALSE] )
-    max_bound = max(data[, name, with=FALSE] )
-    bounds <- append(bounds, list(list(max_bound = max_bound, min_bound = min_bound)))
-  }
-  names(bounds) <- colnames(data)
+  bounds <- PreProcessor.generate_bounds(data)
+  pre_processor <- PreProcessor$new(bounds)
 
   smg_factory <- SMGFactory$new()
-  summaryMeasureGenerator <- smg_factory$fabricate(randomVariables, bounds = bounds)
+  summaryMeasureGenerator <- smg_factory$fabricate(randomVariables, pre_processor = pre_processor)
 
-  osl <- OnlineSuperLearner$new(algos, summaryMeasureGenerator = summaryMeasureGenerator, verbose = log)
+  osl <- OnlineSuperLearner$new(algos, summaryMeasureGenerator = summaryMeasureGenerator, verbose = log, 
+                                pre_processor = pre_processor)
   risk <- osl$fit(data.train, randomVariables = randomVariables,
                         initial_data_size = training_set_size / 2,
                         max_iterations = max_iterations,
@@ -155,12 +143,23 @@ test_that("it should estimate the true treatment", {
 
   summaryMeasureGenerator$reset
   datas <- summaryMeasureGenerator$getNext(n = B)
-  result <- mclapply(seq(B), function(i) {
+
+  #result <- mclapply(seq(B), function(i) {
+   #osl$sample_iteratively(data = datas[i,],
+                          #randomVariables = randomVariables,
+                          #intervention = intervention,
+                          #variable_of_interest = Y,
+                          #tau = tau)
+  #}, mc.cores=cores)
+  result <- lapply(seq(B), function(i) {
    osl$sample_iteratively(data = datas[i,],
                           randomVariables = randomVariables,
                           intervention = intervention,
+                          variable_of_interest = Y,
                           tau = tau)
-  }, mc.cores=cores) %>%
+  })
+  
+  result %<>%
     lapply(., function(x) { tail(x, 1)$Y }) %>%
     unlist
 
@@ -168,8 +167,7 @@ test_that("it should estimate the true treatment", {
 
   psi.estimation <- mean(result)
 
-  #print(psi.estimation)
-  #print(abs(psi.approx - psi.estimation))
+  print(paste('Approximation:', psi.approx, 'estimation:', psi.estimation, 'difference:', abs(psi.approx - psi.estimation)))
 
   expect_true((abs(psi.approx - psi.estimation)) < 0.1)
 

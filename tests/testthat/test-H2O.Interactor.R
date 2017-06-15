@@ -4,16 +4,17 @@ described.class <- H2O.Interactor
 context(" generate_hash")
 test_that("it should generate a hash fast", {
   subject <- described.class$new()
-  n = 1e5 
+  n <- 1e5 
+  threshold <- 0.2
   tic <- Sys.time()
   data <- data.table(a = rnorm(n), b=rnorm(n), c=rnorm(n))
   subject$generate_hash(data)
   toc <- Sys.time()
-  result <- toc - tic
-  if(result >= 0.2) {
+  result <- as.numeric(difftime(tic, toc, units = c("secs")))
+  if(result >= threshold) {
     fail(paste(result, 'is to high!'))
   }
-  expect_true(result < 0.2)
+  expect_lt(result, threshold)
 })
 
 test_that("it should generate a hash correctly", {

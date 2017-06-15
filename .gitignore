@@ -38,3 +38,5 @@ vignettes/*.pdf
 
 xterm-256colors.ti
 .Rproj.user
+
+.ipynb_checkpoints/

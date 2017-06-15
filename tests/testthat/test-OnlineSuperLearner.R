@@ -16,13 +16,6 @@ test_that("it should initialize the CV_risk", {
 context(' fit')
 
 context(" predict")
-data <- data.frame(a=c(1,2,3),b= c(3,2,1))
-test_that("it should return NA if no estimators were fit", {
-  SL.Library <- 'ML.Local.lm'
-  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG)
-  expect_equal(subject$predict(data, randomVariables = c('a'), discrete = FALSE), NA)
-  expect_equal(subject$predict(data, randomVariables = c('a'), discrete = TRUE), NA)
-})
 
 test_that("it should call the predict function of the discrete online super learner if discrete is true", {
 })

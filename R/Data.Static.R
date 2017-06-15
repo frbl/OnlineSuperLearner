@@ -21,10 +21,10 @@
 #'   }
 #'
 #'   \item{\code{getNextN(n)}}{
-#'     Method that returns the next \code{n} observations. This function can be used to bootstrap 
+#'     Method that returns the next \code{n} observations. This function can be used to bootstrap
 #'     an initial model or to get a minibatch of observations. Note that the function will always
 #'     try to return data. If one asks for n observations, it will check if there are still n new
-#'     observations. If not, it will return all observations still available. If there are no 
+#'     observations. If not, it will return all observations still available. If there are no
 #'     observations available, it will return null.
 #'     @param n = the number of measurements requested
 #'   }
@@ -44,7 +44,29 @@ Data.Static <-
           data.table(read.csv(url))
         }
         ),
+  active =
+    list(
+      is_data_set = function() {
+        !is.null(self$getAll())
+      },
 
+      get_length = function() {
+        if(self$is_data_set) {
+          nrow(self$getAll())
+        } else {
+          warning('Data not yet set, returning 0')
+          0
+        }
+      },
+
+      get_remaining_length = function() {
+        max(self$get_length - self$get_currentrow, 0)
+      },
+
+      get_currentrow = function() {
+        return(private$currentrow)
+      }
+      ),
   public =
     list(
         initialize = function(dataset = NULL, url = NULL, verbose = FALSE) {

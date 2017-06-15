@@ -19,24 +19,26 @@ test_that("it should set the minimal measurements needed correctly", {
   expect_equal(subject$minimal.measurements.needed, (max - 1))
 })
 
-test_that("it should throw when bounds are set but are not a list", {
+test_that("it should throw when pre_processor is set but are not a pre_processor", {
   mylist <- c(SMG.Mock$new())
-  expected_message =  "Argument 'bounds' is neither of nor inherits class list: character"
-  expect_error(described.class$new(SMG.list = mylist, bounds='notalist'), expected_message)
+  expected_message =  "Argument 'pre_processor' is neither of nor inherits class PreProcessor"
+  expect_error(described.class$new(SMG.list = mylist, pre_processor='notalist'), expected_message)
 })
 
-test_that("it should set normalized to false if no bounds are provided", {
+test_that("it should set normalized to false if no pre_processor is provided", {
   mylist <- c(SMG.Mock$new())
   subject <- described.class$new(SMG.list = mylist)
   expect_false(subject$is_normalized)
 })
 
-test_that("it should set normalized to true and store the bounds whenever bounds are provided", {
-  bounds <-list(A=list(min=0, max=1000))
+test_that("it should set normalized to true and the pre_processor whenever a pre_processor is provided", {
+  pre_processor_mock <- list(denormalize = function(data) {return(rep(expected, length(data)))})
+  class(pre_processor_mock) <- c(class(pre_processor_mock), 'PreProcessor')
+
   mylist <- c(SMG.Mock$new())
-  subject <- described.class$new(SMG.list = mylist, bounds = bounds)
+  subject <- described.class$new(SMG.list = mylist, pre_processor = pre_processor_mock)
   expect_true(subject$is_normalized)
-  expect_equal(subject$get_bounds, bounds)
+  expect_equal(subject$get_pre_processor, pre_processor_mock)
 })
 
 dataset <- data.table(Y= (seq(1,10)%%2) , A=rep(1,10), W=seq(10,1))
@@ -90,7 +92,7 @@ test_that("it should fill the cache with the correct number of measurments", {
   expect_true(nrow(subject$getCache) == needed -1)  
 })
 
-test_that("it should normalize the data provided to it, if bounds are available", {
+test_that("it should normalize the data provided to it, if a pre_processor is available", {
   my_dataset <- copy(dataset)
   my_dataset <- my_dataset + rnorm(nrow(dataset), 0, 1000)
   expect_true(max(my_dataset) > 1)
@@ -101,10 +103,11 @@ test_that("it should normalize the data provided to it, if bounds are available"
     Y=list(min=min(my_dataset$Y), max=max(my_dataset$Y)),
     W=list(min=min(my_dataset$W), max=max(my_dataset$W))
   )
+  pre_processor <- PreProcessor$new(bounds = bounds)
 
   needed <- 3
   mylist <- c(SMG.Mock$new(needed))
-  subject <- described.class$new(SMG.list = mylist, data = data, bounds = bounds)
+  subject <- described.class$new(SMG.list = mylist, data = data, pre_processor = pre_processor)
   expect_true(nrow(subject$getCache) == 0)  
 
   subject$fillCache()
@@ -192,10 +195,11 @@ test_that("it should combine the results of multiple summarizers" , {
 test_that("it should scale the data if scaling is provided", {
   data <- Data.Static$new(dataset = dataset)
   bounds <-list(A=list(min=0, max=1000))
+  pre_processor <- PreProcessor$new(bounds = bounds)
 
   needed <- 1
   mylist <- c(SMG.Mock$new(needed))
-  subject <- described.class$new(SMG.list = mylist, data = data, bounds = bounds)
+  subject <- described.class$new(SMG.list = mylist, data = data, pre_processor = pre_processor)
   for (i in 1:6) {
     result <- subject$getNext()
     cache  <- subject$getCache
@@ -244,118 +248,4 @@ test_that("it should check if enough data is available for all formulae", {
   expect_true(subject$checkEnoughDataAvailable(c(f1,f2)))
 })
 
-context(" normalize")
-test_that("it should work with multi dimensional data", {
-  data <- data.table(
-                     Y =c(1,2,3,4,1,23,4,2,13,4),
-                     A =c(2,2,3,4,1,23,4,2,13,4)*10,
-                     W =c(3,2,3,4,1,23,4,2,13,4)*100
-                     )
-
-  bounds <- list()
-  for(name in colnames(data)) {
-    min_bound = min(data[, name, with=FALSE] )
-    max_bound = max(data[, name, with=FALSE] )
-    bounds <- append(bounds, list(list(max_bound = max_bound, min_bound = min_bound)))
-  }
-  names(bounds) <- colnames(data)
-
-  mylist <- c(SMG.Mock$new())
-  subject <- described.class$new(SMG.list = mylist)
-
-  res <- subject$normalize(data, bounds)
-
-  for(name in colnames(data)) {
-    expect_equal(min(res[, name, with=FALSE]), 0)
-    expect_equal(max(res[, name, with=FALSE]), 1)
-  }
-})
-
-test_that("it should work with multi dimensional data when bounds are provided for a subset of the variables", {
-  data <- data.table(
-    Y =c(1,2,3,4,1,23,4,2,13,4),
-    A =c(2,2,3,4,1,23,4,2,13,4)*10,
-    W =c(3,2,3,4,1,23,4,2,13,4)*100
-  )
-
-  bounds <- list()
-  for(name in colnames(data)) {
-    min_bound = min(data[, name, with=FALSE] )
-    max_bound = max(data[, name, with=FALSE] )
-    bounds <- append(bounds, list(list(max_bound = max_bound, min_bound = min_bound)))
-  }
-  names(bounds) <- colnames(data)
-  bounds <- bounds[-1]
-  not_changed <- setdiff(colnames(data), names(bounds))
-
-  expected_not_changed <- data[,not_changed, with=FALSE]
-
-  mylist <- c(SMG.Mock$new())
-  subject <- described.class$new(SMG.list = mylist)
-
-  res <- subject$normalize(data, bounds)
-
-  for(name in names(bounds)) {
-    expect_equal(min(res[, name, with=FALSE]), 0)
-    expect_equal(max(res[, name, with=FALSE]), 1)
-  }
-  expect_equal(res[,not_changed, with=FALSE], expected_not_changed)
-})
-
-test_that("it should throw if the provided data is not a data.table", {
-  wrong_datas <- list(NULL, list(), 'a')
-
-  mylist <- c(SMG.Mock$new())
-  subject <- described.class$new(SMG.list = mylist)
-  error_message <- "Argument 'data' is neither of nor inherits class data.table:"
-  lapply(wrong_datas, function(data) { 
-    current_error <- paste(error_message, class(data))
-    expect_error(subject$normalize(data), current_error) 
-  }) 
-})
-
-test_that("it should throw if the provided bounds are not a list", {
-  wrong_bounds <- list(NULL, data.frame, 'a')
-  data <- data.table(
-    Y =c(1,2,3,4,1,23,4,2,13,4),
-    A =c(2,2,3,4,1,23,4,2,13,4)*10,
-    W =c(3,2,3,4,1,23,4,2,13,4)*100
-  )
-
-  mylist <- c(SMG.Mock$new())
-  subject <- described.class$new(SMG.list = mylist)
-  error_message <- "Argument 'bounds' is neither of nor inherits class list:"
-  lapply(wrong_bounds, function(bounds) { 
-    current_error <- paste(error_message, class(bounds))
-    expect_error(subject$normalize(data, bounds), current_error) 
-  }) 
-})
-
-
-test_that("it should use the initialized bounds when no bounds are provided", {
-  data <- data.table(
-    Y =c(1,2,3,4,1,23,4,2,13,4),
-    A =c(2,2,3,4,1,23,4,2,13,4)*10,
-    W =c(3,2,3,4,1,23,4,2,13,4)*100
-  )
-
-  bounds <- list()
-  for(name in colnames(data)) {
-    min_bound = min(data[, name, with=FALSE] )
-    max_bound = max(data[, name, with=FALSE] )
-    bounds <- append(bounds, list(list(max_bound = max_bound, min_bound = min_bound)))
-  }
-  names(bounds) <- colnames(data)
-
-  mylist <- c(SMG.Mock$new())
-  subject <- described.class$new(SMG.list = mylist, bounds = bounds)
-
-  res <- subject$normalize(data)
-
-  for(name in colnames(data)) {
-    expect_equal(min(res[, name, with=FALSE]), 0)
-    expect_equal(max(res[, name, with=FALSE]), 1)
-  }
- 
-})
 

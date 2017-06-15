@@ -43,8 +43,8 @@ Suggests:
     roxygen2,
     testthat,
     mockery
-RoxygenNote: 5.0.1
-Collate:
+RoxygenNote: 6.0.1
+Collate: 
     'Evaluation.R'
     'CrossValidationRiskCalculator.R'
     'Data.Base.R'
@@ -64,6 +64,8 @@ Collate:
     'ML.H2O.gbm.R'
     'ML.H2O.glm.R'
     'ML.H2O.randomForest.R'
+    'OnlineSuperLearner.Predict.R'
+    'WCC.SGD.Simplex.R'
     'WCC.NMBFGS.R'
     'WeightedCombinationComputer.R'
     'SMG.Mock.R'
@@ -76,10 +78,12 @@ Collate:
     'SMGFactory.R'
     'RandomVariable.R'
     'OnlineSuperLearner.Simulation.R'
+    'PreProcessor.R'
     'SMG.Mean.R'
     'Simulator.GAD.R'
     'Simulator.Slow.R'
     'WCC.NLopt.R'
     'WCC.NNLS.R'
     'WCC.SGD.R'
-Remotes: osofr/condensier
+Remotes: 
+    osofr/condensier@fb-add-update

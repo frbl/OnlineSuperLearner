@@ -93,7 +93,7 @@ LibraryFactory <- R6Class("LibraryFactory",
 
         fabricateGrid = function(SL.library) {
           #SL.library <- Arguments$getList(SL.library)
-          # We have to fabricate a grid on two levels, 1st for the algorithm, then for the density estimatino
+          # We have to fabricate a grid on two levels, 1st for the algorithm, then for the density estimation
           # algotithm_params contains the params for the algorithm
           # params contains the params for the density estimation
 
