@@ -203,16 +203,18 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                               randomVariables = randomVariables)
 
           # Update the discrete superlearner (take the first if there are multiple candidates)
-          private$fit_dosl()
+          if (self$fits_dosl) {
+            private$fit_dosl()
 
-          # In order to get the initial estimate of the CV error of the DOSL, we first need to fit the other 
-          # estimators, and after that calculate the dosl error separately. 
-          predicted.outcome <- self$predict(data = data.splitted$test,
-                                          randomVariables = randomVariables,
-                                          discrete = TRUE, continuous = FALSE, all_estimators = FALSE)
-          private$cv_risk$dosl.estimator <- private$cv_risk_calculator$calculate_risk(predicted.outcome = predicted.outcome,
-                              observed.outcome = observed.outcome,
-                              randomVariables = randomVariables)$dosl.estimator
+            # In order to get the initial estimate of the CV error of the DOSL, we first need to fit the other 
+            # estimators, and after that calculate the dosl error separately. 
+            predicted.outcome <- self$predict(data = data.splitted$test,
+                                            randomVariables = randomVariables,
+                                            discrete = TRUE, continuous = FALSE, all_estimators = FALSE)
+            private$cv_risk$dosl.estimator <- private$cv_risk_calculator$calculate_risk(predicted.outcome = predicted.outcome,
+                                observed.outcome = observed.outcome,
+                                randomVariables = randomVariables)$dosl.estimator
+          }
 
         },
 

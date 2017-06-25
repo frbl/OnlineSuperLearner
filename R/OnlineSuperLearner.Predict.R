@@ -21,8 +21,8 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
         }
 
         all_estimators <- Arguments$getLogical(all_estimators)
-        discrete <- Arguments$getLogical(discrete) & osl$fits_dosl
-        continuous <- Arguments$getLogical(continuous) & osl$fits_osl
+        discrete <- Arguments$getLogical(discrete) && osl$fits_dosl
+        continuous <- Arguments$getLogical(continuous) && osl$fits_osl
 
         if (!any(c(discrete, all_estimators, continuous))) {
           throw('At least one option should be selected: discrete, all_estimators, or continuous')

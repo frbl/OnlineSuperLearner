@@ -14,6 +14,7 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
   inherit = WeightedCombinationComputer,
   private =
     list(
+      verbose = NULL,
       function_to_optimize = NULL,
       epsilon = NULL,
       data = NULL,
@@ -97,8 +98,8 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
         # It could be the case that one of the weights was right on the border (0 for example), and this will
         # result in Inf
         if (any(is.infinite(sthgiew))) {
-          msg <- "Trying to start from the border, so doing nothing..."
-          warning(paste("\n", msg, "\n"))
+          msg <-  "Trying to start from the border, so doing nothing..."
+          private$verbose && cat(private$verbose, msg)
           value <- private$function_to_optimize(alpha = weights, data = data, ...)
           value <- value[1, drop = TRUE]
           opt <- list(par = weights,
@@ -136,19 +137,26 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
                                   data = data, ...)
 
         private$weights <- optFirst$par
-        #optSecond <- private$perform_optimization(weights = optFirst$par,
-                                    #epsilon = private$epsilon,
-                                    #method = "BFGS",
-                                    #data = data, ...)
 
-        #private$weights <- optSecond$par
+        result = tryCatch({
+          optSecond <- private$perform_optimization(weights = optFirst$par,
+                                      epsilon = private$epsilon,
+                                      method = "BFGS",
+                                      data = data, ...)
+
+          private$weights <- optSecond$par
+        }, error = function(e) {
+          private$verbose && cat(private$verbose, 'Second level of optimization not succesful, only using Nelder Mead optimization')
+        })
+
         names(private$weights) <- libraryNames
         invisible(self)
       }
     ),
   public =
     list(
-      initialize = function(weights.initial, function_to_optimize = NULL, epsilon = 1e-3) {
+      initialize = function(weights.initial, function_to_optimize = NULL, epsilon = 1e-3, verbose = FALSE) {
+        private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
         super$initialize(weights.initial)
         if (is.null(function_to_optimize)) {
           function_to_optimize <- function(alpha, data) {
