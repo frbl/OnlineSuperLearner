@@ -5,7 +5,7 @@ context(' initialize')
 test_that("it should set the dataset if this is provided", {
   data <- data.table(x=c(1,2,3,4), y=c(1,2,3,4))
   ds <- described.class$new(dataset = data)
-  result <- ds$getAll() 
+  result <- ds$get_all 
   expect_false(is.null(result))
   expect_equal(result, data)
 })
@@ -18,7 +18,7 @@ context(' getAll')
 test_that("it should return the whole dataset", {
   data <- data.table(x=c(1,2,3,4), y=c(1,2,3,4))
   ds <- described.class$new(dataset = data)
-  result <- ds$getAll() 
+  result <- ds$get_all 
   expect_equal(result, data)
 })
 
@@ -26,7 +26,7 @@ test_that("it should also return the whole dataset, even if the pointer was plac
   data <- data.table(x=c(1,2,3,4), y=c(1,2,3,4))
   ds <- described.class$new(dataset = data)
   ds$getNext()
-  result <- ds$getAll() 
+  result <- ds$get_all 
   expect_equal(result, data)
 })
 
@@ -41,7 +41,7 @@ test_that("it should reset the pointer to the first observation", {
   expected <- as.data.table(t(c(x=1, y=4)))
   expect_equal(result, expected)
 
-  ds$reset()
+  ds$reset
 
   #1 again
   result <- ds$getNext()

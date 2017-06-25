@@ -4,12 +4,25 @@
 #' @docType class
 #' @importFrom R6 R6Class
 #' @import data.table
+#' 
 #' @section Methods:
 #' \describe{
-#'   \item{\code{new()}}{This method is used to create object of this class. }
+#'   \item{\code{initialize() }}{
+#'     Creates a new instance of the data.base class
+#'   }
 #'
-#'   \item{\code{getNext()}}{Method to retrieve the next observation from the data.}
-#'   \item{\code{getNextN(n)}}{Method that returns the next \code{n} observations. This function can be used to bootstrap an initial model.}
+#'   \item{\code{getNext()}}{
+#'     This method returns the next observation from the underlying data, depending on the implementation this could be
+#'     a row from a data frame, or an observation from a stream. Note: this method needs to be inherited in the
+#'     subclass.
+#'   }
+#'
+#'   \item{\code{getNextN(n = 1)}}{
+#'     This method returns the next \code{n} observations from the underlying data, depending on the implementation this
+#'     could be a number of rows from a data frame, or a number of observations from a stream. Note: this method needs
+#'     to be inherited in the subclass.
+#'     @param n the number of elements to retrieve.
+#'   }
 #'}
 Data.Base <- R6Class ("Data.Base",
   public =

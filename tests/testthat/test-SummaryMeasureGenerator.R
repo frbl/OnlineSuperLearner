@@ -142,7 +142,7 @@ test_that("it should return the measurements requested when specifying N", {
   mylist <- c(SMG.Mock$new(needed))
   subject <- described.class$new(SMG.list = mylist, data = data)
   for (n in 1:3) {
-    data$reset()
+    data$reset
     subject$reset()
     for (i in seq(1,4,n)) {
       result <- subject$getNext(n=n)
