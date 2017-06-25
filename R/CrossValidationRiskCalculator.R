@@ -13,7 +13,7 @@
 #'     Creates a new cross validated risk calculator.
 #'   }
 #'
-#'   \item{\code{calculate_evaluation(predicted.outcome, observed.outcome, randomVariables, add_evaluation_measure_name=TRUE}}{
+#'   \item{\code{calculate_evaluation(predicted.outcome, observed.outcome, randomVariables, add_evaluation_measure_name=TRUE)}}{
 #'     <<description>>
 #'     @param predicted.outcome
 #'     @param observed.outcome

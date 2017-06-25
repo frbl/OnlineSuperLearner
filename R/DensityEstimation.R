@@ -1,8 +1,50 @@
 #' Density.Estimation
+#' This class performs the actual density estimation for each of the random variables provided to it. 
 #'
 #' @docType class
 #' @importFrom R6 R6Class
 #' @importFrom condensier DataStore fit_density predict_probability sample_value speedglmR6
+#' @section Methods: 
+#' \describe{  
+#'   \item{\code{initialize(nbins = 30, bin_estimator = NULL, online = FALSE, verbose = FALSE) }}{ 
+#'     Creates a new density estimator. One can provide various hyper parameters. First of all the number of bins the
+#'     estimator uses can be configured, by default this is 30. Then one can define the actual estimator the density
+#'     estimator uses for estimating the conditional densities. By default it uses speedglm. Finally, one can select
+#'     whether to treat the algorithm as an online or batch algorithm. If online is set to false, we will keep a record
+#'     of the data that has been used to train an estimator. Note that this is currently very inefficient.
+#'     @param nbins integer the number of bins to use for the estimator
+#'     @param bin_estimator ML.Base the actual estimator used for fitting the conditional density
+#'     @param online boolean does the algorithm have an updating possibility? And should we treat it as online?
+#'     @param verbose the verbosity
+#'   } 
+#' 
+#'   \item{\code{predict(data, sample = FALSE, subset = NULL, plot = FALSE) }}{ 
+#'     Method to perform the prediction on all (or a subset of) the random variables / conditional densities.
+#'     @param data the data from which to predict the outcome.
+#'     @param sample boolean would we like to sample a value (true) or a probability (false) from the conditional
+#'     density
+#'     @param subset stringarray do we want to perform predictions for all variables? (NULL), or just a subset thereof?
+#'     @param plot boolean plot the predicted outcomes to a file in /tmp/osl
+#'   } 
+#' 
+#'   \item{\code{process(data, randomVariables, update = FALSE) }}{ 
+#'     <<description>> 
+#'     @param data 
+#'     @param randomVariables 
+#'     @param update = FALSE  
+#'   } 
+#' 
+#'   \item{\code{getConditionalDensities(outcome = NULL) }}{ 
+#'     <<description>> 
+#'     @param outcome = NULL  
+#'   } 
+#' 
+#'   \item{\code{clone(deep = FALSE) }}{ 
+#'     <<description>> 
+#'     @param deep = FALSE  
+#'   } 
+#' 
+#' }  
 DensityEstimation <- R6Class ("DensityEstimation",
   private =
     list(

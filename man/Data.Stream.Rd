@@ -3,21 +3,29 @@
 \docType{class}
 \name{Data.Stream}
 \alias{Data.Stream}
-\title{Class to provide the functionality of treating a static, finite datatable as a stream of incomming
-data.}
+\title{Class to provide the functionality to read data from an input stream}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 Data.Stream
 }
 \description{
-Class to provide the functionality of treating a static, finite datatable as a stream of incomming
-data.
+Class to provide the functionality to read data from an input stream
 }
 \section{Methods}{
 
 \describe{
-  \item{\code{new(kafka.host, kafka.stream)}}{This method is used to create object of this class. It expects a host for a kafka cluster (or the coordinating zookeeper therof) as input in the \code{kafka.host}. Secondly, it also expects the stream on the kafka host to listen on (\code{kafka.stream}}
-
+  \item{\code{initialize(kafka.host = 'imac.evionix.org:2181', kafka.stream = 'test')}}{
+   This method is used to create object of this class. It expects a host for a kafka cluster (or the coordinating
+   zookeeper therof) as input in the \code{kafka.host}. Secondly, it also expects the stream on the kafka host to
+   listen on (\code{kafka.stream}
+   @param kafka.host the host address for the kafka stream
+   @param kafka.stream the particular stream to read from
+  }
+  \item{\code{getNext()}}{
+    Not implemented
+    Returns the next observation from the stream
+    @return one row of the dataframe the stream yields
+  }
   \item{\code{getNext()}}{Method to retrieve the next observation from the stream.}
 }
 }

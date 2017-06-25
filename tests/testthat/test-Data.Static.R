@@ -31,7 +31,7 @@ test_that("it should also return the whole dataset, even if the pointer was plac
 })
 
 context(' reset')
-test_that("it should reset the pointer to the first observation", {
+test_that("it should eeset the pointer to the first observation", {
   data <- data.table(x=c(1,2,3,4), y=c(4,3,2,1))
   ds <- described.class$new(dataset = data)
 

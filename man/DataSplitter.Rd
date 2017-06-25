@@ -3,24 +3,27 @@
 \docType{class}
 \name{DataSplitter}
 \alias{DataSplitter}
-\title{DataSplitter}
+\title{DataSplitter
+Splits data into train and test set.}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 DataSplitter
 }
 \description{
+DataSplitter
 Splits data into train and test set.
 }
 \section{Methods}{
  
 \describe{  
   \item{\code{initialize() }}{ 
-    <<description>> 
+    Creates a new datasplitter
   } 
 
-  \item{\code{split(data) }}{ 
-    splits the data in a train and test set
+  \item{\code{split(data)}}{ 
+    Splits the data in a train and test set. It will always use the last observation as the test set observation.
     @param data the data to spit 
+    @return list with two entries: \code{train} and \code{test}. Each containing the correct dataframe.
   } 
 }
 }
