@@ -23,7 +23,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
         SL.library.definition = NULL,
         cv_risk_calculator = NULL,
 
-        train = function(data.test, data.train, bounds, randomVariables, max_iterations, llW, llA, llY) {
+        train = function(data.test, data.train, bounds, randomVariables, variable_of_interest, max_iterations, llW, llA, llY) {
           outcome.variables <- sapply(randomVariables, function(rv) rv$getY)
           smg_factory <- SMGFactory$new()
 
@@ -74,7 +74,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           #plot(x=performances$iterations, y=performances$performance)
           #performances
-          intervention <- list(variable = 'A', when = c(2), what = c(0))
+          intervention <- list(variable = 'A', when = c(2), what = c(1))
           tau = 2
           B <- 100
 
@@ -118,10 +118,10 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
             osl$sample_iteratively(data = data.test[i,],
                                    randomVariables = randomVariables,
                                    intervention = intervention,
-                                   tau = tau)[tau, 'Y']
+                                   variable_of_interest = variable_of_interest,
+                                   tau = tau)[tau, variable_of_interest$getY, with=FALSE]
           } %>%
             unlist
-
 
           options(warn=pre)
 
@@ -187,13 +187,21 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   #algorithm_params = list(ntrees=c(10,20)),
                                   #params = list(nbins = c(16), online = TRUE))))
 
-          algos <- append(algos, list(list(algorithm = 'condensier::speedglmR6',
+          #algos <- append(algos, list(list(algorithm = 'condensier::speedglmR6',
+                                  ##algorithm_params = list(),
+                                  #params = list(nbins = c(39, 40), online = FALSE))))
+
+          algos <- append(algos, list(list(algorithm = 'ML.Speedglm',
                                   #algorithm_params = list(),
+                                  params = list(nbins = c(39, 40), online = FALSE))))
+
+          algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
+                                  algorithm_params = list(alpha = c(0,1)),
                                   params = list(nbins = c(39, 40), online = FALSE))))
 
           #algos <- append(algos, list(list(algorithm = 'condensier::glmR6',
                                   ##algorithm_params = list(),
-                                  #params = list(nbins = c(16, 20, 24, 30, 34, 40), online = FALSE))))
+                                  #params = list(nbins = c(39, 40), online = FALSE))))
 
           private$SL.library.definition <- algos
 
@@ -251,8 +259,8 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           # Create the measures we'd like to include in our model
           # In this simulation we will include 2 lags and the latest data (non lagged)
           # Define the variables in the initial dataset we'd like to use
-          private$train(data.test, data.train, bounds, randomVariables, 2)
-          private$train(data.test, data.train, bounds, randomVariables, max_iterations = 2,
+          #private$train(data.test, data.train, bounds, randomVariables, 2)
+          private$train(data.test, data.train, bounds, randomVariables, Y,  max_iterations = 2,
                         llW = llW,
                         llA = llA, 
                         llY = llY)
@@ -330,7 +338,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           # Create the measures we'd like to include in our model
           # In this simulation we will include 2 lags and the latest data (non lagged)
           # Define the variables in the initial dataset we'd like to use
-          private$train(data.test, data.train, bounds, randomVariables, max_iterations = 20, llW, llA, llY)
+          private$train(data.test, data.train, bounds, randomVariables, Y, max_iterations = 5, llW, llA, llY)
         }
   )
 )
