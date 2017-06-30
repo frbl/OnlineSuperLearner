@@ -136,7 +136,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
           # Save the output in a dir so we can access it later
           date <- format(Sys.time(), "%y%m%d%H%M")
           full_dir <- paste(dir, date, '/', sep ='')
-          dir.create(full_dir, showWarnings = FALSE)
+          dir.create(full_dir, showWarnings = FALSE, recursive = TRUE)
 
           pdf(paste(full_dir,output,'.pdf',sep = ''))
           plot(true_density, ylim=c(0,max(estimated_probabilities)+.5))

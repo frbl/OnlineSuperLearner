@@ -31,6 +31,8 @@ Imports:
     magrittr,
     purrr,
     xgboost,
+    speedglm,
+    glmnet,
     nloptr,
     future,
     foreach,
@@ -60,10 +62,12 @@ Collate:
     'ML.Base.R'
     'ML.XGBoost.R'
     'LibraryFactory.R'
+    'ML.GLMnet.R'
     'ML.H2O.R'
     'ML.H2O.gbm.R'
     'ML.H2O.glm.R'
     'ML.H2O.randomForest.R'
+    'ML.Local.Speedlm.R'
     'OnlineSuperLearner.Predict.R'
     'WCC.SGD.Simplex.R'
     'WCC.NMBFGS.R'

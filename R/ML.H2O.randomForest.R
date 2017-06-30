@@ -42,6 +42,7 @@ ML.H2O.randomForest <- R6Class("ML.H2O.randomForest",
 
         private$catch_warning(h2o.randomForest, x = colnames(X_mat), y='Y_vals',
                          training_frame = pointer,
+                         binomial_double_trees = TRUE,
                          ntrees = private$ntrees,
                          nfolds = private$nfolds,
                          min_rows = private$min_rows,

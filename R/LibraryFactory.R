@@ -142,7 +142,9 @@ LibraryFactory <- R6Class("LibraryFactory",
                                                     'condensier::glmR6',
                                                     'ML.H2O.gbm',
                                                     'ML.H2O.glm',
+                                                    'ML.GLMnet',
                                                     'ML.H2O.randomForest',
+                                                    'ML.Local.Speedlm',
                                                     'ML.Local.lm',
                                                     'ML.XGBoost'), verbose = FALSE) {
           private$ML.models.allowed = ML.models.allowed

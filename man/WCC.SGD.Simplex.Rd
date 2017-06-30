@@ -4,13 +4,19 @@
 \name{WCC.SGD.Simplex}
 \alias{WCC.SGD.Simplex}
 \title{WCC.SGD.Simplex
-This is the SGD computer used in the Online SL package by David Benkeser; https://github.com/benkeser/onlinesl/}
+This is the SGD computer used in the Online SL package by David Benkeser;
+https://github.com/benkeser/onlinesl/. It performs a gradient descent update
+(or a number of gradient descent updates) using the estimates of the
+separate estimators.}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 WCC.SGD.Simplex
 }
 \description{
 WCC.SGD.Simplex
-This is the SGD computer used in the Online SL package by David Benkeser; https://github.com/benkeser/onlinesl/
+This is the SGD computer used in the Online SL package by David Benkeser;
+https://github.com/benkeser/onlinesl/. It performs a gradient descent update
+(or a number of gradient descent updates) using the estimates of the
+separate estimators.
 }
 \keyword{datasets}

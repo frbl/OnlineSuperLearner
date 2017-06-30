@@ -6,7 +6,7 @@
 #' @include ML.Base.R
 #' @section Methods:
 #' \describe{
-#'   \item{\code{initialize(booster = "gblinear", alpha = 0, lambda = 0, rounds = 200}}{
+#'   \item{\code{initialize(booster = "gblinear", alpha = 0, lambda = 0, rounds = 200)}}{
 #'     Initializes a new XGBoosted estimator. See the underlying xgboost packages for more details. This estimator
 #'     allows to tweak several hyperparameters (see params). By default XGBoost uses elasticnet for penalizing the
 #'     fitted model, the amount of penalization can be tweaked using the alpha (L1 regularization) and lambda (L2
@@ -30,12 +30,12 @@ ML.XGBoost <- R6Class("ML.XGBoost",
     list(
       fitfunname='xgboost',
       lmclass='xgboostR6',
-      initialize = function(booster = 'gblinear', alpha = 0, lambda = 0, rounds = 200, gamma = 0, eta = 0.3, verbose = FALSE) {
+      initialize = function(booster = 'gblinear', alpha = 0, lambda = 0, rounds = 200, gamma = 0, eta = 0.3, objective = 'binary:logistic', verbose = FALSE) {
 
         private$rounds <- Arguments$getInteger(rounds, c(1, Inf))
         private$verbosity <- Arguments$getVerbose(verbose)
 
-        private$params <- list(objective = 'binary:logistic',
+        private$params <- list(objective = Arguments$getCharacter(objective),
                               booster = Arguments$getCharacter(booster),
                               nthread = 8,
                               alpha   = Arguments$getNumeric(alpha, c(0, 1)),
