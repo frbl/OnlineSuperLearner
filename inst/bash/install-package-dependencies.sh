@@ -13,6 +13,7 @@ packages <- c(
 "testthat",
 "xgboost",
 "glmnet",
+"speedglm",
 "nnls",
 "sgd",
 "dplyr",

@@ -2,6 +2,7 @@
 #' Class to create speedlm linear models. Uses the speed glm package and can be updated online.
 #'
 #' @docType class
+#' @importFrom speedglm speedlm updateWithMoreData
 #' @section Methods:
 #' \describe{
 #'   \item{\code{initialize()}}{

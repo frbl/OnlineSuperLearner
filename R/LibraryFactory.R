@@ -144,7 +144,7 @@ LibraryFactory <- R6Class("LibraryFactory",
                                                     'ML.H2O.glm',
                                                     'ML.GLMnet',
                                                     'ML.H2O.randomForest',
-                                                    'ML.Speedglm',
+                                                    'ML.Local.Speedlm',
                                                     'ML.Local.lm',
                                                     'ML.XGBoost'), verbose = FALSE) {
           private$ML.models.allowed = ML.models.allowed

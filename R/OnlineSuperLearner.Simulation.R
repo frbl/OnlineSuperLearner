@@ -191,9 +191,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   #algorithm_params = list(),
                                   params = list(nbins = c(39, 40), online = FALSE))))
 
-          algos <- append(algos, list(list(algorithm = 'ML.Speedglm',
+          algos <- append(algos, list(list(algorithm = 'ML.Local.Speedlm',
                                   #algorithm_params = list(),
-                                  params = list(nbins = c(39, 40), online = FALSE))))
+                                  params = list(nbins = c(39, 40), online = TRUE))))
 
           algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
                                   algorithm_params = list(alpha = c(0,1)),
