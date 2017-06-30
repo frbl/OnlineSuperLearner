@@ -4,7 +4,7 @@ subject <- described.class$new()
 
 context(" initialize")
 test_that("it should initialize a new speed lm model", {
-  subject <- subject$new()
+  subject <- described.class$new()
   expect_true(is(subject, 'ML.Local.Speedlm'))
 })
 
