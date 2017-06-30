@@ -6,7 +6,7 @@
 #' @include ML.Base.R
 #' @section Methods:
 #' \describe{
-#'   \item{\code{initialize(booster = "gblinear", alpha = 0, lambda = 0, rounds = 200}}{
+#'   \item{\code{initialize(booster = "gblinear", alpha = 0, lambda = 0, rounds = 200)}}{
 #'     Initializes a new XGBoosted estimator. See the underlying xgboost packages for more details. This estimator
 #'     allows to tweak several hyperparameters (see params). By default XGBoost uses elasticnet for penalizing the
 #'     fitted model, the amount of penalization can be tweaked using the alpha (L1 regularization) and lambda (L2

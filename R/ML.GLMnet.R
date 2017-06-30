@@ -8,6 +8,8 @@ ML.GLMnet <- R6Class("ML.GLMnet",
   inherit = ML.Base,
   public =
     list(
+      fitfunname='glmnet',
+      lmclass='glmnet',
       initialize = function(family = 'binomial', alpha = 0.5, nlambda = 100, verbose = FALSE) {
         private$verbosity <- Arguments$getVerbose(verbose)
 

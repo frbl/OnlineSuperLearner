@@ -183,13 +183,13 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   #algorithm_params = list(ntrees=c(10,20), min_rows=1),
                                   #params = list(nbins = c(6), online = TRUE))))
 
-          #algos <- append(algos, list(list(algorithm = 'ML.H2O.randomForest',
-                                  #algorithm_params = list(ntrees=c(10,20)),
-                                  #params = list(nbins = c(16), online = TRUE))))
+          algos <- append(algos, list(list(algorithm = 'ML.H2O.randomForest',
+                                  algorithm_params = list(ntrees=c(10,20)),
+                                  params = list(nbins = c(16), online = TRUE))))
 
-          #algos <- append(algos, list(list(algorithm = 'condensier::speedglmR6',
-                                  ##algorithm_params = list(),
-                                  #params = list(nbins = c(39, 40), online = FALSE))))
+          algos <- append(algos, list(list(algorithm = 'condensier::speedglmR6',
+                                  #algorithm_params = list(),
+                                  params = list(nbins = c(39, 40), online = FALSE))))
 
           algos <- append(algos, list(list(algorithm = 'ML.Speedglm',
                                   #algorithm_params = list(),
