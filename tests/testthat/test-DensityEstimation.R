@@ -63,7 +63,7 @@ test_that("it should sample if from the cond densities once they've been fitted"
 
   # TODO: fix these warnings
   # suppressWarnings(
-    subject$process(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
+    subject$fit(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
   # )
 
   Y_val <- 0
@@ -85,7 +85,7 @@ test_that("it should sample from the cond densities once they've been fitted als
 
   # TODO: fix these warnings
   # suppressWarnings(
-    subject$process(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
+    subject$fit(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
   # )
   accepted_error <- 20
   Y_val <- NA
@@ -102,7 +102,7 @@ test_that("it should sample from the cond densities once they've been fitted als
 
   ## TODO: fix these warnings
   #suppressWarnings(
-    #subject$process(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
+    #subject$fit(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
   #)
 
   #W <- 1
@@ -117,7 +117,7 @@ test_that("it should get the correct probabilities from the cond densities", {
 
   # TODO: fix these warnings
   # suppressWarnings(
-    subject$process(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
+    subject$fit(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
   # )
 
   n <- 3
@@ -137,7 +137,7 @@ context(' > predict')
 test_that("cond density predictions should work for only one row of data", {
   set.seed(12345)
   subject <- described.class$new(nbins = 10)
-  subject$process(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
+  subject$fit(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
   n <- 1
   Y_val <- 1000
   dat <- data.table(D = rep(1,n), W=seq(n), Y=rep(Y_val, n))
@@ -157,19 +157,19 @@ test_that("it should throw if no output column is provided in the data", {
 
   # TODO: fix these warnings
   # suppressWarnings()
-  subject$process(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
+  subject$fit(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
 
   n <- 3
   dat <- data.table(D = rep(1,n), W=seq(n))
   res <- expect_error(subject$predict(dat, sample = FALSE), expected_error, fixed = TRUE)
 })
 
-context(' process')
+context(' fit')
 test_that("it should fit the conditional densities", {
   subject <- described.class$new(nbins = 3)
   # TODO: fix these warnings
   # suppressWarnings()
-  subject$process(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
+  subject$fit(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
 
   result <- subject$getConditionalDensities()
   expect_false(length(result) == 0)
@@ -179,12 +179,16 @@ test_that("it should fit the conditional densities", {
 
 test_that("it should throw when the list provided does not consist of randomvariables", {
   subject <- described.class$new(nbins = 3)
-  expect_error(subject$process(defaultDataTable(), randomVariables = c(rv.W, 'not-an-rv!')),
+  expect_error(subject$fit(defaultDataTable(), randomVariables = c(rv.W, 'not-an-rv!')),
                "Argument 'rv' is neither of nor inherits class RandomVariable: character", fixed=TRUE)
 
 })
 
 context(' update')
+test_that("it should update existing estimators with new data", {
+  skip()
+})
+
 
 context(' getConditionalDensities')
 test_that("it should throw if the densities were not yet fitted", {
@@ -195,7 +199,7 @@ test_that("it should throw if the densities were not yet fitted", {
 test_that("it should return all CDs when no outcome is provided", {
   subject <- described.class$new(nbins = 3)
   # TODO: fix these warnings
-  subject$process(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
+  subject$fit(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
   result <- subject$getConditionalDensities()
   expect_false(length(result) == 0)
   expect_equal(names(result), c(unname(rv.W$getY), unname(rv.Y$getY)))
@@ -205,7 +209,7 @@ test_that("it should provide just the CD with a given name when an outcome is pr
   subject <- described.class$new(nbins = 3)
   # TODO: fix these warnings
   # suppressWarnings()
-  subject$process(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
+  subject$fit(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
   result <- subject$getConditionalDensities(outcome = rv.Y$getY)
   expect_true(is.a(result, 'SummariesModel'))
   expect_equal(result$outvar, rv.Y$getY)
@@ -215,9 +219,27 @@ test_that("it should throw whenever a CD is provided as outcome that has not bee
   subject <- described.class$new(nbins = 3)
   # TODO: fix these warnings
   # suppressWarnings()
-  subject$process(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
+  subject$fit(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
   expect_error(subject$getConditionalDensities(outcome = 'this-should-never-exist'),
                'this-should-never-exist is not a fitted outcome')
 
+})
+
+context(' Static methods')
+context(' > DensityEstimation.are_all_estimators_online')
+test_that("it should return true if a whole list of estimators is online", {
+  SL.Library <- list()
+  SL.Library <- append(SL.Library, list( described.class$new(nbins = 3, online=TRUE)))
+  SL.Library <- append(SL.Library, list( described.class$new(nbins = 3, online=TRUE)))
+  SL.Library <- append(SL.Library, list( described.class$new(nbins = 3, online=TRUE)))
+  expect_true(DensityEstimation.are_all_estimators_online(SL.Library))
+})
+
+test_that("it should return false if any estimator is not online", {
+  SL.Library <- list()
+  SL.Library <- append(SL.Library, list( described.class$new(nbins = 3, online=TRUE)))
+  SL.Library <- append(SL.Library, list( described.class$new(nbins = 3, online=FALSE)))
+  SL.Library <- append(SL.Library, list( described.class$new(nbins = 3, online=TRUE)))
+  expect_false(DensityEstimation.are_all_estimators_online(SL.Library))
 })
 
