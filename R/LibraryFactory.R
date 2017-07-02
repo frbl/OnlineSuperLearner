@@ -8,14 +8,24 @@
 #' @include ML.Local.lm.R
 #' @section Methods:
 #' \describe{
-#'   \item{\code{new(ML.models.allowed = c('ML.H2O.glm', 'ML.Local.lm', 'ML.XGBoost.glm'))}}{This method is used to create object of this class. It expects a \code{ML.models.allowed} as a list which describes all of the models that are allowed for fabrication. }
+#'   \item{\code{new(ML.models.allowed = c('ML.H2O.glm', 'ML.Local.lm', 'ML.XGBoost.glm'))}}{
+#'     This method is used to create object of this class. It expects a \code{ML.models.allowed} as a list which describes all of the models that are allowed for fabrication. 
+#'     @param ML.models.allowed = the list of ML models allowed to create objects for. The default is a list of all models in the OSL package
+#'     @return a new instance of the library factory
+#'   }
 #'
 #'   \item{\code{get_validity}}{
-#'    Method to determine if the object is in a valid state.
+#'     Method to determine if the object is in a valid state. The method will throw whenever the state is not valid
 #'   }
 #'
 #'   \item{\code{fabricate(SL.library)}}{
-#'    Method that fabricates the models in the provided \code{SL.library}.
+#'     Method that fabricates the models in the provided \code{SL.library}.
+#'     @param SL.library can be either a list of ML models, for which we will then choose the default hyper parameters,
+#'     or a more specific specification of the models. This is in the form of a list and should be specified as follows:
+#'     \code{list(list(algorithm = 'the class of the algorithm',
+#'                     algorithm_params = list(hyper_parameter1=c(1,2,3)),
+#'                     params = list(nbins = c(39, 40), online = FALSE))))} in which \code{algorithm_params} are the
+#'                     hyperparameters for the learner, and params are the hyper parameters for the density estimator.
 #'   }
 #'}
 LibraryFactory <- R6Class("LibraryFactory",
@@ -25,13 +35,13 @@ LibraryFactory <- R6Class("LibraryFactory",
         verbose = NULL,
 
         is_valid_ml_model = function(ML.name) {
-          # TODO: Test if files actually exist.
+          ## TODO: Test if files actually exist.
         },
 
         create_estimator_grid = function(entry) {
             name <- entry$algorithm
 
-            # If no params are provided, treat the list as a vector
+            ## If no params are provided, treat the list as a vector
             if (!('algorithm_params' %in% names(entry))){
               name <- paste(name, 'vanilla', sep = '-')
               algorithm_instances <- list(create_object_from_string(entry$algorithm, args = list()))
@@ -40,8 +50,8 @@ LibraryFactory <- R6Class("LibraryFactory",
               algorithm_param_list <- entry$algorithm_params %>% purrr::cross_d()
               data.table::setDT(algorithm_param_list)
 
-              # Initialize the actual algorithms
-              # We iterate over the numbers, we we still have a datatable when indexing.
+              ## Initialize the actual algorithms
+              ## We iterate over the numbers, we we still have a datatable when indexing.
               algorithm_instances <- lapply(1:nrow(algorithm_param_list), function(i) {
                 current_params <- list()
                 params_name <- paste(name, 'vanilla' , sep='-')
@@ -61,16 +71,16 @@ LibraryFactory <- R6Class("LibraryFactory",
 
         create_density_estimator_grid = function(entry, algorithm_instances) {
           result <- lapply(algorithm_instances, function(algorithm_instance) {
-              # We shouldn't do gridsearch when no parameters are specified, just use the defaults
+              ## We shouldn't do gridsearch when no parameters are specified, just use the defaults
               if (!('params' %in% names(entry))){
                 result <- list('vanillaDE' = DensityEstimation$new(bin_estimator = algorithm_instance))
               } else {
                 param_list <- entry$params %>% purrr::cross_d()
                 data.table::setDT(param_list)
 
-                # We iterate over the numbers, we still keep the correct names when we pass the list
+                ## We iterate over the numbers, we still keep the correct names when we pass the list
                 result <- lapply(1:nrow(param_list), function(i) {
-                  # TODO: Extract this to a function
+                  ## TODO: Extract this to a function
                   current_params <- list()
                   params_name <- 'vanillaDE'
                   if(nrow(param_list[i]) > 0) {
@@ -92,14 +102,14 @@ LibraryFactory <- R6Class("LibraryFactory",
         },
 
         fabricateGrid = function(SL.library) {
-          #SL.library <- Arguments$getList(SL.library)
-          # We have to fabricate a grid on two levels, 1st for the algorithm, then for the density estimation
-          # algotithm_params contains the params for the algorithm
-          # params contains the params for the density estimation
+          ##SL.library <- Arguments$getList(SL.library)
+          ## We have to fabricate a grid on two levels, 1st for the algorithm, then for the density estimation
+          ## algotithm_params contains the params for the algorithm
+          ## params contains the params for the density estimation
 
-          # Create objects for each of the objects
-          #naming:
-          # algorithmname-paramname-param
+          ## Create objects for each of the objects
+          ##naming:
+          ## algorithmname-paramname-param
           instances <- lapply(SL.library, function(entry) {
             self$check_entry_validity(entry)
             algorithm_instances <- private$create_estimator_grid(entry)
@@ -111,7 +121,7 @@ LibraryFactory <- R6Class("LibraryFactory",
         fabricateDefault = function(SL.library) {
           SL.library <- Arguments$getCharacters(SL.library)
 
-          # Create objects for each of the objects
+          ## Create objects for each of the objects
           fabricatedLibrary <- lapply(SL.library, function(entry) {
             self$check_entry_validity(entry)
 
@@ -127,12 +137,12 @@ LibraryFactory <- R6Class("LibraryFactory",
     list(
         get_validity = function() {
           errors <- character()
-          # Check if all models are actually ml models
-          #are.ml.models <- sapply(private$ML.models.allowed, startsWith, 'ML')
-          #if(!all(are.ml.models)){
-            #msg <- 'Not all provided models are ML models as models should start with ML, please only use ML models.'
-            #errors <- c(errors, msg)
-          #}
+          ## Check if all models are actually ml models
+          ##are.ml.models <- sapply(private$ML.models.allowed, startsWith, 'ML')
+          ##if(!all(are.ml.models)){
+            ##msg <- 'Not all provided models are ML models as models should start with ML, please only use ML models.'
+            ##errors <- c(errors, msg)
+          ##}
           if (length(errors) == 0) return(TRUE) else throw(errors)
         }
         ),
@@ -153,11 +163,11 @@ LibraryFactory <- R6Class("LibraryFactory",
         },
 
         fabricate = function(SL.library) {
-          # If we receive a list, assume that we have to create a parameter grid for each model
+          ## If we receive a list, assume that we have to create a parameter grid for each model
           if(is.a(SL.library, 'list')){
             fabricatedLibrary <- private$fabricateGrid(SL.library)
           } else {
-            # if it is not a list, assume it is a vector or string
+            ## if it is not a list, assume it is a vector or string
             fabricatedLibrary <- private$fabricateDefault(SL.library)
           }
           return(fabricatedLibrary)

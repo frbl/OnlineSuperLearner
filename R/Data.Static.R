@@ -1,5 +1,4 @@
-#' Class to provide the functionality of treating a static, finite datatable as a stream of incomming
-#' data.
+#' Class to provide the functionality of treating a static, finite datatable as a stream of incomming data.
 #'
 #' @docType class
 #' @include Data.Base.R
@@ -8,25 +7,61 @@
 #'
 #' @section Methods:
 #' \describe{
-#'   \item{\code{new(dataset, url)}}{
+#'   \item{\code{initialize(dataset = NULL, url = NULL, verbose = FALSE)}}{
 #'     This method is used to create object of this class. One can provide either a \code{datatable} or a \code{url} pointing to a dataframe.
+#'     @param dataset is a datatable to read the data from
+#'     @param url is a datatable to read the data from if no dataset is available
+#'     @param verbose the verbosity
 #'   }
 #'
-#'   \item{\code{getAll()}}{
-#'     Method to retrieve the whole dataset at once.
+#'   \item{\code{initialize(dataset = NULL, url = NULL, verbose = FALSE)}}{
+#'     This method is used to create object of this class. One can provide either a \code{datatable} or a \code{url} pointing to a dataframe.
+#'     @param dataset is a datatable to read the data from
+#'     @param url is a datatable to read the data from if no dataset is available
+#'     @param verbose the verbosity
 #'   }
 #'
 #'   \item{\code{getNext()}}{
 #'     Method to retrieve the next observation from the data.
+#'     @return datatable a row from a datatable
 #'   }
 #'
-#'   \item{\code{getNextN(n)}}{
-#'     Method that returns the next \code{n} observations. This function can be used to bootstrap
-#'     an initial model or to get a minibatch of observations. Note that the function will always
-#'     try to return data. If one asks for n observations, it will check if there are still n new
-#'     observations. If not, it will return all observations still available. If there are no
-#'     observations available, it will return null.
+#'   \item{\code{getNextN(n = 1)}}{
+#'     Method that returns the next \code{n} observations. This function can be used to bootstrap an initial model or to
+#'     get a minibatch of observations. Note that the function will always try to return data. If one asks for n
+#'     observations, it will check if there are still n new observations. If not, it will return all observations still
+#'     available. If there are no observations available, it will return null.
 #'     @param n = the number of measurements requested
+#'     @return datatable a row or number of rows from a datatable, NULL if \code{n} <= 0
+#'   }
+#'
+#'   \item{\code{is_data_set}}{
+#'     Method to determine whether the data is set
+#'     @return boolean true if a dataset is available
+#'   }
+#'
+#'   \item{\code{reset}}{
+#'     Method to reset the pointer to the beginning of the datatable.
+#'   }
+#'
+#'   \item{\code{get_all}}{
+#'     Method to retrieve the whole dataset at once.
+#'     @return a datatable as set when initializing the object
+#'   }
+#'
+#'   \item{\code{get_length}}{
+#'     Method to retrieve the number of rows in the dataframe
+#'     @return integer the number of rows in the dataframe. 0 and a warning if no data is set.
+#'   }
+#'
+#'   \item{\code{get_remaining_length}}{
+#'     Method to retrieve the number of rows still remaining in the dataframe
+#'     @return integer the remaining number of rows in the dataframe.
+#'   }
+#'
+#'   \item{\code{get_currentrow}}{
+#'     Method to retrieve pointer to the current row in the data frame.
+#'     @return integer the current row in the dataframe. 1 if no data is set.
 #'   }
 #' }
 #' @export
@@ -34,39 +69,6 @@ Data.Static <-
   R6Class (
   "Data.Static",
   inherit = Data.Base,
-  private =
-    list(
-        dataset = NULL,
-        currentrow = 1,
-
-        readDataFromUrl = function(url) {
-          # TODO: Test the file, which format it should be
-          data.table(read.csv(url))
-        }
-        ),
-  active =
-    list(
-      is_data_set = function() {
-        !is.null(self$getAll())
-      },
-
-      get_length = function() {
-        if(self$is_data_set) {
-          nrow(self$getAll())
-        } else {
-          warning('Data not yet set, returning 0')
-          0
-        }
-      },
-
-      get_remaining_length = function() {
-        max(self$get_length - self$get_currentrow, 0)
-      },
-
-      get_currentrow = function() {
-        return(private$currentrow)
-      }
-      ),
   public =
     list(
         initialize = function(dataset = NULL, url = NULL, verbose = FALSE) {
@@ -80,20 +82,12 @@ Data.Static <-
           } else {
             throw('You need to provide at least a datatable or url')
           }
-          self$reset()
-          #TODO: Do proper verbosity check here
-          if(verbose){
-            print('Static set initialized with:')
-            print(head(dataset))
-          }
-        },
 
-        getAll = function() {
-          return(private$dataset)
-        },
+          ## Initialize the pointer to the data
+          self$reset
 
-        reset = function() {
-          private$currentrow <- 1
+          private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
+          private$verbose && cat(private$verbose, 'Static set initialized with:', head(dataset))
         },
 
         getNext = function() {
@@ -114,5 +108,47 @@ Data.Static <-
           private$currentrow <- private$currentrow + n
           return(temp)
         }
+    ),
+  active =
+    list(
+      is_data_set = function() {
+        !is.null(self$get_all())
+      },
+
+      reset = function() {
+        private$currentrow <- 1
+      },
+
+      get_all = function() {
+        return(private$dataset)
+      },
+
+      get_length = function() {
+        if(self$is_data_set) {
+          nrow(self$get_all)
+        } else {
+          warning('Data not yet set, returning 0')
+          0
+        }
+      },
+
+      get_remaining_length = function() {
+        max(self$get_length - self$get_currentrow, 0)
+      },
+
+      get_currentrow = function() {
+        return(private$currentrow)
+      }
+    ),
+  private =
+    list(
+      dataset = NULL,
+      currentrow = NULL,
+      verbose = NULL,
+
+      readDataFromUrl = function(url) {
+        ## TODO: Test the file, which format it should be
+        data.table(read.csv(url))
+      }
     )
 )
