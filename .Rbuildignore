@@ -19,7 +19,7 @@ test.Dockerfile
 #----------------------------
 # Travis-CI et al.
 #----------------------------
-#^[.]travis[.]yml$
+^[.]travis[.]yml$
 #^travis-tool[.]sh$
 #^pkg-build[.]sh$
 #^appveyor[.]yml$
