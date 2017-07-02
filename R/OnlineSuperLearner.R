@@ -20,22 +20,22 @@
 #' \describe{
 #'   \item{\code{initialize(SL.library.definition = c("ML.Local.lm", "ML.H2O.glm", summaryMeasureGenerator, verbose = FALSE)}}{
 #'     starts a new OnlineSuperLearner. The provided \code{SL.library.definition} contains the machine learning models to use
-#'     @param SL.library.definition = a list of machine learning algorithms. This could be either a vector with
-#'                                    with the name of each estimator or a list according to the libraryFactroy.
-#'                                    Look in the LibraryFactory class for the specification of this list.
-#'     @param summaryMeasureGenerator = an object of the type SummaryMeasureGenerator. This generator is used to
-#'                                      get new observations with the correct aggregated columns.
+#'     @param SL.library.definition = a list of machine learning algorithms. This could be either a vector with with the
+#'     name of each estimator or a list according to the libraryFactroy.  Look in the LibraryFactory class for the
+#'     specification of this list.
+#'     @param summaryMeasureGenerator = an object of the type SummaryMeasureGenerator. This generator is used to get new
+#'     observations with the correct aggregated columns.
 #'     @param verbose = the verbosity (how much logging). Note that this might be propagated to other classes.
 #'   }
 #'
 #'   \item{\code{evaluateModels(data, randomVariables) }}{
 #'     Performs a basic evaluation on the data, given a list of random variables
 #'     @param data = the data to use for performing the evaluation
-#'     @param randomVariables = the randomVariables for which one wants to see the evaluation. Note that this needs
-#'                              to be equal to, or a subset of, the random variables used to train the estimators.
+#'     @param randomVariables = the randomVariables for which one wants to see the evaluation. Note that this needs to
+#'     be equal to, or a subset of, the random variables used to train the estimators.
 #'   }
 #'
-#'   \item{\code{sample_iteratively(data, randomVariables, tau = 10, intervention = NULL}}{
+#'   \item{\code{sample_iteratively(data, randomVariables, tau = 10, intervention = NULL)}}{
 #'     Method to sample iteratively from the densities. It works by providing an initial observation (\code{data}), from which
 #'     iteretitatively the next measurement is estimated. This is done until \code{tau} steps in the future. Furthermore,
 #'     this sampling step can be augmented with an intervention. That is, we could set a given time step (or all)
@@ -47,7 +47,7 @@
 #'     @param intervention = the intervention, e.g.: \code{list(when = c(1,2), what = c(1,0))}
 #'   }
 #'
-#'   \item{\code{fit(data, randomVariables, initial_data_size = 5, max_iterations = 20, mini_batch_size = 20}}{
+#'   \item{\code{fit(data, randomVariables, initial_data_size = 5, max_iterations = 20, mini_batch_size = 20)}}{
 #'     The actual method to fit the OnlineSuperLearner. This will fit the provided \code{SL.library.definition}
 #'     estimators as well as the OnlineSuperLearner and the DiscreteOnlineSuperLearner.
 #'     @param data = the data to fit the estimator on. Should be a \code{Data.Base} subclass.
@@ -57,17 +57,70 @@
 #'     @param mini_batch_size = the size of the mini batch to use for each update.
 #'   }
 #'
-#'   \item{\code{predict(data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE}}{
+#'   \item{\code{predict(data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE)}}{
 #'     Method to perform a prediction on the estimators. It can run in different configurations. It can be configured
 #'     to predict the outcome using all estimators (the \code{all_estimators} flag), using the discrete superlearner
 #'     (the \code{discrete} flag), or using the continuous online superlearner (the \code{continous} flag). At least
 #'     one of these three flags must be true.
 #'     @param data = the data to use for doing the predictions
 #'     @param randomVariables = the random variables used for doing the predictions (these should be the same as the
-#'                              ones used for fitting).
+#'     ones used for fitting).
 #'     @param all_estimators = whether or not to include the output of all candidate estimators in the output
 #'     @param discrete = whether or not to include the output of the discrete super learner in the output
 #'     @param continuous = whether or not to include the output of the continuous super learner in the output
+#'   }
+#'
+#'   \item{\code{is_fitted}}{
+#'     Active method to return whether the OSL has been fitted or not
+#'     @return boolean true if it has been fitted, false if not
+#'   }
+#'
+#'   \item{\code{is_online}}{
+#'     Active method to deterimine whether the actual algorithm is fitted in an online way. That is to say, that all of
+#'     the estimators are in fact online.
+#'     @return boolean true if it all algorithms are online, false if not
+#'   }
+#'
+#'   \item{\code{fits_osl}}{
+#'     Active method to know whether the current OSL fits an online super learner (that is, the weighted combination).
+#'     This setting comes from the initialization step of OSL.
+#'     @return boolean true if it fits an osl (false if not)
+#'   }
+#'
+#'   \item{\code{fits_dosl}}{
+#'     Active method to know whether the current OSL fits a discrete online super learner.  This setting comes from the
+#'     initialization step of OSL.
+#'     @return boolean true if it fits a discrete osl (false if not)
+#'   }
+#'
+#'   \item{\code{info}}{
+#'     Active method to print some general info related to the current OSL
+#'   }
+#'
+#'   \item{\code{get_estimators}}{
+#'     Active method to retrieve a list of estimators. These can be the fitted versions (if the osl is fitted), or the
+#'     plain unfitted versions. Check the is_online version for that.
+#'     @return list a list object containing all estimators.
+#'   }
+#'
+#'   \item{\code{get_osl_weights}}{
+#'     Active method to retrieve a vector of weights that the OSL has found for its continuous online super learner fit.
+#'     @return vector a vector containing the estimates of the OSL weights
+#'   }
+#'
+#'   \item{\code{get_dosl}}{
+#'     Active method to retrieve the actual DOSL fit. this could be nil if no dosl has been fit yet.
+#'     @return list a list containing the best estimator for each of the random variables.
+#'   }
+#'
+#'   \item{\code{get_cv_risk}}{
+#'     Active method to retrieve the crossvalidated risk of each of the estimators
+#'     @return list a list containing the risk estimates for each of hte estimators.
+#'   }
+#'
+#'   \item{\code{get_valididy}}{
+#'     Active method that throws an error if the current state of the OSL is not valid (i.e., that it has invalid
+#'     parameters in it).
 #'   }
 #' }
 #' @export
@@ -375,7 +428,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         },
 
         get_osl_weights = function() {
-          sapply(private$weightedCombinationComputers, function(wcc) wcc$get_weights)
+          sapply(private$weightedCombinationComputers, function(wcc) wcc$get_weights) %>%
+            unlist
         },
 
         get_dosl = function() {
