@@ -11,6 +11,7 @@
 #' @include zzz.R
 #' @include LibraryFactory.R
 #' @include DataSplitter.R
+#' @include DensityEstimation.R
 #' @include SummaryMeasureGenerator.R
 #' @include WeightedCombinationComputer.R
 #' @include WCC.NMBFGS.R
@@ -131,7 +132,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## Variables
         ## =========
         ## The R.cv score of the current fit
-        ##default_wcc = WCC.SGD.Simplex,
+        ## default_wcc = WCC.SGD.Simplex,
         default_wcc = WCC.NMBFGS,
         cv_risk = NULL,
         cv_risk_count = NULL,
@@ -152,6 +153,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         ## Splitter for the data
         data_splitter = NULL,
+
+        ## A cache for the data (used whenever the algorithm is not online)
+        data_cache = NULL,
+        all_estimators_online = NULL,
 
         ## Summary measures and a generator
         summaryMeasureGenerator = NULL,
@@ -194,6 +199,19 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           })
         },
 
+        ## Updates the data cache with the new observations. This function only
+        ## updates the cache if not all estimators are online. It tells the user
+        ## if it has updated by the boolean it returns.
+        ## @param newdata the new data to add to the cache
+        ## @return boolean whether or not it actually needed to update the cache.
+        update_cache = function(newdata) {
+          if (!self$is_online) {
+            private$data_cache <- rbindlist(list(private$data, newdata))
+            return(TRUE)
+          }
+          return(FALSE)
+        },
+
         ## Train using all estimators separately.
         ## Postcondition: each of our density estimators will have a fitted conditional
         ## density in them for each of our random vars WAY *AND IT SHOULD DO THIS FOR ALL
@@ -206,15 +224,20 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## @return a vector of outcomes, each entry being the predicted outcome of an estimator on the test set
         train_all_estimators = function(data, randomVariables) {
           private$verbose && enter(private$verbose, 'Training all estimators')
-          ##dataH2o <- as.h2o(data)
-          ##private$verbose && cat(private$verbose, 'Uploaded data to h2o')
+          
+          # If not all estimators are online, we have to keep track of a cache of data.
+          private$update_cache(newdata = data)
+
           result <- lapply(private$SL.library.fabricated, function(estimator) {
-            ##if(is.a(estimator, 'ML.H2O')){
-              ##current <- dataH2o
-            ##} else {
-            current <- data
-            ##}
-            estimator$process(current, randomVariables = randomVariables, update = self$is_fitted)
+            if(self$is_fitted && estimator$is_online) {
+              # Note that we use the data here, and not the cache, as
+              # essentially this cache will be  empty if none of the algorithms
+              # is online, and we only want to use the new observations to
+              # update the estimator.
+              estimator$update(data)
+            } else {
+              estimator$fit(private$data_cache, randomVariables = randomVariables)
+            }
           })
           private$verbose && exit(private$verbose)
           result
@@ -392,6 +415,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ),
   active =
     list(
+        is_online = function() {
+          private$all_estimators_online
+        },
+
         is_fitted = function() {
           private$fitted
         },
@@ -476,6 +503,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           libraryFactory <- LibraryFactory$new(verbose = verbose)
           private$SL.library.fabricated <- libraryFactory$fabricate(SL.library.definition)
           private$SL.library.descriptions <- names(private$SL.library.fabricated)
+          private$all_estimators_online <- DensityEstimation.are_all_estimators_online(private$SL.library.fabricated)
 
           ## We need a weighted combination computer for each of the randomvariables.
           ## We could reuse the WCC, and just save the weights here. However, this way we do allow

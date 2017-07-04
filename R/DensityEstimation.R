@@ -77,39 +77,8 @@ DensityEstimation <- R6Class ("DensityEstimation",
         bin_estimator = NULL,
         is_online_estimator = NULL,
 
-        ## Functions
-        ## =========
-        fake_update = function(newdata, X, Y) {
-          ##warning('This is not an online update! We fake  the online part!')
-          private$data <- rbindlist(list(private$data, newdata))
-          private$fit(private$data, X=X,Y=Y)
-        },
-
-        ## Updates the used condistional density
-        update = function(newdata, X, Y) {
-          if (self$is_online) {
-            data_obj <- condensier::DataStore$new(input_data = newdata, Y = Y, X = X, auto_typing = FALSE)
-            self$getConditionalDensities(Y)$update(newdata = data_obj)
-          } else {
-            private$fake_update(newdata = newdata, X = X, Y = Y)
-          }
-        },
-
-        fit = function(datO, X, Y){
-          if (!self$is_online) {
-            ## If the actual algorithm is not online, we fake the online part
-            private$data <- datO
-          }
-
-          dens_fit <- condensier::fit_density(X = X,
-                                  Y = Y,
-                                  input_data = datO,
-                                  nbins = private$nbins,
-                                  bin_estimator = private$bin_estimator)
-          private$conditional_densities[Y] <- list(dens_fit)
-
-        },
-
+        # Functions
+        # =========
         predict_probability = function(datO, X, Y, plot = FALSE) {
           if(!(Y %in% names(datO))) throw('In order to predict the probability of an outcome, we also need the outcome')
           yValues <- datO[[Y]]
@@ -261,13 +230,37 @@ DensityEstimation <- R6Class ("DensityEstimation",
           results[!is.na(results)]
         },
 
-        ## Fits the densities according to the provided randomVariables
-        process = function(data, randomVariables, update=FALSE) {
-          private$verbose && cat(private$verbose, 'Fitting ', length(randomVariables), ' densities')
-
-          ## Convert the formula in vectors (can probably be done easier)
+        set_random_variables = function(randomVariables) {
+          # Convert the formula in vectors (can probably be done easier)
           for (rv in randomVariables) {
             private$randomVariables[[rv$getY]] <- Arguments$getInstanceOf(rv, 'RandomVariable')
+          }
+        },
+
+        # Updates the used condistional density
+        update = function(newdata) {
+          for (rv in private$randomVariables) {
+            ## TODO: Currently it is is not yet possible to sample from an non-conditional distribution!
+            ## OS: Maybe the following hack (its probably not a very good one):
+            ## 1) Fit unconditional density using the same method (histogram) with intercept only GLMs
+            ## 2) Sample from that fit just like conditional density
+            X <- rv$getX
+            Y <- rv$getY
+            if(length(rv$getX) > 0) {
+              private$verbose && cat(private$verbose, 'Updating density: ', Y)
+              data_obj <- condensier::DataStore$new(input_data = newdata, Y = Y, X = X, auto_typing = FALSE)
+              dens_fit <- self$getConditionalDensities(Y)
+              dens_fit$update(newdata = data_obj)
+
+              private$conditional_densities[Y] <- list(dens_fit)
+            }
+          }
+          TRUE
+        },
+
+        fit = function(datO, randomVariables){
+          if(is.null(private$randomVariables)) {
+            self$set_random_variables(randomVariables = randomVariables)
           }
 
           ## Fit conditional density for all of the randomVariables
@@ -276,14 +269,16 @@ DensityEstimation <- R6Class ("DensityEstimation",
             ## OS: Maybe the following hack (its probably not a very good one):
             ## 1) Fit unconditional density using the same method (histogram) with intercept only GLMs
             ## 2) Sample from that fit just like conditional density
-            if(length(rv$getX) > 0) {
-              if (update) {
-                private$verbose && cat(private$verbose, 'Updating density: ', rv$getY)
-                private$update(newdata = data, Y = rv$getY, X = rv$getX)
-              } else {
-                private$verbose && cat(private$verbose, 'Fitting density: ', rv$getY)
-                private$fit(datO = data, Y = rv$getY, X = rv$getX)
-              }
+            X = rv$getX
+            Y = rv$getY
+            if(length(X) > 0) {
+              private$verbose && cat(private$verbose, 'Fitting density: ', Y)
+              dens_fit <- condensier::fit_density(X = X,
+                                      Y = Y,
+                                      input_data = datO,
+                                      nbins = private$nbins,
+                                      bin_estimator = private$bin_estimator)
+              private$conditional_densities[Y] <- list(dens_fit)
             }
           })
           TRUE
@@ -305,3 +300,18 @@ DensityEstimation <- R6Class ("DensityEstimation",
         }
   )
 )
+
+#' Static method to check whether all included estimators are in fact specified
+#' as being online estimators. If this is not the case, we should keep a cache
+#' of all data somewhere. 
+#' @param estimators list of all estimator objects (should be density estimator objects)
+#' @return boolean TRUE if all estimators are online, FALSE if not
+#' @export
+DensityEstimation.are_all_estimators_online = function(estimators) {
+  for (estimator in estimators) {
+    if(!estimator$is_online) {
+      return(FALSE)
+    }
+  }
+  return(TRUE)
+}
