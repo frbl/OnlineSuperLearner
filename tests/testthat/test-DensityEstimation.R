@@ -16,6 +16,14 @@ defaultDataTable = function() {
   Y=(rnorm(nobs,mean,10))
   data.table(D=D, W=W, Y = Y)
 }
+otherDefaultDataTable = function() {
+  nobs = 10
+  W = rbinom(n=nobs,size=1, prob=0.1)
+  D = rnorm(nobs,100,100)
+  mean = (1000 * W)
+  Y=(rnorm(nobs,mean,1))
+  data.table(D=D, W=W, Y = Y)
+}
 
 # TESTING:
 rv.W <- RandomVariable$new(formula = W ~ D, family = 'binomial')
@@ -132,8 +140,6 @@ test_that("it should get the correct probabilities from the cond densities", {
   expect_equal(length(res$W), n)
 })
 
-
-context(' > predict')
 test_that("cond density predictions should work for only one row of data", {
   set.seed(12345)
   subject <- described.class$new(nbins = 10)
@@ -185,8 +191,21 @@ test_that("it should throw when the list provided does not consist of randomvari
 })
 
 context(' update')
-test_that("it should update existing estimators with new data", {
-  skip('Not yet tested')
+test_that("it should update existing estimators with new data and still sets the correct names", {
+  subject <- described.class$new(nbins = 20)
+
+  subject$fit(otherDefaultDataTable(), randomVariables = c(rv.W, rv.Y))
+  result_pre <- copy(subject$getConditionalDensities())
+  result_pre <- result_pre[[1]]$getPsAsW.models()[[1]]$getfit$coef
+
+  subject$update(defaultDataTable())
+  result_post <- copy(subject$getConditionalDensities())
+  result_post <- result_post[[1]]$getPsAsW.models()[[1]]$getfit$coef
+
+  for (i in seq_along(result_pre)) {
+    # Test if in fact all entries have been updated
+    expect_false(equals(result_pre[[i]], result_post[[i]]))
+  }
 })
 
 

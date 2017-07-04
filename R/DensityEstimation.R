@@ -181,19 +181,22 @@ DensityEstimation <- R6Class ("DensityEstimation",
 
         # Updates the used condistional density
         update = function(newdata) {
-          lapply(private$randomVariables, function(rv) {
-            # TODO: Currently it is is not yet possible to sample from an non-conditional distribution!
+          for (rv in private$randomVariables) {
+            ## TODO: Currently it is is not yet possible to sample from an non-conditional distribution!
             ## OS: Maybe the following hack (its probably not a very good one):
             ## 1) Fit unconditional density using the same method (histogram) with intercept only GLMs
             ## 2) Sample from that fit just like conditional density
-            X = rv$getX
-            Y = rv$getY
+            X <- rv$getX
+            Y <- rv$getY
             if(length(rv$getX) > 0) {
               private$verbose && cat(private$verbose, 'Updating density: ', Y)
               data_obj <- condensier::DataStore$new(input_data = newdata, Y = Y, X = X, auto_typing = FALSE)
-              self$getConditionalDensities(Y)$update(newdata = data_obj)
+              dens_fit <- self$getConditionalDensities(Y)
+              dens_fit$update(newdata = data_obj)
+
+              private$conditional_densities[Y] <- list(dens_fit)
             }
-          })
+          }
           TRUE
         },
 
