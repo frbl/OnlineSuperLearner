@@ -186,7 +186,7 @@ test_that("it should throw when the list provided does not consist of randomvari
 
 context(' update')
 test_that("it should update existing estimators with new data", {
-  skip()
+  skip('Not yet tested')
 })
 
 

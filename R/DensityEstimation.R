@@ -186,8 +186,10 @@ DensityEstimation <- R6Class ("DensityEstimation",
             ## OS: Maybe the following hack (its probably not a very good one):
             ## 1) Fit unconditional density using the same method (histogram) with intercept only GLMs
             ## 2) Sample from that fit just like conditional density
+            X = rv$getX
+            Y = rv$getY
             if(length(rv$getX) > 0) {
-              private$verbose && cat(private$verbose, 'Updating density: ', rv$getY)
+              private$verbose && cat(private$verbose, 'Updating density: ', Y)
               data_obj <- condensier::DataStore$new(input_data = newdata, Y = Y, X = X, auto_typing = FALSE)
               self$getConditionalDensities(Y)$update(newdata = data_obj)
             }
@@ -205,8 +207,10 @@ DensityEstimation <- R6Class ("DensityEstimation",
             ## OS: Maybe the following hack (its probably not a very good one):
             ## 1) Fit unconditional density using the same method (histogram) with intercept only GLMs
             ## 2) Sample from that fit just like conditional density
-            if(length(rv$getX) > 0) {
-              private$verbose && cat(private$verbose, 'Fitting density: ', rv$getY)
+            X = rv$getX
+            Y = rv$getY
+            if(length(X) > 0) {
+              private$verbose && cat(private$verbose, 'Fitting density: ', Y)
               dens_fit <- condensier::fit_density(X = X,
                                       Y = Y,
                                       input_data = datO,
@@ -242,7 +246,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
 #' @return boolean TRUE if all estimators are online, FALSE if not
 #' @export
 DensityEstimation.are_all_estimators_online = function(estimators) {
-  for estimator in estimators {
+  for (estimator in estimators) {
     if(!estimator$is_online) {
       return(FALSE)
     }
