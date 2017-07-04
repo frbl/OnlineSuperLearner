@@ -86,6 +86,7 @@ Collate:
     'SMG.Mean.R'
     'Simulator.GAD.R'
     'Simulator.Slow.R'
+    'Tmle.R'
     'WCC.NLopt.R'
     'WCC.NNLS.R'
     'WCC.SGD.R'
