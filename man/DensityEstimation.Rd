@@ -3,12 +3,14 @@
 \docType{class}
 \name{DensityEstimation}
 \alias{DensityEstimation}
-\title{Density.Estimation}
+\title{Density.Estimation
+This class performs the actual density estimation for each of the random variables provided to it.}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 DensityEstimation
 }
 \description{
 Density.Estimation
+This class performs the actual density estimation for each of the random variables provided to it.
 }
 \keyword{datasets}

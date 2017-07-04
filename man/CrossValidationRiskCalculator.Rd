@@ -3,35 +3,16 @@
 \docType{class}
 \name{CrossValidationRiskCalculator}
 \alias{CrossValidationRiskCalculator}
-\title{CrossValidationRiskCalculator}
+\title{CrossValidationRiskCalculator
+Class that contains various methods for calculating the crossvalidated risk
+of an estimator.}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 CrossValidationRiskCalculator
 }
 \description{
 CrossValidationRiskCalculator
+Class that contains various methods for calculating the crossvalidated risk
+of an estimator.
 }
-\section{Methods}{
-
-\describe{
-  \item{\code{initialize() }}{
-    <<description>>
-  }
-
-  \item{\code{calculate_risk(predicted.outcome, observed.outcome, randomVariables}}{
-    <<description>>
-    @param predicted.outcome
-    @param observed.outcome
-    @param randomVariables
-  }
-
-  \item{\code{update_risk(predicted.outcome = predicted.outcome, observed.outcome = observed.outcome}}{
-    <<description>>
-    @param predicted.outcome
-    @param observed.outcome
-  }
-
-}
-}
-
 \keyword{datasets}

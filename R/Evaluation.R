@@ -8,13 +8,13 @@ Evaluation.get_evaluation_function = function(family, useAsLoss=TRUE) {
 
   if(useAsLoss){
     return(Evaluation.log_likelihood_loss)
-    #if (family == 'gaussian') {
-      #return(Evaluation.mse_loss)
-    #} else if(family == 'binomial') {
-      #return(Evaluation.log_loss)
-    #} else {
-      #throw('No loss function implemented for family ', family)
-    #}
+    ##if (family == 'gaussian') {
+      ##return(Evaluation.mse_loss)
+    ##} else if(family == 'binomial') {
+      ##return(Evaluation.log_loss)
+    ##} else {
+      ##throw('No loss function implemented for family ', family)
+    ##}
   }
   if (family == 'gaussian') {
     return(Evaluation.root_mean_squared_error)
@@ -68,7 +68,7 @@ Evaluation.mse_loss <-  function(data.observed, data.predicted) {
 #' @param data.observed the true data (Y)
 #' @param data.predicted the Y outcome from the estimator 
 Evaluation.mean_squared_error <- function(data.observed, data.predicted) {
-  # Calculate the MSE
+  ## Calculate the MSE
   se <- Evaluation.mse_loss(data.predicted, data.observed)
   if (is.a(data.predicted, 'matrix')) {
     means <- colMeans(se)
@@ -84,6 +84,6 @@ Evaluation.mean_squared_error <- function(data.observed, data.predicted) {
 Evaluation.root_mean_squared_error <- function(data.observed, data.predicted) {
   mse <- Evaluation.mean_squared_error(data.observed = data.observed, data.predicted = data.predicted)
 
-  # Calculate the root of the mse
+  ## Calculate the root of the mse
   c(r = sqrt(mse))
 }

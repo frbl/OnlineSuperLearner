@@ -4,12 +4,13 @@ set.seed(12345)
 n <- 1e5
 Z <- rnorm(n)
 
-pred <- cbind(Z, Z^2, Z^3, Z^4)
-true_params <- c(.2, .8, 0, 0)
+pred <- cbind(Z, Z^2, Z^3, Z^4, Z^5)
+true_params <- c(.2, .8, 0, 0, 0)
 
 Y <- pred %*% true_params +rnorm(n)
-initial_weights <- c(1/4, 1/4, 1/4, 1/4)
-libraryNames <- c('a', 'b', 'c', 'd')
+num_params <- length(true_params)
+initial_weights <- rep(1/num_params, num_params)
+libraryNames <- c('a', 'b', 'c', 'd', 'e')
 
 test_that("it should set the default parameters when not yet processed", {
   subject <- described.class$new(weights.initial = initial_weights)
@@ -19,6 +20,18 @@ test_that("it should set the default parameters when not yet processed", {
 test_that("it should compute the correct convex combination", {
   set.seed(12345)
   subject <- described.class$new(weights.initial = initial_weights)
+  subject$process(pred, Y, libraryNames)
+
+  # Check that we approximate the true parameters
+  difference <- subject$get_weights - true_params
+  expect_true(all(difference < 1e-2))
+})
+
+test_that("it should compute the correct convex combination with random initial weights", {
+  set.seed(12345)
+  weights <- runif(num_params, 0, 1)
+  weights <- weights / sum(weights)
+  subject <- described.class$new(weights.initial = weights)
   subject$process(pred, Y, libraryNames)
 
   # Check that we approximate the true parameters
@@ -36,7 +49,7 @@ test_that("it should throw if something other than a function is provided", {
 test_that("it should throw if the epsilon provided is not correct", {
   expect_error(
     described.class$new(weights.initial = initial_weights, epsilon = 10),
-    "Argument 'epsilon' is out of range [0,0.025]: 10",
+    "Argument 'epsilon' is out of range [0,0.02]: 10",
     fixed=TRUE
   )
 })

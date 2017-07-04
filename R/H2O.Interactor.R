@@ -1,9 +1,33 @@
 #' H2O.Interactor
+#' Class used to interact with H2O, mainly for caching data. It keeps track off all the data that has been uploaded to
+#' H2O, and returns the cached version if it is already on H2O.
 #'
 #' @docType class
 #' @importFrom R6 R6Class
 #' @importFrom digest digest
 #' @include H2O.initializer.R
+#'
+#' @section Methods:
+#' \describe{
+#'   \item{\code{initialized(verbose = FALSE, digest_algorithm = 'sha1')}}{
+#'     Initializes a new h2o interactor. 
+#'     @param verbose the verbosity to use
+#'     @param digest_algorithm the algorithm to use for the hashing
+#'     @return a new intereactor
+#'   }
+#'
+#'   \item{\code{generate_hash(data)}}{
+#'     Generates a checksum for a piece of data (e.g., datatable). 
+#'     @param data the data table to hash
+#'     @return string the hash of the datatable
+#'   }
+#'
+#'   \item{\code{get_data_pointer(data)}}{
+#'     Function that either uploads or reuses a dataset to H2O and returns the pointer to the data on H2O.
+#'     @param data the data to send to H2O
+#'     @return string the identifier on H2O
+#'   }
+#' }
 H2O.Interactor <- R6Class("H2O.Interactor",
   public =
     list(
