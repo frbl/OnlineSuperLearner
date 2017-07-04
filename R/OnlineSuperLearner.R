@@ -517,7 +517,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         ## Samples the data iteratively from the fitted distribution, and applies an intervention if necessary
         ## @param tau is the time at which we want to measure the outcome
-        sample_iteratively = function(data, randomVariables, variable_of_interest, tau = 10, intervention = NULL, discrete = TRUE) {
+        sample_iteratively = function(data, randomVariables, variable_of_interest, tau = 10, intervention = NULL, discrete = TRUE, return_full = FALSE) {
 
           randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
           randomVariables <- RandomVariable.find_ordering(randomVariables)
@@ -563,6 +563,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             result <- rbind(result, data)
             if(t != tau)  data <- private$summaryMeasureGenerator$getLatestCovariates(data)
           }
+          if(return_full) return(result)
           return(result[,names(randomVariables), with = FALSE])
         },
 
