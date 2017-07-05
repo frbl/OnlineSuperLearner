@@ -114,8 +114,8 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
 
           # Note that this won't work when we have an H2O estimator in the set. The parallelization will fail.
-          result <- foreach(i=seq(B), .combine=rbind) %dopar% {
-            osl$sample_iteratively(data = data.test[i,],
+          result <- foreach(i=seq(B), .combine=rbind) %do% {
+            osl$sample_iteratively(data = data.test[1,],
                                    randomVariables = randomVariables,
                                    intervention = intervention,
                                    variable_of_interest = variable_of_interest,
@@ -183,21 +183,21 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   #algorithm_params = list(ntrees=c(10,20), min_rows=1),
                                   #params = list(nbins = c(6), online = TRUE))))
 
-          algos <- append(algos, list(list(algorithm = 'ML.H2O.randomForest',
-                                  algorithm_params = list(ntrees=c(10,20)),
-                                  params = list(nbins = c(16), online = TRUE))))
+          #algos <- append(algos, list(list(algorithm = 'ML.H2O.randomForest',
+                                  #algorithm_params = list(ntrees=c(10,20)),
+                                  #params = list(nbins = c(16), online = TRUE))))
 
           algos <- append(algos, list(list(algorithm = 'condensier::speedglmR6',
                                   #algorithm_params = list(),
                                   params = list(nbins = c(39, 40), online = FALSE))))
 
-          algos <- append(algos, list(list(algorithm = 'ML.Local.Speedlm',
-                                  #algorithm_params = list(),
-                                  params = list(nbins = c(39, 40), online = TRUE))))
+          #algos <- append(algos, list(list(algorithm = 'ML.Local.Speedlm',
+                                  ##algorithm_params = list(),
+                                  #params = list(nbins = c(39, 40), online = TRUE))))
 
-          algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
-                                  algorithm_params = list(alpha = c(0,1)),
-                                  params = list(nbins = c(39, 40), online = FALSE))))
+          #algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
+                                  #algorithm_params = list(alpha = c(0,1)),
+                                  #params = list(nbins = c(39, 40), online = FALSE))))
 
           #algos <- append(algos, list(list(algorithm = 'condensier::glmR6',
                                   ##algorithm_params = list(),
@@ -338,7 +338,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           # Create the measures we'd like to include in our model
           # In this simulation we will include 2 lags and the latest data (non lagged)
           # Define the variables in the initial dataset we'd like to use
-          private$train(data.test, data.train, bounds, randomVariables, Y, max_iterations = 5, llW, llA, llY)
+          private$train(data.test, data.train, bounds, randomVariables, Y, max_iterations = 2, llW, llA, llY)
         }
   )
 )

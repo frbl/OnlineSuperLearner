@@ -43,7 +43,7 @@
 #'     to a certain value. The \code{intervention} provided should be a list containing a \code{when} and \code{what} entry.
 #'     the \code{when} entry should show when the intervention is performed, the \code{what} entry shows what should be done.
 #'     @param data = the initial data to start the sampling from. At most 1 row of data.
-#'     @param randomVariables = the randomvariables used when fitting the data
+#'     @param randomVariables = the ordered set of randomvariables used when fitting the data
 #'     @param tau = the timestep at which you want to evaluate the output
 #'     @param intervention = the intervention, e.g.: \code{list(when = c(1,2), what = c(1,0))}
 #'   }
@@ -489,7 +489,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         ## Samples the data iteratively from the fitted distribution, and applies an intervention if necessary
         ## @param tau is the time at which we want to measure the outcome
-        sample_iteratively = function(data, randomVariables, variable_of_interest, tau = 10, intervention = NULL, discrete = TRUE, return_type = 'observations') {
+        sample_iteratively = function(data, randomVariables, variable_of_interest, tau = 10, intervention = NULL, discrete = TRUE, return_type = 'observations', start_from = NULL) {
 
           randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
           randomVariables <- RandomVariable.find_ordering(randomVariables)
@@ -514,13 +514,33 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             if(!valid_intervention) throw('The intervention specified is not correct! it should have a when (specifying t), a what (specifying the intervention) and a variable (specifying the name of the variable to intervene on).')
           }
 
+          if (is.null(start_from)) {
+            ## We assume the randomVariables are ordered when they come in!
+            start_from <- randomVariables[[1]]
+          }
+          start_from <- Arguments$getInstanceOf(start_from, 'RandomVariable')
+
           result <- data.table()
+
+          ## Just to be certain we don't use future data, we remove a subset:
+          remove_vars <- names(randomVariables)
+          started = FALSE
 
           ## We need to sample sequentially here, just so we can plugin the value everytime in the next evaluation
           for (t in seq(tau)) {
-            data[,names(randomVariables)] <- NA
+            #data[,names(randomVariables)] <- NA
             for (rv in randomVariables) {
               current_outcome <- rv$getY
+              if (!started && !equals(current_outcome, start_from$getY)) {
+                ## The current outcome lies in the past, so it might be that we
+                ## need it later, don't remove it
+                remove_vars <- remove_vars[remove_vars != current_outcome]
+                next
+              }
+
+              started = TRUE
+              ## set the variables we don't need to NA
+              data[,remove_vars] <- NA
 
               ## If the current t is an intervention t, apply the proposed intervention.
               if (!is.null(intervention) && current_outcome == intervention$variable && t %in% intervention$when) {
@@ -552,7 +572,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           }
           return(result)
         },
-
 
         ## Data = the data object from which the data can be retrieved
         ## initial_data_size = the number of observations needed to fit the initial estimator

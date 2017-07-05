@@ -24,6 +24,13 @@ test_that("it should call the predict function of the  online super learner if d
 })
 
 context(' sample_iteratively')
+test_that("it should throw if the provided start from is not in the randomvariables", {
+  skip('not yet tested')  
+})
+
+test_that("it should work with any start from (either NULL or a value)", {
+  skip('not yet tested')  
+})
 
 context(' is_fitted') 
 test_that("it should return the fitted status of the osl", {
