@@ -521,6 +521,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             data[,names(randomVariables)] <- NA
             for (rv in randomVariables) {
               current_outcome <- rv$getY
+
+              ## If the current t is an intervention t, apply the proposed intervention.
               if (!is.null(intervention) && current_outcome == intervention$variable && t %in% intervention$when) {
                 when.idx <- which(intervention$when == t)
                 outcome <- intervention$what[when.idx]
@@ -532,7 +534,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                 outcome <- self$predict(data = data, randomVariables = c(rv),
                                         discrete = discrete,
                                         continuous = !discrete,
-                                        all_estimators = FALSE, sample = TRUE, denormalize = denormalize)[[1]]
+                                        all_estimators = FALSE,
+                                        sample = TRUE, 
+                                        denormalize = denormalize)[[1]]
 
                 private$verbose && cat(private$verbose,'Predicting ', current_outcome, ' using ', paste(rv$getX, collapse=', '))
               }
