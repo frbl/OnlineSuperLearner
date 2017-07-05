@@ -108,40 +108,59 @@ get_h_ratios_second = function(B, N, tau, intervention, data, randomVariables) {
   h_ratio_predictors
 }
 
-evaluation_of_conditional_expectations = function(B, N, h_ratios, variable_of_interest, randomVariables, data, tau, intervention) {
+evaluation_of_conditional_expectations = function(B, N, h_ratio_predictors, variable_of_interest, randomVariables, data, tau, intervention) {
   # We have to create the conditional expectations using each of the random variables as a start point
-  for (rv in randomVariables) {
+  for (rv_id in seq_along(randomVariables)) {
+    next_rv_id <- (rv_id %% length(randomVariables)) + 1
+
+    rv <- randomVariables[[rv_id]]
+    next_rv <- randomVariables[[next_rv_id]]
+
+    # We are actually in next time block if the modulo was applied. This should be reflected in the time s.
+    s_offset <- ifelse(rv_id > next_rv_id, 1, 0)
+
+    # Get the formula so we can retrieve the prediction mechanism.
     formula <- get_formula(rv)
+
     # Then, we start on a given s
     for (s in seq(tau)) {
 
       # The h_ratio is the same for each s, wo we only need to estimate it once.
-      h_ratio <- predict(h_ratios[[s]][[formula]])
       for (t in seq(N)) {
+        # First we have to estimate the h_ratio based on the C_rv
+        h_ratio <- predict(h_ratio_predictors[[s]][[formula]], data[t,], type='response')
+
         # Now we have to sample from the conditional distribution of rv + 1. I.e., we have the our value for RV, and its
         # corresponding C. Using these values we can sample the next variable in the sequence. We do this until tau - s
         # because we want to start at time s (we actually start on time t and don't let it go further than tau - s).
-        Osample_conditional <- foreach(b=seq(B), .combine=rbind) %dopar% {
+        o_sample_conditional <- foreach(b=seq(B), .combine=rbind) %dopar% {
+          # So, instead of moving s closer to tau, we move tau closer to s
+          tau_cur <- tau - (s + s_offset)
+          current <- osl$sample_iteratively(data = data[t,],
+                                            randomVariables = randomVariables,
+                                            start_from = next_rv,
+                                            intervention = intervention,
+                                            variable_of_interest = variable_of_interest,
+                                            tau = tau_cur,
+                                            return_type = 'outcome')[tau_cur, variable_of_interest$getY, with=FALSE]
+        } %>%
+          unlist %>%
+          mean
+
+        o_sample_marginal <- foreach(b=seq(B), .combine=rbind) %dopar% {
+          tau_cur <- tau - (s + s_offset)
           current <- osl$sample_iteratively(data = data[t,],
                                             randomVariables = randomVariables,
                                             start = rv,
                                             intervention = intervention,
                                             variable_of_interest = variable_of_interest,
-                                            tau = tau - s,
-                                            return_type = 'outcome')
-        } %>% colmeans
+                                            tau = tau_cur,
+                                            return_type = 'outcome')[tau_cur, variable_of_interest$getY, with=FALSE]
+        } %>%
+          unlist %>%
+          mean
 
-        Osample_marginal <- foreach(b=seq(B), .combine=rbind) %dopar% {
-          #current <- osl$sample_iteratively(data = data[t,],
-                                            #randomVariables = randomVariables,
-                                            #start = rv,
-                                            #intervention = intervention,
-                                            #variable_of_interest = variable_of_interest,
-                                            #tau = tau - s,
-                                            #return_type = 'outcome')
-        } %>% colmeans
-
-        h_ratio * (Osample_conditional - Osample_marginal)
+        h_ratio * (Oo_sample_conditional - o_sample_marginal)
       }
     }
   }
@@ -165,12 +184,12 @@ tmle = function() {
   tau = intervention$when + 1
 
   #1 calculate H-ratios
-  h_ratios <- get_h_ratios(B = B, N = N, tau = tau, intervention = intervention, data = data, 
+  h_ratio_predictors <- get_h_ratios(B = B, N = N, tau = tau, intervention = intervention, data = data, 
                            randomVariables = randomVariables )
 
   #2 Solve expectaions
   # We want to approximate the conditional expectation from RV (start) till Ytau
-  evaluation_of_conditional_expectations(B, N, h_ratios = h_ratios,
+  evaluation_of_conditional_expectations(B, N, h_ratio_predictors = h_ratio_predictors,
                                          variable_of_interest = Y, 
                                          randomVariables = randomVariables,
                                          data = data,
