@@ -13,10 +13,9 @@
 # In which $c_y = C_y(t)$, and $y = Y(t)$
 
 # #1 Simple / fast / inefficient solution
-
 get_h_ratios = function(B, N, intervention, data, randomVariables) {
 
-  # Using $B$ we uniformely sample independently a number of integers from $1,\ldots, N$.
+  # Using $B$ we uniformely sample independently a number of integers from $\{1,\ldots, N\}$.
   Tsample <- sample.int(N, B, replace = TRUE)
 
   # Then we sample $B$ observations from $P^N$ and $B$ observations from $P^N_{s,a}.
@@ -27,7 +26,7 @@ get_h_ratios = function(B, N, intervention, data, randomVariables) {
                                       # TODO: We should transform all variables back to their original value
                                       variable_of_interest = variable_of_interest,
                                       tau = current_T,
-                                      return_full = TRUE)
+                                      return_type = 'summary_measures')
 
     cbind(current[length(current), ], delta = 1)
   }
@@ -38,7 +37,8 @@ get_h_ratios = function(B, N, intervention, data, randomVariables) {
                                       randomVariables = randomVariables,
                                       intervention = intervention,
                                       variable_of_interest = variable_of_interest,
-                                      tau = intervention$when)
+                                      tau = intervention$when,
+                                      return_type = 'summary_measures')
 
     cbind(current[length(current), ], delta = 0)
   }
@@ -50,6 +50,53 @@ get_h_ratios = function(B, N, intervention, data, randomVariables) {
                                  glm(formula, Osample.full, family = binomial())
                                       })
 
+  h_ratio_predictors
+}
+
+# #2 More efficient but slow solution
+get_h_ratios_second = function(B, N, tau, intervention, data, randomVariables) {
+  O_0 = data[1,]
+  # In the second version we can use all observations drawn from P^N. In this case we sample $B$ observations $O^N$ and
+  # extract from each of these observations the summary measures $C$.
+
+  # We first sample $B$ observations from $P^N$ and $B$ observations from $P^N_{s,a}. The size of Osample will be $BN$.
+  Osample <- foreach(i=seq(B), .combine=rbind) %dopar% {
+    current <- osl$sample_iteratively(data = O_0,
+                                      randomVariables = randomVariables,
+                                      # TODO: We should transform all variables back to their original value
+                                      variable_of_interest = variable_of_interest,
+                                      tau = N,
+                                      return_type = 'summary_measures')
+
+    # We store each observation with the correct delta
+    cbind(current, delta = rep(1, length(current)))
+  }
+
+  # Because we use $BN$ observations in the previous sampling step, we should also draw BN observations from P^N_{s,a}.
+  h_ratio_predictors <- lapply(seq(tau), function(s) {
+
+    Osample_full_for_s <- foreach(j=seq(B), .combine=rbind) %dopar% {
+      current <- osl$sample_iteratively(data = O_0,
+                                        randomVariables = randomVariables,
+                                        intervention = intervention,
+                                        variable_of_interest = variable_of_interest,
+                                        tau = s,
+                                        return_type = 'summary_measures')
+
+      cbind(current, delta = rep(0, length(current)))
+    } %>% rbind(Osample, .)
+
+    # Only process the unique random variables
+    formulae <- lapply(randomVariables, function(rv) {
+      formula <- paste('delta ~', paste(sort(rv$getX), collapse = ' + '))
+    }) %>% unique
+
+    lapply(formulae, function(formula) {
+      glm(formula, Osample_full_for_s, family = binomial())
+    })
+  })
+
+  # We have a
   h_ratio_predictors
 }
 
