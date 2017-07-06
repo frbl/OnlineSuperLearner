@@ -64,7 +64,7 @@ get_h_ratios_second = function(B, N, tau, intervention, data, randomVariables) {
   # extract from each of these observations the summary measures $C$.
 
   # We first sample $B$ observations from $P^N$ and $B$ observations from $P^N_{s,a}. The size of Osample will be $BN$.
-  Osample <- foreach(b=seq(B), .combine=rbind) %dopar% {
+  Osample_p <- foreach(b=seq(B), .combine=rbind) %dopar% {
     current <- osl$sample_iteratively(data = O_0,
                                       randomVariables = randomVariables,
                                       # TODO: !!!!We should transform all variables back to their original value?!!!!
@@ -77,34 +77,35 @@ get_h_ratios_second = function(B, N, tau, intervention, data, randomVariables) {
   }
 
   # Because we use $BN$ observations in the previous sampling step, we should also draw BN observations from P^N_{s,a}.
-  h_ratio_predictors <- lapply(seq(tau), function(s) {
-    Osample_full_for_s <- foreach(b=seq(B), .combine=rbind) %dopar% {
-      current <- osl$sample_iteratively(data = O_0,
-                                        randomVariables = randomVariables,
-                                        intervention = intervention,
-                                        # TODO: !!!!We should transform all variables back to their original value?!!!!
-                                        variable_of_interest = variable_of_interest,
-                                        tau = s,
-                                        return_type = 'summary_measures')
+  #h_ratio_predictors <- lapply(seq(tau), function(s) {
+  Osample_p_star <- foreach(b=seq(B), .combine=rbind) %dopar% {
+    current <- osl$sample_iteratively(data = O_0,
+                                      randomVariables = randomVariables,
+                                      intervention = intervention,
+                                      # TODO: !!!!We should transform all variables back to their original value?!!!!
+                                      variable_of_interest = variable_of_interest,
+                                      tau = tau,
+                                      return_type = 'summary_measures')
 
-      cbind(current, delta = rep(0, length(current)))
-    } %>% rbind(Osample, .)
+    cbind(current, delta = rep(0, length(current)))
+  }
 
-    # Only process the unique random variables
-    formulae <- lapply(randomVariables, function(rv) {
-      formula <- get_formula(rv)
-    }) %>% unique
+  # Kind of inefficient. Use data.tables here.
+  Osample_p_full <- rbind(Osample_p, Osample_p_star)
 
-    result <- lapply(formulae, function(formula) {
-      glm(formula, Osample_full_for_s, family = binomial())
-    })
+  # Only process the unique random variables
+  formulae <- lapply(randomVariables, function(rv) {
+    formula <- get_formula(rv)
+  }) %>% unique
 
-    # Store the names of the formulae, so we can index them easily later on
-    names(result) <- formulae
-  })
+  # Currently we use GLM here, but we should make use of a SuperLearner here.
+  h_ratio_predictors <- lapply(formulae, function(formula) { glm(formula, Osample_p_full, family = binomial()) })
 
-  # The final result is a list of lists. The outer list goes from 1 to tau. The inner list contains a GLM for each
-  # $C_W$, $C_A$, and $C_Y$. (so tau * 3 elements)
+  # Store the names of the formulae, so we can index them easily later on
+  names(h_ratio_predictors) <- formulae
+  #})
+
+  # The final result is a list of estimators, which contains a GLM for each $C_W$, $C_A$, and $C_Y$. (so 3 elements)
   h_ratio_predictors
 }
 
@@ -122,14 +123,13 @@ evaluation_of_conditional_expectations = function(B, N, h_ratio_predictors, vari
     # Get the formula so we can retrieve the prediction mechanism.
     formula <- get_formula(rv)
 
-    # Then, we start on a given s
-    for (s in seq(tau)) {
+    for (t in seq(N)) {
+      # First we have to estimate the h_ratio based on the C_rv
+      # The h_ratio is the same for each t, wo we only need to estimate it once.
+      h_ratio <- predict(h_ratio_predictors[[formula]], data[t,], type='response')
 
-      # The h_ratio is the same for each s, wo we only need to estimate it once.
-      for (t in seq(N)) {
-        # First we have to estimate the h_ratio based on the C_rv
-        h_ratio <- predict(h_ratio_predictors[[s]][[formula]], data[t,], type='response')
-
+      # Then, we start on a given s
+      for (s in seq(tau)) {
         # Now we have to sample from the conditional distribution of rv + 1. I.e., we have the our value for RV, and its
         # corresponding C. Using these values we can sample the next variable in the sequence. We do this until tau - s
         # because we want to start at time s (we actually start on time t and don't let it go further than tau - s).
@@ -196,10 +196,7 @@ tmle = function() {
                                          tau = tau,
                                          intervention = intervention)
 
-  #3
-  #4
-  #5
-
-
+  #3 Add the EIC term to the predictor to make it well behaved
+  #4 Calculate the variance of the estimator
 }
 
