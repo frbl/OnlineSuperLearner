@@ -58,7 +58,7 @@ get_formula = function(rv) {
 }
 
 # #2 More efficient but slow solution
-get_h_ratios_second = function(B, N, tau, intervention, data, randomVariables) {
+get_h_ratios_second = function(osl, B, N, tau, intervention, data, randomVariables) {
   O_0 = data[1,]
   # In the second version we can use all observations drawn from P^N. In this case we sample $B$ observations $O^N$ and
   # extract from each of these observations the summary measures $C$.
@@ -109,7 +109,7 @@ get_h_ratios_second = function(B, N, tau, intervention, data, randomVariables) {
   h_ratio_predictors
 }
 
-evaluation_of_conditional_expectations = function(B, N, h_ratio_predictors, variable_of_interest, randomVariables, data, tau, intervention) {
+evaluation_of_conditional_expectations = function(osl, B, N, h_ratio_predictors, variable_of_interest, randomVariables, data, tau, intervention) {
   # We have to create the conditional expectations using each of the random variables as a start point
   for (rv_id in seq_along(randomVariables)) {
     next_rv_id <- (rv_id %% length(randomVariables)) + 1
@@ -166,37 +166,53 @@ evaluation_of_conditional_expectations = function(B, N, h_ratio_predictors, vari
   }
 }
 
-tmle = function() {
-  data = 'XXXXXX'
-  randomVariables = 'XXXX'
-  Y = 'XXXX'
+perform_initial_estimation = function(osl, B, data, randomVariables, intervention, variable_of_interest, tau) {
+  foreach(i=seq(B), .combine=rbind) %do% {
+    osl$sample_iteratively(data = data.test[1,],
+                            randomVariables = randomVariables,
+                            intervention = intervention,
+                            variable_of_interest = variable_of_interest,
+                            tau = tau)[tau, variable_of_interest$getY, with=FALSE]
+  } %>%
+    unlist %>% 
+    mean
+}
 
-  # Let $B$ be a large integer (the larger $B$ the better the approxmation).
-  B = 1e5
+OnlineOneStepEstimator.perform = function(osl, randomVariables, data, variable_of_interest, intervention, tau, B = 1e5) {
 
-  # Let $N$ be the number of observations.
+  # Let $B$ be a large integer (the larger $B$ the better the approxmation),
+  # let $N$ be the number of observations,
   N = nrow(data)
+  # let intervention be the intervention we whish to oppose on the system, and
+  # let tau the the outcome of interest. 
 
-  # We define our intervention as follows:
-  intervention <- list(variable = 'A', when = c(2), what = c(1))
+  #1 Before anything, perform our initial estimation of our parameter of interest
+  initial_estimate <- perform_initial_estimation(osl = osl,
+                                                 B = B,
+                                                 data = data,
+                                                 randomVariables = randomVariables,
+                                                 intervention = intervention,
+                                                 variable_of_interest = variable_of_interest,
+                                                 tau = tau)
 
-  # We want to approximate the outcome at time tau.
-  tau = intervention$when + 1
-
-  #1 calculate H-ratios
-  h_ratio_predictors <- get_h_ratios(B = B, N = N, tau = tau, intervention = intervention, data = data, 
+  #2 calculate H-ratios
+  h_ratio_predictors <- get_h_ratios(osl = osl, B = B, N = N, tau = tau, intervention = intervention, data = data, 
                            randomVariables = randomVariables )
 
-  #2 Solve expectaions
+  #3 Solve expectaions
   # We want to approximate the conditional expectation from RV (start) till Ytau
-  evaluation_of_conditional_expectations(B, N, h_ratio_predictors = h_ratio_predictors,
-                                         variable_of_interest = Y, 
+  D_star_evaluation = evaluation_of_conditional_expectations(B, N, h_ratio_predictors = h_ratio_predictors,
+                                         variable_of_interest = variable_of_interest, 
                                          randomVariables = randomVariables,
                                          data = data,
                                          tau = tau,
                                          intervention = intervention)
 
-  #3 Add the EIC term to the predictor to make it well behaved
-  #4 Calculate the variance of the estimator
+  #4 Add the EIC term to the predictor to make it well behaved
+  # initial_estimate + D_star_evaluation
+
+  #5 Calculate the variance of the estimator
+  # see chapter antoine
+
 }
 

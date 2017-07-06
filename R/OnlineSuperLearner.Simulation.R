@@ -150,6 +150,15 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           osl$info
 
           lapply(performance, function(x) {lapply(x,mean)})
+
+          # Now, the fimal step is to apply the OneStepEstimator
+          OnlineOneStepEstimator.perform(osl = osl,
+                                         randomVariables = randomVariables,
+                                         data = data.test, 
+                                         variable_of_interest = variable_of_interest,
+                                         intervention = intervention,
+                                         tau = tau,
+                                         B = B) 
         }
         ),
   public =
