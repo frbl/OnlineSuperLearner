@@ -72,18 +72,24 @@ get_h_ratios = function(osl, B, N, tau, intervention, data, randomVariables) {
     formula <- get_formula(rv)
   }) %>% unique
 
-  browser()
+  print('NOW!')
+  B = 8
+
+  tic <- Sys.time()
   Osample_p <- foreach(b = seq(B), .combine = rbind) %dopar% {
+    # TODO: Note that the summary measures we currently collect are NORMALIZED. I think that this does not matter for
+    # calculating the h-ratios, but we need to check this.
     current <- osl$sample_iteratively(data = O_0,
                                       randomVariables = randomVariables,
-                                      # TODO: !!!!We should transform all variables back to their original value?!!!!
-                                      variable_of_interest = variable_of_interest,
                                       tau = N,
                                       return_type = 'summary_measures')
 
     # We store each observation with the correct delta
-    cbind(current, delta = rep(1, length(current)))
   }
+  Osample_p <- cbind(current, delta = rep(1, length(Osample_p)))
+  toc <- Sys.time()
+  cat('The whole procedure took ', (toc - tic), ' seconds.')
+  browser()
 
   # The final result is a list of estimators, which contains a GLM for each $C_W$, $C_A$, and $C_Y$, for each s in tau.
   # (so 3tau estimators)
@@ -93,14 +99,12 @@ get_h_ratios = function(osl, B, N, tau, intervention, data, randomVariables) {
       current <- osl$sample_iteratively(data = O_0,
                                         randomVariables = randomVariables,
                                         intervention = intervention,
-                                        # TODO: !!!!We should transform all variables back to their original value?!!!!
-                                        variable_of_interest = variable_of_interest,
                                         tau = s,
                                         return_type = 'summary_measures')
 
-      cbind(current, delta = rep(0, length(current)))
     }
     # Kind of inefficient. Use data.tables here.
+    cbind(Osample_p_star, delta = rep(0, length(current)))
     Osample_p_full <- rbind(Osample_p, Osample_p_star)
 
     # Currently we use GLM here, but we should make use of a SuperLearner here.

@@ -62,9 +62,10 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           observed.outcome <- data.test[, outcome.variables, with=FALSE]
           predicted.outcome <- osl$predict(data = copy(data.test), randomVariables)
 
-          performance <- private$cv_risk_calculator$calculate_evaluation(predicted.outcome = predicted.outcome,
-                                                          observed.outcome = observed.outcome,
-                                                          randomVariables = randomVariables) %>%
+          performance <- 
+            private$cv_risk_calculator$calculate_evaluation(predicted.outcome = predicted.outcome,
+                                                            observed.outcome = observed.outcome,
+                                                            randomVariables = randomVariables) %>%
             c(iterations = max_iterations, performance = .) %T>%
             print
 
@@ -118,7 +119,6 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
             #osl$sample_iteratively(data = data.test[1,],
                                    #randomVariables = randomVariables,
                                    #intervention = intervention,
-                                   #variable_of_interest = variable_of_interest,
                                    #tau = tau)[tau, variable_of_interest$getY, with=FALSE]
           #} %>%
             #unlist
@@ -171,6 +171,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           private$cv_risk_calculator <- CrossValidationRiskCalculator$new()
           private$test_set_size <- 100
           private$log <- Arguments$getVerbose(-8, timestamp=TRUE)
+          private$log <- FALSE
           #algos <- list(list(description='ML.H2O.randomForest-1tree',
                                   #algorithm = 'ML.H2O.randomForest',
                                   #params = list(ntrees = 1)))
