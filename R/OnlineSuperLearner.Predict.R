@@ -15,7 +15,7 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
       },
 
       predict = function(osl, data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, 
-                         sample = FALSE, plot = FALSE, denormalize) {
+                         sample = FALSE, plot = FALSE) {
         if (!osl$is_fitted){
           return(NA)
         }
@@ -56,6 +56,7 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
         if (discrete) {
           predictions <- self$predict_dosl(osl$get_dosl, data, randomVariables,
                                                      sample = sample, plot = plot)
+
           result$normalized$dosl.estimator <-  predictions$normalized
           result$denormalized$dosl.estimator <- predictions$denormalized
 

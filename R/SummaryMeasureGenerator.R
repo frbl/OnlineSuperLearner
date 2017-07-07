@@ -115,7 +115,6 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
           private$cache <- rbindlist(list(private$cache, current))
 
           self$summarizeData(private$cache, n=n)
-
         }
         ),
   active =

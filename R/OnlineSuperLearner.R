@@ -237,12 +237,12 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           ## Extract the level 1 data and use it to fit the osl
           predicted.outcome <- private$online_super_learner_predict$predict_using_all_estimators(
             data = data.splitted$train,
-            sl_library = private$SL.library.fabricated,
-            denormalize = TRUE
+            sl_library = private$SL.library.fabricated
           )
 
           observed.outcome <- data.splitted$train[,outcome.variables, with=FALSE]
-          private$fit_osl(predicted.outcome = predicted.outcome, observed.outcome = observed.outcome)
+          private$fit_osl(predicted.outcome = predicted.outcome,
+                          observed.outcome = observed.outcome)
           private$fitted <- TRUE
 
           ## Make a prediction using the learners on the test data
@@ -251,7 +251,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                                           randomVariables = randomVariables,
                                           discrete = TRUE, continuous = TRUE, all_estimators = TRUE)
 
-          ## Calculate the error
+          ## Calculate the error using the normalized predictions
           private$update_risk(predicted.outcome = predicted.outcome,
                               observed.outcome = observed.outcome,
                               randomVariables = randomVariables)
@@ -265,9 +265,11 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             predicted.outcome <- self$predict(data = data.splitted$test,
                                             randomVariables = randomVariables,
                                             discrete = TRUE, continuous = FALSE, all_estimators = FALSE)
-            private$cv_risk$dosl.estimator <- private$cv_risk_calculator$calculate_risk(predicted.outcome = predicted.outcome,
-                                observed.outcome = observed.outcome,
-                                randomVariables = randomVariables)$dosl.estimator
+
+            private$cv_risk$dosl.estimator <- 
+              private$cv_risk_calculator$calculate_risk(predicted.outcome = predicted.outcome,
+                                                        observed.outcome = observed.outcome,
+                                                        randomVariables = randomVariables)$dosl.estimator
           }
 
         },
@@ -336,7 +338,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             observed_outcome <- observed.outcome[, random_variable_name, with=FALSE]
 
             ## Convert the predictions to wide format so we can use them per column
-            predicted_outcomes <- do.call(cbind, predicted.outcome) %>%
+            predicted_outcomes <- do.call(cbind, predicted.outcome$normalized) %>%
               subset(., select = grep(paste(random_variable_name,"$",sep=""), names(.)))
 
             if(is.null(colnames(predicted_outcomes))) throw('Something went wrong, the predicted_outcome colnames are not defined')
@@ -460,7 +462,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         initialize = function(SL.library.definition = c('ML.Local.lm', 'ML.H2O.glm'),
                               summaryMeasureGenerator, should_fit_osl = TRUE, should_fit_dosl = TRUE, pre_processor = NULL,
                               verbose = FALSE ) {
-          private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
+          self$set_verbosity(Arguments$getVerbose(verbose, timestamp = TRUE))
           private$fitted = FALSE
           private$summaryMeasureGenerator <- Arguments$getInstanceOf(summaryMeasureGenerator, 'SummaryMeasureGenerator')
           private$should_fit_dosl <- Arguments$getLogical(should_fit_dosl)
@@ -487,16 +489,16 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           self$get_validity
         },
 
+        set_verbosity = function(verbosity) {
+          private$verbose = verbosity
+        },
+
         ## Samples the data iteratively from the fitted distribution, and applies an intervention if necessary
         ## @param tau is the time at which we want to measure the outcome
-        sample_iteratively = function(data, randomVariables, variable_of_interest, tau = 10, intervention = NULL, discrete = TRUE, return_type = 'observations', start_from = NULL) {
+        sample_iteratively = function(data, randomVariables, tau = 10, intervention = NULL, discrete = TRUE, return_type = 'observations', start_from = NULL) {
 
           randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
           randomVariables <- RandomVariable.find_ordering(randomVariables)
-
-          if (is(variable_of_interest, 'RandomVariable')) {
-            variable_of_interest <- variable_of_interest$getY
-          }
 
           return_type <- Arguments$getCharacters(return_type)
           valid_return_types <- c('observations', 'full', 'summary_measures')
@@ -521,6 +523,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           start_from <- Arguments$getInstanceOf(start_from, 'RandomVariable')
 
           result <- data.table()
+          result_denormalized_observations <- data.table(matrix(nrow=0, ncol=length(randomVariables)))
+          colnames(result_denormalized_observations) <- names(randomVariables)
+
 
           ## Just to be certain we don't use future data, we remove a subset:
           remove_vars <- names(randomVariables)
@@ -528,7 +533,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           ## We need to sample sequentially here, just so we can plugin the value everytime in the next evaluation
           for (t in seq(tau)) {
-            #data[,names(randomVariables)] <- NA
+            current_denormalized_observation <- list()
             for (rv in randomVariables) {
               current_outcome <- rv$getY
               if (!started && !equals(current_outcome, start_from$getY)) {
@@ -537,10 +542,12 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                 remove_vars <- remove_vars[remove_vars != current_outcome]
                 next
               }
+              if (!started) {
+                data[,remove_vars] <- NA
+              }
 
               started = TRUE
               ## set the variables we don't need to NA
-              data[,remove_vars] <- NA
 
               ## If the current t is an intervention t, apply the proposed intervention.
               if (!is.null(intervention) && current_outcome == intervention$variable && t %in% intervention$when) {
@@ -548,24 +555,27 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                 outcome <- intervention$what[when.idx]
                 private$verbose && cat(private$verbose, 'Setting intervention on ', current_outcome,' with ', outcome, ' on time ', t)
               } else {
-                ## We only want to denormalize the eventual outcome
-                denormalize = (t == tau && current_outcome == variable_of_interest)
-
                 outcome <- self$predict(data = data, randomVariables = c(rv),
                                         discrete = discrete,
                                         continuous = !discrete,
                                         all_estimators = FALSE,
-                                        sample = TRUE, 
-                                        denormalize = denormalize)[[1]]
+                                        sample = TRUE)
 
                 private$verbose && cat(private$verbose,'Predicting ', current_outcome, ' using ', paste(rv$getX, collapse=', '))
               }
-              data[,  (current_outcome) := outcome ]
+              ## We need to add the [[1]] because the result is a list of lists (1st norm/denorm, then estimator, then
+              ## values)
+              data[,  (current_outcome) := as.numeric(outcome$normalized[[1]]) ]
+              current_denormalized_observation[[current_outcome]] <- outcome$denormalized[[1]] %>%
+                as.numeric
             }
+            result_denormalized_observations <- rbindlist(list(result_denormalized_observations, current_denormalized_observation))
             result <- rbind(result, data)
             if(t != tau)  data <- private$summaryMeasureGenerator$getLatestCovariates(data)
           }
           if (return_type == 'observations') {
+            ## Return the denormalized observations?
+            #return(result_denormalized_observations)
             return(result[,names(randomVariables), with = FALSE])
           } else if (return_type == 'summary_measures') {
             return(result[, !names(randomVariables), with = FALSE])
@@ -586,7 +596,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           ## TODO: Move to check validity? Needs moving of the equations as well.
           private$summaryMeasureGenerator$checkEnoughDataAvailable(randomVariables = randomVariables)
 
-          ## We initialize the WCC's here because we need to have the randomVriables
+          ## We initialize the WCC's here because we need to have the randomVariables
           private$initialize_weighted_combination_calculators(randomVariables)
 
           print(paste('Fitting OnlineSuperLearner with a library:', paste(private$SL.library.descriptions, collapse = ', '),
@@ -615,12 +625,12 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         ## Predict should return a nrow(data) * 1 matrix, where the predictions are multiplied by
         ## the weights of each estimator.
-        predict = function(data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE, denormalize = TRUE) {
+        predict = function(data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE) {
 
           ## Pass the function to the separate class so it won't fill up this class
           private$online_super_learner_predict$predict(osl = self, data = data, randomVariables = randomVariables,
                                                all_estimators = all_estimators, discrete = discrete, continuous = continuous,
-                                               sample = sample, plot = plot, denormalize = denormalize)
+                                               sample = sample, plot = plot)
 
         }
   )
