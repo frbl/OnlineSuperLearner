@@ -91,11 +91,11 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                         sample = TRUE,
                         plot = TRUE)[[1]]
 
-          result.approx <- foreach(i=seq(B), .combine=rbind) %dopar% {
-            data.int <- private$sim$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
-                                              intervention = intervention, verbose = FALSE)
-            data.int$Y[tau]
-          }
+          #result.approx <- foreach(i=seq(B), .combine=rbind) %dopar% {
+            #data.int <- private$sim$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
+                                              #intervention = intervention, verbose = FALSE)
+            #data.int$Y[tau]
+          #}
           
 
 
@@ -114,42 +114,42 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
 
           # Note that this won't work when we have an H2O estimator in the set. The parallelization will fail.
-          result <- foreach(i=seq(B), .combine=rbind) %do% {
-            osl$sample_iteratively(data = data.test[1,],
-                                   randomVariables = randomVariables,
-                                   intervention = intervention,
-                                   variable_of_interest = variable_of_interest,
-                                   tau = tau)[tau, variable_of_interest$getY, with=FALSE]
-          } %>%
-            unlist
+          #result <- foreach(i=seq(B), .combine=rbind) %do% {
+            #osl$sample_iteratively(data = data.test[1,],
+                                   #randomVariables = randomVariables,
+                                   #intervention = intervention,
+                                   #variable_of_interest = variable_of_interest,
+                                   #tau = tau)[tau, variable_of_interest$getY, with=FALSE]
+          #} %>%
+            #unlist
 
           options(warn=pre)
 
-          result.mean <- result %>%
-            mean
+          #result.mean <- result %>%
+            #mean
 
-          result.approx.mean <- result.approx %>%
-            mean
+          #result.approx.mean <- result.approx %>%
+            #mean
 
-          print(paste('The difference between the estimate and approximation is: ', abs(result.mean - result.approx.mean)))
+          #print(paste('The difference between the estimate and approximation is: ', abs(result.mean - result.approx.mean)))
 
-          result
+          #result
 
           # Plot the convergence
-          y1 <- cumsum(result.approx)/seq(along=result.approx)
-          y2 <- cumsum(result)/seq(along=result)
+          #y1 <- cumsum(result.approx)/seq(along=result.approx)
+          #y2 <- cumsum(result)/seq(along=result)
 
-          pdf('/tmp/osl/difference.pdf')
-          plot(y1, ylim=range(c(y1, y2)))
-          par(new=TRUE)
-          plot(y2, ylim=range(c(y1, y2)), col="red", axes = FALSE, xlab = "", ylab = "")
-          dev.off()
+          #pdf('/tmp/osl/difference.pdf')
+          #plot(y1, ylim=range(c(y1, y2)))
+          #par(new=TRUE)
+          #plot(y2, ylim=range(c(y1, y2)), col="red", axes = FALSE, xlab = "", ylab = "")
+          #dev.off()
 
-          browser()
+          #browser()
 
-          osl$info
+          #osl$info
 
-          lapply(performance, function(x) {lapply(x,mean)})
+          #lapply(performance, function(x) {lapply(x,mean)})
 
           # Now, the fimal step is to apply the OneStepEstimator
           OnlineOneStepEstimator.perform(osl = osl,
