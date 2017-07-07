@@ -58,13 +58,22 @@ get_formula = function(rv) {
 }
 
 # #2 More efficient but slow solution
-get_h_ratios_second = function(osl, B, N, tau, intervention, data, randomVariables) {
+get_h_ratios = function(osl, B, N, tau, intervention, data, randomVariables) {
   O_0 = data[1,]
   # In the second version we can use all observations drawn from P^N. In this case we sample $B$ observations $O^N$ and
-  # extract from each of these observations the summary measures $C$.
+  # extract from each of these observations the summary measures $C$. We first sample $B$ observations from $P^N$ and
+  # then $B$ observations from $P^N_{s,a}. The size of Osample will be $BN$. After we have sampled these $BN$
+  # observations, we augment the data with a $\delta$ column, which is either $1$ (when the data was sampled from P^N),
+  # or $0$, whenever the data was sampled from $P^N_{a,s}$. Using these fully augmented data frames we now create
+  # $3\tau$ machine learning estimators.
 
-  # We first sample $B$ observations from $P^N$ and $B$ observations from $P^N_{s,a}. The size of Osample will be $BN$.
-  Osample_p <- foreach(b=seq(B), .combine=rbind) %dopar% {
+  # Only process the unique random variables
+  formulae <- lapply(randomVariables, function(rv) {
+    formula <- get_formula(rv)
+  }) %>% unique
+
+  browser()
+  Osample_p <- foreach(b = seq(B), .combine = rbind) %dopar% {
     current <- osl$sample_iteratively(data = O_0,
                                       randomVariables = randomVariables,
                                       # TODO: !!!!We should transform all variables back to their original value?!!!!
@@ -76,37 +85,31 @@ get_h_ratios_second = function(osl, B, N, tau, intervention, data, randomVariabl
     cbind(current, delta = rep(1, length(current)))
   }
 
-  # Because we use $BN$ observations in the previous sampling step, we should also draw BN observations from P^N_{s,a}.
-  #h_ratio_predictors <- lapply(seq(tau), function(s) {
-  Osample_p_star <- foreach(b=seq(B), .combine=rbind) %dopar% {
-    current <- osl$sample_iteratively(data = O_0,
-                                      randomVariables = randomVariables,
-                                      intervention = intervention,
-                                      # TODO: !!!!We should transform all variables back to their original value?!!!!
-                                      variable_of_interest = variable_of_interest,
-                                      tau = tau,
-                                      return_type = 'summary_measures')
+  # The final result is a list of estimators, which contains a GLM for each $C_W$, $C_A$, and $C_Y$, for each s in tau.
+  # (so 3tau estimators)
+  lapply(seq(tau), function(s) {
+    # Because we use $BN$ observations in the previous sampling step, we should also draw BN observations from P^N_{s,a}.
+    Osample_p_star <- foreach(b=seq(B * N), .combine=rbind) %dopar% {
+      current <- osl$sample_iteratively(data = O_0,
+                                        randomVariables = randomVariables,
+                                        intervention = intervention,
+                                        # TODO: !!!!We should transform all variables back to their original value?!!!!
+                                        variable_of_interest = variable_of_interest,
+                                        tau = s,
+                                        return_type = 'summary_measures')
 
-    cbind(current, delta = rep(0, length(current)))
-  }
+      cbind(current, delta = rep(0, length(current)))
+    }
+    # Kind of inefficient. Use data.tables here.
+    Osample_p_full <- rbind(Osample_p, Osample_p_star)
 
-  # Kind of inefficient. Use data.tables here.
-  Osample_p_full <- rbind(Osample_p, Osample_p_star)
+    # Currently we use GLM here, but we should make use of a SuperLearner here.
+    h_ratio_predictors <- lapply(formulae, function(formula) { glm(formula, Osample_p_full, family = binomial()) })
 
-  # Only process the unique random variables
-  formulae <- lapply(randomVariables, function(rv) {
-    formula <- get_formula(rv)
-  }) %>% unique
-
-  # Currently we use GLM here, but we should make use of a SuperLearner here.
-  h_ratio_predictors <- lapply(formulae, function(formula) { glm(formula, Osample_p_full, family = binomial()) })
-
-  # Store the names of the formulae, so we can index them easily later on
-  names(h_ratio_predictors) <- formulae
-  #})
-
-  # The final result is a list of estimators, which contains a GLM for each $C_W$, $C_A$, and $C_Y$. (so 3 elements)
-  h_ratio_predictors
+    # Store the names of the formulae, so we can index them easily later on
+    names(h_ratio_predictors) <- formulae
+    h_ratio_predictors
+  })
 }
 
 evaluation_of_conditional_expectations = function(osl, B, N, h_ratio_predictors, variable_of_interest, randomVariables, data, tau, intervention) {
@@ -168,7 +171,7 @@ evaluation_of_conditional_expectations = function(osl, B, N, h_ratio_predictors,
 
 perform_initial_estimation = function(osl, B, data, randomVariables, intervention, variable_of_interest, tau) {
   foreach(i=seq(B), .combine=rbind) %do% {
-    osl$sample_iteratively(data = data.test[1,],
+    osl$sample_iteratively(data = data[1,],
                             randomVariables = randomVariables,
                             intervention = intervention,
                             variable_of_interest = variable_of_interest,
@@ -187,13 +190,13 @@ OnlineOneStepEstimator.perform = function(osl, randomVariables, data, variable_o
   # let tau the the outcome of interest. 
 
   #1 Before anything, perform our initial estimation of our parameter of interest
-  initial_estimate <- perform_initial_estimation(osl = osl,
-                                                 B = B,
-                                                 data = data,
-                                                 randomVariables = randomVariables,
-                                                 intervention = intervention,
-                                                 variable_of_interest = variable_of_interest,
-                                                 tau = tau)
+  #initial_estimate <- perform_initial_estimation(osl = osl,
+                                                 #B = B,
+                                                 #data = data,
+                                                 #randomVariables = randomVariables,
+                                                 #intervention = intervention,
+                                                 #variable_of_interest = variable_of_interest,
+                                                 #tau = tau)
 
   #2 calculate H-ratios
   h_ratio_predictors <- get_h_ratios(osl = osl, B = B, N = N, tau = tau, intervention = intervention, data = data, 
