@@ -77,11 +77,11 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           #performances
           intervention <- list(variable = 'A', when = c(2), what = c(1))
           tau = 2
-          B <- 100
+          B <- 10
 
           pre <- options('warn')$warn
           options(warn=-1)
-          doParallel::registerDoParallel(cores = 8)
+          doParallel::registerDoParallel(cores = parallel::detectCores())
 
           data.aisset <- copy(data.test)
           result <- osl$predict(data = data.aisset,
@@ -92,11 +92,11 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                         sample = TRUE,
                         plot = TRUE)[[1]]
 
-          #result.approx <- foreach(i=seq(B), .combine=rbind) %dopar% {
-            #data.int <- private$sim$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
-                                              #intervention = intervention, verbose = FALSE)
-            #data.int$Y[tau]
-          #}
+          result.approx <- foreach(i=seq(B), .combine=rbind) %dopar% {
+            data.int <- private$sim$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
+                                              intervention = intervention, verbose = FALSE)
+            data.int$Y[tau]
+          }
           
 
 
@@ -115,23 +115,24 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
 
           # Note that this won't work when we have an H2O estimator in the set. The parallelization will fail.
-          #result <- foreach(i=seq(B), .combine=rbind) %do% {
-            #osl$sample_iteratively(data = data.test[1,],
-                                   #randomVariables = randomVariables,
-                                   #intervention = intervention,
-                                   #tau = tau)[tau, variable_of_interest$getY, with=FALSE]
-          #} %>%
-            #unlist
+          result <- foreach(i=seq(B), .combine=rbind) %do% {
+            osl$sample_iteratively(data = data.test[1,],
+                                   randomVariables = randomVariables,
+                                   intervention = intervention,
+                                   tau = tau)[tau, variable_of_interest$getY, with=FALSE]
+          } %>%
+            unlist
 
           options(warn=pre)
 
-          #result.mean <- result %>%
-            #mean
+          result.mean <- result %>%
+            mean
 
-          #result.approx.mean <- result.approx %>%
-            #mean
+          result.approx.mean <- result.approx %>%
+            mean
 
-          #print(paste('The difference between the estimate and approximation is: ', abs(result.mean - result.approx.mean)))
+          print(paste('The difference between the estimate and approximation (before oos) is: ',
+                      abs(result.mean - result.approx.mean)))
 
           #result
 
@@ -139,6 +140,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           #y1 <- cumsum(result.approx)/seq(along=result.approx)
           #y2 <- cumsum(result)/seq(along=result)
 
+          #dir.create('/tmp/osl/', showWarnings = FALSE, recursive = TRUE)
           #pdf('/tmp/osl/difference.pdf')
           #plot(y1, ylim=range(c(y1, y2)))
           #par(new=TRUE)
@@ -152,13 +154,17 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           #lapply(performance, function(x) {lapply(x,mean)})
 
           # Now, the fimal step is to apply the OneStepEstimator
-          OnlineOneStepEstimator.perform(osl = osl,
-                                         randomVariables = randomVariables,
-                                         data = data.test, 
-                                         variable_of_interest = variable_of_interest,
-                                         intervention = intervention,
-                                         tau = tau,
-                                         B = B) 
+          result.approx.mean.update <- OnlineOneStepEstimator.perform(osl = osl,
+                                                               initial_estimate = result.mean,
+                                                               randomVariables = randomVariables,
+                                                               data = data.test, 
+                                                               variable_of_interest = variable_of_interest,
+                                                               intervention = intervention,
+                                                               tau = tau,
+                                                               B = B) 
+
+          print(paste('The difference between the estimate and approximation (after oos) is: ',
+                      abs(result.mean - result.approx.mean.update$oos_estimate)))
         }
         ),
   public =

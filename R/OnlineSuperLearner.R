@@ -552,7 +552,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
               ## If the current t is an intervention t, apply the proposed intervention.
               if (!is.null(intervention) && current_outcome == intervention$variable && t %in% intervention$when) {
                 when.idx <- which(intervention$when == t)
-                outcome <- intervention$what[when.idx]
+                outcome <- list(normalized = intervention$what[when.idx],
+                                denormalized = intervention$what[when.idx])
                 private$verbose && cat(private$verbose, 'Setting intervention on ', current_outcome,' with ', outcome, ' on time ', t)
               } else {
                 outcome <- self$predict(data = data, randomVariables = c(rv),
@@ -569,7 +570,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
               current_denormalized_observation[[current_outcome]] <- outcome$denormalized[[1]] %>%
                 as.numeric
             }
-            result_denormalized_observations <- rbindlist(list(result_denormalized_observations, current_denormalized_observation))
+            result_denormalized_observations <- rbindlist(list(result_denormalized_observations, current_denormalized_observation), fill=TRUE)
             result <- rbind(result, data)
             if(t != tau)  data <- private$summaryMeasureGenerator$getLatestCovariates(data)
           }
