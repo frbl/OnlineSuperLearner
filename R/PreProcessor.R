@@ -40,7 +40,11 @@ PreProcessor <- R6Class("PreProcessor",
           scaled_data * (max_bound - min_bound) + min_bound
         }
 
-        fn <- ifelse(denormalize, un_scale_data, scale_data)
+        if(denormalize) {
+          fn <- un_scale_data
+        } else {
+          fn <- scale_data
+        }
 
         # TODO: Make this more efficient
         # It could be the case that we don't want to normalize all columns. Therefore, loop over the bound names

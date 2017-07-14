@@ -1,4 +1,5 @@
 \.git
+run.R
 ^README\.md$
 \.gitignore
 Makefile

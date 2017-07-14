@@ -59,7 +59,7 @@ get_formula = function(rv) {
 
 # #2 More efficient but slow solution
 get_h_ratios = function(osl, B, N, tau, intervention, data, randomVariables) {
-  O_0 = data[1,]
+  O_0 = copy(data[1,])
   # In the second version we can use all observations drawn from P^N. In this case we sample $B$ observations $O^N$ and
   # extract from each of these observations the summary measures $C$. We first sample $B$ observations from $P^N$ and
   # then $B$ observations from $P^N_{s,a}. The size of Osample will be $BN$. After we have sampled these $BN$
@@ -72,8 +72,7 @@ get_h_ratios = function(osl, B, N, tau, intervention, data, randomVariables) {
     formula <- get_formula(rv)
   }) %>% unique
 
-  print('NOW!')
-  B = 8
+  print('Starting sampling from PN')
 
   tic <- Sys.time()
   Osample_p <- foreach(b = seq(B), .combine = rbind) %dopar% {
@@ -82,47 +81,56 @@ get_h_ratios = function(osl, B, N, tau, intervention, data, randomVariables) {
     current <- osl$sample_iteratively(data = O_0,
                                       randomVariables = randomVariables,
                                       tau = N,
-                                      return_type = 'summary_measures')
+                                      return_type = 'full')
 
     # We store each observation with the correct delta
   }
-  Osample_p <- cbind(current, delta = rep(1, length(Osample_p)))
+  Osample_p <- cbind(Osample_p, delta = rep(1, length(Osample_p)))
   toc <- Sys.time()
-  cat('The whole procedure took ', (toc - tic), ' seconds.')
-  browser()
+  cat('Sampling ', B,' observations from PN took ', (toc - tic), ' seconds.')
 
   # The final result is a list of estimators, which contains a GLM for each $C_W$, $C_A$, and $C_Y$, for each s in tau.
   # (so 3tau estimators)
-  lapply(seq(tau), function(s) {
-    # Because we use $BN$ observations in the previous sampling step, we should also draw BN observations from P^N_{s,a}.
-    Osample_p_star <- foreach(b=seq(B * N), .combine=rbind) %dopar% {
-      current <- osl$sample_iteratively(data = O_0,
-                                        randomVariables = randomVariables,
-                                        intervention = intervention,
-                                        tau = s,
-                                        return_type = 'summary_measures')
+  # Because we use $BN$ observations in the previous sampling step, we should also draw BN observations from P^N_{s,a}.
 
-    }
-    # Kind of inefficient. Use data.tables here.
-    cbind(Osample_p_star, delta = rep(0, length(current)))
-    Osample_p_full <- rbind(Osample_p, Osample_p_star)
+  tic <- Sys.time()
+  Osample_p_star <- foreach(b=seq(B * N), .combine=rbind) %dopar% {
+    current <- osl$sample_iteratively(data = O_0,
+                                      randomVariables = randomVariables,
+                                      intervention = intervention,
+                                      tau = tau,
+                                      return_type = 'full')
 
-    # Currently we use GLM here, but we should make use of a SuperLearner here.
+  }
+  toc <- Sys.time()
+  cat('Sampling ', B*N,' observations from PN* took ', (toc - tic), ' seconds.')
+
+
+  # Add an S column to the data, so we know which summary measure belongs to which s
+  time_s_column <- lapply(seq(N*B), function(i) ((i - 1) %% tau) + 1)  %>% unlist
+
+  # Kind of inefficient. Use data.tables here.
+  Osample_p_star <- cbind(Osample_p_star, delta = rep(0, nrow(Osample_p_star)), time_s_column = time_s_column)
+
+  # Currently we use GLM here, but we should make use of a SuperLearner here.
+  h_ratio_predictors_per_s <- lapply(seq(tau), function(time_s) {
+    Osample_p_full <- rbind(Osample_p, Osample_p_star[time_s_column == 1][,!'time_s_column'])
     h_ratio_predictors <- lapply(formulae, function(formula) { glm(formula, Osample_p_full, family = binomial()) })
-
     # Store the names of the formulae, so we can index them easily later on
     names(h_ratio_predictors) <- formulae
     h_ratio_predictors
   })
+  h_ratio_predictors_per_s
 }
 
 evaluation_of_conditional_expectations = function(osl, B, N, h_ratio_predictors, variable_of_interest, randomVariables, data, tau, intervention) {
   # We have to create the conditional expectations using each of the random variables as a start point
-  for (rv_id in seq_along(randomVariables)) {
+  influence_curve_for_each_rv <- lapply (seq_along(randomVariables), function(rv_id){
     next_rv_id <- (rv_id %% length(randomVariables)) + 1
 
     rv <- randomVariables[[rv_id]]
     next_rv <- randomVariables[[next_rv_id]]
+
 
     # We are actually in next time block if the modulo was applied. This should be reflected in the time s.
     s_offset <- ifelse(rv_id > next_rv_id, 1, 0)
@@ -130,47 +138,52 @@ evaluation_of_conditional_expectations = function(osl, B, N, h_ratio_predictors,
     # Get the formula so we can retrieve the prediction mechanism.
     formula <- get_formula(rv)
 
-    for (t in seq(N)) {
-      # First we have to estimate the h_ratio based on the C_rv
-      # The h_ratio is the same for each t, wo we only need to estimate it once.
-      h_ratio <- predict(h_ratio_predictors[[formula]], data[t,], type='response')
+    efficient_influence_curve_for_rv <- foreach(t=seq(N), .combine='sum') %dopar% {
+      dat <- copy(data[t,])
 
       # Then, we start on a given s
-      for (s in seq(tau)) {
+      difference_in_expectations_for_all_s <- foreach(s=seq(tau), .combine='sum') %do% {
+        # First we have to estimate the h_ratio based on the C_rv
+        # The h_ratio is the same for each t, wo we only need to estimate it once.
+        h_ratio <- predict(h_ratio_predictors[[s]][[formula]], data[t,], type='response') %>% as.numeric
+        h_ratio <- h_ratio / (1.0 - h_ratio)
+
         # Now we have to sample from the conditional distribution of rv + 1. I.e., we have the our value for RV, and its
         # corresponding C. Using these values we can sample the next variable in the sequence. We do this until tau - s
         # because we want to start at time s (we actually start on time t and don't let it go further than tau - s).
-        o_sample_conditional <- foreach(b=seq(B), .combine=rbind) %dopar% {
-          # So, instead of moving s closer to tau, we move tau closer to s
-          tau_cur <- tau - (s + s_offset)
-          current <- osl$sample_iteratively(data = data[t,],
+
+        # So, instead of moving s closer to tau, we move tau closer to s
+        # TODO: deNormalize the output here
+        tau_cur <- tau - (s + s_offset) + 1
+        o_sample_conditional <- foreach(b=seq(B), .combine=rbind) %do% {
+          current <- osl$sample_iteratively(data = dat,
                                             randomVariables = randomVariables,
                                             start_from = next_rv,
                                             intervention = intervention,
-                                            variable_of_interest = variable_of_interest,
                                             tau = tau_cur,
-                                            return_type = 'outcome')[tau_cur, variable_of_interest$getY, with=FALSE]
+                                            return_type = 'observations')[tau_cur, variable_of_interest$getY, with=FALSE]
         } %>%
           unlist %>%
           mean
 
-        o_sample_marginal <- foreach(b=seq(B), .combine=rbind) %dopar% {
-          tau_cur <- tau - (s + s_offset)
+        o_sample_marginal <- foreach(b=seq(B), .combine=rbind) %do% {
           current <- osl$sample_iteratively(data = data[t,],
                                             randomVariables = randomVariables,
                                             start = rv,
                                             intervention = intervention,
-                                            variable_of_interest = variable_of_interest,
                                             tau = tau_cur,
-                                            return_type = 'outcome')[tau_cur, variable_of_interest$getY, with=FALSE]
+                                            return_type = 'observations')[tau_cur, variable_of_interest$getY, with=FALSE]
         } %>%
           unlist %>%
           mean
 
-        h_ratio * (Oo_sample_conditional - o_sample_marginal)
+        h_ratio * (o_sample_conditional - o_sample_marginal)
       }
+      difference_in_expectations_for_all_s / N
     }
-  }
+    efficient_influence_curve_for_rv
+  })
+  influence_curve_for_each_rv
 }
 
 perform_initial_estimation = function(osl, B, data, randomVariables, intervention, variable_of_interest, tau) {
@@ -185,7 +198,7 @@ perform_initial_estimation = function(osl, B, data, randomVariables, interventio
     mean
 }
 
-OnlineOneStepEstimator.perform = function(osl, randomVariables, data, variable_of_interest, intervention, tau, B = 1e5) {
+OnlineOneStepEstimator.perform = function(osl, initial_estimate, randomVariables, data, variable_of_interest, intervention, tau, B = 1e5) {
 
   # Let $B$ be a large integer (the larger $B$ the better the approxmation),
   # let $N$ be the number of observations,
@@ -208,18 +221,27 @@ OnlineOneStepEstimator.perform = function(osl, randomVariables, data, variable_o
 
   #3 Solve expectaions
   # We want to approximate the conditional expectation from RV (start) till Ytau
-  D_star_evaluation = evaluation_of_conditional_expectations(B, N, h_ratio_predictors = h_ratio_predictors,
-                                         variable_of_interest = variable_of_interest, 
-                                         randomVariables = randomVariables,
-                                         data = data,
-                                         tau = tau,
-                                         intervention = intervention)
 
-  #4 Add the EIC term to the predictor to make it well behaved
-  # initial_estimate + D_star_evaluation
+  D_star_evaluation = evaluation_of_conditional_expectations(osl = osl,
+                                                             B = B,
+                                                             N = N,
+                                                             h_ratio_predictors = h_ratio_predictors,
+                                                             variable_of_interest = variable_of_interest, 
+                                                             randomVariables = randomVariables,
+                                                             data = data,
+                                                             tau = tau,
+                                                             intervention = intervention)
+  print(D_star_evaluation)
 
-  #5 Calculate the variance of the estimator
-  # see chapter antoine
+  # Calculate the new estimate
+  oos_estimate <- D_star_evaluation %>% unlist %>% sum
+  oos_estimate <- oos_estimate + initial_estimate
+  oos_variance <- 0
+
+  list(
+    oos_estimate = oos_estimate,
+    oos_variance = oos_variance
+  )
 
 }
 
