@@ -528,6 +528,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
           randomVariables <- RandomVariable.find_ordering(randomVariables)
 
+          tau <- Arguments$getNumerics(tau, c(1,Inf))
+
           return_type <- Arguments$getCharacters(return_type)
           valid_return_types <- c('observations', 'full', 'summary_measures')
           if (!return_type %in% valid_return_types) {

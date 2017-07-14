@@ -23,6 +23,8 @@ packages <- c(
 "purrr",
 "doParallel",
 "foreach",
+"snow",
+"doSNOW",
 "matrixStats",
 "digest",
 "future",
