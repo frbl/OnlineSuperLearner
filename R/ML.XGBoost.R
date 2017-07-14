@@ -30,14 +30,17 @@ ML.XGBoost <- R6Class("ML.XGBoost",
     list(
       fitfunname='xgboost',
       lmclass='xgboostR6',
-      initialize = function(booster = 'gblinear', alpha = 0, lambda = 0, rounds = 200, gamma = 0, eta = 0.3, objective = 'binary:logistic', verbose = FALSE) {
+      initialize = function(booster = 'gblinear', nthread = -1, alpha = 0, lambda = 0, rounds = 200, gamma = 0, eta = 0.3, objective = 'binary:logistic', verbose = FALSE) {
 
         private$rounds <- Arguments$getInteger(rounds, c(1, Inf))
         private$verbosity <- Arguments$getVerbose(verbose)
+        if (nthread == -1) { 
+          nthread <- parallel::detectCores()
+        }
 
         private$params <- list(objective = Arguments$getCharacter(objective),
                               booster = Arguments$getCharacter(booster),
-                              nthread = 8,
+                              nthread = nthread,
                               alpha   = Arguments$getNumeric(alpha, c(0, 1)),
                               gamma   = Arguments$getNumeric(gamma, c(0, Inf)),
                               eta     = Arguments$getNumeric(eta, c(1e-10, Inf)),

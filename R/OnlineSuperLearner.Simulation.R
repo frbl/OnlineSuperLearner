@@ -6,6 +6,7 @@
 #' @importFrom R6 R6Class
 #' @importFrom condensier condensier_options
 #' @importFrom doParallel registerDoParallel
+#' @importFrom doSNOW registerDoSnow
 #' @importFrom foreach foreach
 #' @include RandomVariable.R
 #' @include SMGFactory.R
@@ -77,11 +78,10 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           #performances
           intervention <- list(variable = 'A', when = c(2), what = c(1))
           tau = 2
-          B <- 10
+          B <- 100
 
           pre <- options('warn')$warn
           options(warn=-1)
-          doParallel::registerDoParallel(cores = parallel::detectCores())
 
           data.aisset <- copy(data.test)
           result <- osl$predict(data = data.aisset,
@@ -92,7 +92,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                         sample = TRUE,
                         plot = TRUE)[[1]]
 
+          cat('Approximating truth...\n')
           result.approx <- foreach(i=seq(B), .combine=rbind) %dopar% {
+            print('Hier')
             data.int <- private$sim$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
                                               intervention = intervention, verbose = FALSE)
             data.int$Y[tau]
@@ -115,11 +117,15 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
 
           # Note that this won't work when we have an H2O estimator in the set. The parallelization will fail.
+          O_0 <- data.test[1,]
+          cat('Sampling from Pn* (for approximation)\n')
+          outcome <- variable_of_interest$getY
           result <- foreach(i=seq(B), .combine=rbind) %do% {
-            osl$sample_iteratively(data = data.test[1,],
+            print(i)
+            osl$sample_iteratively(data = O_0,
                                    randomVariables = randomVariables,
                                    intervention = intervention,
-                                   tau = tau)[tau, variable_of_interest$getY, with=FALSE]
+                                   tau = tau)[tau, outcome, with=FALSE]
           } %>%
             unlist
 
@@ -171,6 +177,11 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
     list(
         initialize = function() {
           condensier_options(parfit=FALSE)
+          cat('Starting calculation with ', parallel::detectCores(),' cores\n')
+          #doParallel::registerDoParallel(cores = parallel::detectCores())
+          cluster <- makeCluster(parallel::detectCores())
+          doSNOW::registerDoSNOW(cluster)
+
           options(warn=1)
           private$sim  <- Simulator.GAD$new()
           private$training_set_size <- 1e3
@@ -191,9 +202,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           algos <- list()
 
 
-          #algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                                  #algorithm_params = list(alpha = 0),
-                                  #params = list(nbins = c(16,40), online = TRUE))))
+          algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
+                                  algorithm_params = list(alpha = 0),
+                                  params = list(nbins = c(16,40), online = TRUE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
                                   #algorithm_params = list(ntrees=c(10,20), min_rows=1),
@@ -224,6 +235,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           # Run the simulations
           self$basicRegressionWithLags()
           #self$verySimpleSimulation()
+          stopCluster(cluster)
         },
 
         basicRegressionWithLagsAndJustWAY = function() {

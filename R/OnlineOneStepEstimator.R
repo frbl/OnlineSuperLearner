@@ -125,12 +125,17 @@ get_h_ratios = function(osl, B, N, tau, intervention, data, randomVariables) {
 
 evaluation_of_conditional_expectations = function(osl, B, N, h_ratio_predictors, variable_of_interest, randomVariables, data, tau, intervention) {
   # We have to create the conditional expectations using each of the random variables as a start point
-  influence_curve_for_each_rv <- lapply (seq_along(randomVariables), function(rv_id){
+  influence_curve_for_each_rv <- c()
+  for (rv_id in seq_along(randomVariables)) {
     next_rv_id <- (rv_id %% length(randomVariables)) + 1
 
     rv <- randomVariables[[rv_id]]
     next_rv <- randomVariables[[next_rv_id]]
 
+    print(rv$getY)
+    #if(rv$getY == 'Y') browser()
+    current_rv <- rv$getY
+    var_of_interest <- variable_of_interest$getY
 
     # We are actually in next time block if the modulo was applied. This should be reflected in the time s.
     s_offset <- ifelse(rv_id > next_rv_id, 1, 0)
@@ -139,6 +144,7 @@ evaluation_of_conditional_expectations = function(osl, B, N, h_ratio_predictors,
     formula <- get_formula(rv)
 
     efficient_influence_curve_for_rv <- foreach(t=seq(N), .combine='sum') %dopar% {
+      print(t)
       dat <- copy(data[t,])
 
       # Then, we start on a given s
@@ -154,25 +160,34 @@ evaluation_of_conditional_expectations = function(osl, B, N, h_ratio_predictors,
 
         # So, instead of moving s closer to tau, we move tau closer to s
         # TODO: deNormalize the output here
-        tau_cur <- tau - (s + s_offset) + 1
-        o_sample_conditional <- foreach(b=seq(B), .combine=rbind) %do% {
-          current <- osl$sample_iteratively(data = dat,
-                                            randomVariables = randomVariables,
-                                            start_from = next_rv,
-                                            intervention = intervention,
-                                            tau = tau_cur,
-                                            return_type = 'observations')[tau_cur, variable_of_interest$getY, with=FALSE]
+        tau_cur <- tau - ((s - 1) + s_offset)
+
+        # If tau ends up to be 0, and we already know y(tau), we can just get
+        # it from the data. Expectation of a constant is the constant itself,
+        # right?
+        if(tau_cur == 0 && current_rv == var_of_interest) {
+          o_sample_marginal <- as.numeric(dat[,var_of_interest, with=FALSE])
+        } else {
+          o_sample_conditional <- foreach(b=seq(B), .combine=rbind) %do% {
+            current <- osl$sample_iteratively(data = dat,
+                                              randomVariables = randomVariables,
+                                              start_from = next_rv,
+                                              intervention = intervention,
+                                              tau = tau_cur,
+                                              return_type = 'observations')[tau_cur, var_of_interest, with=FALSE]
         } %>%
           unlist %>%
           mean
+        }
 
+        tau_cur <- tau - (s - 1)
         o_sample_marginal <- foreach(b=seq(B), .combine=rbind) %do% {
           current <- osl$sample_iteratively(data = data[t,],
                                             randomVariables = randomVariables,
                                             start = rv,
                                             intervention = intervention,
                                             tau = tau_cur,
-                                            return_type = 'observations')[tau_cur, variable_of_interest$getY, with=FALSE]
+                                            return_type = 'observations')[tau_cur, var_of_interest, with=FALSE]
         } %>%
           unlist %>%
           mean
@@ -181,8 +196,8 @@ evaluation_of_conditional_expectations = function(osl, B, N, h_ratio_predictors,
       }
       difference_in_expectations_for_all_s / N
     }
-    efficient_influence_curve_for_rv
-  })
+    influence_curve_for_each_rv <- c(influence_curve_for_each_rv, efficient_influence_curve_for_rv)
+  }
   influence_curve_for_each_rv
 }
 
@@ -236,6 +251,10 @@ OnlineOneStepEstimator.perform = function(osl, initial_estimate, randomVariables
   # Calculate the new estimate
   oos_estimate <- D_star_evaluation %>% unlist %>% sum
   oos_estimate <- oos_estimate + initial_estimate
+  if(is.nan(oos_estimate)) {
+    warning('Oos estimate is NaN, setting to zero')
+    oos_estimate <- 0
+  }
   oos_variance <- 0
 
   list(
