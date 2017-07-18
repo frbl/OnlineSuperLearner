@@ -78,13 +78,15 @@ get_h_ratios = function(osl, B, N, tau, intervention, data, randomVariables) {
   Osample_p <- foreach(b = seq(B), .combine = rbind) %dopar% {
     # TODO: Note that the summary measures we currently collect are NORMALIZED. I think that this does not matter for
     # calculating the h-ratios, but we need to check this.
-    current <- osl$sample_iteratively(data = O_0,
+    cat('Iteration ', b, '\n')
+    osl$sample_iteratively(data = O_0,
                                       randomVariables = randomVariables,
                                       tau = N,
                                       return_type = 'full')
 
     # We store each observation with the correct delta
   }
+
   Osample_p <- cbind(Osample_p, delta = rep(1, length(Osample_p)))
   toc <- Sys.time()
   cat('Sampling ', B,' observations from PN took ', (toc - tic), ' seconds.')
@@ -222,13 +224,15 @@ OnlineOneStepEstimator.perform = function(osl, initial_estimate, randomVariables
   # let tau the the outcome of interest. 
 
   #1 Before anything, perform our initial estimation of our parameter of interest
-  #initial_estimate <- perform_initial_estimation(osl = osl,
-                                                 #B = B,
-                                                 #data = data,
-                                                 #randomVariables = randomVariables,
-                                                 #intervention = intervention,
-                                                 #variable_of_interest = variable_of_interest,
-                                                 #tau = tau)
+  if(is.null(initial_estimate)) {
+    initial_estimate <- perform_initial_estimation(osl = osl,
+                                                   B = B,
+                                                   data = data,
+                                                   randomVariables = randomVariables,
+                                                   intervention = intervention,
+                                                   variable_of_interest = variable_of_interest,
+                                                   tau = tau)
+  }
 
   #2 calculate H-ratios
   h_ratio_predictors <- get_h_ratios(osl = osl, B = B, N = N, tau = tau, intervention = intervention, data = data, 

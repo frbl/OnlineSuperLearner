@@ -30,7 +30,7 @@ ML.XGBoost <- R6Class("ML.XGBoost",
     list(
       fitfunname='xgboost',
       lmclass='xgboostR6',
-      initialize = function(booster = 'gblinear', nthread = -1, alpha = 0, lambda = 0, rounds = 200, gamma = 0, eta = 0.3, objective = 'binary:logistic', verbose = FALSE) {
+      initialize = function(booster = 'gblinear', nthread = 1, alpha = 0, lambda = 0, rounds = 200, gamma = 0, eta = 0.3, objective = 'binary:logistic', verbose = FALSE) {
 
         private$rounds <- Arguments$getInteger(rounds, c(1, Inf))
         private$verbosity <- Arguments$getVerbose(verbose)

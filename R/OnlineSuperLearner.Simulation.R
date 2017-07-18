@@ -6,7 +6,6 @@
 #' @importFrom R6 R6Class
 #' @importFrom condensier condensier_options
 #' @importFrom doParallel registerDoParallel
-#' @importFrom doSNOW registerDoSnow
 #' @importFrom foreach foreach
 #' @include RandomVariable.R
 #' @include SMGFactory.R
@@ -15,6 +14,276 @@
 #' @include SMG.Transformation.R
 #' @export
 OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
+  public =
+    list(
+        initialize = function() {
+          condensier_options(parfit=FALSE)
+          cat('Starting calculation with ', parallel::detectCores(),' cores\n')
+          doParallel::registerDoParallel(cores = parallel::detectCores())
+
+          options(warn=1)
+          private$sim  <- Simulator.GAD$new()
+          private$training_set_size <- 1e3
+          private$cv_risk_calculator <- CrossValidationRiskCalculator$new()
+          private$test_set_size <- 100
+          private$log <- Arguments$getVerbose(-8, timestamp=TRUE)
+          private$log <- FALSE
+          #algos <- list(list(description='ML.H2O.randomForest-1tree',
+                                  #algorithm = 'ML.H2O.randomForest',
+                                  #params = list(ntrees = 1)))
+
+          #algos <- append(algos, list(list(description='ML.H2O.randomForest-50trees',
+                                  #algorithm = 'ML.H2O.randomForest',
+                                  #params = list(ntrees = 50))))
+
+          #algos <- append(algos, list(list(description='ML.H2O.gbm',
+                                  #algorithm = 'ML.H2O.gbm')))
+          algos <- list()
+
+
+          algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
+                                  algorithm_params = list(alpha = 0),
+                                  params = list(nbins = c(16,40), online = TRUE))))
+
+          #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
+                                  #algorithm_params = list(ntrees=c(10,20), min_rows=1),
+                                  #params = list(nbins = c(6), online = TRUE))))
+
+          #algos <- append(algos, list(list(algorithm = 'ML.H2O.randomForest',
+                                  #algorithm_params = list(ntrees=c(10,20)),
+                                  #params = list(nbins = c(16), online = TRUE))))
+
+          algos <- append(algos, list(list(algorithm = 'condensier::speedglmR6',
+                                  #algorithm_params = list(),
+                                  params = list(nbins = c(39, 40), online = FALSE))))
+
+          #algos <- append(algos, list(list(algorithm = 'ML.Local.Speedlm',
+                                  ##algorithm_params = list(),
+                                  #params = list(nbins = c(39, 40), online = TRUE))))
+
+          #algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
+                                  #algorithm_params = list(alpha = c(0,1)),
+                                  #params = list(nbins = c(39, 40), online = FALSE))))
+
+          #algos <- append(algos, list(list(algorithm = 'condensier::glmR6',
+                                  ##algorithm_params = list(),
+                                  #params = list(nbins = c(39, 40), online = FALSE))))
+
+          private$SL.library.definition <- algos
+
+          # Run the simulations
+          self$configuration1()
+          self$configuration2()
+          self$configuration3()
+          self$configuration4()
+          self$configuration5()
+          #self$verySimpleSimulation()
+          #stopCluster(cluster)
+        },
+
+        configuration1 = function() {
+          set.seed(12345)
+
+          ######################################
+          # Generate observations for training #
+          #####################################
+          llW <- list(stochMech=function(numberOfBlocks) {
+              rnorm(numberOfBlocks, 0, 10)
+            },
+            param=c(1),
+            rgen=identity
+          )
+
+          llA <- list(
+            stochMech=function(ww) {
+              rbinom(length(ww), 1, expit(ww))
+            },
+            param=c(0.5),
+            rgen=function(xx, delta=0.05){
+              probability <- delta+(1-2*delta)*expit(xx)
+              rbinom(length(xx), 1, probability)
+            }
+          )
+
+          llY <- list(rgen={function(AW){
+            aa <- AW[, "A"]
+            ww <- AW[, grep("[^A]", colnames(AW))]
+            mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
+              (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
+            mu <- aa*(0.9) + (1-aa)*(0.3)
+            rnorm(length(mu), mu, sd=0.1)}}
+          )
+
+          # We'd like to use the following features in our estimation:
+          W <- RandomVariable$new(formula = Y ~ A + W, family = 'gaussian')
+          A <- RandomVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
+          Y <- RandomVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
+          randomVariables <- c(W, A, Y)
+
+          # Generate a dataset we will use for testing.
+          margin <- 100
+          data.test <- private$sim$simulateWAY(private$test_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
+          data.train <- private$sim$simulateWAY(private$training_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
+
+          # Create the bounds
+          bounds <- PreProcessor.generate_bounds(data.train)
+
+          # Create the measures we'd like to include in our model
+          # In this simulation we will include 2 lags and the latest data (non lagged)
+          # Define the variables in the initial dataset we'd like to use
+          #private$train(data.test, data.train, bounds, randomVariables, 2)
+          private$train(data.test, data.train, bounds, randomVariables, Y,  max_iterations = 2,
+                        llW = llW,
+                        llA = llA, 
+                        llY = llY)
+        },
+
+        configuration2 = function() {
+          set.seed(12345)
+
+          ######################################
+          # Generate observations for training #
+          #####################################
+          llW <- list(
+            list(stochMech = function(numberOfBlocks) {
+                rnorm(numberOfBlocks, 0, 10)
+              },
+              param=c(1),
+              rgen=identity),
+            list(stochMech = function(numberOfBlocks) {
+                runif(numberOfBlocks, 0, 1)
+              },
+              param=c(1),
+              rgen = identity),
+            list(stochMech = function(numberOfBlocks) {
+                runif(numberOfBlocks, 0, 1)
+              },
+              param=c(1),
+              rgen = identity)
+          )
+
+          llA <- list(
+            stochMech=function(ww) {
+                rbinom(length(ww), 1, expit(ww))
+            },
+            #param=c(-0.1, 0.1, 0.3, 0.7),
+            rgen=function(xx, delta=0.05){
+              probability <- delta+(1-2*delta)*expit(xx)
+              rbinom(length(xx), 1, probability)
+            }
+          )
+
+          llY <- list(rgen={function(AW){
+            aa <- AW[, "A"]
+            ww <- AW[, grep("[^A]", colnames(AW))]
+            mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
+              (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
+            rnorm(length(mu), mu, sd=0.01)}}
+          )
+
+          # We'd like to use the following features in our estimation:
+          W  <- RandomVariable$new(family = 'gaussian', formula = W  ~ Y_lag_1 + W2_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2)
+          W2 <- RandomVariable$new(family = 'gaussian', formula = W2 ~ W_lag_1)
+          W3 <- RandomVariable$new(family = 'gaussian', formula = W3 ~ Y_lag_1)
+          A  <- RandomVariable$new(family = 'binomial', formula = A  ~ W + Y_lag_1 + A_lag_1 + W_lag_1)
+          Y  <- RandomVariable$new(family = 'gaussian', formula = Y  ~ A + W + Y_lag_1 + A_lag_1 + W_lag_1)
+          randomVariables <- c(W, W2, W3, A, Y)
+
+          # Create the measures we'd like to include in our model
+          # In this simulation we will include 2 lags and the latest data (non lagged)
+          # Define the variables in the initial dataset we'd like to use
+
+          # Generate a dataset we will use for testing.
+          # We add a margin so we don't have to worry about the presence of enough history
+          margin <- 100
+          data.test <- private$sim$simulateWAY(private$test_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
+          data.train <- private$sim$simulateWAY(private$training_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
+
+          # Create the bounds
+          bounds <- PreProcessor.generate_bounds(data.train)
+
+          # Create the measures we'd like to include in our model
+          # In this simulation we will include 2 lags and the latest data (non lagged)
+          # Define the variables in the initial dataset we'd like to use
+          private$train(data.test, data.train, bounds, randomVariables, Y, max_iterations = 2, llW, llA, llY)
+        },
+
+        configuration3 = function() {
+          set.seed(12345)
+
+          ######################################
+          # Generate observations for training #
+          #####################################
+          llW <- list(
+            list(stochMech = function(numberOfBlocks) {
+                rnorm(numberOfBlocks, 0, 10)
+              },
+              param=c(0, 0.5, -0.25, 0.1),
+              rgen=identity),
+            list(stochMech = function(numberOfBlocks) {
+                runif(numberOfBlocks, 0, 1)
+              },
+              param = c(0, 0.5),
+              rgen = identity),
+            list(stochMech = function(numberOfBlocks) {
+                runif(numberOfBlocks, 0, 1)
+              },
+              param = c(0, 0.5),
+              rgen = identity)
+          )
+
+          llA <- list(
+            stochMech=function(ww) {
+                rbinom(length(ww), 1, expit(ww))
+            },
+            param=c(-0.1, 0.1, 0.3, 0.7),
+            rgen=function(xx, delta=0.05){
+              probability <- delta+(1-2*delta)*expit(xx)
+              rbinom(length(xx), 1, probability)
+            }
+          )
+
+          llY <- list(rgen={function(AW){
+            aa <- AW[, "A"]
+            ww <- AW[, grep("[^A]", colnames(AW))]
+            mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
+              (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
+            rnorm(length(mu), mu, sd=0.01)}}
+          )
+
+          # We'd like to use the following features in our estimation:
+          W  <- RandomVariable$new(family = 'gaussian', formula = W  ~ Y_lag_1 + W2_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2)
+          W2 <- RandomVariable$new(family = 'gaussian', formula = W2 ~ W_lag_1)
+          W3 <- RandomVariable$new(family = 'gaussian', formula = W3 ~ Y_lag_1)
+          A  <- RandomVariable$new(family = 'binomial', formula = A  ~ W + Y_lag_1 + A_lag_1 + W_lag_1)
+          Y  <- RandomVariable$new(family = 'gaussian', formula = Y  ~ A + W + Y_lag_1 + A_lag_1 + W_lag_1)
+          randomVariables <- c(W, W2, W3, A, Y)
+
+          # Create the measures we'd like to include in our model
+          # In this simulation we will include 2 lags and the latest data (non lagged)
+          # Define the variables in the initial dataset we'd like to use
+
+          # Generate a dataset we will use for testing.
+          # We add a margin so we don't have to worry about the presence of enough history
+          margin <- 100
+          data.test <- private$sim$simulateWAY(private$test_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
+          data.train <- private$sim$simulateWAY(private$training_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
+
+          # Create the bounds
+          bounds <- PreProcessor.generate_bounds(data.train)
+
+          # Create the measures we'd like to include in our model
+          # In this simulation we will include 2 lags and the latest data (non lagged)
+          # Define the variables in the initial dataset we'd like to use
+          private$train(data.test, data.train, bounds, randomVariables, Y, max_iterations = 2, llW, llA, llY)
+        },
+
+        configuration4 = function() {
+        },
+
+        configuration5 = function() {
+        }
+  ),
   private =
     list(
         sim = NULL,
@@ -94,7 +363,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           cat('Approximating truth...\n')
           result.approx <- foreach(i=seq(B), .combine=rbind) %dopar% {
-            print('Hier')
+            print(i)
             data.int <- private$sim$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
                                               intervention = intervention, verbose = FALSE)
             data.int$Y[tau]
@@ -120,7 +389,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           O_0 <- data.test[1,]
           cat('Sampling from Pn* (for approximation)\n')
           outcome <- variable_of_interest$getY
-          result <- foreach(i=seq(B), .combine=rbind) %do% {
+          result <- foreach(i=seq(B), .combine=rbind) %dopar% {
             print(i)
             osl$sample_iteratively(data = O_0,
                                    randomVariables = randomVariables,
@@ -161,212 +430,16 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           # Now, the fimal step is to apply the OneStepEstimator
           result.approx.mean.update <- OnlineOneStepEstimator.perform(osl = osl,
-                                                               initial_estimate = result.mean,
-                                                               randomVariables = randomVariables,
-                                                               data = data.test, 
-                                                               variable_of_interest = variable_of_interest,
-                                                               intervention = intervention,
-                                                               tau = tau,
-                                                               B = B) 
+                                                                      initial_estimate = result.mean,
+                                                                      randomVariables = randomVariables,
+                                                                      data = data.test, 
+                                                                      variable_of_interest = variable_of_interest,
+                                                                      intervention = intervention,
+                                                                      tau = tau,
+                                                                      B = B) 
 
           print(paste('The difference between the estimate and approximation (after oos) is: ',
                       abs(result.mean - result.approx.mean.update$oos_estimate)))
-        }
-        ),
-  public =
-    list(
-        initialize = function() {
-          condensier_options(parfit=FALSE)
-          cat('Starting calculation with ', parallel::detectCores(),' cores\n')
-          #doParallel::registerDoParallel(cores = parallel::detectCores())
-          cluster <- makeCluster(parallel::detectCores())
-          doSNOW::registerDoSNOW(cluster)
-
-          options(warn=1)
-          private$sim  <- Simulator.GAD$new()
-          private$training_set_size <- 1e3
-          private$cv_risk_calculator <- CrossValidationRiskCalculator$new()
-          private$test_set_size <- 100
-          private$log <- Arguments$getVerbose(-8, timestamp=TRUE)
-          private$log <- FALSE
-          #algos <- list(list(description='ML.H2O.randomForest-1tree',
-                                  #algorithm = 'ML.H2O.randomForest',
-                                  #params = list(ntrees = 1)))
-
-          #algos <- append(algos, list(list(description='ML.H2O.randomForest-50trees',
-                                  #algorithm = 'ML.H2O.randomForest',
-                                  #params = list(ntrees = 50))))
-
-          #algos <- append(algos, list(list(description='ML.H2O.gbm',
-                                  #algorithm = 'ML.H2O.gbm')))
-          algos <- list()
-
-
-          algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                                  algorithm_params = list(alpha = 0),
-                                  params = list(nbins = c(16,40), online = TRUE))))
-
-          #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
-                                  #algorithm_params = list(ntrees=c(10,20), min_rows=1),
-                                  #params = list(nbins = c(6), online = TRUE))))
-
-          #algos <- append(algos, list(list(algorithm = 'ML.H2O.randomForest',
-                                  #algorithm_params = list(ntrees=c(10,20)),
-                                  #params = list(nbins = c(16), online = TRUE))))
-
-          algos <- append(algos, list(list(algorithm = 'condensier::speedglmR6',
-                                  #algorithm_params = list(),
-                                  params = list(nbins = c(39, 40), online = FALSE))))
-
-          #algos <- append(algos, list(list(algorithm = 'ML.Local.Speedlm',
-                                  ##algorithm_params = list(),
-                                  #params = list(nbins = c(39, 40), online = TRUE))))
-
-          #algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
-                                  #algorithm_params = list(alpha = c(0,1)),
-                                  #params = list(nbins = c(39, 40), online = FALSE))))
-
-          #algos <- append(algos, list(list(algorithm = 'condensier::glmR6',
-                                  ##algorithm_params = list(),
-                                  #params = list(nbins = c(39, 40), online = FALSE))))
-
-          private$SL.library.definition <- algos
-
-          # Run the simulations
-          self$basicRegressionWithLags()
-          #self$verySimpleSimulation()
-          stopCluster(cluster)
-        },
-
-        basicRegressionWithLagsAndJustWAY = function() {
-          set.seed(12345)
-
-          ######################################
-          # Generate observations for training #
-          #####################################
-          llW <- list(stochMech=function(numberOfBlocks) {
-                        rnorm(numberOfBlocks, 0, 10)
-                      },
-                      param=c(0, 0.5, -0.25, 0.1),
-                      rgen=identity)
-
-          llA <- list(
-            stochMech=function(ww) {
-                rbinom(length(ww), 1, expit(ww))
-            },
-            param=c(-0.1, 0.1, 0.25),
-            rgen=function(xx, delta=0.05){
-              probability <- delta+(1-2*delta)*expit(xx)
-              rbinom(length(xx), 1, probability)
-            }
-          )
-
-          llY <- list(rgen={function(AW){
-            aa <- AW[, "A"]
-            ww <- AW[, grep("[^A]", colnames(AW))]
-            mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
-              (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
-            mu <- aa*(0.9) + (1-aa)*(0.3)
-            rnorm(length(mu), mu, sd=0.1)}})
-
-
-          # We'd like to use the following features in our estimation:
-          W <- RandomVariable$new(formula = Y ~ A + W, family = 'gaussian')
-          A <- RandomVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
-          Y <- RandomVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
-          randomVariables <- c(W, A, Y)
-
-          # Generate a dataset we will use for testing.
-          margin <- 100
-          data.test <- private$sim$simulateWAY(private$test_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
-          data.train <- private$sim$simulateWAY(private$training_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
-
-          # Create the bounds
-          bounds <- PreProcessor.generate_bounds(data.train)
-
-          # Create the measures we'd like to include in our model
-          # In this simulation we will include 2 lags and the latest data (non lagged)
-          # Define the variables in the initial dataset we'd like to use
-          #private$train(data.test, data.train, bounds, randomVariables, 2)
-          private$train(data.test, data.train, bounds, randomVariables, Y,  max_iterations = 2,
-                        llW = llW,
-                        llA = llA, 
-                        llY = llY)
-        },
-
-        basicRegressionWithLags = function() {
-          set.seed(12345)
-
-          ######################################
-          # Generate observations for training #
-          #####################################
-          #llW <- list(stochMech=function(numberOfBlocks) {
-                        #rnorm(numberOfBlocks, 0, 10)
-                      #},
-                      #param=c(0, 0.5, -0.25, 0.1),
-                      #rgen=identity)
-
-          llW <- list(list(stochMech = function(numberOfBlocks) {
-                        rnorm(numberOfBlocks, 0, 10)
-                      },
-                      param=c(0, 0.5, -0.25, 0.1),
-                      rgen=identity),
-                    list(stochMech = function(numberOfBlocks) {
-                        runif(numberOfBlocks, 0, 1)
-                      },
-                      param = c(0, 0.5),
-                      rgen = identity),
-                    list(stochMech = function(numberOfBlocks) {
-                        runif(numberOfBlocks, 0, 1)
-                      },
-                      param = c(0, 0.5),
-                      rgen = identity)
-                    )
-
-          llA <- list(
-            stochMech=function(ww) {
-                rbinom(length(ww), 1, expit(ww))
-            },
-            param=c(-0.1, 0.1, 0.25),
-            rgen=function(xx, delta=0.05){
-              probability <- delta+(1-2*delta)*expit(xx)
-              rbinom(length(xx), 1, probability)
-            }
-          )
-
-          llY <- list(rgen={function(AW){
-            aa <- AW[, "A"]
-            ww <- AW[, grep("[^A]", colnames(AW))]
-            mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
-              (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
-            mu <- aa*(0.9) + (1-aa)*(0.3)
-            rnorm(length(mu), mu, sd=0.0001)}})
-
-          # We'd like to use the following features in our estimation:
-          W  <- RandomVariable$new(family = 'gaussian', formula = W  ~ Y_lag_1 + W2_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2)
-          W2 <- RandomVariable$new(family = 'gaussian', formula = W2 ~ W_lag_1)
-          W3 <- RandomVariable$new(family = 'gaussian', formula = W3 ~ Y_lag_1)
-          A  <- RandomVariable$new(family = 'binomial', formula = A  ~ W + Y_lag_1 + A_lag_1 + W_lag_1)
-          Y  <- RandomVariable$new(family = 'gaussian', formula = Y  ~ A + W + Y_lag_1 + A_lag_1 + W_lag_1)
-          randomVariables <- c(W, W2, W3, A, Y)
-
-          # Create the measures we'd like to include in our model
-          # In this simulation we will include 2 lags and the latest data (non lagged)
-          # Define the variables in the initial dataset we'd like to use
-
-          # Generate a dataset we will use for testing.
-          # We add a margin so we don't have to worry about the presence of enough history
-          margin <- 100
-          data.test <- private$sim$simulateWAY(private$test_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
-          data.train <- private$sim$simulateWAY(private$training_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
-
-          # Create the bounds
-          bounds <- PreProcessor.generate_bounds(data.train)
-
-          # Create the measures we'd like to include in our model
-          # In this simulation we will include 2 lags and the latest data (non lagged)
-          # Define the variables in the initial dataset we'd like to use
-          private$train(data.test, data.train, bounds, randomVariables, Y, max_iterations = 2, llW, llA, llY)
         }
   )
 )
