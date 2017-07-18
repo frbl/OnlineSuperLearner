@@ -534,10 +534,13 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           started = FALSE
 
           ## We need to sample sequentially here, just so we can plugin the value everytime in the next evaluation
+          private$verbose && enter(private$verbose, 'Sampling from PN*')
           for (t in seq(tau)) {
             current_denormalized_observation <- list()
+            private$verbose && enter(private$verbose,'Sampling at ', t)
             for (rv in randomVariables) {
               current_outcome <- rv$getY
+              private$verbose && enter(private$verbose, 'Working on randomvariable ', current_outcome)
               if (!started && !equals(current_outcome, start_from$getY)) {
                 ## The current outcome lies in the past, so it might be that we
                 ## need it later, don't remove it
@@ -569,13 +572,16 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
               ## We need to add the [[1]] because the result is a list of lists (1st norm/denorm, then estimator, then
               ## values)
               data[,  (current_outcome) := as.numeric(outcome$normalized[[1]]) ]
+              private$verbose && exit(private$verbose)
               current_denormalized_observation[[current_outcome]] <- outcome$denormalized[[1]] %>%
                 as.numeric
             }
+            private$verbose && exit(private$verbose)
             result_denormalized_observations <- rbindlist(list(result_denormalized_observations, current_denormalized_observation), fill=TRUE)
             result <- rbind(result, data)
             if(t != tau)  data <- private$summaryMeasureGenerator$getLatestCovariates(data)
           }
+          private$verbose && exit(private$verbose)
           if (return_type == 'observations') {
             ## Return the denormalized observations?
             #return(result_denormalized_observations)

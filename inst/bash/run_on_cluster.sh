@@ -1,8 +1,8 @@
 #!/usr/bin/env sh
 server_name=peregrine
 server_name=peregrine-interactive
-#scp -r * peregrine:~/osl
-rsync -ue ssh . peregrine:~/osl
+scp -r * $server_name:~/osl
+#rsync -ue ssh ./ peregrine:~/osl
 if [[ $server_name != 'peregrine-interactive' ]]; then
   ssh $server_name -t 'cd osl; srun --ntasks=1 --cpus-per-task=22 --time=00:30:00 --partition=nodes Rscript run.R'
 else
