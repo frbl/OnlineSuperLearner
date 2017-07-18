@@ -381,11 +381,13 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$dosl.estimators <- rbindlist(current_risk) %>%
             ## Get the first if there are multiple best ones
             sapply(., function(algorithm_scores) {
-              ## We do it this way as the OSL might also get selected. This might be something we want, but for now
-              ## the discrete SL can only be one of the candidates, and not the OSL.
               ids <- sort(algorithm_scores, index.return=TRUE)$ix
+              ## We do it this way as the OSL might also get selected. This
+              ## might be something we want, but for now the discrete SL can
+              ## only be one of the candidates, and not the OSL.
               for(name in names(current_risk)[ids]) {
                 if(name %in% names(private$SL.library.fabricated)) {
+                  private$verbose && cat(private$verbose, 'Selecting ', name)
                   return(private$SL.library.fabricated[[name]])
                 }
               }
@@ -445,7 +447,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           print('\n-------------------------------------')
           print('The online super learner (DSC) was fit using the following estimators:')
           print('-------------------------------------')
-          print(self$get_dosl)
+          lapply(self$get_dosl, function(estimator) {list(estimator$get_estimator_type, bins=estimator$get_nbins)}) %>%
+            print
           print('\n-------------------------------------')
           print('The cross validated risk of each estimator is')
           print('-------------------------------------')

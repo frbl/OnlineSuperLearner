@@ -131,6 +131,13 @@ LibraryFactory <- R6Class("LibraryFactory",
           })
           names(fabricatedLibrary) <- SL.library
           return(fabricatedLibrary)
+        },
+
+        inject_names_in_estimators = function(fabricatedLibrary) {
+          # Not a very elegant nor efficient solution, but clear and simple
+          for (i in seq_along(fabricatedLibrary)) {
+            fabricatedLibrary[[i]]$set_name(names(fabricatedLibrary)[[i]])
+          }
         }
         ),
   active =
@@ -170,6 +177,9 @@ LibraryFactory <- R6Class("LibraryFactory",
             ## if it is not a list, assume it is a vector or string
             fabricatedLibrary <- private$fabricateDefault(SL.library)
           }
+
+          # Set a name in each of the fabricated estimators.
+          private$inject_names_in_estimators(fabricatedLibrary)
           return(fabricatedLibrary)
         },
 

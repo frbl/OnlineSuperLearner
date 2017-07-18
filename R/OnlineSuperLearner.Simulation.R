@@ -8,6 +8,7 @@
 #' @importFrom doParallel registerDoParallel
 #' @importFrom foreach foreach
 #' @include RandomVariable.R
+#' @include OutputPlotGenerator.R
 #' @include SMGFactory.R
 #' @include SMG.Latest.Entry.R
 #' @include SMG.Lag.R
@@ -23,7 +24,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           options(warn=1)
           private$sim  <- Simulator.GAD$new()
-          private$training_set_size <- 1e3
+          private$training_set_size <- 1e4
           private$cv_risk_calculator <- CrossValidationRiskCalculator$new()
           private$test_set_size <- 100
           private$log <- Arguments$getVerbose(-8, timestamp=TRUE)
@@ -43,7 +44,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
                                   algorithm_params = list(alpha = 0),
-                                  params = list(nbins = c(16,40), online = TRUE))))
+                                  params = list(nbins = c(10, 20, 30, 40), online = TRUE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
                                   #algorithm_params = list(ntrees=c(10,20), min_rows=1),
@@ -53,17 +54,17 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   #algorithm_params = list(ntrees=c(10,20)),
                                   #params = list(nbins = c(16), online = TRUE))))
 
-          algos <- append(algos, list(list(algorithm = 'condensier::speedglmR6',
-                                  #algorithm_params = list(),
-                                  params = list(nbins = c(39, 40), online = FALSE))))
-
-          #algos <- append(algos, list(list(algorithm = 'ML.Local.Speedlm',
+          #algos <- append(algos, list(list(algorithm = 'condensier::speedglmR6',
                                   ##algorithm_params = list(),
-                                  #params = list(nbins = c(39, 40), online = TRUE))))
-
-          #algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
-                                  #algorithm_params = list(alpha = c(0,1)),
                                   #params = list(nbins = c(39, 40), online = FALSE))))
+
+          algos <- append(algos, list(list(algorithm = 'ML.Local.Speedlm',
+                                  #algorithm_params = list(),
+                                  params = list(nbins = c(10, 20, 30, 40), online = FALSE))))
+
+          algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
+                                  algorithm_params = list(alpha = c(0.3,0.8)),
+                                  params = list(nbins = c(10, 20, 30, 40), online = FALSE))))
 
           #algos <- append(algos, list(list(algorithm = 'condensier::glmR6',
                                   ##algorithm_params = list(),
@@ -73,10 +74,10 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           # Run the simulations
           self$configuration1()
-          self$configuration2()
-          self$configuration3()
-          self$configuration4()
-          self$configuration5()
+          #self$configuration2()
+          #self$configuration3()
+          #self$configuration4()
+          #self$configuration5()
           #self$verySimpleSimulation()
           #stopCluster(cluster)
         },
@@ -84,9 +85,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
         configuration1 = function() {
           set.seed(12345)
 
-          ######################################
-          # Generate observations for training #
-          #####################################
+          # Generate the true data generating distributions
           llW <- list(stochMech=function(numberOfBlocks) {
               rnorm(numberOfBlocks, 0, 10)
             },
@@ -111,13 +110,18 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
             mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
               (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
             mu <- aa*(0.9) + (1-aa)*(0.3)
-            rnorm(length(mu), mu, sd=0.1)}}
+
+            xx <- rnorm(length(mu), mu, sd=0.01)
+            delta <- 0.05
+            probability <- delta+(1-2*delta)*expit(xx)
+            rbinom(length(xx), 1, probability)
+            }}
           )
 
           # We'd like to use the following features in our estimation:
           W <- RandomVariable$new(formula = Y ~ A + W, family = 'gaussian')
           A <- RandomVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
-          Y <- RandomVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
+          Y <- RandomVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'binomial')
           randomVariables <- c(W, A, Y)
 
           # Generate a dataset we will use for testing.
@@ -330,7 +334,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           # Calculate prediction quality
           observed.outcome <- data.test[, outcome.variables, with=FALSE]
-          predicted.outcome <- osl$predict(data = copy(data.test), randomVariables)
+          predicted.outcome <- osl$predict(data = copy(data.test), randomVariables, plot= TRUE)
 
           performance <- 
             private$cv_risk_calculator$calculate_evaluation(predicted.outcome = predicted.outcome,
@@ -347,7 +351,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           #performances
           intervention <- list(variable = 'A', when = c(2), what = c(1))
           tau = 2
-          B <- 100
+          B <- 1000
 
           pre <- options('warn')$warn
           options(warn=-1)
@@ -355,9 +359,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           data.aisset <- copy(data.test)
           result <- osl$predict(data = data.aisset,
                         randomVariables = randomVariables,
-                        all_estimators = FALSE,
+                        all_estimators = TRUE,
                         discrete = TRUE,
-                        continuous = FALSE,
+                        continuous = TRUE,
                         sample = TRUE,
                         plot = TRUE)[[1]]
 
@@ -409,37 +413,31 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           print(paste('The difference between the estimate and approximation (before oos) is: ',
                       abs(result.mean - result.approx.mean)))
 
-          #result
 
           # Plot the convergence
-          #y1 <- cumsum(result.approx)/seq(along=result.approx)
-          #y2 <- cumsum(result)/seq(along=result)
-
-          #dir.create('/tmp/osl/', showWarnings = FALSE, recursive = TRUE)
-          #pdf('/tmp/osl/difference.pdf')
-          #plot(y1, ylim=range(c(y1, y2)))
-          #par(new=TRUE)
-          #plot(y2, ylim=range(c(y1, y2)), col="red", axes = FALSE, xlab = "", ylab = "")
-          #dev.off()
+          OutputPlotGenerator.create_convergence_plot(truth_approximation = result.approx,
+                                                      estimated_approximation = result,
+                                                      output = 'convergence')
 
           #browser()
+          osl$info
+          print('')
 
-          #osl$info
 
           #lapply(performance, function(x) {lapply(x,mean)})
 
           # Now, the fimal step is to apply the OneStepEstimator
-          result.approx.mean.update <- OnlineOneStepEstimator.perform(osl = osl,
-                                                                      initial_estimate = result.mean,
-                                                                      randomVariables = randomVariables,
-                                                                      data = data.test, 
-                                                                      variable_of_interest = variable_of_interest,
-                                                                      intervention = intervention,
-                                                                      tau = tau,
-                                                                      B = B) 
+          #result.approx.mean.update <- OnlineOneStepEstimator.perform(osl = osl,
+                                                                      #initial_estimate = result.mean,
+                                                                      #randomVariables = randomVariables,
+                                                                      #data = data.test, 
+                                                                      #variable_of_interest = variable_of_interest,
+                                                                      #intervention = intervention,
+                                                                      #tau = tau,
+                                                                      #B = B) 
 
-          print(paste('The difference between the estimate and approximation (after oos) is: ',
-                      abs(result.mean - result.approx.mean.update$oos_estimate)))
+          #print(paste('The difference between the estimate and approximation (after oos) is: ',
+                      #abs(result.mean - result.approx.mean.update$oos_estimate)))
         }
   )
 )
