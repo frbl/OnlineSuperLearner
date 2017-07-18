@@ -15,7 +15,10 @@ ML.GLMnet <- R6Class("ML.GLMnet",
 
         private$params <- list(family  = Arguments$getCharacter(family),
                               alpha   = Arguments$getNumeric(alpha, c(0, 1)),
-                              nlambda  = Arguments$getNumeric(nlambda, c(1, Inf)))
+                              nlambda  = Arguments$getNumeric(nlambda, c(1, Inf)),
+                              standardize = FALSE,
+                              intercept = TRUE
+                              )
 
         self$get_validity
         super$initialize()
