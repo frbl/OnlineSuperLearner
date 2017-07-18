@@ -32,6 +32,32 @@ test_that("it should work with any start from (either NULL or a value)", {
   skip('not yet tested')  
 })
 
+context(' is_online')
+test_that("it should return true if all estimators are online", {
+  SL.Library <- list()
+
+  SL.Library <- append(SL.Library, list(list(algorithm = 'ML.H2O.randomForest',
+                          params = list(online = TRUE))))
+
+  SL.Library <- append(SL.Library, list(list(algorithm = 'condensier::speedglmR6',
+                          params = list(online = TRUE))))
+
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG)
+  expect_true(subject$is_online)
+})
+
+test_that("it should return false if any estimators is not online", {
+  SL.Library <- list()
+  SL.Library <- append(SL.Library, list(list(algorithm = 'ML.H2O.randomForest',
+                          params = list(online = FALSE))))
+
+  SL.Library <- append(SL.Library, list(list(algorithm = 'condensier::speedglmR6',
+                          params = list(online = TRUE))))
+
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG)
+  expect_false(subject$is_online)
+})
+
 context(' is_fitted') 
 test_that("it should return the fitted status of the osl", {
   SL.Library <- 'ML.Local.lm'
