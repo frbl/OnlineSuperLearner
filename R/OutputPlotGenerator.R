@@ -48,15 +48,52 @@ OutputPlotGenerator.create_density_plot = function(yValues, estimated_probabilit
 #'
 #' @param truth_approximation the truth (i.e., as found using simulation / monte carlo approximation)
 #' @param estimated_approximation the estimate (i.e., as found using machine learning and monte carlo approximation)
+#' @import ggplot2
+#' @import reshape2
 #' @export
-OutputPlotGenerator.create_convergence_plot = function(truth_approximation, estimated_approximation, output, dir = '~/tmp/osl/') {
-  y1 <- cumsum(truth_approximation)/seq(along=truth_approximation)
-  y2 <- cumsum(estimated_approximation)/seq(along=estimated_approximation)
-
+OutputPlotGenerator.create_convergence_plot = function(data, output, dir = '~/tmp/osl/') {
+  labels = names(data)
+  colors <- OutputPlotGenerator.get_colors(length(labels))
   dir.create(dir, showWarnings = FALSE, recursive = TRUE)
   pdf(paste(dir,output,'.pdf',sep = ''))
-  plot(y1, ylim=range(c(y1, y2)))
-  par(new=TRUE)
-  plot(y2, ylim=range(c(y1, y2)), col="red", axes = FALSE, xlab = "", ylab = "")
+
+  data <- lapply(data, function(dat) cumsum(dat)/seq(along=dat)) %>%
+    as.data.frame
+
+  data$epoch <- seq(nrow(data))
+  data <- melt(data, id.vars='epoch')
+
+  plotje <- ggplot(data,aes(epoch,value,color=variable))+
+    geom_line() + 
+    scale_color_manual(values = colors[seq_along(labels)])+
+    theme(panel.background = element_rect(fill = 'transparent', colour = 'black', size=1))+
+    scale_y_continuous(name="")+
+    theme(axis.text.y = element_text(colour = "black") ) +
+    theme(axis.text.x = element_text(colour = "black") ) +
+    theme(axis.title.x = element_text(vjust = -0.5)) +
+    theme(legend.title = element_blank())+
+    theme(legend.position="bottom")+
+    theme(legend.background = element_rect(colour="transparent"))+
+    theme(legend.key = element_rect(fill = "transparent", colour = "transparent")) +
+    theme(legend.key.size= unit(3,"lines"))
+
+  plot(plotje)
   dev.off()
+}
+
+OutputPlotGenerator.get_colors = function(number_of_variables) {
+  list(
+    tol1qualitative=c("#4477AA"),
+    tol2qualitative=c("#4477AA", "#CC6677"),
+    tol3qualitative=c("#4477AA", "#DDCC77", "#CC6677"),
+    tol4qualitative=c("#4477AA", "#117733", "#DDCC77", "#CC6677"),
+    tol5qualitative=c("#332288", "#88CCEE", "#117733", "#DDCC77", "#CC6677"),
+    tol6qualitative=c("#332288", "#88CCEE", "#117733", "#DDCC77", "#CC6677","#AA4499"),
+    tol7qualitative=c("#332288", "#88CCEE", "#44AA99", "#117733", "#DDCC77", "#CC6677","#AA4499"),
+    tol8qualitative=c("#332288", "#88CCEE", "#44AA99", "#117733", "#999933", "#DDCC77", "#CC6677","#AA4499"),
+    tol9qualitative=c("#332288", "#88CCEE", "#44AA99", "#117733", "#999933", "#DDCC77", "#CC6677", "#882255", "#AA4499"),
+    tol10qualitative=c("#332288", "#88CCEE", "#44AA99", "#117733", "#999933", "#DDCC77", "#661100", "#CC6677", "#882255", "#AA4499"),
+    tol11qualitative=c("#332288", "#6699CC", "#88CCEE", "#44AA99", "#117733", "#999933", "#DDCC77", "#661100", "#CC6677", "#882255", "#AA4499"),
+    tol12qualitative=c("#332288", "#6699CC", "#88CCEE", "#44AA99", "#117733", "#999933", "#DDCC77", "#661100", "#CC6677", "#AA4466", "#882255", "#AA4499")
+  )[[number_of_variables]]
 }

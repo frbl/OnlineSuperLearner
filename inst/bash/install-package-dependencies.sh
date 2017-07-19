@@ -3,6 +3,7 @@
 options(repos = structure(c(CRAN = "http://cran-mirror.cs.uu.nl/")))
 packages <- c(
 "devtools",
+"ggplot2",
 "mockery",
 "RCurl",
 "jsonlite",
