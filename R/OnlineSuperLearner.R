@@ -228,7 +228,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           # If not all estimators are online, we have to keep track of a cache of data.
           private$update_cache(newdata = data)
 
-          result <- lapply(private$SL.library.fabricated, function(estimator) {
+          #private$SL.library.fabricated <- mclapply(private$SL.library.fabricated, function(estimator) {
+          for(estimator in private$SL.library.fabricated) {
             if(self$is_fitted && estimator$is_online) {
               # Note that we use the data here, and not the cache, as
               # essentially this cache will be  empty if none of the algorithms
@@ -238,9 +239,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             } else {
               estimator$fit(private$data_cache, randomVariables = randomVariables)
             }
-          })
+            #estimator
+          }
+          #}, mc.cores = 23)
           private$verbose && exit(private$verbose)
-          result
         },
 
         ## Functions
@@ -527,7 +529,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## Samples the data iteratively from the fitted distribution, and applies an intervention if necessary
         ## @param tau is the time at which we want to measure the outcome
         sample_iteratively = function(data, randomVariables, tau = 10, intervention = NULL, discrete = TRUE, return_type = 'observations', start_from = NULL) {
-
           randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
           randomVariables <- RandomVariable.find_ordering(randomVariables)
 
@@ -541,16 +542,15 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           if(!is.null(intervention)) {
             intervention <- Arguments$getInstanceOf(intervention, 'list')
-            valid_intervention <- is.numeric(intervention$when) &
-            is.numeric(intervention$what) &
-            is.character(intervention$variable) &
-            length(intervention$when) == length(intervention$what)
+            valid_intervention <- is.numeric(intervention$when) &&
+              is.numeric(intervention$what) &&
+              is.character(intervention$variable) &&
+              length(intervention$when) == length(intervention$what)
 
             if(!valid_intervention) throw('The intervention specified is not correct! it should have a when (specifying t), a what (specifying the intervention) and a variable (specifying the name of the variable to intervene on).')
           }
 
           if (is.null(start_from)) {
-            ## We assume the randomVariables are ordered when they come in!
             start_from <- randomVariables[[1]]
           }
           start_from <- Arguments$getInstanceOf(start_from, 'RandomVariable')
@@ -558,7 +558,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           result <- data.table()
           result_denormalized_observations <- data.table(matrix(nrow=0, ncol=length(randomVariables)))
           colnames(result_denormalized_observations) <- names(randomVariables)
-
 
           ## Just to be certain we don't use future data, we remove a subset:
           remove_vars <- names(randomVariables)
@@ -608,15 +607,20 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                 as.numeric
             }
             private$verbose && exit(private$verbose)
-            result_denormalized_observations <- rbindlist(list(result_denormalized_observations, current_denormalized_observation), fill=TRUE)
+            result_denormalized_observations <- 
+              rbindlist(list(
+                             result_denormalized_observations, 
+                             current_denormalized_observation), 
+                        fill=TRUE)
+
             result <- rbind(result, data)
-            if(t != tau)  data <- private$summaryMeasureGenerator$getLatestCovariates(data)
+            if(t < tau)  data <- private$summaryMeasureGenerator$getLatestCovariates(data)
           }
           private$verbose && exit(private$verbose)
           if (return_type == 'observations') {
             ## Return the denormalized observations?
-            #return(result_denormalized_observations)
-            return(result[,names(randomVariables), with = FALSE])
+            return(result_denormalized_observations[,names(randomVariables), with = FALSE])
+            #return(result[,names(randomVariables), with = FALSE])
           } else if (return_type == 'summary_measures') {
             return(result[, !names(randomVariables), with = FALSE])
           }

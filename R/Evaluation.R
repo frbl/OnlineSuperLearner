@@ -6,23 +6,23 @@
 Evaluation.get_evaluation_function = function(family, useAsLoss=TRUE) {
   return(Evaluation.log_likelihood_loss)
 
-  if(useAsLoss){
-    return(Evaluation.log_likelihood_loss)
-    ##if (family == 'gaussian') {
-      ##return(Evaluation.mse_loss)
-    ##} else if(family == 'binomial') {
-      ##return(Evaluation.log_loss)
-    ##} else {
-      ##throw('No loss function implemented for family ', family)
-    ##}
-  }
-  if (family == 'gaussian') {
-    return(Evaluation.root_mean_squared_error)
-  } else if(family == 'binomial') {
-    return(Evaluation.accuracy)
-  } else {
-    throw('No evaluation measure implemented for family ', family)
-  }
+  ##if(useAsLoss){
+    ##return(Evaluation.log_likelihood_loss)
+    ####if (family == 'gaussian') {
+      ####return(Evaluation.mse_loss)
+    ####} else if(family == 'binomial') {
+      ####return(Evaluation.log_loss)
+    ####} else {
+      ####throw('No loss function implemented for family ', family)
+    ####}
+  ##}
+  ##if (family == 'gaussian') {
+    ##return(Evaluation.root_mean_squared_error)
+  ##} else if(family == 'binomial') {
+    ##return(Evaluation.accuracy)
+  ##} else {
+    ##throw('No evaluation measure implemented for family ', family)
+  ##}
 }
 
 #' Accuracy caluclator
