@@ -81,6 +81,11 @@ OutputPlotGenerator.create_convergence_plot = function(data, output, dir = '~/tm
   dev.off()
 }
 
+
+OutputPlotGenerator.create_risk_plot = function(risks, output, dir = '~/tmp/osl/') {
+
+}
+
 OutputPlotGenerator.get_colors = function(number_of_variables) {
   list(
     tol1qualitative=c("#4477AA"),

@@ -22,7 +22,8 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
     list(
         minimal.measurements.needed = NULL,
 
-        initialize = function(data = NULL, SMG.list, verbose = FALSE, pre_processor = NULL) {
+        initialize = function(data = NULL, SMG.list, verbose = FALSE, pre_processor = NULL, number_of_observations_per_timeseries = Inf) {
+          private$number_of_observations_per_timeseries <- Arguments$getInteger(number_of_observations_per_timeseries , c(1,Inf))
           private$data <- data
           private$SMG.list <- SMG.list
           private$verbose <- verbose
@@ -64,15 +65,22 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
           private$data = data
         },
 
+
         # This function will fill the cache with the first N measurements if the cache is empty
         fillCache = function() {
           private$checkDataAvailable()
+
           # If no history is needed, we don't have to fill the cache
           if(self$minimal.measurements.needed == 0) return(FALSE)
 
+          # If the timeseries we are requesting is a new one (i.e., the next
+          # person when multiple timeseries are provided) we should reset the
+          # cache, so we don't mixup the summarymeasures.
+          if(self$is_new_timeseries) self$reset()
+
           extraMeasurementsNeeded <- nrow(self$getCache) - self$minimal.measurements.needed
           if(extraMeasurementsNeeded < 0) {
-            private$cache <- private$get_next_normalized(n=abs(extraMeasurementsNeeded))
+            private$cache <- private$get_next_normalized(n = abs(extraMeasurementsNeeded))
             return(TRUE)
           }
           FALSE
@@ -127,6 +135,12 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
           private$normalized
         },
 
+        is_new_timeseries = function() {
+          ts <- ((self$get_data_object$get_currentrow - 1) %% private$number_of_observations_per_timeseries) + 1
+          # We do the nan check here because x %% Inf is nan...
+          !is.nan(ts) && ts == 1
+        },
+
         getCache = function(){
           return(private$cache)
         },
@@ -142,6 +156,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
   private =
     list(
         data = NULL,
+        number_of_observations_per_timeseries = NULL,
         cache = data.table(),
         SMG.list = NULL,
         verbose = NULL,
