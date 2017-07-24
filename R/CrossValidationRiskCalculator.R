@@ -51,8 +51,8 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
         },
 
         calculate_evaluation = function(predicted.outcome, observed.outcome, randomVariables, add_evaluation_measure_name=TRUE) {
-          if ('denormalized' %in% names(predicted.outcome)) {
-            predicted.outcome = predicted.outcome$denormalized
+          if ('normalized' %in% names(predicted.outcome)) {
+            predicted.outcome = predicted.outcome$normalized
           }
 
           evaluate <- function(current.predicted.outcome) {
@@ -84,8 +84,8 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
         ## Calculate the CV risk for each of the random variables provided
         ## Output is a list of lists
         calculate_risk = function(predicted.outcome, observed.outcome, randomVariables){
-          if ('denormalized' %in% names(predicted.outcome)) {
-            predicted.outcome = predicted.outcome$denormalized
+          if ('normalized' %in% names(predicted.outcome)) {
+            predicted.outcome = predicted.outcome$normalized
           }
             
           predicted.outcome <- Arguments$getInstanceOf(predicted.outcome, 'list')

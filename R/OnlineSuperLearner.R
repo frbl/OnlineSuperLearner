@@ -1,4 +1,4 @@
-##devtools::load_all('~/Workspace/osofr/condensier')
+devtools::load_all('~/Workspace/osofr/condensier')
 
 #' OnlineSuperLearner
 #'
@@ -255,9 +255,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         train_library = function(data_current, randomVariables) {
           ## Fit or update the  estimators
           data.splitted <- private$data_splitter$split(data_current)
-          private$train_all_estimators(data = data.splitted$train, randomVariables = randomVariables)
-
           outcome.variables <- sapply(randomVariables, function(rv) rv$getY)
+
+          private$train_all_estimators(data = data.splitted$train, randomVariables = randomVariables)
 
           ## Extract the level 1 data and use it to fit the osl
           predicted.outcome <- private$online_super_learner_predict$predict_using_all_estimators(
@@ -330,6 +330,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             }
 
             private$train_library(data_current = data_current, randomVariables = randomVariables)
+            output = paste('performance_iteration',t,sep='_')
+            OutputPlotGenerator.create_risk_plot(self$get_cv_risk, output, '/tmp/osl/')
+ 
 
             ## Get the new row of data
             data_current <- private$summaryMeasureGenerator$getNext(mini_batch_size)

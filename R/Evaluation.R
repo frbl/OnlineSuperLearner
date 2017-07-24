@@ -4,18 +4,18 @@
 #' @param useAsLoss should we use the loss function or the performance function?
 #' @export
 Evaluation.get_evaluation_function = function(family, useAsLoss=TRUE) {
-  return(Evaluation.log_likelihood_loss)
+  if(!useAsLoss){
+    #return(Evaluation.log_likelihood_loss)
+    ###if (family == 'gaussian') {
+      return(Evaluation.log_loss)
+    ###} else if(family == 'binomial') {
+      ###return(Evaluation.log_loss)
+    ###} else {
+      ###throw('No loss function implemented for family ', family)
+    ###}
+  }
+  return(Evaluation.log_loss)
 
-  ##if(useAsLoss){
-    ##return(Evaluation.log_likelihood_loss)
-    ####if (family == 'gaussian') {
-      ####return(Evaluation.mse_loss)
-    ####} else if(family == 'binomial') {
-      ####return(Evaluation.log_loss)
-    ####} else {
-      ####throw('No loss function implemented for family ', family)
-    ####}
-  ##}
   ##if (family == 'gaussian') {
     ##return(Evaluation.root_mean_squared_error)
   ##} else if(family == 'binomial') {
@@ -45,7 +45,9 @@ Evaluation.accuracy <- function(data.observed, data.predicted) {
 #' @param eps is a small offset to let the log not go to Inf
 Evaluation.log_loss <- function(data.observed, data.predicted, eps = 1e-15) {
   data.predicted = pmin(pmax(data.predicted, eps), 1-eps)
-  c(log_loss = -mean(data.observed * log(data.predicted) + (1 - data.observed) * log(1 - data.predicted)))
+  res <- c(log_loss = -mean(data.observed * log(data.predicted) + (1 - data.observed) * log(1 - data.predicted)))
+  #if(is.na(res)) browser()
+  res
 }
 
 #' Log likelihood loss evaluation metric
