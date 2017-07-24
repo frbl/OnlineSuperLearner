@@ -15,7 +15,7 @@ ML.Local.Speedlm <- R6Class("ML.Local.Speedlm",
   public =
     list(
         fitfunname='speedlm-local',
-        lmclass='speedlm',
+        lmclass='speedglm',
         initialize = function() { }
         ),
   active =
@@ -25,10 +25,10 @@ ML.Local.Speedlm <- R6Class("ML.Local.Speedlm",
     list(
         do.fit = function(X_mat, Y_vals) {
           # , maxit=1000
-            suppressWarnings(
-              m.fit <- speedglm::speedlm.wfit(X = X_mat, y = Y_vals, family = binomial(), 
-                                               method='Cholesky')
-            )
+          suppressWarnings(
+            m.fit <- speedglm::speedglm.wfit(X = X_mat, y = Y_vals, family = binomial(), 
+                                              method='Cholesky')
+          )
           m.fit$coef
         },
 
@@ -38,10 +38,12 @@ ML.Local.Speedlm <- R6Class("ML.Local.Speedlm",
 
         do.predict = function(X_mat, m.fit) {
           if (any(is.na(m.fit$coef))) {
-            return(super$do.predict(X_mat, m.fit))
+            result <- super$do.predict(X_mat, m.fit)
           } else {
-            return(expit(X_mat %*% m.fit$coef))
+            result <- expit(X_mat %*% m.fit$coef)
           }
+          if(any(is.na(result))) browser()
+          return(result)
         }
     )
 )

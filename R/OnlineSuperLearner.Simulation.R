@@ -43,9 +43,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           algos <- list()
 
 
-          algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                                  algorithm_params = list(alpha = 0),
-                                  params = list(nbins = nbins, online = TRUE))))
+          #algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
+                                  #algorithm_params = list(alpha = 0),
+                                  #params = list(nbins = nbins, online = TRUE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
                                   #algorithm_params = list(ntrees=c(10,20), min_rows=1),
@@ -63,9 +63,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   #algorithm_params = list(),
                                   params = list(nbins = nbins, online = FALSE))))
 
-          algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
-                                  algorithm_params = list(alpha = c(0.3,0.8)),
-                                  params = list(nbins = nbins, online = FALSE))))
+          #algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
+                                  #algorithm_params = list(alpha = c(0.3,0.8)),
+                                  #params = list(nbins = nbins, online = FALSE))))
 
           #algos <- append(algos, list(list(algorithm = 'condensier::glmR6',
                                   ##algorithm_params = list(),
@@ -94,7 +94,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           # Generate the true data generating distributions
           llW <- list(stochMech=function(numberOfBlocks) {
-              rnorm(numberOfBlocks, 0, 10)
+              rnorm(numberOfBlocks, 0, 1)
             },
             param=c(1),
             rgen=identity
@@ -138,7 +138,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           # In this simulation we will include 2 lags and the latest data (non lagged)
           # Define the variables in the initial dataset we'd like to use
           #private$train(data.test, data.train, bounds, randomVariables, 2)
-          private$train(data.test, data.train, bounds, randomVariables, Y,  max_iterations = 2,
+          private$train(data.test, data.train, bounds, randomVariables, Y,  max_iterations = 12,
                         llW = llW,
                         llA = llA, 
                         llY = llY,
@@ -290,9 +290,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           performance <- 
             private$cv_risk_calculator$calculate_evaluation(predicted.outcome = predicted.outcome,
                                                             observed.outcome = observed.outcome,
-                                                            randomVariables = randomVariables) %>%
-            c(iterations = max_iterations, performance = .) %T>%
-            print
+                                                            randomVariables = randomVariables) 
+          OutputPlotGenerator.create_risk_plot(performance, 'performance', '/tmp/osl/')
+          browser()
 
           #})
           #performances <- do.call(rbind, lapply(performances, data.frame)) %T>%
@@ -302,7 +302,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           #performances
           intervention <- list(variable = 'A', when = c(2), what = c(1))
           tau = 2
-          B <- 1000
+          B <- 100
 
           pre <- options('warn')$warn
           options(warn=-1)

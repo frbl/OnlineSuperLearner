@@ -22,8 +22,9 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
     list(
         minimal.measurements.needed = NULL,
 
-        initialize = function(data = NULL, SMG.list, verbose = FALSE, pre_processor = NULL, number_of_observations_per_timeseries = Inf) {
-          private$number_of_observations_per_timeseries <- Arguments$getInteger(number_of_observations_per_timeseries , c(1,Inf))
+        initialize = function(data = NULL, SMG.list, verbose = FALSE, pre_processor = NULL, 
+                              number_of_observations_per_timeseries = Inf) {
+          private$number_of_observations_per_timeseries <- Arguments$getNumerics(number_of_observations_per_timeseries , c(1,Inf))
           private$data <- data
           private$SMG.list <- SMG.list
           private$verbose <- verbose

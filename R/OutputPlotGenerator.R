@@ -82,8 +82,27 @@ OutputPlotGenerator.create_convergence_plot = function(data, output, dir = '~/tm
 }
 
 
-OutputPlotGenerator.create_risk_plot = function(risks, output, dir = '~/tmp/osl/') {
+#' @export
+OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tmp/osl/') {
+  # Performance should be a list of lists:
+  # List 1: the estimator used
+  # List 2: the random variable predicted
 
+  performance_dt <- performance %>% rbindlist
+  ml_names <- names(performance)
+  outcomes <- colnames(performance_dt)
+
+  performance_dt[, 'names' :=  ml_names]
+
+  dir.create(dir, showWarnings = FALSE, recursive = TRUE)
+  pdf(paste(dir,output,'.pdf',sep = ''))
+  for (name in outcomes) {
+    p <- ggplot(performance_dt) +
+        geom_point(size = 2, aes_string(x=name, y='names')) +
+        theme(legend.position="none")
+    plot(p)
+  }
+  dev.off()
 }
 
 OutputPlotGenerator.get_colors = function(number_of_variables) {
