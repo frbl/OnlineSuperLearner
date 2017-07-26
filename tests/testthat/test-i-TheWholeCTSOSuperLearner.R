@@ -132,7 +132,6 @@ test_that("it should estimate the true treatment", {
                           randomVariables = randomVariables,
                           intervention = intervention,
                           discrete = FALSE,
-                          variable_of_interest = Y,
                           tau = tau)
   })
   
