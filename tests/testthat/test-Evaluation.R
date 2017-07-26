@@ -64,6 +64,51 @@ test_that("it should return the a correct log loss and not go to infinity", {
   expect_true(loss > 0)
 })
 
+context(" Evaluation.log_likelihood_loss")
+test_that("it should should return the correct log likelihood loss", {
+  nobs <- 10
+  observed  <- rep(1, nobs)
+  predicted <- rep(0, nobs) 
+  loss <- Evaluation.log_likelihood_loss(data.observed = observed, data.predicted = predicted)
+
+  # Initial loss is large (just a sanity check)
+  expect_true(loss > 30)
+  expect_true(loss < Inf)
+  for (i in 1:(nobs)) {
+    # We are switching the elements 1 by one, and it should improve the quality
+    predicted[i] <- 1
+    new_loss <- Evaluation.log_likelihood_loss(data.observed = observed, data.predicted = predicted)
+    expect_true(new_loss < loss)
+    loss <- new_loss
+  }
+
+  expect_true(loss == 0)
+})
+
+test_that("it should also work with non binary values", {
+  set.seed(12345)
+  nobs <- 10
+  observed  <- rep(1, nobs)
+  predicted <- rep(0, nobs) 
+  initial_loss <- Evaluation.log_likelihood_loss(data.observed = observed, data.predicted = predicted)
+
+  loss <- initial_loss
+  # Initial loss is large (just a sanity check)
+  expect_true(loss > 30)
+  expect_true(loss < Inf)
+  for (i in 1:(nobs)) {
+    # We are switching the elements 1 by one, and it should improve the quality
+    predicted[i] <- observed[i] - max(0,min(1,rnorm(1, 0.5, 0.1)))
+    new_loss <- Evaluation.log_likelihood_loss(data.observed = observed, data.predicted = predicted)
+    expect_true(new_loss < loss)
+    loss <- new_loss
+  }
+
+  # Loss should be small, but is not 0 because we never hit the truth
+  expect_true(loss < initial_loss)
+  expect_true(loss != 0)
+})
+
 context(" Evaluation.mse_loss")
 test_that("it should return the a correct mse loss and not go to infinity", {
   set.seed(12345)

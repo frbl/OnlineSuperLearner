@@ -278,7 +278,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           private$cv_risk_calculator$calculate_evaluation(predicted.outcome = predicted.outcome,
                               observed.outcome = observed.outcome,
-                              randomVariables = randomVariables) %>%
+                              randomVariables = randomVariables,
+                              add_evaluation_measure_name = FALSE) %>%
           print
 
           private$cv_risk_calculator$calculate_risk(predicted.outcome = predicted.outcome,
