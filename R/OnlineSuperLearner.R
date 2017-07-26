@@ -276,6 +276,16 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                                           randomVariables = randomVariables,
                                           discrete = TRUE, continuous = TRUE, all_estimators = TRUE)
 
+          private$cv_risk_calculator$calculate_evaluation(predicted.outcome = predicted.outcome,
+                              observed.outcome = observed.outcome,
+                              randomVariables = randomVariables) %>%
+          print
+
+          private$cv_risk_calculator$calculate_risk(predicted.outcome = predicted.outcome,
+                              observed.outcome = observed.outcome,
+                              randomVariables = randomVariables) %>%
+          print
+          browser()
           ## Calculate the error using the normalized predictions
           private$update_risk(predicted.outcome = predicted.outcome,
                               observed.outcome = observed.outcome,

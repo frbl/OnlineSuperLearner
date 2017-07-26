@@ -56,7 +56,7 @@ Evaluation.log_loss <- function(data.observed, data.predicted, eps = 1e-15) {
 #' @param eps is a small offset to let the log not go to Inf
 Evaluation.log_likelihood_loss <- function(data.observed = NULL, data.predicted, eps = 1e-15) {
   data.predicted = pmax(data.predicted, eps)
-  - log(data.predicted)
+  - sum(log(data.predicted))
 }
 
 #' Mean squared error loss

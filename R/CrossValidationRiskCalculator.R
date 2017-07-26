@@ -15,6 +15,49 @@
 #'
 #'   \item{\code{calculate_evaluation(predicted.outcome, observed.outcome, randomVariables, add_evaluation_measure_name=TRUE)}}{
 #'     <<description>>
+#'     The input data looks as followos:
+#'     \code{
+#'       $normalized
+#'       $normalized$`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
+#'               W         A         Y
+#'       1: 1.94863 0.5234383 0.3501003
+#'
+#'       $normalized$`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`
+#'                 W         A         Y
+#'       1: 1.818194 0.5234383 0.3501003
+#'
+#'       $denormalized
+#'       $denormalized$`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
+#'               W         A         Y
+#'       1: 10.8308 0.5234383 0.3501003
+#'
+#'       $denormalized$`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`
+#'                 W         A         Y
+#'       1: 9.889878 0.5234383 0.3501003
+#'     }
+#'
+#'     The output data looks as follows:
+#'     \code{
+#'        $`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
+#'        $`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`$W
+#'        [1] 24.22468
+#'
+#'        $`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`$A
+#'        [1] 0.6473362
+#'
+#'        $`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`$Y
+#'        [1] 0.4309372
+#'
+#'        $`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`
+#'        $`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`$W
+#'        [1] 24.22468
+#'
+#'        $`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`$A
+#'        [1] 0.6473362
+#'
+#'        $`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`$Y
+#'        [1] 0.4309372
+#'     }
 #'     @param predicted.outcome
 #'     @param observed.outcome
 #'     @param randomVariables
@@ -51,16 +94,13 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
         },
 
         calculate_evaluation = function(predicted.outcome, observed.outcome, randomVariables, add_evaluation_measure_name=TRUE) {
-          if ('normalized' %in% names(predicted.outcome)) {
-            predicted.outcome = predicted.outcome$normalized
-          }
-
+          # Evaluate should receive the outcome of 1 estimator
           evaluate <- function(current.predicted.outcome) {
             sapply(randomVariables, function(rv) {
               current_outcome <- rv$getY
               lossFn <- Evaluation.get_evaluation_function(rv$getFamily, useAsLoss = FALSE)
-              result <- lossFn(data.observed  = observed.outcome[,current_outcome, with=FALSE],
-                              data.predicted = current.predicted.outcome[,current_outcome, with=FALSE])
+              result <- lossFn(data.observed  = observed.outcome[[current_outcome]],
+                               data.predicted = current.predicted.outcome[[current_outcome]])
               if (add_evaluation_measure_name){
                 names(result) <- paste(names(result), current_outcome, sep='.')
               } else {
@@ -75,6 +115,10 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
           }
           
           if (is.a(predicted.outcome, 'list')) {
+            if ('normalized' %in% names(predicted.outcome)) {
+              predicted.outcome = predicted.outcome$normalized
+            }
+
             return(lapply(predicted.outcome, evaluate))
           }
 
@@ -94,14 +138,14 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
           cv_risk <- lapply(predicted.outcome, function(algorithm_outcome) {
             ## The as.list unlist is a hack to flatten the result, but to keep the correct names
             ## that the entries got in the loop.
-            as.list(unlist(lapply(randomVariables, function(rv) {
+            lapply(randomVariables, function(rv) {
               current_outcome <- rv$getY
               lossFn <- Evaluation.get_evaluation_function(rv$getFamily, useAsLoss = TRUE)
               risk <- lossFn(data.observed = observed.outcome[[current_outcome]],
                                      data.predicted = algorithm_outcome[[current_outcome]])
               names(risk) <- current_outcome
               risk
-            })))
+            })
           })
 
           return(cv_risk)
@@ -126,7 +170,6 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
           updated_risk <- self$calculate_risk(predicted.outcome = predicted.outcome,
                                               observed.outcome = observed.outcome,
                                               randomVariables = randomVariables)
-
 
           ## Note that we need to update the risk for every algorithm and every RV
           algorithm_names <- names(updated_risk)

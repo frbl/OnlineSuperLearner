@@ -35,12 +35,15 @@ OutputPlotGenerator.create_density_plot = function(yValues, estimated_probabilit
   date <- format(Sys.time(), "%y%m%d%H%M")
   full_dir <- paste(dir, date, '/', sep ='')
   dir.create(full_dir, showWarnings = FALSE, recursive = TRUE)
+  full_file_name <- paste(full_dir,output,'.pdf',sep = '')
+  ylim <- c(0,max(c(estimated_probabilities, true_density$y), na.rm=TRUE))
 
-  pdf(paste(full_dir,output,'.pdf',sep = ''))
-  plot(true_density, ylim=c(0,max(estimated_probabilities)+.5))
+  pdf(full_file_name)
+  plot(true_density, ylim=ylim)
   lines(estimated_y_values, estimated_probabilities, type = type, cex = .3, col = "red",
         ylim=c(0,max(estimated_probabilities)+.5))
   dev.off()
+  return(full_file_name)
 }
 
 #' OutputPlotGenerator.create_convergence_plot
