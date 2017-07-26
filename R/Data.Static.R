@@ -35,11 +35,6 @@
 #'     @return datatable a row or number of rows from a datatable, NULL if \code{n} <= 0
 #'   }
 #'
-#'   \item{\code{is_data_set}}{
-#'     Method to determine whether the data is set
-#'     @return boolean true if a dataset is available
-#'   }
-#'
 #'   \item{\code{reset}}{
 #'     Method to reset the pointer to the beginning of the datatable.
 #'   }
@@ -111,10 +106,6 @@ Data.Static <-
     ),
   active =
     list(
-      is_data_set = function() {
-        !is.null(self$get_all())
-      },
-
       reset = function() {
         private$currentrow <- 1
       },
@@ -124,16 +115,11 @@ Data.Static <-
       },
 
       get_length = function() {
-        if(self$is_data_set) {
-          nrow(self$get_all)
-        } else {
-          warning('Data not yet set, returning 0')
-          0
-        }
+        nrow(self$get_all)
       },
 
       get_remaining_length = function() {
-        max(self$get_length - self$get_currentrow, 0)
+        max(self$get_length - self$get_currentrow + 1, 0)
       },
 
       get_currentrow = function() {
