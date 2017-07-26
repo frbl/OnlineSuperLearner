@@ -136,6 +136,8 @@ test_that("it should estimate the true treatment", {
 
   osl <- OnlineSuperLearner$new(algos, summaryMeasureGenerator = summaryMeasureGenerator, verbose = log, 
                                 pre_processor = pre_processor)
+
+
   risk <- osl$fit(data.train, randomVariables = randomVariables,
                         initial_data_size = training_set_size / 2,
                         max_iterations = max_iterations,
@@ -155,7 +157,6 @@ test_that("it should estimate the true treatment", {
    osl$sample_iteratively(data = datas[i,],
                           randomVariables = randomVariables,
                           intervention = intervention,
-                          variable_of_interest = Y,
                           tau = tau)
   })
   

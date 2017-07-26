@@ -126,7 +126,7 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
         },
 
         ## Calculate the CV risk for each of the random variables provided
-        ## Output is a list of lists
+        ## Output is a list of data.tables
         calculate_risk = function(predicted.outcome, observed.outcome, randomVariables){
           if ('normalized' %in% names(predicted.outcome)) {
             predicted.outcome = predicted.outcome$normalized
@@ -136,8 +136,6 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
           observed.outcome <- Arguments$getInstanceOf(observed.outcome, 'data.table')
 
           cv_risk <- lapply(predicted.outcome, function(algorithm_outcome) {
-            ## The as.list unlist is a hack to flatten the result, but to keep the correct names
-            ## that the entries got in the loop.
             lapply(randomVariables, function(rv) {
               current_outcome <- rv$getY
               lossFn <- Evaluation.get_evaluation_function(rv$getFamily, useAsLoss = TRUE)
@@ -145,7 +143,9 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
                                      data.predicted = algorithm_outcome[[current_outcome]])
               names(risk) <- current_outcome
               risk
-            })
+            }) %>% unlist %>% t %>% as.data.table
+            ## The unlist t is a hack to flatten the result, but to keep the correct names
+            ## that the entries got in the loop.
           })
 
           return(cv_risk)

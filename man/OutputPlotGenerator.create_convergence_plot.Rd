@@ -5,8 +5,7 @@
 \title{OutputPlotGenerator.create_convergence_plot
 Function to plot the convergence to the parameter of interest of both the truth and the estimation.}
 \usage{
-OutputPlotGenerator.create_convergence_plot(truth_approximation,
-  estimated_approximation, output, dir = "~/tmp/osl/")
+OutputPlotGenerator.create_convergence_plot(data, output, dir = "~/tmp/osl/")
 }
 \arguments{
 \item{truth_approximation}{the truth (i.e., as found using simulation / monte carlo approximation)}

@@ -65,10 +65,11 @@ test_that("it should update the predictions according to the osl_weights", {
   osl_weights <- data.frame(Y= weights)
 
   result <- subject$predict_osl(osl_weights = osl_weights, predictions = predictions, 
-                      randomVariables = randomVariables, denormalize = FALSE)
+                      randomVariables = randomVariables)
   
-  expected = as.numeric(c(1,2,3) %*% weights)
-  expect_true(all(result == expected))
+  expected = as.numeric(c(1,2,3) %*% weights) 
+  expect_true(all(result$normalized == expected))
+  expect_true(all(result$denormalized == expected))
 })
 
 test_that("it should update the predictions and normalize if specified", {
@@ -81,14 +82,18 @@ test_that("it should update the predictions and normalize if specified", {
   subject <- described.class$new(pre_processor = pre_processor)
 
   df <- data.table(Y=rep(1, nobs))
-  predictions <- list(a=df, b=df+1, c=df+2)
+  # Only the normalized values are used for prediction
+  predictions <- list(normalized = list(a=df, b=df+1, c=df+2))
   weights <- c(0.2, 0.5, 0.3)
   osl_weights <- data.frame(Y= weights)
 
   result <- subject$predict_osl(osl_weights = osl_weights, predictions = predictions, 
-                      randomVariables = randomVariables, denormalize = TRUE)
+                                randomVariables = randomVariables)
+
+  expect_true(is(result, 'list'))
+  expect_named(result, c('denormalized', 'normalized'), ignore.order = TRUE)
   
-  expect_equal(result, expected)
+  expect_equal(result$denormalized, expected)
 })
 
 context(" predict_dosl")
@@ -132,9 +137,14 @@ test_that("it should should predict using the dosl provided", {
   dosl <- list(W = W_mock_estimator, A = A_mock_estimator, Y = Y_mock_estimator)
 
   result <- subject$predict_dosl(dosl = dosl, data = true_data, sample = true_sample, plot = true_plot,
-                                randomVariables = randomVariables, denormalize = FALSE)
-  expect_true(is(result, 'data.table'))
-  expect_equal(result, true_data[, c('W','A','Y'), with=FALSE])
+                                randomVariables = randomVariables)
+  expect_true(is(result, 'list'))
+  expect_named(result, c('denormalized', 'normalized'), ignore.order = TRUE)
+
+  lapply(result, function(current_result) {
+    expect_true(is(current_result, 'data.table'))
+    expect_equal(current_result, true_data[, c('W','A','Y'), with=FALSE])
+  })
 })
 
 test_that("it should predict and normalize if set", {
@@ -148,7 +158,16 @@ test_that("it should predict and normalize if set", {
   true_plot <- FALSE
   true_data <- data.table(W=0.1231, A = 1, Y = 7.1)
 
-  pre_processor <- list(denormalize = function(data) {return(rep(expected, length(data)))})
+  # Mock the preprocessor
+  pre_processor <- list(
+    denormalize = function(data) {
+      result <- rep(expected, length(data)) %>%
+        as.list %>%
+        setDT 
+      names(result) <-  names(true_data)
+      return(result)
+    }
+  )
   class(pre_processor) <- c(class(pre_processor), 'PreProcessor')
   subject <- described.class$new(pre_processor = pre_processor)
 
@@ -180,8 +199,10 @@ test_that("it should predict and normalize if set", {
   dosl <- list(W = W_mock_estimator, A = A_mock_estimator, Y = Y_mock_estimator)
 
   result <- subject$predict_dosl(dosl = dosl, data = true_data, sample = true_sample, plot = true_plot,
-                                randomVariables = randomVariables, denormalize = TRUE)
-  expect_equal(result, c(expected, expected, expected)
+                                randomVariables = randomVariables)
+
+  expect_named(result, c('denormalized', 'normalized'), ignore.order = TRUE)
+  expect_equal(result$denormalized, data.table(W=expected, A=expected, Y=expected)
 )
   
 })
@@ -212,51 +233,23 @@ test_that("it should call all estimators and estimate using those estimators", {
 
   sl_lib <- list(mock_estimator, mock_estimator, mock_estimator, mock_estimator)
   result <- subject$predict_using_all_estimators(data = true_data, sl_library = sl_lib,
-                                                 sample = true_sample, plot = true_plot, denormalize = FALSE)
+                                                 sample = true_sample, plot = true_plot)
 
-  # Each estimator should have an outcome
-  expect_equal(length(result), length(sl_lib))
+  # Each estimator should both have a normalized and denormalized outcome
+  expect_equal(length(result), 2)
+  expect_named(result, c('denormalized', 'normalized'), ignore.order = TRUE)
 
-  # Each estimate should contain all RV's
-  lapply(result, function(entry){
-    expect_equal(entry$W, expected_W)
-    expect_equal(entry$A, expected_A)
-    expect_equal(entry$Y, expected_Y)
+  lapply(result, function(current_result) {
+
+    # Each estimator should have an outcome
+    expect_equal(length(current_result), length(sl_lib))
+
+    # Each estimate should contain all RV's
+    lapply(current_result, function(entry){
+      expect_equal(entry$W, expected_W)
+      expect_equal(entry$A, expected_A)
+      expect_equal(entry$Y, expected_Y)
+    })
   })
-
-})
-
-test_that("it should call all estimators and estimate using those estimators and do normalization", {
-  randomVariables <- list(
-                          list(getY='W', getX='X', getFamily='gaussian'),
-                          list(getY='A', getX='X', getFamily='binomial'),
-                          list(getY='Y', getX='X', getFamily='gaussian')
-                          )
-  expected = 123
-
-  true_sample <- TRUE
-  true_plot <- FALSE
-  pre_processor <- list(denormalize = function(data) {return(rep(expected, length(data)))})
-  class(pre_processor) <- c(class(pre_processor), 'PreProcessor')
-  subject <- described.class$new(pre_processor = pre_processor)
-
-  true_data <- data.table(W = .1231, A = 1, Y = 7.1)
-
-  mock_estimator = list(predict = function(data, sample, plot) {
-   expect_equal(data, true_data) 
-   expect_equal(sample, true_sample) 
-   expect_equal(plot, true_plot) 
-   result <- list(W = rep(1,nrow(data)), A = rep(2,nrow(data)), Y = rep(3,nrow(data)))
-  })
-
-  sl_lib <- list(mock_estimator, mock_estimator, mock_estimator, mock_estimator)
-  result <- subject$predict_using_all_estimators(data = true_data, sl_library = sl_lib,
-                                                 sample = true_sample, plot = true_plot, denormalize = TRUE)
-
-  # Each estimator should have an outcome
-  expect_equal(length(result), length(sl_lib))
-
-  # Each estimate should contain all RV's
-  lapply(result, function(entry){ expect_true(all(entry == expected)) })
 
 })

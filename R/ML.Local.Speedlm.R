@@ -14,7 +14,7 @@ ML.Local.Speedlm <- R6Class("ML.Local.Speedlm",
   inherit = ML.Base,
   public =
     list(
-        fitfunname='speedlm-local',
+        fitfunname='speedglm-local',
         lmclass='speedglm',
         initialize = function() { }
         ),

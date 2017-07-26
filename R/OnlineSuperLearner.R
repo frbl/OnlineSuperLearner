@@ -1,4 +1,4 @@
-devtools::load_all('~/Workspace/osofr/condensier')
+#devtools::load_all('~/Workspace/osofr/condensier')
 
 #' OnlineSuperLearner
 #'
@@ -286,7 +286,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                               observed.outcome = observed.outcome,
                               randomVariables = randomVariables) %>%
           print
-          browser()
           ## Calculate the error using the normalized predictions
           private$update_risk(predicted.outcome = predicted.outcome,
                               observed.outcome = observed.outcome,
@@ -647,8 +646,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           tic <- Sys.time()
           initial_data_size <- Arguments$getInteger(initial_data_size, c(1,Inf))
           max_iterations <- Arguments$getInteger(max_iterations, c(0,Inf))
-
           data <- Arguments$getInstanceOf(data, 'Data.Base')
+
           private$summaryMeasureGenerator$setData(data = data)
 
           ## TODO: Move to check validity? Needs moving of the equations as well.

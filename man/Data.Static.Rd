@@ -42,11 +42,6 @@ Class to provide the functionality of treating a static, finite datatable as a s
     @return datatable a row or number of rows from a datatable, NULL if \code{n} <= 0
   }
 
-  \item{\code{is_data_set}}{
-    Method to determine whether the data is set
-    @return boolean true if a dataset is available
-  }
-
   \item{\code{reset}}{
     Method to reset the pointer to the beginning of the datatable.
   }

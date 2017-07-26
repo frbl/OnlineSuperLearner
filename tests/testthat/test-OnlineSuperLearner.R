@@ -5,6 +5,7 @@ context(" initialize")
 mylist <- c(SMG.Mock$new())
 SMG <- SummaryMeasureGenerator$new(SMG.list = mylist)
 subject <- described.class$new(summaryMeasureGenerator = SMG)
+
 test_that("it should initialize", {
   expect_error(described.class$new(summaryMeasureGenerator = SMG), NA)
 })
@@ -13,7 +14,34 @@ test_that("it should initialize the CV_risk", {
  expect_equal(subject$get_cv_risk, list()) 
 })
 
-context(' fit')
+context(" fit")
+test_that("it should throw if the provided datasize is not an int", {
+  data <- mock('data')
+  randomVariables <- mock('randomvariables')
+  expect_error(subject$fit(data, randomVariables, initial_data_size = 'a', max_iterations = 20, mini_batch_size = 20), "Argument 'initial_data_size' contains")
+  expect_error(
+    subject$fit(data, randomVariables, initial_data_size = -1, max_iterations = 20, mini_batch_size = 20),
+    "Argument 'initial_data_size' is out of range [1,Inf]: -1", fixed= TRUE)
+})
+
+test_that("it should throw if the provided iterations are note ints", {
+  data <- mock('data')
+  randomVariables <- mock('randomvariables')
+  expect_error(
+    subject$fit(data, randomVariables, initial_data_size = 1, max_iterations = 'a', mini_batch_size = 20),
+    "Argument 'max_iterations' contains")
+  expect_error(
+    subject$fit(data, randomVariables, initial_data_size = 1, max_iterations = -20, mini_batch_size = 20),
+    "Argument 'max_iterations' is out of range [0,Inf]: -20", fixed= TRUE)
+})
+
+test_that("it should throw if the provided data is not a data object", {
+  data <- mock('data')
+  randomVariables <- mock('randomvariables')
+  expect_error(
+    subject$fit(data, randomVariables, initial_data_size = 1, max_iterations = 1, mini_batch_size = 20),
+    "Argument 'data' is neither of nor inherits class Data.Base: mock")
+})
 
 context(" predict")
 

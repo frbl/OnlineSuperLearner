@@ -70,12 +70,15 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
 
       predict_osl = function(osl_weights, predictions, randomVariables) {
         private$verbose && cat(private$verbose, 'continuous SL')
+        if ('normalized' %in% names(predictions)) {
+          predictions <- predictions$normalized 
+        }
 
         # TODO: What if A ends up not being binary?
         # TODO: More important, what if a variable is discrete?
         normalized_result <- lapply(randomVariables, function(rv) {
           current_rv_name <- rv$getY
-          result <- do.call(cbind, predictions$normalized) %>%
+          result <- do.call(cbind, predictions) %>%
             subset(., select = grep(paste(current_rv_name,"$",sep=""), names(.))) %>%
             as.matrix(.) %*% osl_weights[,current_rv_name]
 
