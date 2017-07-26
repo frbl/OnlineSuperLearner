@@ -7,14 +7,14 @@ Evaluation.get_evaluation_function = function(family, useAsLoss=TRUE) {
   if(!useAsLoss){
     #return(Evaluation.log_likelihood_loss)
     ###if (family == 'gaussian') {
-      return(Evaluation.log_loss)
+      return(Evaluation.log_likelihood_loss)
     ###} else if(family == 'binomial') {
       ###return(Evaluation.log_loss)
     ###} else {
       ###throw('No loss function implemented for family ', family)
     ###}
   }
-  return(Evaluation.log_loss)
+  return(Evaluation.log_likelihood_loss)
 
   ##if (family == 'gaussian') {
     ##return(Evaluation.root_mean_squared_error)
