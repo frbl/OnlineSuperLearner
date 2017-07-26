@@ -42,6 +42,8 @@ Imports:
     optimr,
     sgd,
     nnls,
+    ggplot2,
+    reshape2,
     digest
 Suggests:
     roxygen2,
