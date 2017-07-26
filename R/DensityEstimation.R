@@ -99,6 +99,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
           ## }
 
           ## Predict the instances where A=A (i.e., the outcome is the outcome)
+          ## NOTE! These estimated probabilities contain NAs whenever an estimator was fitted without any data.
           estimated_probabilities <- condensier::predict_probability(conditionalDensity, datO)
 
           ## We undo our fix here:
@@ -117,6 +118,9 @@ DensityEstimation <- R6Class ("DensityEstimation",
         sample = function(datO, X, Y, plot = FALSE) {
           ## TODO: Implement sampling from a non conditional distribution
           if(length(X) == 0) throw('Sampling from non conditional distribution is not yet supported!')
+
+          print(paste('Sampling from:',Y, 'conditional on',X))
+
           yValues <- datO[[Y]]
           conditionalDensity <- self$getConditionalDensities(Y)
 
@@ -127,6 +131,8 @@ DensityEstimation <- R6Class ("DensityEstimation",
           ##   # datO[is.na(datO)] <- 0
           ## }
 
+
+          # Outcome (sampled_data) is a vector of samples
           sampled_data <- condensier::sample_value(conditionalDensity, datO)
 
           if (plot && length(yValues) > 1) {
@@ -171,7 +177,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
           private$is_online_estimator <- Arguments$getLogical(online)
           private$nbins <- Arguments$getIntegers(as.numeric(nbins), c(1, Inf))
 
-          if (is.null(bin_estimator)) { bin_estimator <- condensier::speedglmR6$new() }
+          if (is.null(bin_estimator)) { bin_estimator <- condensier::glmR6$new() }
           private$bin_estimator <- Arguments$getInstanceOf(bin_estimator, 'logisfitR6')
           private$conditional_densities <- list()
           self$set_name(name = name)
@@ -181,6 +187,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
         predict = function(data, sample = FALSE, subset = NULL, plot = FALSE) {
           data <- Arguments$getInstanceOf(data, 'data.table')
           plot <- Arguments$getLogical(plot)
+
           if (is.null(private$randomVariables) | length(private$conditional_densities) == 0) {
             throw('The conditional_densities need to be fit first!')
           }

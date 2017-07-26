@@ -25,7 +25,9 @@ test_that("it should call the predict function of the  online super learner if d
 
 context(' sample_iteratively')
 test_that("it should throw if the provided start from is not in the randomvariables", {
-  skip('not yet tested')  
+  mylist <- c(SMG.Mock$new())
+  SMG <- SummaryMeasureGenerator$new(SMG.list = mylist)
+  subject <- described.class$new(summaryMeasureGenerator = SMG)
 })
 
 test_that("it should work with any start from (either NULL or a value)", {
