@@ -11,7 +11,15 @@ test_that("it should set the dataset if this is provided", {
 })
 
 test_that("it should get the data from an url if provided", {
-  
+  url <- system.file("testdata",'test-read_from_url_data.static.csv',package="OnlineSuperLearner")
+  subject <- described.class$new(url = url)
+  result <- subject$get_all
+  expected <- data.table(A = rep(1,6), B = rep(2,6), C = rep(3,6))
+  expect_equal(result, expected)
+})
+
+test_that("it should throw if no data frame and no url are provided", {
+  expect_error(described.class$new(), 'You need to provide at least a datatable or url')
 })
 
 context(' getAll')
@@ -49,6 +57,60 @@ test_that("it should eeset the pointer to the first observation", {
   expected <- as.data.table(t(c(x=1, y=4)))
   expect_equal(result, expected)
   
+})
+
+context(" get_length")
+test_that("it should return the total length of the datatable", {
+  data <- data.table(x=c(1,2,3,4), y=c(1,2,3,4))
+  subject <- described.class$new(dataset = data)
+  result <- subject$get_length
+  expect_equal(result, nrow(data))
+})
+
+context(" get_remaining_length")
+test_that("it should return the remaining length of the datatable", {
+  data <- data.table(x=c(1,2,3,4), y=c(1,2,3,4))
+  subject <- described.class$new(dataset = data)
+  expected <- subject$get_length
+  result <- subject$get_remaining_length
+  expect_equal(result, expected)
+  for (i in 1:expected) {
+    subject$getNext()
+    result <- subject$get_remaining_length
+    expect_equal(result, expected - i)
+  }
+})
+
+test_that("it should reset to the original when resetting", {
+  data <- data.table(x=c(1,2,3,4), y=c(1,2,3,4))
+  subject <- described.class$new(dataset = data)
+  for (i in 1:100) {
+    subject$getNext()
+  }
+  subject$reset
+  result <- subject$get_remaining_length
+  expect_equal(result,nrow(data))
+})
+
+test_that("it should not go below zero", {
+  data <- data.table(x=c(1,2,3,4), y=c(1,2,3,4))
+  subject <- described.class$new(dataset = data)
+  for (i in 1:100) {
+    subject$getNext()
+  }
+  result <- subject$get_remaining_length
+  expect_equal(result,0)
+})
+
+context(" get_currentrow")
+test_that("it should return the pointer to the current row", {
+  data <- data.table(x=c(1,2,3,4), y=c(1,2,3,4))
+  subject <- described.class$new(dataset = data)
+  result <- subject$get_currentrow
+  expect_equal(result,1)
+  subject$getNext()
+  result <- subject$get_currentrow
+  expect_equal(result,2)
 })
 
 context(' getNext')
