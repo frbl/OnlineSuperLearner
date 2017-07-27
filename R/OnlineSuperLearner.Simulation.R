@@ -371,14 +371,15 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           #lapply(performance, function(x) {lapply(x,mean)})
 
           # Now, the fimal step is to apply the OneStepEstimator
-          #result.approx.mean.update <- OnlineOneStepEstimator.perform(osl = osl,
-                                                                      #initial_estimate = result.dosl.mean,
-                                                                      #randomVariables = randomVariables,
-                                                                      #data = data.test, 
-                                                                      #variable_of_interest = variable_of_interest,
-                                                                      #intervention = intervention,
-                                                                      #tau = tau,
-                                                                      #B = B) 
+          OOS <- OnlineOneStepEstimator$new()
+          #result.approx.mean.update <- OOS$perform(osl = osl,
+                                                   #initial_estimate = result.dosl.mean,
+                                                   #randomVariables = randomVariables,
+                                                   #data = data.test, 
+                                                   #variable_of_interest = variable_of_interest,
+                                                   #intervention = intervention,
+                                                   #tau = tau,
+                                                   #B = B) 
 
           #print(paste('The difference between the estimate and approximation (after oos) is: ',
                       #abs(result.mean - result.approx.mean.update$oos_estimate)))

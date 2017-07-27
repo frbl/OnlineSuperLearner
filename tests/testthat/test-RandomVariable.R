@@ -53,6 +53,25 @@ test_that("it should not throw if a provided family is not supported", {
   }
 })
 
+context(" get_formula")
+test_that("it should create a formula with delta output", {
+  subject <- described.class$new(formula = (W ~ W_lag_1), family = 'gaussian')
+  result <- subject$get_formula_string(Y='delta')
+  expect_equal(result, 'delta ~ W_lag_1')
+})
+
+test_that("it should create a formula with delta input", {
+  subject <- described.class$new(formula = (W ~ W_lag_1), family = 'gaussian')
+  result <- subject$get_formula_string(X='delta')
+  expect_equal(result, 'W ~ delta')
+})
+
+test_that("it should retrieve the initial formula", {
+  subject <- described.class$new(formula = (W ~ W_lag_1), family = 'gaussian')
+  result <- subject$get_formula_string()
+  expect_equal(result, 'W ~ W_lag_1')
+})
+
 context(" parseFormula")
 test_that("it should parse the provided formula in the correct (in)dependent variables", {
  formula <- Y ~ A + B + C + D 

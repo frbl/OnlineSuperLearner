@@ -55,6 +55,16 @@ RandomVariable <- R6Class("RandomVariable",
           self$getValidity
         },
 
+        get_formula_string = function(X = NULL, Y = NULL) {
+          if (is.null(X)) {
+            X <- self$getX 
+          }
+          if (is.null(Y)) {
+            Y <- self$getY 
+          }
+          paste(Y, '~', paste(sort(X), collapse = ' + '))
+        },
+
         parseFormula = function(formula){
           if(!is.a(formula, 'formula')){
             throw('Provided formula should be a formula')

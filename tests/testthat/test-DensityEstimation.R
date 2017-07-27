@@ -94,12 +94,9 @@ test_that("it should sample from the cond densities once they've been fitted", {
   expect_false(is.null(res$W))
   expect_false(is.null(res$Y))
 
-  dat$Y[dat$W==0] %>% mean %>% print
-  dat$Y[dat$W==1] %>% mean %>% print
-  
-
-  res$Y[dat$W==0] %>% mean %>% print
-  res$Y[dat$W==1] %>% mean %>% print
+  # 0.5 is a random number. The thing is that the difference should be small
+  expect_lt(abs(dat$Y[dat$W==0] %>% mean - res$Y[dat$W==0] %>% mean), 0.5)
+  expect_lt(dat$Y[dat$W==1] %>% mean - res$Y[dat$W==1] %>% mean, 0.5)
   #}
 })
 
@@ -170,7 +167,6 @@ test_that("it should get the correct probabilities from the cond densities", {
   expect_true(abs(mean(res$W[dat$W==1]) - W_prob) < 0.05)
 
   # Y
-  print('High!')
 
   OutputPlotGenerator.create_density_plot(yValues = dat$Y[dat$W==1],
                                           res$Y[dat$W==1],
@@ -181,12 +177,11 @@ test_that("it should get the correct probabilities from the cond densities", {
                                           output = 'test-W-density0'
                                           )
 
-  # TODO: This is not working, but should probably work:
-  #expect_true(mean(res$Y[dat$W == 1 & dat$Y >= 17]) > mean(res$Y[dat$W == 0 & dat$Y < 17]))
-  #expect_true(mean(res$Y[dat$W == 0 & dat$Y >= 17]) < mean(res$Y[dat$W == 1 & dat$Y < 17]))
+  expect_lt(mean(res$Y[dat$W == 0 & dat$Y >= 17]), mean(res$Y[dat$W == 0 & dat$Y < 17]))
+  expect_lt(mean(res$Y[dat$W == 1 & dat$Y < 17]),  mean(res$Y[dat$W == 1 & dat$Y >= 17]))
 
+  #print(mean(res$Y[dat$W == 1 & dat$Y < 17])) 
   #print(mean(res$Y[dat$W == 1 & dat$Y >= 17]))
-  #print(mean(res$Y[dat$W == 1 & dat$Y < 17]))
   #print(mean(res$Y[dat$W == 0 & dat$Y >= 17]))
   #print(mean(res$Y[dat$W == 0 & dat$Y < 17]))
 
