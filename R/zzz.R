@@ -31,3 +31,13 @@ create_object_from_string <- function(string_object_name, args=list()) {
   packageStartupMessage('OnlineSuperLearner')
   packageStartupMessage('The OnlineSuperLearner package is still in beta testing. Interpret results with caution.')
 }
+
+hide_warning_convergence <- function(the_function){
+  h <- function(w) if( any( grepl( "converge", w) ) ) invokeRestart( "muffleWarning" )
+  withCallingHandlers(the_function, warning = h)
+}
+
+hide_warning_test <- function(the_function){
+  h <- function(w) if( any( grepl( "Test function was called!", w) ) ) invokeRestart( "muffleWarning" )
+  withCallingHandlers(the_function, warning = h)
+}
