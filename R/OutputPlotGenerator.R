@@ -85,6 +85,8 @@ OutputPlotGenerator.create_convergence_plot = function(data, output, dir = '~/tm
 }
 
 
+#' OutputPlotGenerator.create_risk_plot
+#' Function to create plots similar to the ones in the OSL papers
 #' @export
 OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tmp/osl/') {
   # Performance should be a list of lists:
@@ -99,12 +101,29 @@ OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tm
 
   dir.create(dir, showWarnings = FALSE, recursive = TRUE)
   pdf(paste(dir,output,'.pdf',sep = ''))
+  p <- ggplot(performance_dt)
+  i <- 1
+  colors <- OutputPlotGenerator.get_simple_colors(length(outcomes) -1)
+  names(colors) <- head(outcomes, -1)
+  colors
   for (name in outcomes) {
-    p <- ggplot(performance_dt) +
-        geom_point(size = 2, aes_string(x=name, y='names')) +
-        theme(legend.position="none")
-    plot(p)
+    if(name == 'names') next
+    p <- p + geom_point(size = 2, aes_string(x=name, y='names'), color=colors[[i]])+
+    theme(legend.position="left")
+    i <- i + 1
   }
+  p <- p +
+  scale_linetype(guide = guide_legend(override.aes = list(alpha = 1)), labels = names(colors)) + 
+  theme(legend.position = c(.75, .25))+
+  theme(panel.background = element_rect(fill = 'transparent', colour = 'black', size=1))+
+  theme(axis.text.y = element_text(colour = "black") ) +
+  theme(axis.title.y=element_blank()) +
+  labs(y = '', x = paste(names(colors), colors, sep=': ', collapse = ', '))+
+  theme(legend.position="left")+
+  theme(legend.background = element_rect(colour="transparent"))+
+  theme(legend.key = element_rect(fill = "transparent", colour = "transparent")) +
+  theme(legend.key.size= unit(3,"lines"))
+  plot(p)
   dev.off()
 }
 
@@ -122,5 +141,22 @@ OutputPlotGenerator.get_colors = function(number_of_variables) {
     tol10qualitative=c("#332288", "#88CCEE", "#44AA99", "#117733", "#999933", "#DDCC77", "#661100", "#CC6677", "#882255", "#AA4499"),
     tol11qualitative=c("#332288", "#6699CC", "#88CCEE", "#44AA99", "#117733", "#999933", "#DDCC77", "#661100", "#CC6677", "#882255", "#AA4499"),
     tol12qualitative=c("#332288", "#6699CC", "#88CCEE", "#44AA99", "#117733", "#999933", "#DDCC77", "#661100", "#CC6677", "#AA4466", "#882255", "#AA4499")
+  )[[number_of_variables]]
+}
+
+OutputPlotGenerator.get_simple_colors = function(number_of_variables) {
+  list(
+    tol1qualitative=c("red"),
+    tol2qualitative=c("red", "green"),
+    tol3qualitative=c("red", "orange", "green"),
+    tol4qualitative=c("red", "blue", "orange", "green"),
+    tol5qualitative=c("brown", "purple", "blue", "orange", "green"),
+    tol6qualitative=c("brown", "purple", "blue", "orange", "green","gray"),
+    tol7qualitative=c("brown", "purple", "black", "blue", "orange", "green","gray"),
+    tol8qualitative=c("brown", "purple", "black", "blue", "#999933", "orange", "green","gray"),
+    tol9qualitative=c("brown", "purple", "black", "blue", "#999933", "orange", "green", "#882255", "gray"),
+    tol10qualitative=c("brown", "purple", "black", "blue", "#999933", "orange", "#661100", "green", "#882255", "gray"),
+    tol11qualitative=c("brown", "#6699CC", "purple", "black", "blue", "#999933", "orange", "#661100", "green", "#882255", "gray"),
+    tol12qualitative=c("brown", "#6699CC", "purple", "black", "blue", "#999933", "orange", "#661100", "green", "#AA4466", "#882255", "gray")
   )[[number_of_variables]]
 }

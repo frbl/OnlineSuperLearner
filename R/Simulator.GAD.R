@@ -263,7 +263,7 @@ Simulator.GAD <- R6Class("Simulator.GAD",
 
         if (!is.null(intervention)) {
           # column 'A' is the last one, but nevertheless:
-          which.col <- grep("A", colnames(WA.mat))
+          which.col <- grep('A', colnames(WA.mat))
           #
           when <- intervention$when
           when.idx <- which(when <= numberOfBlocks)
