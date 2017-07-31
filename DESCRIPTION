@@ -30,6 +30,7 @@ Imports:
     methods,
     magrittr,
     purrr,
+    assertthat,
     xgboost,
     speedglm,
     glmnet,
@@ -96,7 +97,6 @@ Collate:
     'WCC.NLopt.R'
     'WCC.NNLS.R'
     'WCC.SGD.R'
-    'mwe.R'
 Remotes: 
     osofr/condensier@fb-add-update
     n-s-f/mockery@master

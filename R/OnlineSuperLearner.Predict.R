@@ -158,6 +158,8 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
   private =
     list(
       verbose = NULL,
+
+      ## The data processor to convert the results back to their original format
       pre_processor = NULL,
 
       predict_with_one_estimator = function(estimator, data, sample, plot) {

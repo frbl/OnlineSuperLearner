@@ -7,6 +7,7 @@
 #' @importFrom R.utils Arguments
 #' @importFrom R.methodsS3 throw
 #' @import magrittr
+#' @import assertthat
 generalImports <- list()
 
 # General fixes, for usability
