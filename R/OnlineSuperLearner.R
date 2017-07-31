@@ -1,4 +1,4 @@
-#devtools::load_all('~/Workspace/osofr/condensier')
+devtools::load_all('~/Workspace/osofr/condensier')
 
 #' OnlineSuperLearner
 #'
@@ -17,6 +17,7 @@
 #' @include WCC.NMBFGS.R
 #' @include WCC.SGD.Simplex.R
 #' @include CrossValidationRiskCalculator.R
+#' @include InterventionParser.R
 #'
 #' @section Methods:
 #' \describe{
@@ -170,7 +171,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## The class to make predictions on the data
         online_super_learner_predict = NULL,
 
-        ## Functions
+       ## Functions
         ## =========
 
         ## Update the cross validation risk
@@ -311,7 +312,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           ## Set the current timestep to 1
           t <- 0
-
           data_current <- private$summaryMeasureGenerator$getNext(mini_batch_size)
 
           ## TODO: Check wether the stopping criteria are met (e.g., improvement < theta)
@@ -376,7 +376,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         ## Find the best estimator among the current set, for each of the densities (WAY)
         fit_dosl = function() {
-          if(!self$fits_dosl) return(NULL)
+          if(!self$fits_dosl) return(FALSE)
 
           private$verbose && enter(private$verbose, 'Finding best estimators from the candidates')
           current_risk <- self$get_cv_risk
@@ -395,6 +395,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
               }
             })
           private$verbose && exit(private$verbose)
+          return(TRUE)
         }
 
 
@@ -577,18 +578,22 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                 remove_vars <- remove_vars[remove_vars != current_outcome]
                 next
               }
+              ## set the variables we don't need to NA
               if (!started) {
                 data[,remove_vars] <- NA
               }
 
               started = TRUE
-              ## set the variables we don't need to NA
+
+              ## Here we select whether the current node is an intervention
+              ## node. This can be moved to a separate function.
+              parsed_intervention <- InterventionParser.parse_intervention(intervention = intervention,
+                                                                           current_time = t,
+                                                                           current_outcome = current_outcome)
 
               ## If the current t is an intervention t, apply the proposed intervention.
-              if (!is.null(intervention) && current_outcome == intervention$variable && t %in% intervention$when) {
-                when.idx <- which(intervention$when == t)
-                outcome <- list(normalized = intervention$what[when.idx],
-                                denormalized = intervention$what[when.idx])
+              if (parsed_intervention$should_intervene) {
+                outcome <- list(normalized = parsed_intervention$what, denormalized = parsed_intervention$what)
                 private$verbose && cat(private$verbose, 'Setting intervention on ', current_outcome,' with ', outcome, ' on time ', t)
               } else {
                 outcome <- self$predict(data = data, randomVariables = c(rv),

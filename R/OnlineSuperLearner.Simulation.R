@@ -75,13 +75,13 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           private$SL.library.definition <- algos
 
           # Run the simulations
-          diff1 <- self$configuration1()
-          print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff1$dosl))
-          print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff1$osl))
+          #diff1 <- self$configuration1()
+          #print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff1$dosl))
+          #print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff1$osl))
 
-          #diff2 <- self$configuration2()
-          #print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff2$dosl))
-          #print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff2$osl))
+          diff2 <- self$configuration2()
+          print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff2$dosl))
+          print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff2$osl))
 
           #self$configuration3()
           #self$configuration4()
@@ -232,6 +232,59 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
         },
 
         configuration3 = function() {
+          set.seed(12345)
+
+          # Generate the true data generating distributions
+          llW <- list(stochMech=function(numberOfBlocks) {
+              rnorm(numberOfBlocks, 0, 1)
+            },
+            param=c(0, 0.5, -0.25, 0.1),
+            rgen=identity
+          )
+
+          llA <- list(
+            stochMech=function(ww) {
+              rbinom(length(ww), 1, expit(ww))
+            },
+            param=c(-0.1, 0.1, 0.25),
+            rgen=function(xx, delta=0.05){
+              probability <- delta+(1-2*delta)*expit(xx)
+              rbinom(length(xx), 1, probability)
+            }
+          )
+
+          llY <- list(rgen={function(AW){
+              aa <- AW[, "A"]
+              ww <- AW[, grep("[^A]", colnames(AW))]
+              mu <- aa*(0.9) + (1-aa)*(0.3) + rnorm(length(aa), 0, 1)
+              mu <- lapply(mu, function(x) max(min(x, 1),0)) %>% unlist
+              rbinom(length(aa), 1, mu)
+            }}
+          )
+
+          # We'd like to use the following features in our estimation:
+          W <- RandomVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
+          A <- RandomVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
+          Y <- RandomVariable$new(formula = Y ~ A + W, family = 'binomial')
+          randomVariables <- c(W, A, Y)
+
+          # Generate a dataset we will use for testing.
+          margin <- 100
+          data.test <- private$sim$simulateWAY(private$test_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
+          data.train <- private$sim$simulateWAY(private$training_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
+
+          # Create the bounds
+          bounds <- PreProcessor.generate_bounds(data.train)
+
+          # Create the measures we'd like to include in our model
+          # In this simulation we will include 2 lags and the latest data (non lagged)
+          # Define the variables in the initial dataset we'd like to use
+          #private$train(data.test, data.train, bounds, randomVariables, 2)
+          private$train(data.test, data.train, bounds, randomVariables, Y,  max_iterations = 12,
+                        llW = llW,
+                        llA = llA, 
+                        llY = llY,
+                        configuration = 1)
         },
 
         configuration4 = function() {
@@ -292,7 +345,8 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
             private$cv_risk_calculator$calculate_evaluation(predicted.outcome = predicted.outcome,
                                                             observed.outcome = observed.outcome,
                                                             randomVariables = randomVariables) 
-          OutputPlotGenerator.create_risk_plot(performance, 'performance', '/tmp/osl/')
+
+          OutputPlotGenerator.create_risk_plot(performance, 'performance', '~/tmp/osl/')
 
           #})
           #performances <- do.call(rbind, lapply(performances, data.frame)) %T>%
@@ -300,8 +354,10 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           #plot(x=performances$iterations, y=performances$performance)
           #performances
-          intervention <- list(variable = 'A', when = c(2), what = c(1))
-          tau = 2
+          intervention <- list(variable = 'A',
+                               when = c(2), 
+                               what = c(1))
+          tau <- 2
           B <- 100
 
           pre <- options('warn')$warn
@@ -374,22 +430,22 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           #lapply(performance, function(x) {lapply(x,mean)})
 
           # Now, the fimal step is to apply the OneStepEstimator
-          OOS <- OneStepEstimator$new(osl = osl, 
-                                            randomVariables = randomVariables, 
-                                            discrete = TRUE,
-                                            N = 90, 
-                                            B = B,
-                                            pre_processor = pre_processor
-                                            )
+          #OOS <- OneStepEstimator$new(osl = osl, 
+                                            #randomVariables = randomVariables, 
+                                            #discrete = TRUE,
+                                            #N = 90, 
+                                            #B = B,
+                                            #pre_processor = pre_processor
+                                            #)
 
-          result.approx.mean.updated <- OOS$perform(initial_estimate = result.dosl.mean,
-                                                   data = data.test,
-                                                   variable_of_interest = variable_of_interest,
-                                                   intervention = intervention,
-                                                   tau = tau)
+          #result.approx.mean.updated <- OOS$perform(initial_estimate = result.dosl.mean,
+                                                   #data = data.test,
+                                                   #variable_of_interest = variable_of_interest,
+                                                   #intervention = intervention,
+                                                   #tau = tau)
 
-          print(paste('The difference between the estimate and approximation (after oos) for dosl is: ',
-                      abs(result.approx.mean - result.approx.mean.updated$oos_estimate)))
+          #print(paste('The difference between the estimate and approximation (after oos) for dosl is: ',
+                      #abs(result.approx.mean - result.approx.mean.updated$oos_estimate)))
           differences
         }
   )

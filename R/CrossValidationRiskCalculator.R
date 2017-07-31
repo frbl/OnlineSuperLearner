@@ -38,25 +38,13 @@
 #'
 #'     The output data looks as follows:
 #'     \code{
-#'        $`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
-#'        $`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`$W
-#'        [1] 24.22468
+#'      $`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
+#'             #.W        .W2        .W3       .A        .Y
+#'      1: 34.53878 0.02225018 -0.0507633 0.545403 -5.335295
 #'
-#'        $`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`$A
-#'        [1] 0.6473362
-#'
-#'        $`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`$Y
-#'        [1] 0.4309372
-#'
-#'        $`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`
-#'        $`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`$W
-#'        [1] 24.22468
-#'
-#'        $`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`$A
-#'        [1] 0.6473362
-#'
-#'        $`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`$Y
-#'        [1] 0.4309372
+#'      $`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`
+#'             #.W          .W2         .W3       .A        .Y
+#'      1: 34.53878 -0.005705135 -0.03595754 0.545403 -4.499685
 #'     }
 #'     @param predicted.outcome
 #'     @param observed.outcome
@@ -93,6 +81,7 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
         initialize = function() {
         },
 
+        ## Output is a list of data.tables
         calculate_evaluation = function(predicted.outcome, observed.outcome, randomVariables, add_evaluation_measure_name=TRUE) {
           # Evaluate should receive the outcome of 1 estimator
           evaluate <- function(current.predicted.outcome) {
@@ -107,7 +96,7 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
                 names(result) <- current_outcome
               }
               result
-            }) %>% as.list
+            }) %>% t %>% as.data.table
           }
 
           if (is.a(predicted.outcome, 'data.table')) {
@@ -118,6 +107,8 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
             if ('normalized' %in% names(predicted.outcome)) {
               predicted.outcome = predicted.outcome$normalized
             }
+
+            lapply(predicted.outcome, evaluate)
 
             return(lapply(predicted.outcome, evaluate))
           }
@@ -151,12 +142,12 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
           return(cv_risk)
         },
 
-        ## Outcome is a list of lists
+        ## Outcome is a list of datatables
         update_risk = function(predicted.outcome, observed.outcome, randomVariables,
                                current_count, current_risk) {
 
-          if ('denormalized' %in% names(predicted.outcome)) {
-            predicted.outcome = predicted.outcome$denormalized
+          if ('normalized' %in% names(predicted.outcome)) {
+            predicted.outcome = predicted.outcome$normalized
           }
 
           current_count <- Arguments$getInteger(current_count, c(0, Inf))
@@ -171,8 +162,10 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
                                               observed.outcome = observed.outcome,
                                               randomVariables = randomVariables)
 
+
           ## Note that we need to update the risk for every algorithm and every RV
           algorithm_names <- names(updated_risk)
+
           current_risk <- lapply(algorithm_names, function(algorithm_name) {
             new_risks <- updated_risk[[algorithm_name]]
             old_risk <- current_risk[[algorithm_name]]
@@ -198,7 +191,7 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
 
               names(new_risk) <- current
               new_risk
-            }) %>% unlist %>% as.list
+            }) %>% unlist %>% t %>% as.data.table
           })
 
           names(current_risk) <- algorithm_names

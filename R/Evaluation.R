@@ -7,14 +7,14 @@ Evaluation.get_evaluation_function = function(family, useAsLoss=TRUE) {
   if(!useAsLoss){
     #return(Evaluation.log_likelihood_loss)
     ###if (family == 'gaussian') {
-      return(Evaluation.log_likelihood_loss)
+      return(Evaluation.log_loss)
     ###} else if(family == 'binomial') {
       ###return(Evaluation.log_loss)
     ###} else {
       ###throw('No loss function implemented for family ', family)
     ###}
   }
-  return(Evaluation.log_likelihood_loss)
+  return(Evaluation.log_loss)
 
   ##if (family == 'gaussian') {
     ##return(Evaluation.root_mean_squared_error)
@@ -56,7 +56,7 @@ Evaluation.log_loss <- function(data.observed, data.predicted, eps = 1e-15) {
 #' @param eps is a small offset to let the log not go to Inf
 Evaluation.log_likelihood_loss <- function(data.observed = NULL, data.predicted, eps = 1e-15) {
   data.predicted = pmax(data.predicted, eps)
-  - sum(log(data.predicted))
+  c(log_likelihood_loss = - sum(log(data.predicted)))
 }
 
 #' Mean squared error loss
