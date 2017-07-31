@@ -119,7 +119,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
           ## TODO: Implement sampling from a non conditional distribution
           if(length(X) == 0) throw('Sampling from non conditional distribution is not yet supported!')
 
-          print(paste('Sampling from:',Y, 'conditional on',X))
+          #print(paste('Sampling from:',Y, 'conditional on',paste(X, collapse='+')))
 
           yValues <- datO[[Y]]
           conditionalDensity <- self$getConditionalDensities(Y)

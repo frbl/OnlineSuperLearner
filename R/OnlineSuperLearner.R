@@ -170,9 +170,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## The class to make predictions on the data
         online_super_learner_predict = NULL,
 
-        ## The data processor to convert the results back to their original format
-        pre_processor = NULL,
-
         ## Functions
         ## =========
 
@@ -276,16 +273,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                                           randomVariables = randomVariables,
                                           discrete = TRUE, continuous = TRUE, all_estimators = TRUE)
 
-          private$cv_risk_calculator$calculate_evaluation(predicted.outcome = predicted.outcome,
-                              observed.outcome = observed.outcome,
-                              randomVariables = randomVariables,
-                              add_evaluation_measure_name = FALSE) %>%
-          print
-
-          private$cv_risk_calculator$calculate_risk(predicted.outcome = predicted.outcome,
-                              observed.outcome = observed.outcome,
-                              randomVariables = randomVariables) %>%
-          print
           ## Calculate the error using the normalized predictions
           private$update_risk(predicted.outcome = predicted.outcome,
                               observed.outcome = observed.outcome,

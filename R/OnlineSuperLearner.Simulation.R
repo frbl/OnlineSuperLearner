@@ -9,6 +9,7 @@
 #' @importFrom foreach foreach
 #' @include RandomVariable.R
 #' @include OutputPlotGenerator.R
+#' @include OneStepEstimator.R
 #' @include SMGFactory.R
 #' @include SMG.Latest.Entry.R
 #' @include SMG.Lag.R
@@ -43,9 +44,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           algos <- list()
 
 
-          #algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                                  #algorithm_params = list(alpha = 0),
-                                  #params = list(nbins = nbins, online = TRUE))))
+          algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
+                                  algorithm_params = list(alpha = 0),
+                                  params = list(nbins = nbins, online = TRUE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
                                   #algorithm_params = list(ntrees=c(10,20), min_rows=1),
@@ -78,9 +79,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff1$dosl))
           print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff1$osl))
 
-          diff2 <- self$configuration2()
-          print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff2$dosl))
-          print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff2$osl))
+          #diff2 <- self$configuration2()
+          #print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff2$dosl))
+          #print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff2$osl))
 
           #self$configuration3()
           #self$configuration4()
@@ -292,7 +293,6 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                                             observed.outcome = observed.outcome,
                                                             randomVariables = randomVariables) 
           OutputPlotGenerator.create_risk_plot(performance, 'performance', '/tmp/osl/')
-          browser()
 
           #})
           #performances <- do.call(rbind, lapply(performances, data.frame)) %T>%
@@ -328,16 +328,18 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           O_0 <- data.test[1,]
           cat('Sampling from Pn* (for approximation)...\n')
           outcome <- variable_of_interest$getY
+
+
           result.dosl <- foreach(i=seq(B), .combine=rbind) %dopar% {
             print(i)
             osl$sample_iteratively(data = O_0,
                                    randomVariables = randomVariables,
                                    intervention = intervention,
-                                   return_type = 'observations',
                                    discrete = TRUE,
                                    tau = tau)[tau, outcome, with=FALSE]
           } %>%
             unlist
+
           result.osl <- rep(0.5, B)
           result.osl <- foreach(i=seq(B), .combine=rbind) %dopar% {
             print(i)
@@ -349,6 +351,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                    tau = tau)[tau, outcome, with=FALSE]
           } %>%
             unlist
+
 
           options(warn=pre)
 
@@ -371,18 +374,22 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           #lapply(performance, function(x) {lapply(x,mean)})
 
           # Now, the fimal step is to apply the OneStepEstimator
-          OOS <- OnlineOneStepEstimator$new()
-          #result.approx.mean.update <- OOS$perform(osl = osl,
-                                                   #initial_estimate = result.dosl.mean,
-                                                   #randomVariables = randomVariables,
-                                                   #data = data.test, 
-                                                   #variable_of_interest = variable_of_interest,
-                                                   #intervention = intervention,
-                                                   #tau = tau,
-                                                   #B = B) 
+          OOS <- OneStepEstimator$new(osl = osl, 
+                                            randomVariables = randomVariables, 
+                                            discrete = TRUE,
+                                            N = 90, 
+                                            B = B,
+                                            pre_processor = pre_processor
+                                            )
 
-          #print(paste('The difference between the estimate and approximation (after oos) is: ',
-                      #abs(result.mean - result.approx.mean.update$oos_estimate)))
+          result.approx.mean.updated <- OOS$perform(initial_estimate = result.dosl.mean,
+                                                   data = data.test,
+                                                   variable_of_interest = variable_of_interest,
+                                                   intervention = intervention,
+                                                   tau = tau)
+
+          print(paste('The difference between the estimate and approximation (after oos) for dosl is: ',
+                      abs(result.approx.mean - result.approx.mean.updated$oos_estimate)))
           differences
         }
   )

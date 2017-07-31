@@ -19,6 +19,7 @@ packages <- c(
 "sgd",
 "dplyr",
 "magrittr",
+"assertthat",
 "optimr",
 "nloptr",
 "purrr",
