@@ -1,60 +1,67 @@
-# This is just a working documnet for now. No TMLE is included at all!
-
-# Step 1. MC approximation of the efficient influence curve.
-
-# The process of Monte-Carlo approximating the efficient influence curve consists of two main steps: \rom{1} compute the
-# so-called `\emph{h}-ratios', and \rom{2} compute a number of conditional expectations. This procedure is quite a
-# mathematical endavour and we will not go into detail in how to derive the efficient influence curve. For this we
-# redirect the reader to~\cite{VanderLaan2017}.
-
-# Computing the H ratios:
-
-# $h^*_{c_y(s)}(c_y) / h_{c_y}(c_y)$.
-# In which $c_y = C_y(t)$, and $y = Y(t)$
-
-# #1 Simple / fast / inefficient solution
-#get_h_ratio_estimators = function(B, N, intervention, data, randomVariables) {
-
-  ## Using $B$ we uniformely sample independently a number of integers from $\{1,\ldots, N\}$.
-  #Tsample <- sample.int(N, B, replace = TRUE)
-
-  ## Then we sample $B$ observations from $P^N$ and $B$ observations from $P^N_{s,a}.
-  #Osample <- foreach(b=seq(B), .combine=rbind) %dopar% {
-    #current_T <- Tsample[b]
-    #current <- osl$sample_iteratively(data = data[1,],
-                                      #randomVariables = randomVariables,
-                                      ## TODO: We should transform all variables back to their original value
-                                      #variable_of_interest = variable_of_interest,
-                                      #tau = current_T,
-                                      #return_type = 'summary_measures')
-
-    #cbind(current[length(current), ], delta = 1)
-  #}
-
-  ## let s be a value $1 \le s \le \tau$
-  #Osample.Pstar <- foreach(b=seq(B), .combine=rbind) %dopar% {
-    #current <- osl$sample_iteratively(data = data[1,],
-                                      #randomVariables = randomVariables,
-                                      #intervention = intervention,
-                                      #variable_of_interest = variable_of_interest,
-                                      #tau = intervention$when,
-                                      #return_type = 'summary_measures')
-
-    #cbind(current[length(current), ], delta = 0)
-  #}
-
-  #Osample.full <- rbind(Osample, Osample.Pstar)
-
-  #h_ratio_predictors <- lapply(randomVariables, function(rv) {
-                                 #formula <- paste(rv$getY, '~', paste(rv$getX, collapse = '+'))
-                                 #glm(formula, Osample.full, family = binomial())
-                                      #})
-
-  #h_ratio_predictors
-#}
-
 #' OneStepEstimator
 #'
+#' The one step estimator (OOS) is a technique that improves our initial estimates of the parameter of interest and targets
+#' them towards this parameter of interest. In order to use the OOS, one has to solve the Efficient Influence Curve
+#' equation, which can be done using a Monte-Carlo approximation.  The process of Monte-Carlo approximating the
+#' efficient influence curve consists of two main steps: (i) compute the so-called `\emph{h}-ratios', and (ii) compute a
+#' number of conditional expectations. This procedure is implemented in this class and can be started by calling the
+#' \core{perform} method of an instance of this class. 
+#' @section Methods: 
+#' \describe{  
+#'   \item{\code{initialize(osl, randomVariables, N, B, pre_processor, discrete = TRUE) }}{ 
+#'     Initializes the online one step estimator. It uses an earlier fitted online super learner to sample from the
+#'     conditional densities.
+#'     @param osl the online superlearner, which was fitted earlier on the data
+#'     @param randomVariables a list of random variables used for fitting the OSL
+#'     @param N the number of measurements in a timeseries
+#'     @param B the number of iterations we should do while sampling from the conditional expectations
+#'     @param pre_processor the \core{PreProcessor} object used to normalize the data.
+#'     @param discrete = TRUE whether we should use the discrete (true) or continuous (false) super learner 
+#'   } 
+#' 
+#'   \item{\code{perform(initial_estimate, data, variable_of_interest, intervention}}{ 
+#'     This method actually runs the oos. Based on an initial estimate, it calculates an update term to add to this
+#'     estimate. This will make the estimator well behaved (i.e., normally distributed). The function will add this
+#'     correction term to the initial estimate and return the estimated variance of the estimator.
+#'     @param initial_estimate the initial estimate of the target parameter, as calculated using OSL
+#'     @param data the data to seed the sampling procedure
+#'     @param variable_of_interest the variable we are interested in (e.g., the Y random variable)
+#'     @param intervention the intervention we want to perform. See \code{InterventionParser} for more details
+#'     @return a list containing two elements: \code{oos_estimate} and \code{oos_variance}. This first element (\code{oos_estimate})
+#'     contains the updated estimate of the target parameter. The second element (\code{oos_variance}), contains the
+#'     variance of this estimator, which can be used to derive confidence intervals.
+#'   } 
+#' 
+#'   \item{\code{get_h_ratio_estimators(tau, intervention, data) }}{ 
+#'     This method can be used to perform the first step of OOS. It can be used to retrieve a list of h-ratio
+#'     estimators. This method returns an estimator for each random variable (W, A, and Y), and for each time s from 1
+#'     to tau. This method uses the more efficient way, as described in Van der Laan 2017.
+#'     @param tau the time at which we want to measure the effect of an intervention.
+#'     @param intervention the intervention itself, see \code{InterventionParser} for more details
+#'     @param data the data to seed the sampling procedure and thereby h-ratio predictor fitting
+#'     @return a list of lists of estimators. The outer list has a list for each s 1 to tau. For each entry in this
+#'     list, we have another list for each outcome measure, as indexed using their prediction formulae.
+#'   } 
+#' 
+#'   \item{\code{evaluation_of_conditional_expectations(h_ratio_predictors, variable_of_interest, data, tau}}{ 
+#'     In this function one can perform the second step of OOS, calculate the conditional expectations / difference in
+#'     conditional expectations. 
+#'     @param h_ratio_predictors the list of predictors, in a format returned using the \code{get_h_ratio_estimators}
+#'     format.
+#'     @param variable_of_interest the variable we are currently interested in (the outcome variable, Y).
+#'     @param data the data to seed the sampling procedure and thereby conditional expectation evaluation. 
+#'     @param tau the time till which we have to sample.
+#'   } 
+#' 
+#'   \item{\code{perform_initial_estimation(data, intervention, tau) }}{ 
+#'     This function can be used to generate an initial estimation, calculated using the plain OSL. This method then
+#'     returns a value given the provided data, tau, and intervention.
+#'     @param data the data to seed the sampling procedure.
+#'     @param intervention the intervention itself, see \code{InterventionParser} for more details
+#'     @param tau the time at which we want to evaluate the intervention
+#'   } 
+#' 
+#' }  
 #' @docType class
 #' @importFrom R6 R6Class
 #' @importFrom speedglm speedlm updateWithMoreData
@@ -375,7 +382,3 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       }
     )
 )
-
-
-# #2 More efficient but slow solution
-

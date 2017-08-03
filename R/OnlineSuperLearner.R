@@ -1,4 +1,4 @@
-devtools::load_all('~/Workspace/osofr/condensier')
+#devtools::load_all('~/Workspace/osofr/condensier')
 
 #' OnlineSuperLearner
 #'
@@ -171,7 +171,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## The class to make predictions on the data
         online_super_learner_predict = NULL,
 
-       ## Functions
+        ## Functions
         ## =========
 
         ## Update the cross validation risk
