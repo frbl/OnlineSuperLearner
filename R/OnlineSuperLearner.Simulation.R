@@ -46,7 +46,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           alphas <- runif(5,0,1)
           algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                                  algorithm_params = list(alpha = alphas), 
+                                  #algorithm_params = list(alpha = alphas), 
                                   params = list(nbins = nbins, online = TRUE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
@@ -65,9 +65,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   #algorithm_params = list(),
                                   params = list(nbins = nbins, online = FALSE))))
 
-          algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
-                                  algorithm_params = list(alpha = alphas),
-                                  params = list(nbins = nbins, online = FALSE))))
+          #algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
+                                  #algorithm_params = list(alpha = alphas),
+                                  #params = list(nbins = nbins, online = FALSE))))
 
           #algos <- append(algos, list(list(algorithm = 'condensier::glmR6',
                                   ##algorithm_params = list(),
@@ -225,7 +225,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                when = c(2), 
                                what = c(1))
 
-          intervention <- list(variable = 'A',
+          control <- list(variable = 'A',
                                when = c(2), 
                                what = c(0))
 
@@ -555,7 +555,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           differences <- list(
                               dosl         = abs(result.dosl.mean - result.approx.mean),
-                              osl          = abs(result.osl.mean - result.approx.mean)
+                              osl          = abs(result.osl.mean - result.approx.mean),
                               dosl_control = abs(result.dosl_control.mean - result.approx_control.mean),
                               osl_control  = abs(result.osl_control.mean - result.approx_control.mean)
                               )
