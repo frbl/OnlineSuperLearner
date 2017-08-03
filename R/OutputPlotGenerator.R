@@ -54,11 +54,11 @@ OutputPlotGenerator.create_density_plot = function(yValues, estimated_probabilit
 #' @import ggplot2
 #' @import reshape2
 #' @export
-OutputPlotGenerator.create_convergence_plot = function(data, output, dir = '~/tmp/osl/') {
+OutputPlotGenerator.create_convergence_plot = function(data, output, dir = '~/tmp/osl/convergence') {
   labels = names(data)
   colors <- OutputPlotGenerator.get_colors(length(labels))
   dir.create(dir, showWarnings = FALSE, recursive = TRUE)
-  pdf(paste(dir,output,'.pdf',sep = ''))
+  pdf(paste(dir,'/',output,'.pdf',sep = ''))
 
   data <- lapply(data, function(dat) cumsum(dat)/seq(along=dat)) %>%
     as.data.frame
@@ -88,7 +88,7 @@ OutputPlotGenerator.create_convergence_plot = function(data, output, dir = '~/tm
 #' OutputPlotGenerator.create_risk_plot
 #' Function to create plots similar to the ones in the OSL papers
 #' @export
-OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tmp/osl/') {
+OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tmp/osl') {
   # Performance should be a list of lists:
   # List 1: the estimator used
   # List 2: the random variable predicted
@@ -100,7 +100,7 @@ OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tm
   performance_dt[, 'names' :=  ml_names]
 
   dir.create(dir, showWarnings = FALSE, recursive = TRUE)
-  pdf(paste(dir,output,'.pdf',sep = ''))
+  pdf(paste(dir, '/', output,'.pdf',sep = ''))
   p <- ggplot(performance_dt)
   i <- 1
   colors <- OutputPlotGenerator.get_simple_colors(length(outcomes) -1)
@@ -160,3 +160,12 @@ OutputPlotGenerator.get_simple_colors = function(number_of_variables) {
     tol12qualitative=c("brown", "#6699CC", "purple", "black", "blue", "#999933", "orange", "#661100", "green", "#AA4466", "#882255", "gray")
   )[[number_of_variables]]
 }
+
+OutputPlotGenerator.export_key_value = function(key, value, dir = '~/tmp/osl') {
+  if (is.numeric(value)) {
+    value <- round(value, 3)
+  }
+  line <- paste(key,'=',value)
+  write(line,file=paste(dir,"variables.dat", sep='/'),append=TRUE)
+}
+

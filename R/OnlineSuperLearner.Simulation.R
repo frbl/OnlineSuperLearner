@@ -44,8 +44,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           algos <- list()
 
 
+          alphas <- runif(5,0,1)
           algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                                  algorithm_params = list(alpha = 0),
+                                  algorithm_params = list(alpha = alphas), 
                                   params = list(nbins = nbins, online = TRUE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
@@ -64,9 +65,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   #algorithm_params = list(),
                                   params = list(nbins = nbins, online = FALSE))))
 
-          #algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
-                                  #algorithm_params = list(alpha = c(0.3,0.8)),
-                                  #params = list(nbins = nbins, online = FALSE))))
+          algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
+                                  algorithm_params = list(alpha = alphas),
+                                  params = list(nbins = nbins, online = FALSE))))
 
           #algos <- append(algos, list(list(algorithm = 'condensier::glmR6',
                                   ##algorithm_params = list(),
@@ -75,18 +76,22 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           private$SL.library.definition <- algos
 
           # Run the simulations
-          #diff1 <- self$configuration1()
-          #print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff1$dosl))
-          #print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff1$osl))
+          diff <- self$configuration1()
+          print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$dosl))
+          print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff$osl))
 
-          diff2 <- self$configuration2()
-          print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff2$dosl))
-          print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff2$osl))
+          diff <- self$configuration2()
+          print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$dosl))
+          print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff$osl))
 
-          #self$configuration3()
-          #self$configuration4()
-          #self$configuration5()
-          #self$verySimpleSimulation()
+          diff <- self$configuration3()
+          print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$dosl))
+          print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff$osl))
+
+          diff <- self$configuration4()
+          print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$dosl))
+          print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff$osl))
+
           #stopCluster(cluster)
         },
 
@@ -128,18 +133,21 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           randomVariables <- c(W, A, Y)
 
           # Generate a dataset we will use for testing.
-          margin <- 100
-          data.test <- private$sim$simulateWAY(private$test_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
-          data.train <- private$sim$simulateWAY(private$training_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
-
-          # Create the bounds
-          bounds <- PreProcessor.generate_bounds(data.train)
-
           # Create the measures we'd like to include in our model
           # In this simulation we will include 2 lags and the latest data (non lagged)
           # Define the variables in the initial dataset we'd like to use
           #private$train(data.test, data.train, bounds, randomVariables, 2)
-          private$train(data.test, data.train, bounds, randomVariables, Y,  max_iterations = 12,
+          intervention <- list(variable = 'A',
+                               when = c(2), 
+                               what = c(1))
+          control <- list(variable = 'A',
+                               when = c(2), 
+                               what = c(0))
+
+
+          private$train(intervention = intervention,
+                        control = control,
+                        randomVariables, Y,  max_iterations = 12,
                         llW = llW,
                         llA = llA, 
                         llY = llY,
@@ -210,24 +218,22 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           # In this simulation we will include 2 lags and the latest data (non lagged)
           # Define the variables in the initial dataset we'd like to use
 
-          # Generate a dataset we will use for testing.
-          # We add a margin so we don't have to worry about the presence of enough history
-          margin <- 100
-          data.test <- private$sim$simulateWAY(private$test_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
-          data.train <- private$sim$simulateWAY(private$training_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
-
-          # Create the bounds
-          bounds <- PreProcessor.generate_bounds(data.train)
-
           # Create the measures we'd like to include in our model
           # In this simulation we will include 2 lags and the latest data (non lagged)
           # Define the variables in the initial dataset we'd like to use
-          private$train(data.test, 
-                        data.train, 
-                        bounds, 
+          intervention <- list(variable = 'A',
+                               when = c(2), 
+                               what = c(1))
+
+          intervention <- list(variable = 'A',
+                               when = c(2), 
+                               what = c(0))
+
+          private$train(intervention = intervention,
+                        control = control,
                         randomVariables, 
                         Y,
-                        max_iterations = 2, llW, llA, llY,
+                        max_iterations = 12, llW, llA, llY,
                         configuration = 2)
         },
 
@@ -268,26 +274,109 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           Y <- RandomVariable$new(formula = Y ~ A + W, family = 'binomial')
           randomVariables <- c(W, A, Y)
 
-          # Generate a dataset we will use for testing.
-          margin <- 100
-          data.test <- private$sim$simulateWAY(private$test_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
-          data.train <- private$sim$simulateWAY(private$training_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
-
-          # Create the bounds
-          bounds <- PreProcessor.generate_bounds(data.train)
-
           # Create the measures we'd like to include in our model
           # In this simulation we will include 2 lags and the latest data (non lagged)
           # Define the variables in the initial dataset we'd like to use
           #private$train(data.test, data.train, bounds, randomVariables, 2)
-          private$train(data.test, data.train, bounds, randomVariables, Y,  max_iterations = 12,
+          intervention <- list(variable = 'A',
+                               when = c(1), 
+                               what = c(1))
+
+          control <- list(variable = 'A',
+                               when = c(1), 
+                               what = c(0))
+
+          private$train(intervention = intervention,
+                        control = control,
+                        randomVariables,
+                        Y,  max_iterations = 12,
                         llW = llW,
                         llA = llA, 
                         llY = llY,
-                        configuration = 1)
+                        configuration = 3)
         },
 
         configuration4 = function() {
+          set.seed(12345)
+
+          ######################################
+          # Generate observations for training #
+          #####################################
+          llW <- list(
+            list(stochMech = function(numberOfBlocks) {
+                rnorm(numberOfBlocks, 0, 10)
+              },
+              param=c(0, 0.5, -0.25, 0.1),
+              rgen=identity),
+            list(stochMech = function(numberOfBlocks) {
+                runif(numberOfBlocks, 0, 1)
+              },
+              param=c(0, 0.5, -0.25, 0.1),
+              rgen = identity),
+            list(stochMech = function(numberOfBlocks) {
+                runif(numberOfBlocks, 0, 1)
+              },
+              param=c(0, 0.5, -0.25, 0.1),
+              rgen = identity)
+          )
+
+          llA <- list(
+            stochMech=function(ww) {
+                rbinom(length(ww), 1, expit(ww))
+            },
+            param=c(-0.1, 0.1, 0.3, 0.7),
+            rgen=function(xx, delta=0.05){
+              probability <- delta+(1-2*delta)*expit(xx)
+              rbinom(length(xx), 1, probability)
+            }
+          )
+
+          llY <- list(rgen={function(AW){
+              aa <- AW[, "A"]
+              ww <- AW[, grep("[^A]", colnames(AW))]
+              mu <- aa*(0.9) + (1-aa)*(0.3) + rnorm(length(aa), 0, 0.01)
+              mu <- lapply(mu, function(x) max(min(x, 1),0)) %>% unlist
+            }}
+          )
+
+          llY <- list(rgen={function(AW){
+            aa <- AW[, "A"]
+            ww <- AW[, grep("[^A]", colnames(AW))]
+            mu <- 0.5 * ww + 0.3 * (1-aa) + 0.9 * aa 
+            42 + rnorm(length(mu), mu, sd=1)
+            }}
+          )
+
+          # Create the measures we'd like to include in our model
+          # In this simulation we will include 2 lags and the latest data (non lagged)
+          # Define the variables in the initial dataset we'd like to use
+          # We'd like to use the following features in our estimation:
+          W  <- RandomVariable$new(family = 'gaussian', formula = W  ~ Y_lag_1 + W2_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2)
+          W2 <- RandomVariable$new(family = 'gaussian', formula = W2 ~ W_lag_1)
+          W3 <- RandomVariable$new(family = 'gaussian', formula = W3 ~ Y_lag_1)
+          A  <- RandomVariable$new(family = 'binomial', formula = A  ~ W + Y_lag_1 + A_lag_1 + W_lag_1)
+          Y  <- RandomVariable$new(family = 'gaussian', formula = Y  ~ A + W + Y_lag_1 + A_lag_1 + W_lag_1)
+          randomVariables <- c(W, W2, W3, A, Y)
+
+
+          # Create the measures we'd like to include in our model
+          # In this simulation we will include 2 lags and the latest data (non lagged)
+          # Define the variables in the initial dataset we'd like to use
+
+          intervention <- list(variable = 'A',
+                               when = c(1), 
+                               what = c(1))
+
+          control <- list(variable = 'A',
+                               when = c(1), 
+                               what = c(0))
+
+          private$train(intervention = intervention,
+                        control = control,
+                        randomVariables, 
+                        Y,
+                        max_iterations = 12, llW, llA, llY,
+                        configuration = 4)
         },
 
         configuration5 = function() {
@@ -302,7 +391,17 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
         SL.library.definition = NULL,
         cv_risk_calculator = NULL,
 
-        train = function(data.test, data.train, bounds, randomVariables, variable_of_interest, max_iterations, llW, llA, llY, configuration) {
+        train = function(intervention, control, randomVariables, variable_of_interest, max_iterations, llW, llA, llY, configuration) {
+
+          # Generate a dataset we will use for testing.
+          # We add a margin so we don't have to worry about the presence of enough history
+          margin <- 100
+          data.test <- private$sim$simulateWAY(private$test_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
+          data.train <- private$sim$simulateWAY(private$training_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
+
+          # Create the bounds
+          bounds <- PreProcessor.generate_bounds(data.train)
+
           outcome.variables <- sapply(randomVariables, function(rv) rv$getY)
           smg_factory <- SMGFactory$new()
 
@@ -324,12 +423,19 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           private$log && cat(private$log, 'Running OSL')
 
+          initial_training_set_size <- floor(private$training_set_size / 2)
           mini_batch_size <- (private$training_set_size / 2) / max_iterations
-          mini_batch_size <- ifelse(is.na(mini_batch_size) || is.infinite(mini_batch_size), 1, mini_batch_size)
-          print(mini_batch_size)
+          mini_batch_size <- ifelse(is.na(mini_batch_size) || is.infinite(mini_batch_size), 1, floor(mini_batch_size))
+
+          # Store the configuration
+          OutputPlotGenerator.export_key_value('initial-training-set-size', initial_training_set_size)
+          OutputPlotGenerator.export_key_value('minibatch-size', mini_batch_size)
+          OutputPlotGenerator.export_key_value('max-iterations', max_iterations)
+          OutputPlotGenerator.export_key_value('total-iterations', max_iterations+1)
+
           # Divide by two here just so the initial size is a lot larger then each iteration, not really important
           risk <- osl$fit(data.train, randomVariables = randomVariables,
-                                initial_data_size = private$training_set_size / 2,
+                                initial_data_size = initial_training_set_size,
                                 max_iterations = max_iterations,
                                 mini_batch_size = mini_batch_size) %T>%
             print
@@ -354,11 +460,8 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           #plot(x=performances$iterations, y=performances$performance)
           #performances
-          intervention <- list(variable = 'A',
-                               when = c(2), 
-                               what = c(1))
           tau <- 2
-          B <- 100
+          B <- 400
 
           pre <- options('warn')$warn
           options(warn=-1)
@@ -380,9 +483,16 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
             data.int$Y[tau]
           }
 
+          result.approx_control <- foreach(i=seq(B), .combine=rbind) %dopar% {
+            print(i)
+            data.int <- private$sim$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
+                                              intervention = control, verbose = FALSE)
+            data.int$Y[tau]
+          }
+
           # Note that this won't work when we have an H2O estimator in the set. The parallelization will fail.
           O_0 <- data.test[1,]
-          cat('Sampling from Pn* (for approximation)...\n')
+          cat('Sampling from Pn* (for approximation) intervened ...\n')
           outcome <- variable_of_interest$getY
 
 
@@ -408,21 +518,70 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           } %>%
             unlist
 
+          cat('Sampling from Pn* (for approximation) controlled ...\n')
+          outcome <- variable_of_interest$getY
+
+
+          result.dosl_control <- foreach(i=seq(B), .combine=rbind) %dopar% {
+            print(i)
+            osl$sample_iteratively(data = O_0,
+                                   randomVariables = randomVariables,
+                                   intervention = control,
+                                   discrete = TRUE,
+                                   tau = tau)[tau, outcome, with=FALSE]
+          } %>%
+            unlist
+
+          result.osl_control <- rep(0.5, B)
+          result.osl_control <- foreach(i=seq(B), .combine=rbind) %dopar% {
+            print(i)
+            osl$sample_iteratively(data = O_0,
+                                   randomVariables = randomVariables,
+                                   intervention = control,
+                                   return_type = 'observations',
+                                   discrete = FALSE,
+                                   tau = tau)[tau, outcome, with=FALSE]
+          } %>%
+            unlist
 
           options(warn=pre)
 
           result.approx.mean <- result.approx %>% mean
+          result.approx_control.mean <- result.approx_control %>% mean
           result.dosl.mean <- result.dosl %>% mean
+          result.dosl_control.mean <- result.dosl_control %>% mean
           result.osl.mean <- result.osl %>% mean
+          result.osl_control.mean <- result.osl_control %>% mean
 
-          differences <- list(dosl = abs(result.dosl.mean - result.approx.mean),
-                              osl = abs(result.osl.mean - result.approx.mean))
+          differences <- list(
+                              dosl         = abs(result.dosl.mean - result.approx.mean),
+                              osl          = abs(result.osl.mean - result.approx.mean)
+                              dosl_control = abs(result.dosl_control.mean - result.approx_control.mean),
+                              osl_control  = abs(result.osl_control.mean - result.approx_control.mean)
+                              )
 
+          key <- paste('cfg', configuration, 'osl', 'pre-oos', sep='-')
+          OutputPlotGenerator.export_key_value(key, differences$osl)
+
+          key <- paste('cfg', configuration, 'dosl', 'pre-oos', sep='-')
+          OutputPlotGenerator.export_key_value(key, differences$dosl)
+
+          key <- paste('cfg', configuration, 'osl-control', 'pre-oos', sep='-')
+          OutputPlotGenerator.export_key_value(key, differences$osl_control)
+
+          key <- paste('cfg', configuration, 'dosl-control', 'pre-oos', sep='-')
+          OutputPlotGenerator.export_key_value(key, differences$dosl_control)
 
           # Plot the convergence
           data <- list(truth = result.approx, dosl = result.dosl, osl = result.osl)
           OutputPlotGenerator.create_convergence_plot(data = data,
                                                       output = paste('convergence_configuration',configuration,sep='_'))
+
+          data <- list(truth = result.approx_control, dosl = result.dosl_control, osl = result.osl_control)
+          OutputPlotGenerator.create_convergence_plot(data = data,
+                                                      output = paste('convergence_configuration_control',configuration,sep='_'))
+
+
 
           #browser()
           osl$info
@@ -446,6 +605,13 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           #print(paste('The difference between the estimate and approximation (after oos) for dosl is: ',
                       #abs(result.approx.mean - result.approx.mean.updated$oos_estimate)))
+
+          key <- paste('cfg', configuration, 'osl', 'post-oos', sep='-')
+          OutputPlotGenerator.export_key_value(key, -1)
+
+          key <- paste('cfg', configuration, 'dosl', 'post-oos', sep='-')
+          OutputPlotGenerator.export_key_value(key, -1)
+
           differences
         }
   )
