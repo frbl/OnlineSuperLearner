@@ -1,10 +1,10 @@
 context("Evaluation.R")
 
 context(" Evaluation.get_evaluation_function")
-test_that("it should always return the log likelihood loss", {
+test_that("it should always return the log loss", {
   fn <- Evaluation.get_evaluation_function('gaussian', TRUE)
   expect_false(is.null(fn))
-  expect_equal(fn, Evaluation.log_likelihood_loss)
+  expect_equal(fn, Evaluation.log_loss)
 })
 #test_that("it should give the mse_loss if a gaussion lossfunction is requested", {
   #fn <- Evaluation.get_evaluation_function('gaussian', TRUE)

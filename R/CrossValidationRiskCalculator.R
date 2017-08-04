@@ -98,22 +98,17 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
               result
             }) %>% t %>% as.data.table
           }
-
-          if (is.a(predicted.outcome, 'data.table')) {
-            return(evaluate(predicted.outcome))
-          }
           
-          if (is.a(predicted.outcome, 'list')) {
-            if ('normalized' %in% names(predicted.outcome)) {
-              predicted.outcome = predicted.outcome$normalized
-            }
+          predicted.outcome <- Arguments$getInstanceOf(predicted.outcome, 'list')
 
-            lapply(predicted.outcome, evaluate)
-
-            return(lapply(predicted.outcome, evaluate))
+          if ('normalized' %in% names(predicted.outcome)) {
+            predicted.outcome = predicted.outcome$normalized
           }
 
-          throw('Input predicted.outcome should be a data.table or list of data.tables')
+          lapply(predicted.outcome, evaluate)
+
+          return(lapply(predicted.outcome, evaluate))
+
         },
 
         ## Calculate the CV risk for each of the random variables provided

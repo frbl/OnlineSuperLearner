@@ -66,17 +66,6 @@ test_that("it should return the outcome in a list with the correct elements ", {
       expect_true
 })
 
-test_that("it should work when the input is a datatable", {
-    subject <- described.class$new()
-    result <- subject$calculate_evaluation(predicted.outcome = predicted.outcome$a, 
-                                observed.outcome = observed.outcome, 
-                                randomVariables = randomVariables, 
-                                add_evaluation_measure_name = FALSE)
-    expect_true(is(result, 'list'))
-    expect_true(length(result) == length(randomVariable_names))
-})
-
-
 context(" calculate_risk")
 test_that("it should throw if the predicted outcome is not a list", {
   predicted.outcome <- 'not a list'
@@ -173,8 +162,8 @@ test_that("it should throw if the observed outcomes are empty", {
 test_that("it should update (set) the risk properly when there is no risk", {
   subject <- described.class$new()
 
-  expected_risk <- list(list(A = 1, W = 2, Y=3), 
-                        list(A = 4, W = 5, Y = 6))
+  expected_risk <- list(data.table(A = 1, W = 2, Y=3), 
+                         data.table(A = 4, W = 5, Y = 6))
   names(expected_risk) <- names(predicted.outcome)
   stub(subject$update_risk, 'self$calculate_risk', expected_risk)
 
@@ -192,8 +181,8 @@ test_that("it should update (set) the risk properly when there is no risk", {
 test_that("it should update the risk properly when there already was a risk", {
   subject <- described.class$new()
 
-  current_risk <- list(a = list(A = 1, W = 2, Y=3), b = list(A = 4, W = 5, Y = 6))
-  new_risk     <- list(a = list(A = 1, W = 1, Y=1), b = list(A = 1, W = 1, Y = 1))
+  current_risk <- list(a = data.table(A = 1, W = 2, Y=3), b = data.table(A = 4, W = 5, Y = 6))
+  new_risk     <- list(a = data.table(A = 1, W = 1, Y=1), b = data.table(A = 1, W = 1, Y = 1))
 
   stub(subject$update_risk, 'self$calculate_risk', new_risk)
 
