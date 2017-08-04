@@ -1,5 +1,6 @@
 # OnlineSuperLearner: SuperLearner with online functionality for time-series analysis
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/adb6ba75281742f59ff610611cfad947)](https://www.codacy.com/app/frbl/OnlineSuperLearner?utm_source=github.com&utm_medium=referral&utm_content=frbl/OnlineSuperLearner&utm_campaign=badger)
 [![CircleCI](https://circleci.com/gh/frbl/OnlineSuperLearner.svg?style=svg&circle-token=5badec7bf5e36f14cb653dae793d9495eeb540b3)](https://circleci.com/gh/frbl/onlinesuperlearner)
 [![codecov](https://codecov.io/gh/frbl/OnlineSuperLearner/branch/master/graph/badge.svg?token=1s11gjN38m)](https://codecov.io/gh/frbl/OnlineSuperLearner)
 
