@@ -7,10 +7,16 @@ A <- RandomVariable$new(formula = A ~ W, family = 'binomial')
 Y <- RandomVariable$new(formula = Y ~ A, family = 'gaussian')
 randomVariables <- c(W, A, Y)
 
+# Mock the pre_processor
+pre_processor <- list(
+  denormalize = function(dat) dat
+)
+
 B <- 10
 N <- 10
 tau <- 3
-intervention <- list(when=c(1),
+intervention <- list(variable = 'A',
+                     when=c(1),
                      what=c(1))
 
 data <- data.table(Y_lag_1 = 2, W=1, A=1, Y=0)
@@ -24,12 +30,16 @@ subject <- described.class$new(
   osl = osl,
   randomVariables = randomVariables,
   N = N,
-  B = B
+  B = B,
+  pre_processor = pre_processor
 )
 
 context(" initialize")
 test_that("it should succesfully initialize when the correct arguments are provided", {
-  expect_error(described.class$new(osl = osl , randomVariables = randomVariables, N= N, B=B), NA)
+  expect_error(described.class$new(osl = osl, 
+                                   randomVariables = randomVariables, 
+                                   N= N, B=B, 
+                                   pre_processor = pre_processor), NA)
 })
 
 context(" perform")
@@ -78,7 +88,8 @@ test_that("it should produce sensible estimators in the correct output", {
     osl = osl,
     B = B, 
     N = N, 
-    randomVariables = randomVariables 
+    randomVariables = randomVariables,
+    pre_processor = pre_processor
   )
   result <- subject$get_h_ratio_estimators(tau = tau,
                                            intervention = intervention,
@@ -99,15 +110,160 @@ test_that("it should produce sensible estimators in the correct output", {
   })
 })
 
+test_that("it should create the correct estimators -> the ratio should be approx 20 when there is people with certain covariates received treatment more often", {
+  set.seed(12345)
+  osl <- list(
+    sample_iteratively = function(tau, intervention, ...) {
+      data_names <- names(data)
+      if(is.null(intervention)) {
+        mu <- rep(0, tau)
+      } else {
+        mu <- rep(10, tau)
+        #mu[length(mu)] <- 10
+      }
+      data_to_return <- lapply(seq_along(data_names), function(x) return(rnorm(tau, mu, 1))) %>%
+        as.data.table
+      names(data_to_return) <- data_names
+      data_to_return
+    }
+ )
+  class(osl) <- 'OnlineSuperLearner'
+  subject <- described.class$new(
+    osl = osl,
+    randomVariables = randomVariables,
+    N = 90,
+    B = 100,
+    pre_processor = pre_processor
+  )
+
+  h_ratio_predictors <- subject$get_h_ratio_estimators(tau = tau,
+                                           intervention = intervention,
+                                           data = data)
+
+  result <- lapply(seq(tau), function(s) {
+    lapply(randomVariables, function(rv) {
+      formula <- rv$get_formula_string(Y='delta')
+      ## We essentially force the h_ratio to be high, hence remove the warning
+      hide_warning_high_h_ratio(
+      subject$calculate_h_ratio(h_ratio_predictors,
+                                s=s,
+                                formula = formula,
+                                dat = data))
+    })
+  }) %>% 
+    unlist 
+
+  for (i in result) {
+    expect_gte(i, 20)
+  }
+})
+
+
+test_that("it should create the correct estimators -> the ratio should be approx 0 when there is people with certain covariates received treatment less often", {
+  set.seed(12345)
+  osl <- list(
+    sample_iteratively = function(tau, intervention, data, ...) {
+      data_names <- names(data)
+      mu <- rep(0, tau)
+      data_to_return <- lapply(seq_along(data_names), function(x) 
+                               c(rnorm(1, mu[1], 1),
+                                 rnorm(1, mu[2], 1),
+                                 rbinom(1,1, 0.99),
+                                 rnorm(1, mu[4], 1)
+                                 )) %>%
+        as.data.table
+      names(data_to_return) <- data_names
+      data_to_return
+    }
+ )
+  class(osl) <- 'OnlineSuperLearner'
+  subject <- described.class$new(
+    osl = osl,
+    randomVariables = randomVariables,
+    N = 90,
+    B = 100,
+    pre_processor = pre_processor
+  )
+
+  h_ratio_predictors <- subject$get_h_ratio_estimators(tau = tau,
+                                           intervention = intervention,
+                                           data = data)
+
+  result <- lapply(seq(tau), function(s) {
+    lapply(randomVariables, function(rv) {
+      formula <- rv$get_formula_string(Y='delta')
+      subject$calculate_h_ratio(h_ratio_predictors,
+                                s=s,
+                                formula = formula,
+                                dat = data)
+    })
+  }) %>%
+   unlist %>%
+   abs
+
+  for (i in result) {
+    expect_lte(i, 0.3)
+  }
+})
+
+test_that("it should create the correct estimators -> the ratio should be approx 1 when there is no difference based on the covariates", {
+  set.seed(12345)
+  osl <- list(
+    sample_iteratively = function(tau, intervention, ...) {
+      data_names <- names(data)
+      if(is.null(intervention)) {
+        mu <- rep(0, tau)
+      } else {
+        mu <- rep(0, tau)
+        mu[length(mu)] <- 10
+      }
+      data_to_return <- lapply(seq_along(data_names), function(x) return(rnorm(tau, mu, 1))) %>%
+        as.data.table
+      names(data_to_return) <- data_names
+      data_to_return
+    }
+ )
+  class(osl) <- 'OnlineSuperLearner'
+  subject <- described.class$new(
+    osl = osl,
+    randomVariables = randomVariables,
+    N = 90,
+    B = 1000,
+    pre_processor = pre_processor
+  )
+
+  h_ratio_predictors <- subject$get_h_ratio_estimators(tau = tau,
+                                           intervention = intervention,
+                                           data = data)
+
+  result <- lapply(seq(tau), function(s) {
+    lapply(randomVariables, function(rv) {
+      formula <- rv$get_formula_string(Y='delta')
+      subject$calculate_h_ratio(h_ratio_predictors,
+                                s=s,
+                                formula = formula,
+                                dat = data)
+    })
+  }) %>% 
+    unlist %>%
+    subtract(., 1) %>%
+    abs
+
+  for (i in result) {
+    expect_lt(i,  0.01)
+  }
+})
+
 
 context(" evaluation_of_conditional_expectations")
-test_that("it should perform", {
+test_that("it should perform the evaluation", {
 
   subject <- described.class$new(
     osl = osl,
     B = B, 
     N = N, 
-    randomVariables = randomVariables 
+    randomVariables = randomVariables,
+    pre_processor = pre_processor
   )
 
   stub(subject$evaluation_of_conditional_expectations, 'private$calculate_h_ratio', function(...) 0.5)
