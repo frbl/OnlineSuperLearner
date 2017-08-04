@@ -1,15 +1,15 @@
 #!/bin/bash
-spec_dir=`find tests/testthat -name '*.R' -type f -exec basename {} \; | sed -e 's/test-//g' | sort | uniq`
-app_dir=`find R -name '*.R' -type f -exec basename {} \; | sort | uniq`
-result=`comm -13 <(echo "$spec_dir") <(echo "$app_dir")`
-result=`echo $result | sed -e 's/[ \t]+/\n/g'`
+spec_dir=$(find tests/testthat -name '*.R' -type f -exec basename {} \; | sed -e 's/test-//g' | sort | uniq)
+app_dir=$(find R -name '*.R' -type f -exec basename {} \; | sort | uniq)
+result=$(comm -13 <(echo "$spec_dir") <(echo "$app_dir"))
+result=$(echo $result | sed -e 's/[ \t]+/\n/g')
 
 # Remove accepted missings
 array=()
 
 for file in "${array[@]}"
 do
-  result=`echo $result | sed -e s/$file//g`
+  result=$(echo $result | sed -e s/$file//g)
 done
 
 status_code=$(echo $result | wc -w)
