@@ -38,6 +38,12 @@ hide_warning_convergence <- function(the_function){
   withCallingHandlers(the_function, warning = h)
 }
 
+hide_warning_high_h_ratio <- function(the_function){
+  h <- function(w) if( any( grepl( "H-ratio is very high", w) ) ) invokeRestart( "muffleWarning" )
+  withCallingHandlers(the_function, warning = h)
+}
+
+
 hide_warning_test <- function(the_function){
   h <- function(w) if( any( grepl( "Test function was called!", w) ) ) invokeRestart( "muffleWarning" )
   withCallingHandlers(the_function, warning = h)

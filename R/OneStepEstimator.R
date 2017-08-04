@@ -153,6 +153,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
                                                      randomVariables = self$get_randomVariables,
                                                      tau = self$get_N,
                                                      discrete = self$get_discrete,
+                                                     intervention = NULL,
                                                      return_type = 'full')
           current
         }
@@ -167,6 +168,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         # Because we use $BN$ observations in the previous sampling step, we should also draw BN observations from P^N_{s,a}.
         Osample_p_star <- foreach(b=seq(self$get_B * self$get_N), .combine=rbind) %dopar% {
+          cat('Iteration ', b, '\n')
           current <- self$get_osl$sample_iteratively(data = O_0,
                                                      randomVariables = self$get_randomVariables,
                                                      intervention = intervention,
@@ -220,7 +222,9 @@ OneStepEstimator <- R6Class("OneStepEstimator",
           # This is the outer loop of the influence curve
           efficient_influence_curve_for_current_rv <- foreach(t=seq(self$get_N), .combine='sum') %dopar% {
             current_dat <- data[t,]
+
             # This is the inner loop of the influence curve
+
             difference_in_expectations_for_all_s <- foreach(s=seq(tau), .combine='sum') %do% {
               # Then, we start on a given s
               private$get_influence_curve_for_one_random_variable(s = s,
@@ -253,6 +257,22 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         } %>%
           unlist %>%
           mean
+      },
+
+      calculate_h_ratio = function(h_ratio_predictors, s, formula, data) {
+        if(is.null(h_ratio_predictors)) {
+          # This is just for testing purposes!
+          warning('Test function was called!')
+          return(0.5)
+        }
+        assert_that(!is.null(data))
+        h_ratio <- predict(h_ratio_predictors[[s]][[formula]], newdata = data, type='response') %>% as.numeric
+        result <- h_ratio / (1.0 - h_ratio)
+        if((abs(result) > 1000)) {
+          warning(paste('H-ratio is very high:', result, 'because predicted h was', h_ratio))
+        }
+        # Bounding the result on .95% (19)
+        min(result, 20)
       }
     ),
   active =
@@ -301,27 +321,10 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         list(rv = rv, next_rv = next_rv, s_offset = s_offset)
       },
 
-      calculate_h_ratio = function(h_ratio_predictors, s, formula, data) {
-        if(is.null(h_ratio_predictors)) {
-          # This is just for testing purposes!
-          warning('Test function was called!')
-          return(0.5)
-        }
-        assert_that(!is.null(data))
-        h_ratio <- predict(h_ratio_predictors[[s]][[formula]], newdata = data, type='response') %>% as.numeric
-        result <- h_ratio / (1.0 - h_ratio)
-        if((abs(result) > 1000)) {
-          warning(paste('H-ratio is very high:', result, 'because predicted h was', h_ratio))
-        }
-        # Bounding the result on .95% (19)
-        max(result, 20)
-      },
-
       is_current_node_treatment = function(s, intervention, rv) {
         Y <- rv$getY
         if (intervention$variable != Y) return(FALSE)
         if (!(s %in% intervention$when)) return(FALSE)
-        cat('Current node is a treatment node. Skipping')
         return(TRUE)
       },
 
@@ -330,7 +333,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         formula <- current_rvs$rv$get_formula_string(Y='delta')
 
         # First we have to estimate the h_ratio based on the C_rv, and the current s and random variable
-        h_ratio <- private$calculate_h_ratio(h_ratio_predictors, s, formula, dat)
+        h_ratio <- self$calculate_h_ratio(h_ratio_predictors, s, formula, dat)
 
         # Now we have to sample from the conditional distribution of rv + 1.
         # I.e., we have the our value for RV, and its corresponding C. Using
