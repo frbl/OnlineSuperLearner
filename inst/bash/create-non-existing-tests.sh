@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-files=`ls R`
+files=$(ls R)
 for file in $files; do
   testfile="tests/testthat/test-$file"
   if [[ -e "$testfile" ]]; then
