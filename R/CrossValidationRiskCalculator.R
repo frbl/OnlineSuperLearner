@@ -69,7 +69,7 @@
 #'     @param randomVariables the randomvariables for which the distributions have been calculated
 #'     @param current_count the current number of evaluations performed for calculating the \code{current_risk}.
 #'     @param current_risk the previously calculated risk of each of the estimators (calculated over
-#'     \code{current_count) number of evaluations).
+#'     \code{current_count} number of evaluations).
 #'     @return a list of lists with the updated risk for each estimator, and for each estimator an estimate of the risk
 #'     for each random variable.
 #'   }
