@@ -15,4 +15,74 @@ CrossValidationRiskCalculator
 Class that contains various methods for calculating the crossvalidated risk
 of an estimator.
 }
+\section{Methods}{
+
+\describe{
+  \item{\code{initialize() }}{
+    Creates a new cross validated risk calculator.
+  }
+
+  \item{\code{calculate_evaluation(predicted.outcome, observed.outcome, randomVariables, add_evaluation_measure_name=TRUE)}}{
+    <<description>>
+    The input data looks as followos:
+    \code{
+      $normalized
+      $normalized$`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
+              W         A         Y
+      1: 1.94863 0.5234383 0.3501003
+
+      $normalized$`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`
+                W         A         Y
+      1: 1.818194 0.5234383 0.3501003
+
+      $denormalized
+      $denormalized$`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
+              W         A         Y
+      1: 10.8308 0.5234383 0.3501003
+
+      $denormalized$`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`
+                W         A         Y
+      1: 9.889878 0.5234383 0.3501003
+    }
+
+    The output data looks as follows:
+    \code{
+     $`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
+            #.W        .W2        .W3       .A        .Y
+     1: 34.53878 0.02225018 -0.0507633 0.545403 -5.335295
+
+     $`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`
+            #.W          .W2         .W3       .A        .Y
+     1: 34.53878 -0.005705135 -0.03595754 0.545403 -4.499685
+    }
+    @param predicted.outcome
+    @param observed.outcome
+    @param randomVariables
+    @param add_evaluation_measure_name
+  }
+
+  \item{\code{calculate_risk(predicted.outcome, observed.outcome, randomVariables}}{
+    Calculate the CV risk for each of the random variables provided based on
+    the predicted and observed outcomes.
+    @param predicted.outcome the outcomes predicted by the algorithms
+    @param observed.outcome the true outcomes, as empiricaly observed
+    @param randomVariables the randomvariables for which the distributions have been calculated
+    @return a list of lists, in which each element is the risk for one estimator. In each list per estimator, each
+    element corresponds to one of the random variables.
+  }
+
+  \item{\code{update_risk(predicted.outcome, observed.outcome, randomVariables, current_count, current_risk) }}{
+    
+    @param predicted.outcome the outcomes predicted by the algorithms
+    @param observed.outcome the true outcomes, as empiricaly observed
+    @param randomVariables the randomvariables for which the distributions have been calculated
+    @param current_count the current number of evaluations performed for calculating the \code{current_risk}.
+    @param current_risk the previously calculated risk of each of the estimators (calculated over
+    \code{current_count} number of evaluations).
+    @return a list of lists with the updated risk for each estimator, and for each estimator an estimate of the risk
+    for each random variable.
+  }
+}
+}
+
 \keyword{datasets}

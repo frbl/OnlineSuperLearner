@@ -6,6 +6,9 @@
 #' @param estimated_probabilities vector of the estimated y_values (i.e., sampled values)
 #' @param output string with the filename
 #' @param dir the directory to plot to
+#' @importFrom("stats", "density")
+#' @importFrom("grDevices", "dev.off", "pdf")
+#' @importFrom("graphics", "lines", "plot")
 #' @export
 OutputPlotGenerator.create_density_plot = function(yValues, estimated_probabilities, estimated_y_values = NULL, output, dir = '~/tmp/osl/') {
   ## plot densitity first:
@@ -53,6 +56,8 @@ OutputPlotGenerator.create_density_plot = function(yValues, estimated_probabilit
 #' @param estimated_approximation the estimate (i.e., as found using machine learning and monte carlo approximation)
 #' @import ggplot2
 #' @import reshape2
+#' @importFrom grDevices dev.off pdf
+#' @importFrom graphics lines plot
 #' @export
 OutputPlotGenerator.create_convergence_plot = function(data, output, dir = '~/tmp/osl/convergence') {
   labels = names(data)
@@ -87,6 +92,13 @@ OutputPlotGenerator.create_convergence_plot = function(data, output, dir = '~/tm
 
 #' OutputPlotGenerator.create_risk_plot
 #' Function to create plots similar to the ones in the OSL papers
+#'
+#' @param performance the performances as as calculated using crossvalidation. See the \code{CrossValidationRiskCalculator} class.
+#' @param output the name of the output file
+#' @param dir the dir to write the output file to
+#' @importFrom grDevices dev.off pdf
+#' @importFrom graphics lines plot
+#' @importFrom utils head
 #' @export
 OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tmp/osl') {
   # Performance should be a list of lists:
