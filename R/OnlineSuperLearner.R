@@ -228,6 +228,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           #private$SL.library.fabricated <- mclapply(private$SL.library.fabricated, function(estimator) {
           for(estimator in private$SL.library.fabricated) {
+          #estimators <- foreach(estimator=private$SL.library.fabricated) %dopar% {
             if(self$is_fitted && estimator$is_online) {
               # Note that we use the data here, and not the cache, as
               # essentially this cache will be  empty if none of the algorithms
@@ -237,8 +238,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             } else {
               estimator$fit(private$data_cache, randomVariables = randomVariables)
             }
-            #estimator
+            estimator
           }
+          #names(estimators) <- names(private$SL.library.fabricated)
+          #private$SL.library.fabricated <- estimators
           #}, mc.cores = 23)
           private$verbose && exit(private$verbose)
         },

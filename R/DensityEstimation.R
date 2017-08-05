@@ -101,6 +101,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
           ## Predict the instances where A=A (i.e., the outcome is the outcome)
           ## NOTE! These estimated probabilities contain NAs whenever an estimator was fitted without any data.
           estimated_probabilities <- condensier::predict_probability(conditionalDensity, datO)
+            
 
           ## We undo our fix here:
           ## if(fixed) { estimated_probabilities <- estimated_probabilities[[1]] }
@@ -248,7 +249,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
             X = rv$getX
             Y = rv$getY
             if(length(X) > 0) {
-              private$verbose && cat(private$verbose, 'Fitting density: ', Y)
+              private$verbose && cat(private$verbose, 'Fitting density: ', Y, ' on ', self$get_name)
               dens_fit <- condensier::fit_density(X = X,
                                       Y = Y,
                                       input_data = datO,

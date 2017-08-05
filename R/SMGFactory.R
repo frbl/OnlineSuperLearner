@@ -66,10 +66,9 @@ SMGFactory <- R6Class("SMGFactory",
         if (length(my_variables) == 0) { return(FALSE) }
 
         lags <- my_variables %>%
-          gsub("^.*[^(_lag_)]_lag_", "",  .) %>%
+          gsub("^.+?(_lag_)", "",  .) %>%
           strtoi %>%
           max
-
 
         variables <- my_variables %>%
           gsub("_lag_[0-9]*", "",  .) %>%

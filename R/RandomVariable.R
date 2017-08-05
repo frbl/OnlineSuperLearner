@@ -46,6 +46,7 @@ RandomVariable <- R6Class("RandomVariable",
   public =
     list(
         initialize = function(formula, family) {
+          formula <- Arguments$getInstanceOf(formula, 'formula')
           formula.parsed  <- self$parseFormula(formula)
 
           private$formula = formula
@@ -66,9 +67,6 @@ RandomVariable <- R6Class("RandomVariable",
         },
 
         parseFormula = function(formula){
-          if(!is.a(formula, 'formula')){
-            throw('Provided formula should be a formula')
-          }
 
           vars <- all.vars(formula)
           depvar <- head(vars, 1)
