@@ -6,9 +6,9 @@
 #' @param estimated_probabilities vector of the estimated y_values (i.e., sampled values)
 #' @param output string with the filename
 #' @param dir the directory to plot to
-#' @importFrom("stats", "density")
-#' @importFrom("grDevices", "dev.off", "pdf")
-#' @importFrom("graphics", "lines", "plot")
+#' @importFrom stats density
+#' @importFrom grDevices dev.off pdf
+#' @importFrom graphics lines plot
 #' @export
 OutputPlotGenerator.create_density_plot = function(yValues, estimated_probabilities, estimated_y_values = NULL, output, dir = '~/tmp/osl/') {
   ## plot densitity first:
