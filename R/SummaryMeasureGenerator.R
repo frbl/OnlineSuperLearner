@@ -77,7 +77,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
           # If the timeseries we are requesting is a new one (i.e., the next
           # person when multiple timeseries are provided) we should reset the
           # cache, so we don't mixup the summarymeasures.
-          if(self$is_new_timeseries) self$reset()
+          if(self$is_new_timeseries) { self$reset() }
 
           extraMeasurementsNeeded <- nrow(self$getCache) - self$minimal.measurements.needed
           if(extraMeasurementsNeeded < 0) {
@@ -97,7 +97,8 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
 
         summarizeData = function(data, n = 1){
           if(nrow(data) <= self$minimal.measurements.needed){
-            throw('Not enough data provided to support all summary measures')
+            #throw('Not enough data provided to support all summary measures')
+            return(data)
           }
 
           datas <- lapply(private$SMG.list, function(smg) {

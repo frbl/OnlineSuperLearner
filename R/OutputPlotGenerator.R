@@ -145,22 +145,19 @@ OutputPlotGenerator.get_colors = function(number_of_variables) {
 }
 
 OutputPlotGenerator.get_simple_colors = function(number_of_variables) {
-  list(
-    tol1qualitative=c("red"),
-    tol2qualitative=c("red", "green"),
-    tol3qualitative=c("red", "orange", "green"),
-    tol4qualitative=c("red", "blue", "orange", "green"),
-    tol5qualitative=c("brown", "purple", "blue", "orange", "green"),
-    tol6qualitative=c("brown", "purple", "blue", "orange", "green","gray"),
-    tol7qualitative=c("brown", "purple", "black", "blue", "orange", "green","gray"),
-    tol8qualitative=c("brown", "purple", "black", "blue", "#999933", "orange", "green","gray"),
-    tol9qualitative=c("brown", "purple", "black", "blue", "#999933", "orange", "green", "#882255", "gray"),
-    tol10qualitative=c("brown", "purple", "black", "blue", "#999933", "orange", "#661100", "green", "#882255", "gray"),
-    tol11qualitative=c("brown", "#6699CC", "purple", "black", "blue", "#999933", "orange", "#661100", "green", "#882255", "gray"),
-    tol12qualitative=c("brown", "#6699CC", "purple", "black", "blue", "#999933", "orange", "#661100", "green", "#AA4466", "#882255", "gray")
-  )[[number_of_variables]]
+  library(RColorBrewer)
+  qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+  col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+  sample(col_vector, number_of_variables)
 }
 
+#' OutputPlotGenerator.export_key_value 
+#' Function to export a key value pair to a file
+#'
+#' @param key the key to store the value under
+#' @param value the value to store
+#' @param dir the dir to write the file to
+#' @export
 OutputPlotGenerator.export_key_value = function(key, value, dir = '~/tmp/osl') {
   if (is.numeric(value)) {
     value <- round(value, 3)

@@ -63,6 +63,7 @@
 #' 
 #' }  
 #' @docType class
+#' @include ConstrainedGlm.R
 #' @importFrom R6 R6Class
 #' @importFrom speedglm speedlm updateWithMoreData
 OneStepEstimator <- R6Class("OneStepEstimator",
@@ -189,13 +190,14 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         # Currently we use GLM here, but we should make use of a SuperLearner here.
         # We generate tau estimators here, one for each s to tau
+        browser()
         h_ratio_predictors_per_s <- lapply(seq(tau), function(time_s) {
 
           Osample_p_full <- rbind(Osample_p, Osample_p_star[time_s_column == 1][,!'time_s_column'])
 
           h_ratio_predictors <- lapply(formulae, function(formula) {
             #speedglm::speedglm.wfit(formula, Osample_p_full, family = binomial(), method='Cholesky')
-            hide_warning_convergence(glm(formula, Osample_p_full, family = binomial()))
+            hide_warning_convergence(ConstrainedGlm.fit(formula = formula, data = Osample_p_full, delta = 0.05))
           })
           # Store the names of the formulae, so we can index them easily later on
           names(h_ratio_predictors) <- formulae
@@ -207,7 +209,6 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         # estimators)
         h_ratio_predictors_per_s
       },
-
 
       evaluation_of_conditional_expectations = function(h_ratio_predictors, variable_of_interest, data, tau, intervention) {
         # We have to create the conditional expectations using each of the
