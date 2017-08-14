@@ -172,9 +172,9 @@ OneStepEstimator <- R6Class("OneStepEstimator",
           cat('Iteration ', b, '\n')
           current <- self$get_osl$sample_iteratively(data = O_0,
                                                      randomVariables = self$get_randomVariables,
-                                                     intervention = intervention,
-                                                     discrete = self$get_discrete,
                                                      tau = tau,
+                                                     discrete = self$get_discrete,
+                                                     intervention = intervention,
                                                      return_type = 'full')
 
         }
@@ -197,7 +197,9 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
           h_ratio_predictors <- lapply(formulae, function(formula) {
             #speedglm::speedglm.wfit(formula, Osample_p_full, family = binomial(), method='Cholesky')
-            hide_warning_convergence(ConstrainedGlm.fit(formula = formula, data = Osample_p_full, delta = 0.05))
+            hide_warning_convergence(ConstrainedGlm.fit(formula = formula(formula),
+                                                        data = Osample_p_full,
+                                                        delta = 0.05))
           })
           # Store the names of the formulae, so we can index them easily later on
           names(h_ratio_predictors) <- formulae
