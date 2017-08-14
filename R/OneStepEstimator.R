@@ -126,7 +126,6 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       },
 
       get_h_ratio_estimators = function(tau, intervention, data) {
-        O_0 = copy(data[1,])
         # We first sample $B$ observations from $P^N$ (that is, N blocks of
         # summary relevant history) and then $BN$ observations from $P^N_{s,a}
         # (that is, $B * N * \tau$ blocks$ of relevant history).
@@ -143,20 +142,24 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         print('Starting sampling from PN')
         tic <- Sys.time()
-        Osample_p <- foreach(b = seq(self$get_B), .combine = rbind) %dopar% {
-          # TODO: Note that the summary measures we currently collect are
-          # NORMALIZED. I think that this does not matter for
-          # calculating the h-ratios, but we need to check this.
+        Osample_p <- foreach(t = seq(self$get_N), .combine = rbind) %do% {
+          O_0 = data[t,]
+          
+          foreach(b = seq(self$get_B), .combine = rbind) %dopar% {
+            # TODO: Note that the summary measures we currently collect are
+            # NORMALIZED. I think that this does not matter for
+            # calculating the h-ratios, but we need to check this.
 
-          # TODO: Note that we are sampling always starting from O_0.
-          cat('Iteration ', b, '\n')
-          current <- self$get_osl$sample_iteratively(data = O_0,
-                                                     randomVariables = self$get_randomVariables,
-                                                     tau = self$get_N,
-                                                     discrete = self$get_discrete,
-                                                     intervention = NULL,
-                                                     return_type = 'full')
-          current
+            # TODO: Note that we are sampling always starting from O_0.
+            cat('Iteration ', b, '\n')
+            current <- self$get_osl$sample_iteratively(data = O_0,
+                                                      randomVariables = self$get_randomVariables,
+                                                      tau = 1,
+                                                      discrete = self$get_discrete,
+                                                      intervention = NULL,
+                                                      return_type = 'full')
+            current
+          }
         }
 
         # We store each observation with the correct delta
@@ -168,15 +171,20 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         tic <- Sys.time()
 
         # Because we use $BN$ observations in the previous sampling step, we should also draw BN observations from P^N_{s,a}.
-        Osample_p_star <- foreach(b=seq(self$get_B * self$get_N), .combine=rbind) %dopar% {
-          cat('Iteration ', b, '\n')
-          current <- self$get_osl$sample_iteratively(data = O_0,
-                                                     randomVariables = self$get_randomVariables,
-                                                     tau = tau,
-                                                     discrete = self$get_discrete,
-                                                     intervention = intervention,
-                                                     return_type = 'full')
 
+        Osample_p_star <- foreach(t = seq(self$get_N), .combine = rbind) %do% {
+          O_0 = data[t,]
+          
+          foreach(b = seq(self$get_B), .combine = rbind) %dopar% {
+            cat('Iteration ', b, '\n')
+            current <- self$get_osl$sample_iteratively(data = O_0,
+                                                      randomVariables = self$get_randomVariables,
+                                                      tau = tau,
+                                                      discrete = self$get_discrete,
+                                                      intervention = intervention,
+                                                      return_type = 'full')
+
+          }
         }
         toc <- Sys.time()
         cat('Sampling ', self$get_B*self$get_N,' observations from PN* took ', (toc - tic), ' seconds.')
