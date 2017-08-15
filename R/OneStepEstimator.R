@@ -141,17 +141,18 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         }) %>% unique
 
         print('Starting sampling from PN')
+        browser()
         tic <- Sys.time()
         Osample_p <- foreach(t = seq(self$get_N), .combine = rbind) %do% {
           O_0 = data[t,]
           
+          cat('Iteration (time)', t, '\n')
           foreach(b = seq(self$get_B), .combine = rbind) %dopar% {
             # TODO: Note that the summary measures we currently collect are
             # NORMALIZED. I think that this does not matter for
             # calculating the h-ratios, but we need to check this.
 
             # TODO: Note that we are sampling always starting from O_0.
-            cat('Iteration ', b, '\n')
             current <- self$get_osl$sample_iteratively(data = O_0,
                                                       randomVariables = self$get_randomVariables,
                                                       tau = 1,
@@ -163,6 +164,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         }
 
         # We store each observation with the correct delta
+        # Because we use $BN$ observations in the previous sampling step, we should also draw BN observations from P^N_{s,a}.
         Osample_p <- cbind(Osample_p, delta = rep(1, length(Osample_p)))
 
         toc <- Sys.time()
@@ -170,13 +172,11 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         tic <- Sys.time()
 
-        # Because we use $BN$ observations in the previous sampling step, we should also draw BN observations from P^N_{s,a}.
-
         Osample_p_star <- foreach(t = seq(self$get_N), .combine = rbind) %do% {
           O_0 = data[t,]
+          cat('Iteration (time)', t, '\n')
           
           foreach(b = seq(self$get_B), .combine = rbind) %dopar% {
-            cat('Iteration ', b, '\n')
             current <- self$get_osl$sample_iteratively(data = O_0,
                                                       randomVariables = self$get_randomVariables,
                                                       tau = tau,
@@ -201,7 +201,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         browser()
         h_ratio_predictors_per_s <- lapply(seq(tau), function(time_s) {
 
-          Osample_p_full <- rbind(Osample_p, Osample_p_star[time_s_column == 1][,!'time_s_column'])
+          Osample_p_full <- rbind(Osample_p, Osample_p_star[time_s_column == time_s][,!'time_s_column'])
 
           h_ratio_predictors <- lapply(formulae, function(formula) {
             #speedglm::speedglm.wfit(formula, Osample_p_full, family = binomial(), method='Cholesky')
