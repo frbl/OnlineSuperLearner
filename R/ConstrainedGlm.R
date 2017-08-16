@@ -46,7 +46,6 @@ ConstrainedGlm.fit <- function(formula, delta, data, ...) {
 
   ## Fit the constrained regression
   bd_logit <- bounded_logit(delta)
-  #browser()
   family = binomial(link = bd_logit)
 
   ## Override the residuals function
@@ -55,7 +54,6 @@ ConstrainedGlm.fit <- function(formula, delta, data, ...) {
     wt*(y/mu + (1-y)/(1-mu))
   }
 
-  browser()
   return(glm(formula = formula, family = family, data=data,
              control = list(maxit=10000), start = rep(1/ncovariates, ncovariates), ...))
 

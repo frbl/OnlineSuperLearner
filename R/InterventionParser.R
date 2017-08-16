@@ -30,3 +30,17 @@ InterventionParser.parse_intervention <- function(intervention, current_time, cu
   }
   list(when = when, what = what, should_intervene = (when == current_time))
 }
+
+#' InterventionParser.first_intervention
+#' Returns the time at which the first ever intervention should be given.
+#' 
+#' @param intervention the intervention to give \code{list(variable, when, what)}
+#' @return the first ever time at which an intervention is given
+InterventionParser.first_intervention <- function(intervention) {
+  when = -1
+  if (is.null(intervention)) {
+    return(c(when = when))
+  }
+  intervention <- Arguments$getInstanceOf(intervention, 'list')
+  return(c(when = min(intervention$when)))
+}
