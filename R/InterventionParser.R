@@ -44,3 +44,16 @@ InterventionParser.first_intervention <- function(intervention) {
   intervention <- Arguments$getInstanceOf(intervention, 'list')
   return(c(when = min(intervention$when)))
 }
+
+#' InterventionParser.valid_intervention
+#' Checks whether the provided intervention is valid
+#'
+#' @param intervention the intervention to check the validity of
+#' @return boolean true if valid, false if not
+InterventionParser.valid_intervention <- function(intervention) {
+  intervention <- Arguments$getInstanceOf(intervention, 'list')
+  is.numeric(intervention$when) &&
+    is.numeric(intervention$what) &&
+    is.character(intervention$variable) &&
+    length(intervention$when) == length(intervention$what)
+}

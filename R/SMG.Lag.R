@@ -72,7 +72,6 @@ SMG.Lag <- R6Class("SMG.Lag",
 
           # TODO: We could probably do this in a smarter way, i.e., creating an initial frame first
           # and than prepend new columns, and remove the last column.
-          print(setdiff(private$colnames, colnames(data.current)))
           data.current[, (private$colnames.lagged) := shift(.SD, private$lags.vector, NA),
                         .SDcols = private$colnames]
 

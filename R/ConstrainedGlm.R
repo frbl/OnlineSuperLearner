@@ -19,7 +19,6 @@ ConstrainedGlm.fit <- function(formula, delta, data, ...) {
     structure(
       list(## mu mapsto logit( [mu - delta]/[1 - 2 delta]  ).
         linkfun = function(mu) {
-          print(mu)
           logit((mu-delta)/(1-2*delta))
         },
 

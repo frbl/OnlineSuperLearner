@@ -29,7 +29,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           private$cv_risk_calculator <- CrossValidationRiskCalculator$new()
           private$test_set_size <- 100
           private$log <- Arguments$getVerbose(-8, timestamp=TRUE)
-          private$log <- FALSE
+          #private$log <- FALSE
           #algos <- list(list(description='ML.H2O.randomForest-1tree',
                                   #algorithm = 'ML.H2O.randomForest',
                                   #params = list(ntrees = 1)))
@@ -461,7 +461,8 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           #plot(x=performances$iterations, y=performances$performance)
           #performances
           tau <- 2
-          B <- 400
+          B <- 8
+          OutputPlotGenerator.export_key_value('iterations', B)
 
           pre <- options('warn')$warn
           options(warn=-1)
@@ -553,6 +554,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           result.osl.mean <- result.osl %>% mean
           result.osl_control.mean <- result.osl_control %>% mean
 
+          ## Store the differences after OSL
           differences <- list(
                               dosl         = abs(result.dosl.mean - result.approx.mean),
                               osl          = abs(result.osl.mean - result.approx.mean),
@@ -581,12 +583,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           OutputPlotGenerator.create_convergence_plot(data = data,
                                                       output = paste('convergence_configuration_control',configuration,sep='_'))
 
-
-
-          browser()
           osl$info
-
-          #lapply(performance, function(x) {lapply(x,mean)})
 
           # Now, the fimal step is to apply the OneStepEstimator
           OOS <- OneStepEstimator$new(osl = osl, 
@@ -603,14 +600,24 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                                    intervention = intervention,
                                                    tau = tau)
 
-          #print(paste('The difference between the estimate and approximation (after oos) for dosl is: ',
-                      #abs(result.approx.mean - result.approx.mean.updated$oos_estimate)))
+          ## Store the differences after OOS
+          differences_oos <- list(dosl     = abs(result.approx.mean.updated$oos_estimate - result.approx.mean),
+                              osl          = -1,
+                              dosl_control = -1,
+                              osl_control  = -1 
+                              )
 
           key <- paste('cfg', configuration, 'osl', 'post-oos', sep='-')
-          OutputPlotGenerator.export_key_value(key, -1)
+          OutputPlotGenerator.export_key_value(key, differences_oos$osl)
 
           key <- paste('cfg', configuration, 'dosl', 'post-oos', sep='-')
-          OutputPlotGenerator.export_key_value(key, -1)
+          OutputPlotGenerator.export_key_value(key, differences_oos$dosl)
+
+          key <- paste('cfg', configuration, 'osl-control', 'post-oos', sep='-')
+          OutputPlotGenerator.export_key_value(key, differences_oos$osl_control)
+
+          key <- paste('cfg', configuration, 'dosl-control', 'post-oos', sep='-')
+          OutputPlotGenerator.export_key_value(key, differences_oos$dosl_control)
 
           differences
         }
