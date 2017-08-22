@@ -18,7 +18,8 @@
 OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
   public =
     list(
-        initialize = function() {
+        initialize = function(configuration = NULL) {
+          tic <- Sys.time()
           condensier_options(parfit=FALSE)
           cat('Starting calculation with ', parallel::detectCores(),' cores\n')
           doParallel::registerDoParallel(cores = parallel::detectCores())
@@ -26,10 +27,12 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           options(warn=1)
           private$sim  <- Simulator.GAD$new()
           private$training_set_size <- 1e4
+
+          OutputPlotGenerator.export_key_value('training-set-size', private$training_set_size)
           private$cv_risk_calculator <- CrossValidationRiskCalculator$new()
           private$test_set_size <- 100
-          private$log <- Arguments$getVerbose(-8, timestamp=TRUE)
-          #private$log <- FALSE
+          #private$log <- Arguments$getVerbose(-8, timestamp=TRUE)
+          private$log <- FALSE
           #algos <- list(list(description='ML.H2O.randomForest-1tree',
                                   #algorithm = 'ML.H2O.randomForest',
                                   #params = list(ntrees = 1)))
@@ -76,23 +79,43 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           private$SL.library.definition <- algos
 
           # Run the simulations
-          diff <- self$configuration1()
-          print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$dosl))
-          print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff$osl))
+          if(is.null(configuration)) {
+            diff <- self$configuration1()
+            print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$differences_osl$dosl))
+            print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff$differences_osl$osl))
 
-          #diff <- self$configuration2()
-          #print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$dosl))
-          #print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff$osl))
+            print(paste('The difference between the estimate (DOSL) and approximation (after oos) is: ', diff$differences_oos$dosl))
+            print(paste('The difference between the estimate (OSL) and approximation (after oos) is: ', diff$differences_oos$osl))
 
-          #diff <- self$configuration3()
-          #print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$dosl))
-          #print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff$osl))
+            #diff <- self$configuration2()
+            #print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$dosl))
+            #print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff$osl))
 
-          #diff <- self$configuration4()
-          #print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$dosl))
-          #print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff$osl))
+            #diff <- self$configuration3()
+            #print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$dosl))
+            #print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff$osl))
+
+            #diff <- self$configuration4()
+            #print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$dosl))
+            #print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff$osl))
+          } else {
+            if (configuration == 1) {
+              diff <- self$configuration1()
+            } else if (configuration == 2) {
+              diff <- self$configuration2()
+            } else if (configuration == 3) {
+              diff <- self$configuration3()
+            } else {
+              diff <- self$configuration4()
+            }
+            print(paste(configuration,': The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$differences_osl$dosl))
+            print(paste(configuration,': The difference between the estimate (OSL) and approximation (before oos) is: ', diff$differences_osl$osl))
+          }
 
           #stopCluster(cluster)
+          toc <- Sys.time()
+          time.taken <- toc - tic
+          print(time.taken)
         },
 
         configuration1 = function() {
@@ -461,8 +484,10 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           #plot(x=performances$iterations, y=performances$performance)
           #performances
           tau <- 2
-          B <- 8
+          B <- 500 
+          N <- 90 
           OutputPlotGenerator.export_key_value('iterations', B)
+          OutputPlotGenerator.export_key_value('simulation-number-of-observations', N)
 
           pre <- options('warn')$warn
           options(warn=-1)
@@ -545,6 +570,15 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           #} %>%
             #unlist
 
+          # Plot the convergence
+          data <- list(truth = result.approx, dosl = result.dosl, osl = result.osl)
+          OutputPlotGenerator.create_convergence_plot(data = data,
+                                                      output = paste('convergence_configuration',configuration,sep='_'))
+
+          data <- list(truth = result.approx_control, dosl = result.dosl_control, osl = result.osl_control)
+          OutputPlotGenerator.create_convergence_plot(data = data,
+                                                      output = paste('convergence_configuration_control',configuration,sep='_'))
+
           options(warn=pre)
 
           result.approx.mean <- result.approx %>% mean
@@ -556,70 +590,62 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           ## Store the differences after OSL
           differences <- list(
-                              dosl         = abs(result.dosl.mean - result.approx.mean),
-                              osl          = abs(result.osl.mean - result.approx.mean),
-                              dosl_control = abs(result.dosl_control.mean - result.approx_control.mean),
-                              osl_control  = abs(result.osl_control.mean - result.approx_control.mean)
+                              dosl         = (result.dosl.mean - result.approx.mean),
+                              osl          = (result.osl.mean - result.approx.mean),
+                              dosl_control = (result.dosl_control.mean - result.approx_control.mean),
+                              osl_control  = (result.osl_control.mean - result.approx_control.mean)
                               )
 
-          key <- paste('cfg', configuration, 'osl', 'pre-oos', sep='-')
-          OutputPlotGenerator.export_key_value(key, differences$osl)
+          private$store_differences(differences, oos=FALSE, configuration=configuration)
 
-          key <- paste('cfg', configuration, 'dosl', 'pre-oos', sep='-')
-          OutputPlotGenerator.export_key_value(key, differences$dosl)
-
-          key <- paste('cfg', configuration, 'osl-control', 'pre-oos', sep='-')
-          OutputPlotGenerator.export_key_value(key, differences$osl_control)
-
-          key <- paste('cfg', configuration, 'dosl-control', 'pre-oos', sep='-')
-          OutputPlotGenerator.export_key_value(key, differences$dosl_control)
-
-          # Plot the convergence
-          data <- list(truth = result.approx, dosl = result.dosl, osl = result.osl)
-          OutputPlotGenerator.create_convergence_plot(data = data,
-                                                      output = paste('convergence_configuration',configuration,sep='_'))
-
-          data <- list(truth = result.approx_control, dosl = result.dosl_control, osl = result.osl_control)
-          OutputPlotGenerator.create_convergence_plot(data = data,
-                                                      output = paste('convergence_configuration_control',configuration,sep='_'))
 
           osl$info
 
           # Now, the fimal step is to apply the OneStepEstimator
           OOS <- OneStepEstimator$new(osl = osl, 
-                                            randomVariables = randomVariables, 
-                                            discrete = TRUE,
-                                            N = 90, 
-                                            B = B,
-                                            pre_processor = pre_processor
-                                            )
+                                      randomVariables = randomVariables, 
+                                      discrete = TRUE,
+                                      N = N, 
+                                      B = B,
+                                      pre_processor = pre_processor)
 
-          result.approx.mean.updated <- OOS$perform(initial_estimate = result.dosl.mean,
+          result.dosl.mean.updated <- OOS$perform(initial_estimate = result.dosl.mean,
                                                    data = data.test,
                                                    variable_of_interest = variable_of_interest,
                                                    intervention = intervention,
                                                    tau = tau)
 
+          result.dosl_control.mean.updated <- OOS$perform(initial_estimate = result.dosl_control.mean,
+                                                   data = data.test,
+                                                   variable_of_interest = variable_of_interest,
+                                                   intervention = control,
+                                                   tau = tau)
+
+
           ## Store the differences after OOS
-          differences_oos <- list(dosl     = abs(result.approx.mean.updated$oos_estimate - result.approx.mean),
+          differences_oos <- list(dosl     = (result.dosl.mean.updated$oos_estimate - result.approx.mean),
                               osl          = -1,
-                              dosl_control = -1,
+                              dosl_control = (result.dosl_control.mean.updated$oos_estimate - result.approx_control.mean),
                               osl_control  = -1 
                               )
 
-          key <- paste('cfg', configuration, 'osl', 'post-oos', sep='-')
-          OutputPlotGenerator.export_key_value(key, differences_oos$osl)
+          private$store_differences(differences_oos, oos=TRUE, configuration=configuration)
+          list(differences_osl = differences, differences_oos = differences_oos)
+        },
 
-          key <- paste('cfg', configuration, 'dosl', 'post-oos', sep='-')
-          OutputPlotGenerator.export_key_value(key, differences_oos$dosl)
+        store_differences = function(differences, oos, configuration) {
+          name <- ifelse(oos, 'post-oos', 'pre-oos')
+          key <- paste('cfg', configuration, 'osl', name, sep='-')
+          OutputPlotGenerator.export_key_value(key, differences$osl)
 
-          key <- paste('cfg', configuration, 'osl-control', 'post-oos', sep='-')
-          OutputPlotGenerator.export_key_value(key, differences_oos$osl_control)
+          key <- paste('cfg', configuration, 'dosl', name, sep='-')
+          OutputPlotGenerator.export_key_value(key, differences$dosl)
 
-          key <- paste('cfg', configuration, 'dosl-control', 'post-oos', sep='-')
-          OutputPlotGenerator.export_key_value(key, differences_oos$dosl_control)
+          key <- paste('cfg', configuration, 'osl-control', name, sep='-')
+          OutputPlotGenerator.export_key_value(key, differences$osl_control)
 
-          differences
+          key <- paste('cfg', configuration, 'dosl-control', name, sep='-')
+          OutputPlotGenerator.export_key_value(key, differences$dosl_control)
         }
   )
 )

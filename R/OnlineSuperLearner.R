@@ -535,8 +535,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         sample_iteratively = function(data, randomVariables, tau = 10, intervention = NULL, discrete = TRUE, 
                                       return_type = 'observations', 
                                       start_from_variable = NULL,
-                                      start_from_time = 1,
-                                      unused = FALSE) {
+                                      start_from_time = 1) {
           randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
           randomVariables <- RandomVariable.find_ordering(randomVariables)
 
@@ -568,7 +567,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           remove_vars <- names(randomVariables)
           started = FALSE
 
-          if(unused) browser()
           ## We need to sample sequentially here, just so we can plugin the value everytime in the next evaluation
           private$verbose && enter(private$verbose, 'Sampling from PN*')
           for (t in seq(start_from_time, tau)) {
@@ -632,12 +630,11 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             result <- rbind(result, data)
             if(t < tau)  data <- private$summaryMeasureGenerator$getLatestCovariates(data)
           }
-          if(unused) browser()
           private$verbose && exit(private$verbose)
           if (return_type == 'observations') {
-            if(any(is.na(result_denormalized_observations[,names(randomVariables), with = FALSE]))){
-              print(result_denormalized_observations)
-            }
+            #if(any(is.na(result_denormalized_observations[,names(randomVariables), with = FALSE]))){
+              #print(result_denormalized_observations)
+            #}
 
             ## Return the denormalized observations?
             return(result_denormalized_observations[,names(randomVariables), with = FALSE])
