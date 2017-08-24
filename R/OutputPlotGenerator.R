@@ -158,7 +158,7 @@ OutputPlotGenerator.get_simple_colors = function(number_of_variables) {
 #' @param value the value to store
 #' @param dir the dir to write the file to
 #' @export
-OutputPlotGenerator.export_key_value = function(key, value, dir = '~/tmp/osl') {
+OutputPlotGenerator.export_key_value = function(key, value, output='variables.dat', dir = '~/tmp/osl') {
   if (is.numeric(value)) {
     value <- round(value, 3)
   }

@@ -49,7 +49,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           alphas <- runif(5,0,1)
           algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                                  #algorithm_params = list(alpha = alphas), 
+                                  algorithm_params = list(alpha = alphas), 
                                   params = list(nbins = nbins, online = TRUE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
@@ -68,9 +68,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   #algorithm_params = list(),
                                   params = list(nbins = nbins, online = FALSE))))
 
-          #algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
-                                  #algorithm_params = list(alpha = alphas),
-                                  #params = list(nbins = nbins, online = FALSE))))
+          algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
+                                  algorithm_params = list(alpha = alphas),
+                                  params = list(nbins = nbins, online = FALSE))))
 
           #algos <- append(algos, list(list(algorithm = 'condensier::glmR6',
                                   ##algorithm_params = list(),
@@ -451,10 +451,11 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           mini_batch_size <- ifelse(is.na(mini_batch_size) || is.infinite(mini_batch_size), 1, floor(mini_batch_size))
 
           # Store the configuration
-          OutputPlotGenerator.export_key_value('initial-training-set-size', initial_training_set_size)
-          OutputPlotGenerator.export_key_value('minibatch-size', mini_batch_size)
-          OutputPlotGenerator.export_key_value('max-iterations', max_iterations)
-          OutputPlotGenerator.export_key_value('total-iterations', max_iterations+1)
+          key_output = paste('variables_', configuration,'.dat', sep='')
+          OutputPlotGenerator.export_key_value('initial-training-set-size', initial_training_set_size, output=key_output)
+          OutputPlotGenerator.export_key_value('minibatch-size', mini_batch_size, output=key_output)
+          OutputPlotGenerator.export_key_value('max-iterations', max_iterations, output=key_output)
+          OutputPlotGenerator.export_key_value('total-iterations', max_iterations+1, output=key_output)
 
           # Divide by two here just so the initial size is a lot larger then each iteration, not really important
           risk <- osl$fit(data.train, randomVariables = randomVariables,
@@ -475,7 +476,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                                             observed.outcome = observed.outcome,
                                                             randomVariables = randomVariables) 
 
-          OutputPlotGenerator.create_risk_plot(performance, 'performance', '~/tmp/osl/')
+
+          key_performance = paste('performance_cfg_', configuration, sep='')
+          OutputPlotGenerator.create_risk_plot(performance=performance, output=key_performance)
 
           #})
           #performances <- do.call(rbind, lapply(performances, data.frame)) %T>%
@@ -486,8 +489,8 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           tau <- 2
           B <- 500 
           N <- 90 
-          OutputPlotGenerator.export_key_value('iterations', B)
-          OutputPlotGenerator.export_key_value('simulation-number-of-observations', N)
+          OutputPlotGenerator.export_key_value(output=key_output, 'iterations', B)
+          OutputPlotGenerator.export_key_value(output=key_output, 'simulation-number-of-observations', N)
 
           pre <- options('warn')$warn
           options(warn=-1)
@@ -596,7 +599,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                               osl_control  = (result.osl_control.mean - result.approx_control.mean)
                               )
 
-          private$store_differences(differences, oos=FALSE, configuration=configuration)
+          private$store_differences(differences, output=key_output,  oos=FALSE, configuration=configuration)
 
 
           osl$info
@@ -629,23 +632,23 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                               osl_control  = -1 
                               )
 
-          private$store_differences(differences_oos, oos=TRUE, configuration=configuration)
+          private$store_differences(differences_oos, output=key_outpput, oos=TRUE, configuration=configuration)
           list(differences_osl = differences, differences_oos = differences_oos)
         },
 
-        store_differences = function(differences, oos, configuration) {
+        store_differences = function(differences, output, oos, configuration) {
           name <- ifelse(oos, 'post-oos', 'pre-oos')
           key <- paste('cfg', configuration, 'osl', name, sep='-')
-          OutputPlotGenerator.export_key_value(key, differences$osl)
+          OutputPlotGenerator.export_key_value(key, differences$osl, output=output)
 
           key <- paste('cfg', configuration, 'dosl', name, sep='-')
-          OutputPlotGenerator.export_key_value(key, differences$dosl)
+          OutputPlotGenerator.export_key_value(key, differences$dosl, output=output)
 
           key <- paste('cfg', configuration, 'osl-control', name, sep='-')
-          OutputPlotGenerator.export_key_value(key, differences$osl_control)
+          OutputPlotGenerator.export_key_value(key, differences$osl_control, output=output)
 
           key <- paste('cfg', configuration, 'dosl-control', name, sep='-')
-          OutputPlotGenerator.export_key_value(key, differences$dosl_control)
+          OutputPlotGenerator.export_key_value(key, differences$dosl_control, output=output)
         }
   )
 )
