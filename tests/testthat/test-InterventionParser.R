@@ -102,5 +102,50 @@ test_that("it should work with the old style interventions", {
   expect_equal(result$what, 1)
 })
 
+context(' InterventionParser.valid_intervention')
+test_that("it should return true when an intervention is valid", {
+  intervention <- list(variable = 'A',when = c(2), what = c(1))
+  expect_true(InterventionParser.valid_intervention(intervention))
 
-  
+  intervention <- list(variable = 'A',when = c(2,2,2,2), what = c(0,1,1,1))
+  expect_true(InterventionParser.valid_intervention(intervention))
+})
+
+test_that("it should return false when the intervention is not a list", {
+  interventions <- c(NULL, 'wrong', TRUE)
+  for (intervention in interventions) {
+    expect_false(InterventionParser.valid_intervention(intervention))
+  }
+})
+
+test_that("it should return false when the intervention length of whens is not equal to the whats", {
+  intervention <- list(variable = 'A',when = c(2,2,2), what = c(0,1,1,1))
+  expect_false(InterventionParser.valid_intervention(intervention))
+  intervention <- list(variable = 'A',when = c(1,2,2,2), what = c(1,1,1))
+  expect_false(InterventionParser.valid_intervention(intervention))
+})
+
+test_that("it should return false if any of the keys is missing", {
+  intervention <- list(variable = 'A',when = c(2))
+  expect_false(InterventionParser.valid_intervention(intervention))
+  intervention <- list(variable = 'A', what = c(1))
+  expect_false(InterventionParser.valid_intervention(intervention))
+  intervention <- list(when = c(2), what = c(1))
+  expect_false(InterventionParser.valid_intervention(intervention))
+})
+
+context(" InterventionParser.generate_intervention")
+test_that("it should generate an intervention based on the provided when and what for one of the variables", {
+  variables <- c('A', 'B', 'C')
+  variable_intervened <- 'A'
+  when <- 1
+  what <- 1
+  result <- InterventionParser.generate_intervention(variables = variables,
+                                                     variable_intervened= variable_intervened,
+                                                     when = when, what = what)
+  expect_true(InterventionParser.valid_intervention(result))
+  expected <- list(variable = variables,
+                   when = rep(when, length(variables)),
+                   what = c(1,0,0)) 
+  expect_equal(expected, result)
+})

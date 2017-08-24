@@ -51,9 +51,28 @@ InterventionParser.first_intervention <- function(intervention) {
 #' @param intervention the intervention to check the validity of
 #' @return boolean true if valid, false if not
 InterventionParser.valid_intervention <- function(intervention) {
-  intervention <- Arguments$getInstanceOf(intervention, 'list')
+  if (!is(intervention, 'list')) return(FALSE) 
   is.numeric(intervention$when) &&
     is.numeric(intervention$what) &&
     is.character(intervention$variable) &&
     length(intervention$when) == length(intervention$what)
 }
+
+#' InterventionParser.generate_intervention
+#' Function that can generate interventions, especially when performing an
+#' intervention on multiple nodes. What the function is do is set one of the
+#' nodes to intervened (variable_intervened), and the other nodes to control. 
+#' If what is 1, the intervened variable will be 1 and the rest 0, if what is
+#' 0, the intervened variable will be 0 and the rest will be one.
+#' @param variables the variables to create the intervention for (a list of all intervention nodes)
+#' @param variable_intervened the variable to perform the intervention on
+#' @param when integer when the intervention should take place
+#' @param when integer when the intervention should take place
+#' @export
+InterventionParser.generate_intervention <- function(variables, variable_intervened, when, what) {
+  what <- lapply(variables, function(a) {
+    ifelse(a == variable_intervened, what, 1 - what) 
+  }) %>% unlist
+  list(variable = variables, when = rep(when, length(variables)), what = what)
+}
+

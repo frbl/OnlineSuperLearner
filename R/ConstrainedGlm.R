@@ -41,6 +41,8 @@ ConstrainedGlm.fit <- function(formula, delta, data, ...) {
     )
   }
 
+
+
     ## "deviance residuals" as a function of eta
 
   ## Fit the constrained regression
@@ -52,8 +54,9 @@ ConstrainedGlm.fit <- function(formula, delta, data, ...) {
     mu <- bd_logit$linkinv(eta)
     wt*(y/mu + (1-y)/(1-mu))
   }
+  the_glm <- glm(formula = formula, family = family, data=data,
+             control = list(maxit=10000), start = rep(1/ncovariates, ncovariates), ...)
 
-  return(glm(formula = formula, family = family, data=data,
-             control = list(maxit=10000), start = rep(1/ncovariates, ncovariates), ...))
+  return(the_glm)
 
 }
