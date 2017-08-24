@@ -15,10 +15,17 @@ ConstrainedGlm.fit <- function(formula, delta, data, ...) {
     length %>%
     add(.,1)
   
+  if(any(is.na(data))) warning('Data contains NA values!')
+  if(any(is.null(data))) warning('Data contains NULL values!')
+
   bounded_logit <- function(delta) {
     structure(
       list(## mu mapsto logit( [mu - delta]/[1 - 2 delta]  ).
         linkfun = function(mu) {
+          if(mu <= 0 || mu >= 1) {
+            warning('Mu is incorrect: ', mu)
+            min(max(mu,1),0)
+          }
           logit((mu-delta)/(1-2*delta))
         },
 

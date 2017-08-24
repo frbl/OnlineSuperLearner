@@ -136,6 +136,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## default_wcc = WCC.SGD.Simplex,
         default_wcc = WCC.NMBFGS,
         cv_risk = NULL,
+        historical_cv_risk = NULL,
         cv_risk_count = NULL,
         cv_risk_calculator = NULL,
 
@@ -185,6 +186,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             private$cv_risk_count <- private$cv_risk_count + 1
           }
           private$cv_risk_count
+        },
+
+        update_historical_cv_risk = function() {
+          private$historical_cv_risk <- append(self$get_historical_cv_risk, list(private$cv_risk))
         },
 
         ## Initializes the weighted combination calculators. One for each randomvariable.
@@ -277,6 +282,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                                           randomVariables = randomVariables,
                                           discrete = TRUE, continuous = TRUE, all_estimators = TRUE)
 
+          ## We need to store the dosl risk, as we will update it later.
+          pre_dosl_risk <- private$cv_risk$dosl.estimator
+
           ## Calculate the error using the normalized predictions
           private$update_risk(predicted.outcome = predicted.outcome,
                               observed.outcome = observed.outcome,
@@ -286,6 +294,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           if (self$fits_dosl) {
             private$fit_dosl()
 
+            ## Put the CV risk back to what it was before the update. We can now actually fit it correctly.
+            private$cv_risk$dosl.estimator <- pre_dosl_risk
+
             ## In order to get the initial estimate of the CV error of the DOSL, we first need to fit the other 
             ## estimators, and after that calculate the dosl error separately. 
             predicted.outcome <- self$predict(data = data.splitted$test,
@@ -293,10 +304,17 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                                             discrete = TRUE, continuous = FALSE, all_estimators = FALSE)
 
             private$cv_risk$dosl.estimator <- 
-              private$cv_risk_calculator$calculate_risk(predicted.outcome = predicted.outcome,
-                                                        observed.outcome = observed.outcome,
-                                                        randomVariables = randomVariables)$dosl.estimator
+              private$cv_risk_calculator$update_risk(predicted.outcome = predicted.outcome,
+                                                                      observed.outcome = observed.outcome,
+                                                                      randomVariables = randomVariables,
+                                                                      current_count = private$cv_risk_count-1,
+                                                                      current_risk = self$get_cv_risk)$dosl.estimator
+              #private$cv_risk_calculator$calculate_risk(predicted.outcome = predicted.outcome,
+                                                        #observed.outcome = observed.outcome,
+                                                        #randomVariables = randomVariables)$dosl.estimator
           }
+
+          private$update_historical_cv_risk()
 
         },
 
@@ -392,11 +410,26 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
               ## only be one of the candidates, and not the OSL.
               for(name in names(current_risk)[ids]) {
                 if(name %in% names(private$SL.library.fabricated)) {
-                  private$verbose && cat(private$verbose, 'Selecting ', name)
+                  #private$verbose && cat(private$verbose, 'Selecting ', name)
+                  cat(private$verbose, 'Selecting ', name)
                   return(private$SL.library.fabricated[[name]])
                 }
               }
             })
+
+          # DEBUGGING ONLY
+          if(TRUE) {
+            for (i in seq_along(private$dosl.estimators)) {
+              estimator <- private$dosl.estimators[[i]]
+              scores <- current_risk[[i]]
+              best_risk <- current_risk[[estimator$get_name]][[i]] 
+              all_risks <- lapply(current_risk, function(x) x[[i]])
+              idx <- names(all_risks) == 'osl.estimator' | names(all_risks)== 'dosl.estimator'
+              min_risks <- all_risks[!(idx)] %>% unlist %>% min
+              assert_that(min_risks == best_risk)
+            }
+          }
+
           private$verbose && exit(private$verbose)
           return(TRUE)
         }
@@ -439,6 +472,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         fits_dosl = function() {
           private$should_fit_dosl
+        },
+
+        get_historical_cv_risk = function() {
+          private$historical_cv_risk
         },
 
         info = function() {
@@ -489,6 +526,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           if (!is.a(private$weightedCombinationComputers, 'list')) {
             throw("The WCC's should be in a list, one for each RV")
           }
+          private$historical_cv_risk <- Arguments$getInstanceOf(private$historical_cv_risk, 'list')
         }
         ),
   public =
@@ -522,6 +560,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$weightedCombinationComputers <- list()
           private$online_super_learner_predict <- OnlineSuperLearner.Predict$new(pre_processor = pre_processor,
                                                                                  verbose = verbose)
+          private$historical_cv_risk <- list()
 
           self$get_validity
         },

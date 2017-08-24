@@ -49,7 +49,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           alphas <- runif(5,0,1)
           algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                                  algorithm_params = list(alpha = alphas), 
+                                  #algorithm_params = list(alpha = alphas), 
                                   params = list(nbins = nbins, online = TRUE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
@@ -68,9 +68,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   #algorithm_params = list(),
                                   params = list(nbins = nbins, online = FALSE))))
 
-          algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
-                                  algorithm_params = list(alpha = alphas),
-                                  params = list(nbins = nbins, online = FALSE))))
+          #algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
+                                  #algorithm_params = list(alpha = alphas),
+                                  #params = list(nbins = nbins, online = FALSE))))
 
           #algos <- append(algos, list(list(algorithm = 'condensier::glmR6',
                                   ##algorithm_params = list(),
@@ -80,7 +80,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           # Run the simulations
           if(is.null(configuration)) {
-            diff <- self$configuration1()
+            diff <- self$configuration2()
             print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$differences_osl$dosl))
             print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff$differences_osl$osl))
 
@@ -480,6 +480,10 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           key_performance = paste('performance_cfg_', configuration, sep='')
           OutputPlotGenerator.create_risk_plot(performance=performance, output=key_performance)
 
+          OutputPlotGenerator.create_training_curve(osl$get_historical_cv_risk, 
+                                                    randomVariables = randomVariables,
+                                                    output = paste('curve',configuration, sep='_'))
+
           #})
           #performances <- do.call(rbind, lapply(performances, data.frame)) %T>%
           #print
@@ -487,7 +491,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           #plot(x=performances$iterations, y=performances$performance)
           #performances
           tau <- 2
-          B <- 500 
+          B <- 10 
           N <- 90 
           OutputPlotGenerator.export_key_value(output=key_output, 'iterations', B)
           OutputPlotGenerator.export_key_value(output=key_output, 'simulation-number-of-observations', N)
@@ -604,35 +608,39 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           osl$info
 
-          # Now, the fimal step is to apply the OneStepEstimator
-          OOS <- OneStepEstimator$new(osl = osl, 
-                                      randomVariables = randomVariables, 
-                                      discrete = TRUE,
-                                      N = N, 
-                                      B = B,
-                                      pre_processor = pre_processor)
+          differences_oos <- list(dosl = -1, osl = -1, dosl_control = -1, osl_control = -1 )
+          run_oos = FALSE
+          if(run_oos){
+            # Now, the fimal step is to apply the OneStepEstimator
+            OOS <- OneStepEstimator$new(osl = osl, 
+                                        randomVariables = randomVariables, 
+                                        discrete = TRUE,
+                                        N = N, 
+                                        B = B,
+                                        pre_processor = pre_processor)
 
-          result.dosl.mean.updated <- OOS$perform(initial_estimate = result.dosl.mean,
-                                                   data = data.test,
-                                                   variable_of_interest = variable_of_interest,
-                                                   intervention = intervention,
-                                                   tau = tau)
+            result.dosl.mean.updated <- OOS$perform(initial_estimate = result.dosl.mean,
+                                                    data = data.test,
+                                                    variable_of_interest = variable_of_interest,
+                                                    intervention = intervention,
+                                                    tau = tau)
 
-          result.dosl_control.mean.updated <- OOS$perform(initial_estimate = result.dosl_control.mean,
-                                                   data = data.test,
-                                                   variable_of_interest = variable_of_interest,
-                                                   intervention = control,
-                                                   tau = tau)
+            result.dosl_control.mean.updated <- OOS$perform(initial_estimate = result.dosl_control.mean,
+                                                    data = data.test,
+                                                    variable_of_interest = variable_of_interest,
+                                                    intervention = control,
+                                                    tau = tau)
 
 
-          ## Store the differences after OOS
-          differences_oos <- list(dosl     = (result.dosl.mean.updated$oos_estimate - result.approx.mean),
-                              osl          = -1,
-                              dosl_control = (result.dosl_control.mean.updated$oos_estimate - result.approx_control.mean),
-                              osl_control  = -1 
-                              )
+            ## Store the differences after OOS
+            differences_oos <- list(dosl     = (result.dosl.mean.updated$oos_estimate - result.approx.mean),
+                                osl          = -1,
+                                dosl_control = (result.dosl_control.mean.updated$oos_estimate - result.approx_control.mean),
+                                osl_control  = -1 
+                                )
 
-          private$store_differences(differences_oos, output=key_outpput, oos=TRUE, configuration=configuration)
+            private$store_differences(differences_oos, output=key_output, oos=TRUE, configuration=configuration)
+          }
           list(differences_osl = differences, differences_oos = differences_oos)
         },
 

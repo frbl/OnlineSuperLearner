@@ -49,8 +49,9 @@ OutputPlotGenerator.create_density_plot = function(yValues, estimated_probabilit
 #' OutputPlotGenerator.create_convergence_plot
 #' Function to plot the convergence to the parameter of interest of both the truth and the estimation.
 #'
-#' @param truth_approximation the truth (i.e., as found using simulation / monte carlo approximation)
-#' @param estimated_approximation the estimate (i.e., as found using machine learning and monte carlo approximation)
+#' @param data the truth  and apporoximations to plot
+#' @param output the filename of the output
+#' @param dir the directory name of the output
 #' @import ggplot2
 #' @import reshape2
 #' @export
@@ -82,6 +83,71 @@ OutputPlotGenerator.create_convergence_plot = function(data, output, dir = '~/tm
 
   plot(plotje)
   dev.off()
+}
+
+
+#' OutputPlotGenerator.create_training_curve
+#' Function to plot the training curve given the number of iterations used
+#'
+#' @import ggplot2
+#' @import reshape2
+#' @export
+OutputPlotGenerator.create_training_curve = function(historical_cvs, randomVariables, output = 'historical_cvs', dir = '~/tmp/osl/') {
+  # historical_cvs is a list of lists of datatables
+  #                     - each iteration
+  #                             - each learner
+  #                                      - each RV
+  result <- lapply(randomVariables, function(rv){
+    lapply (historical_cvs, function(epoch) {
+      lapply(epoch, function(algorithm_outcome) algorithm_outcome[, rv$getY, with=FALSE]) %>% unlist
+    })
+  })
+  
+
+  plots <- lapply(seq_along(result), function(rv_id) {
+    rv_result <- result[[rv_id]]
+    dt <- as.data.table(rv_result)%>% t
+    colnames(dt) <- names(rv_result[[1]]) 
+    dt <- data.table(dt)
+    dt
+    dt[, id := seq(1, length(rv_result))]
+
+    test_data_long <- reshape2::melt(dt, id='id')
+    test_data_long
+    names(test_data_long)
+    ggplot(data=test_data_long,
+        aes(x=id, y=value, colour=variable)) +
+        geom_line()+
+        theme(axis.text.y = element_text(colour = "black") ) +
+        theme(axis.text.x = element_text(colour = "black") ) +
+        theme(axis.title.x = element_text(vjust = -0.5)) +
+        theme(legend.title = element_blank())+
+        theme(legend.background = element_rect(colour="transparent"))+
+        theme(legend.key = element_rect(fill = "transparent", colour = "transparent")) +
+        theme(legend.key.size= unit(1,"lines"))
+
+  })
+  
+  pdf(paste(dir,'/',output,'.pdf',sep = ''))
+  lapply(plots, plot)
+  dev.off()
+
+
+
+
+  #data <- lapply(data, function(dat) cumsum(dat)/seq(along=dat)) %>%
+    #as.data.frame
+
+  #data$epoch <- seq(nrow(data))
+  #data <- melt(data, id.vars='epoch')
+
+  #plotje <- ggplot(data,aes(epoch,value,color=variable))+
+    #geom_line() + 
+    #scale_color_manual(values = colors[seq_along(labels)])+
+    #theme(panel.background = element_rect(fill = 'transparent', colour = 'black', size=1))+
+    #scale_y_continuous(name="")+
+
+  #plot(plotje)
 }
 
 
@@ -163,6 +229,6 @@ OutputPlotGenerator.export_key_value = function(key, value, output='variables.da
     value <- round(value, 3)
   }
   line <- paste(key,'=',value)
-  write(line,file=paste(dir,"variables.dat", sep='/'),append=TRUE)
+  write(line,file=paste(dir,output, sep='/'),append=TRUE)
 }
 
