@@ -191,7 +191,7 @@ test_that("it should create the correct estimators -> the ratio should be approx
 
   result <- lapply(seq(tau), function(s) {
     lapply(randomVariables, function(rv) {
-      formula <- rv$get_formula_string(Y='delta')
+      formula <- rv$get_formula_string(Y='Delta')
       subject$calculate_h_ratio(h_ratio_predictors,
                                 s=s,
                                 formula = formula,

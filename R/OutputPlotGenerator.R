@@ -258,6 +258,12 @@ OutputPlotGenerator.export_key_value = function(key, value, output='variables.da
     value <- round(value, 3)
   }
   line <- paste(key,'=',value)
-  write(line,file=paste(dir,output, sep='/'),append=TRUE)
+  the_file = paste(dir,output, sep='/')
+  if (!file.exists(the_file)) {
+    dir.create(dir, showWarnings = FALSE, recursive = TRUE)
+    file.create(the_file)
+  }
+
+  write(line,file=the_file,append=TRUE)
 }
 
