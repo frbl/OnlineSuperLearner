@@ -49,7 +49,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           alphas <- runif(5,0,1)
           algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                                  #algorithm_params = list(alpha = alphas), 
+                                  algorithm_params = list(alpha = alphas), 
                                   params = list(nbins = nbins, online = TRUE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
@@ -68,9 +68,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   #algorithm_params = list(),
                                   params = list(nbins = nbins, online = FALSE))))
 
-          #algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
-                                  #algorithm_params = list(alpha = alphas),
-                                  #params = list(nbins = nbins, online = FALSE))))
+          algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
+                                  algorithm_params = list(alpha = alphas),
+                                  params = list(nbins = nbins, online = FALSE))))
 
           #algos <- append(algos, list(list(algorithm = 'condensier::glmR6',
                                   ##algorithm_params = list(),
@@ -491,7 +491,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           #plot(x=performances$iterations, y=performances$performance)
           #performances
           tau <- 2
-          B <- 10 
+          B <- 500 
           N <- 90 
           OutputPlotGenerator.export_key_value(output=key_output, 'iterations', B)
           OutputPlotGenerator.export_key_value(output=key_output, 'simulation-number-of-observations', N)
@@ -609,7 +609,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           osl$info
 
           differences_oos <- list(dosl = -1, osl = -1, dosl_control = -1, osl_control = -1 )
-          run_oos = FALSE
+          run_oos = TRUE
           if(run_oos){
             # Now, the fimal step is to apply the OneStepEstimator
             OOS <- OneStepEstimator$new(osl = osl, 

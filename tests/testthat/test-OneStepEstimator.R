@@ -131,8 +131,8 @@ test_that("it should create the correct estimators -> the ratio should be approx
   subject <- described.class$new(
     osl = osl,
     randomVariables = randomVariables,
-    N = 90,
-    B = 100,
+    N = 9,
+    B = 10,
     pre_processor = pre_processor
   )
 
@@ -142,7 +142,7 @@ test_that("it should create the correct estimators -> the ratio should be approx
 
   result <- lapply(seq(tau), function(s) {
     lapply(randomVariables, function(rv) {
-      formula <- rv$get_formula_string(Y='delta')
+      formula <- rv$get_formula_string(Y='Delta')
       ## We essentially force the h_ratio to be high, hence remove the warning
       hide_warning_high_h_ratio(
       subject$calculate_h_ratio(h_ratio_predictors,
@@ -154,7 +154,7 @@ test_that("it should create the correct estimators -> the ratio should be approx
     unlist 
 
   for (i in result) {
-    expect_gte(i, 20)
+    expect_lte(abs(19 - i), 0.001)
   }
 })
 
@@ -215,7 +215,7 @@ test_that("it should create the correct estimators -> the ratio should be approx
         mu <- rep(0, tau)
       } else {
         mu <- rep(0, tau)
-        mu[length(mu)] <- 10
+        #mu[length(mu)] <- 10
       }
       data_to_return <- lapply(seq_along(data_names), function(x) return(rnorm(tau, mu, 1))) %>%
         as.data.table
@@ -236,9 +236,10 @@ test_that("it should create the correct estimators -> the ratio should be approx
                                            intervention = intervention,
                                            data = data)
 
+
   result <- lapply(seq(tau), function(s) {
     lapply(randomVariables, function(rv) {
-      formula <- rv$get_formula_string(Y='delta')
+      formula <- rv$get_formula_string(Y='Delta')
       subject$calculate_h_ratio(h_ratio_predictors,
                                 s=s,
                                 formula = formula,
@@ -249,11 +250,11 @@ test_that("it should create the correct estimators -> the ratio should be approx
     subtract(., 1) %>%
     abs
 
+  result
   for (i in result) {
-    expect_lt(i,  0.01)
+    expect_lt(i,  0.1)
   }
 })
-
 
 context(" evaluation_of_conditional_expectations")
 test_that("it should perform the evaluation", {

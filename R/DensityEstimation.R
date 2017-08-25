@@ -223,7 +223,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
             ## 2) Sample from that fit just like conditional density
             X <- rv$getX
             Y <- rv$getY
-            if(length(rv$getX) > 0) {
+            if(length(X) > 0) {
               private$verbose && cat(private$verbose, 'Updating density: ', Y)
               data_obj <- condensier::DataStore$new(input_data = newdata, Y = Y, X = X, auto_typing = FALSE)
               dens_fit <- self$getConditionalDensities(Y)
@@ -246,8 +246,8 @@ DensityEstimation <- R6Class ("DensityEstimation",
             ## OS: Maybe the following hack (its probably not a very good one):
             ## 1) Fit unconditional density using the same method (histogram) with intercept only GLMs
             ## 2) Sample from that fit just like conditional density
-            X = rv$getX
-            Y = rv$getY
+            X <- rv$getX
+            Y <- rv$getY
             if(length(X) > 0) {
               private$verbose && cat(private$verbose, 'Fitting density: ', Y, ' on ', self$get_name)
               #browser()

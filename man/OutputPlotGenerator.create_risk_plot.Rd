@@ -7,6 +7,13 @@ Function to create plots similar to the ones in the OSL papers}
 \usage{
 OutputPlotGenerator.create_risk_plot(performance, output, dir = "~/tmp/osl")
 }
+\arguments{
+\item{performance}{a list of list with performances: list 1 the estimators used, list 2 the random variables predicted.}
+
+\item{output}{string the filename to use for the plot (without .pdf)}
+
+\item{dir}{string the directory to write to}
+}
 \description{
 OutputPlotGenerator.create_risk_plot
 Function to create plots similar to the ones in the OSL papers

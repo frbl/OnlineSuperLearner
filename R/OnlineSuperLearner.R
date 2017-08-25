@@ -208,11 +208,13 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## @param newdata the new data to add to the cache
         ## @return boolean whether or not it actually needed to update the cache.
         update_cache = function(newdata) {
-          if (!self$is_online) {
-            private$data_cache <- rbindlist(list(private$data, newdata))
-            return(TRUE)
+          if (self$is_online) {
+            ## If we are truly online, just cache the last entry
+            private$data_cache <- newdata
+            return(FALSE)
           }
-          return(FALSE)
+          private$data_cache <- rbindlist(list(private$data, newdata))
+          return(TRUE)
         },
 
         ## Train using all estimators separately.
@@ -417,8 +419,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
               }
             })
 
-          # DEBUGGING ONLY
-          if(TRUE) {
+          ## DEBUGGING ONLY
+          ## This function checks the fitted DOSL and checks if each of the
+          ## selected estimators indeed has the lowest risk. 
+          if(FALSE) {
             for (i in seq_along(private$dosl.estimators)) {
               estimator <- private$dosl.estimators[[i]]
               scores <- current_risk[[i]]

@@ -5,14 +5,17 @@
 \title{OutputPlotGenerator.export_key_value 
 Function to export a key value pair to a file}
 \usage{
-OutputPlotGenerator.export_key_value(key, value, dir = "~/tmp/osl")
+OutputPlotGenerator.export_key_value(key, value, output = "variables.dat",
+  dir = "~/tmp/osl")
 }
 \arguments{
 \item{key}{the key to store the value under}
 
 \item{value}{the value to store}
 
-\item{dir}{the dir to write the file to}
+\item{output}{string the file}
+
+\item{dir}{string the dir to write the file to}
 }
 \description{
 OutputPlotGenerator.export_key_value 

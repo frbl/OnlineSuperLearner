@@ -6,6 +6,8 @@
 #' @param estimated_probabilities vector of the estimated y_values (i.e., sampled values)
 #' @param output string with the filename
 #' @param dir the directory to plot to
+#' @importFrom graphics lines plot
+#' @importFrom grDevices dev.off pdf
 #' @export
 OutputPlotGenerator.create_density_plot = function(yValues, estimated_probabilities, estimated_y_values = NULL, output, dir = '~/tmp/osl/') {
   ## plot densitity first:
@@ -49,11 +51,13 @@ OutputPlotGenerator.create_density_plot = function(yValues, estimated_probabilit
 #' OutputPlotGenerator.create_convergence_plot
 #' Function to plot the convergence to the parameter of interest of both the truth and the estimation.
 #'
+#' @import ggplot2
+#' @import reshape2
+#' @importFrom graphics plot
+#' @importFrom grDevices dev.off pdf
 #' @param data the truth  and apporoximations to plot
 #' @param output the filename of the output
 #' @param dir the directory name of the output
-#' @import ggplot2
-#' @import reshape2
 #' @export
 OutputPlotGenerator.create_convergence_plot = function(data, output, dir = '~/tmp/osl/convergence') {
   labels = names(data)
@@ -91,6 +95,14 @@ OutputPlotGenerator.create_convergence_plot = function(data, output, dir = '~/tm
 #'
 #' @import ggplot2
 #' @import reshape2
+#' @importFrom grDevices dev.off pdf
+#' @importFrom graphics plot
+#' @param historical_cvs the historical CV risks. List of lists of datatables.
+#' First list is for each iteration, second for each learner, and the datatable
+#' has columns for each random variable.
+#' @param randomVariables list of randomvariables to use in the output
+#' @param output string the filename to write the pdf to (without .pdf)
+#' @param dir string the directory to write the file to
 #' @export
 OutputPlotGenerator.create_training_curve = function(historical_cvs, randomVariables, output = 'historical_cvs', dir = '~/tmp/osl/') {
   # historical_cvs is a list of lists of datatables
@@ -153,6 +165,13 @@ OutputPlotGenerator.create_training_curve = function(historical_cvs, randomVaria
 
 #' OutputPlotGenerator.create_risk_plot
 #' Function to create plots similar to the ones in the OSL papers
+#' @importFrom stats binomial density terms
+#' @importFrom utils head
+#' @importFrom grDevices dev.off pdf
+#' @importFrom graphics plot
+#' @param performance a list of list with performances: list 1 the estimators used, list 2 the random variables predicted.
+#' @param output string the filename to use for the plot (without .pdf)
+#' @param dir string the directory to write to
 #' @export
 OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tmp/osl') {
   # Performance should be a list of lists:
@@ -193,6 +212,10 @@ OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tm
   dev.off()
 }
 
+#' OutputPlotGenerator.get_colors
+#' Function to return a list of colors, depending on the number of variables / colors needed, uses hex for colors
+#' @param number_of_variables the number of colors one requires
+#' @return a list of colors
 OutputPlotGenerator.get_colors = function(number_of_variables) {
   list(
     tol1qualitative=c("#4477AA"),
@@ -210,8 +233,13 @@ OutputPlotGenerator.get_colors = function(number_of_variables) {
   )[[number_of_variables]]
 }
 
+
+#' OutputPlotGenerator.get_simple_colors
+#' Function to return a list of colors, depending on the number of variables / colors needed
+#' @import RColorBrewer
+#' @param number_of_variables the number of colors one requires
+#' @return a list of colors
 OutputPlotGenerator.get_simple_colors = function(number_of_variables) {
-  library(RColorBrewer)
   qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
   col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
   sample(col_vector, number_of_variables)
@@ -222,7 +250,8 @@ OutputPlotGenerator.get_simple_colors = function(number_of_variables) {
 #'
 #' @param key the key to store the value under
 #' @param value the value to store
-#' @param dir the dir to write the file to
+#' @param output string the file
+#' @param dir string the dir to write the file to
 #' @export
 OutputPlotGenerator.export_key_value = function(key, value, output='variables.dat', dir = '~/tmp/osl') {
   if (is.numeric(value)) {

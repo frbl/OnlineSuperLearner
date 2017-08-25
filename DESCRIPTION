@@ -37,8 +37,6 @@ Imports:
     nloptr,
     future,
     foreach,
-    snow,
-    doSNOW,
     doParallel,
     optimr,
     sgd,

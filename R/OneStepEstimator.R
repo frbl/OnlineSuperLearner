@@ -168,7 +168,8 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         Osample_p[, Delta := rep(1, nrow(Osample_p))]
 
         toc <- Sys.time()
-        cat('Sampling ', self$get_B,' observations from P^N took ', (toc - tic), ' seconds.')
+        cat('Sampled ', self$get_B,' observations from P^N.\n')
+        print(toc - tic)
 
         tic <- Sys.time()
 
@@ -182,7 +183,8 @@ OneStepEstimator <- R6Class("OneStepEstimator",
                                                     return_type = 'full')
         }
         toc <- Sys.time()
-        cat('Sampling ', self$get_B*self$get_N,' observations from PN* took ', (toc - tic), ' seconds.')
+        cat('Sampled ', self$get_B*self$get_N,' observations from PN*\n')
+        print(toc - tic)
 
 
         ## Add an S column to the data, so we know which summary measure belongs to which s
@@ -287,7 +289,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         ## If we didn't find a predictor_or_na, it means that the the numerator and
         ## denominator are equal. Hence their ratio = 1. This is the case for
         ## the pre-treatment distributions.
-        if (is.na(predictor_or_na)) {
+        if (is(predictor_or_na, 'logical') && is.na(predictor_or_na)) {
           return(1) 
         }
 
