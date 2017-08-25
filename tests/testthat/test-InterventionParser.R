@@ -102,6 +102,32 @@ test_that("it should work with the old style interventions", {
   expect_equal(result$what, 1)
 })
 
+test_that("it should return a list and should not intervene if the intervention is null", {
+  result <- InterventionParser.parse_intervention(NULL, 
+                                                  current_time= 100,
+                                                  current_outcome = 'A')
+  expect_false(result$should_intervene)
+  expect_equal(result$when, -1)
+  expect_equal(result$what, -1)
+})
+
+context(" InterventionParser.valid_intervention")
+test_that("it should return -1 if no intervention is provided", {
+  result <- InterventionParser.first_intervention(NULL)
+
+  expect_named(result, 'when')
+  expect_equivalent(result, -1)
+})
+
+test_that("it should should find the first intervention in the list and return the timestamp", {
+  intervention <- list(variable = 'A',when = c(10,20,20,20), what = c(0,1,1,1))
+  result <- InterventionParser.first_intervention(intervention)
+
+  expect_named(result, 'when')
+  expect_equivalent(result, 10)
+  
+})
+
 context(' InterventionParser.valid_intervention')
 test_that("it should return true when an intervention is valid", {
   intervention <- list(variable = 'A',when = c(2), what = c(1))

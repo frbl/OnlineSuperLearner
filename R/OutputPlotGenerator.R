@@ -217,6 +217,9 @@ OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tm
 #' @param number_of_variables the number of colors one requires
 #' @return a list of colors
 OutputPlotGenerator.get_colors = function(number_of_variables) {
+  if (number_of_variables > 12 || number_of_variables < 1) {
+    return(NULL) 
+  }
   list(
     tol1qualitative=c("#4477AA"),
     tol2qualitative=c("#4477AA", "#CC6677"),
@@ -240,6 +243,10 @@ OutputPlotGenerator.get_colors = function(number_of_variables) {
 #' @param number_of_variables the number of colors one requires
 #' @return a list of colors
 OutputPlotGenerator.get_simple_colors = function(number_of_variables) {
+  if (number_of_variables < 1) {
+    return(NULL)
+  }
+  number_of_variables <- abs(number_of_variables)
   qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
   col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
   sample(col_vector, number_of_variables)
