@@ -143,17 +143,20 @@ OneStepEstimator <- R6Class("OneStepEstimator",
           formula <- rv$get_formula_string(Y = 'Delta')
         }) %>% unique
 
-        O_0 = data[1,]
         print('Starting sampling from PN')
         tic <- Sys.time()
-        Osample_p <- foreach(b = seq(self$get_B), .combine = rbind) %dopar% {
+
+        ## Draw B integers between 1-N
+        B_samples <- sample(seq(1:self$get_N), self$get_B, replace=TRUE)
+        ## O_0 = data[1,]
+        Osample_p <- foreach(b = B_samples, .combine = rbind) %dopar% {
           ## TODO: Note that the summary measures we currently collect are
           ## NORMALIZED. I think that this does not matter for calculating the
           ## h-ratios (it might even work better), but we need to check this.
 
           cat('Iteration', b, '\n')
-          ## TODO: Note that we are sampling always starting from O_0.
-          current <- self$get_osl$sample_iteratively(data = O_0,
+          ## TODO: Note that we are sampling always starting from data[b,].
+          current <- self$get_osl$sample_iteratively(data = data[b,],
                                                      randomVariables = self$get_randomVariables,
                                                      tau = self$get_N,
                                                      discrete = self$get_discrete,
@@ -173,14 +176,17 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         tic <- Sys.time()
 
-        Osample_p_star <- foreach(b = seq(self$get_N * self$get_B), .combine = rbind) %dopar% {
+        BN_samples <- sample(seq(1:self$get_N), self$get_B * self$get_N, replace=TRUE)
+
+        Osample_p_star <- foreach(b = BN_samples, .combine = rbind) %dopar% {
           cat('Iteration ', b, '\n')
-          current <- self$get_osl$sample_iteratively(data = O_0,
+          current <- self$get_osl$sample_iteratively(data = data[b,],
                                                     randomVariables = self$get_randomVariables,
                                                     tau = tau,
                                                     discrete = self$get_discrete,
                                                     intervention = intervention,
                                                     return_type = 'full')
+          current
         }
         toc <- Sys.time()
         cat('Sampled ', self$get_B*self$get_N,' observations from PN*\n')

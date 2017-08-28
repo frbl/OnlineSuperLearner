@@ -78,6 +78,7 @@ ML.XGBoost <- R6Class("ML.XGBoost",
         } else {
           result <- predict(m.fit$coef, X_mat)
         }
+        if(any(is.na(result))) browser()
         return(result)
       },
 

@@ -74,6 +74,7 @@ myglm.fit <-
         ##------------- THE Iteratively Reweighting L.S. iteration -----------
         for (iter in 1L:control$maxit) {
             good <- weights > 0
+            cat('GOOD1: ', sum(good) / length(good), '\n')
             varmu <- variance(mu)[good]
             if (anyNA(varmu))
                 stop("NAs in V(mu)")
@@ -84,6 +85,14 @@ myglm.fit <-
                 stop("NAs in d(mu)/d(eta)")
             ## drop observations for which w will be zero
             good <- (weights > 0) & (mu.eta.val != 0)
+            cat('GOOD2: \n')
+            cat(' weights:', sum(weights>0) / length(weights), '(', sum(weights>0) ,')\n')
+            cat(' mu.etav:', sum(mu.eta.val != 0) / length(mu.eta.val), '(', sum(mu.eta.val != 0) ,')\n')
+            cat(' good.va:', sum(good) / length(good), '\n')
+
+            #if (sum(good) / length(good) == 0) {
+             #browser() 
+            #}
 
             if (all(!good)) {
                 conv <- FALSE
@@ -213,6 +222,7 @@ myglm.fit <-
     ################################################## 
     # It crashes here if we dont add delta in mu.eta #
     ################################################## 
+    cat('GOOD3: ', sum(good) / length(good), '\n')
     if(!EMPTY)
         names(fit$effects) <-
             c(xxnames[seq_len(fit$rank)], rep.int("", sum(good) - fit$rank))
@@ -268,7 +278,7 @@ ConstrainedGlm.fit <- function(formula, delta, data, ...) {
           # TODO: Movet his to the valid mu function?
           if(mu <= 0 || mu >= 1) {
             warning('Mu is incorrect: ', mu)
-            min(max(mu,1),0)
+            min(max(mu,1-delta),delta)
           }
           logit((mu-delta)/(1-2*delta))
         },
@@ -281,7 +291,7 @@ ConstrainedGlm.fit <- function(formula, delta, data, ...) {
         ## derivative of inverse link wrt eta
         mu.eta = function(eta) {
           expit.eta <- expit(eta)
-          (1-2*delta)* expit.eta*(1-expit.eta) +delta
+          (1-2*delta) * expit.eta*(1-expit.eta)
         },
         ## test of validity for eta
         valideta = function(...) TRUE,
@@ -305,7 +315,7 @@ ConstrainedGlm.fit <- function(formula, delta, data, ...) {
   }
 
   ## TODO: Why do the starting values need to be 0.999? If we specify otherwise, everything crashes
-  start <- rep(1, ncovariates)
+  start <- rep(1/ncovariates, ncovariates)
   the_glm <- glm(formula = formula, family = family, data=data, start = start, ...)
   return(the_glm)
 }
