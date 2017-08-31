@@ -276,10 +276,10 @@ ConstrainedGlm.fit <- function(formula, delta, data, ...) {
       list(## mu mapsto logit( [mu - delta]/[1 - 2 delta]  ).
         linkfun = function(mu) {
           # TODO: Movet his to the valid mu function?
-          if(mu <= 0 || mu >= 1) {
-            warning('Mu is incorrect: ', mu)
-            min(max(mu,1-delta),delta)
-          }
+          #if(mu <= 0 || mu >= 1) {
+            #warning('Mu is incorrect: ', mu)
+            #min(max(mu,1-delta),delta)
+          #}
           logit((mu-delta)/(1-2*delta))
         },
 
@@ -308,14 +308,15 @@ ConstrainedGlm.fit <- function(formula, delta, data, ...) {
   family = binomial(link = bd_logit)
 
   ## Override the residuals function
-  family$dev.resids <- function(y, eta, wt) {
-    mu <- bd_logit$linkinv(eta)
-    wt*(y/mu + (1-y)/(1-mu))
-    mu
-  }
+  #family$dev.resids <- function(y, eta, wt) {
+    #mu <- bd_logit$linkinv(eta)
+    #wt*(y/mu + (1-y)/(1-mu))
+    #mu
+  #}
 
   ## TODO: Why do the starting values need to be 0.999? If we specify otherwise, everything crashes
   start <- rep(1/ncovariates, ncovariates)
+  start <- NULL
   the_glm <- glm(formula = formula, family = family, data=data, start = start, ...)
   return(the_glm)
 }
