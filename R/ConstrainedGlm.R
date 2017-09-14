@@ -268,31 +268,49 @@ ConstrainedGlm.fit <- function(formula, delta, data, ...) {
   ## 1 for intercept
   ncovariates <- length(labels(terms(formula))) + 1
   
-  if(any(is.na(data))) warning('Data contains NA values!')
+  if(any(is.na(data))) {
+    browser()
+    warning('Data contains NA values!')
+  }
   if(any(is.null(data))) warning('Data contains NULL values!')
+
+  ## eta mapsto delta + (1 - 2 delta) expit (eta).
+  linkinv_fun <- function(eta) {
+    delta + ((1-2*delta)*expit(eta))
+  }
+
+  ## mu mapsto logit( [mu - delta]/[1 - 2 delta]  ).
+  linkfun_fun <- function(mu) {
+    # TODO: Movet his to the valid mu function?
+    if(mu <= 0 || mu >= 1) {
+      warning('Mu is incorrect: ', mu)
+      min(max(mu,1-delta),delta)
+    }
+    logit((mu-delta)/(1-2*delta))
+  }
+
+  ## derivative of inverse link wrt eta
+  mu.eta_fun <- function(eta) {
+    expit.eta <- expit(eta)
+    (1-2*delta) * expit.eta*(1-expit.eta)
+  }
+
+  ## Override the residuals function
+  dev.resids_fun <- function(y, eta, wt) {
+    mu <- bd_logit$linkinv(eta)
+    wt*(y/mu + (1-y)/(1-mu))
+    mu
+  }
+
 
   bounded_logit <- function(delta) {
     structure(
-      list(## mu mapsto logit( [mu - delta]/[1 - 2 delta]  ).
-        linkfun = function(mu) {
-          # TODO: Movet his to the valid mu function?
-          if(mu <= 0 || mu >= 1) {
-            warning('Mu is incorrect: ', mu)
-            min(max(mu,1-delta),delta)
-          }
-          logit((mu-delta)/(1-2*delta))
-        },
+      list(
+        linkfun = linkfun_fun,
+        linkinv = linkinv_fun,
+        mu.eta = mu.eta_fun ,
+        dev.resids = dev.resids_fun,
 
-        ## eta mapsto delta + (1 - 2 delta) expit (eta).
-        linkinv = function(eta) {
-          delta + ((1-2*delta)*expit(eta))
-        },
-
-        ## derivative of inverse link wrt eta
-        mu.eta = function(eta) {
-          expit.eta <- expit(eta)
-          (1-2*delta) * expit.eta*(1-expit.eta)
-        },
         ## test of validity for eta
         valideta = function(...) TRUE,
         validmu = function(...) TRUE,
@@ -307,16 +325,9 @@ ConstrainedGlm.fit <- function(formula, delta, data, ...) {
   bd_logit <- bounded_logit(delta)
   family = binomial(link = bd_logit)
 
-  ## Override the residuals function
-  ########################################
-  family$dev.resids <- function(y, eta, wt) {
-    mu <- bd_logit$linkinv(eta)
-    wt*(y/mu + (1-y)/(1-mu))
-    mu
-  }
-
   ## TODO: Why do the starting values need to be 0.999? If we specify otherwise, everything crashes
   start <- rep(1/ncovariates, ncovariates)
+  start <- NULL
   the_glm <- glm(formula = formula, family = family, data=data, start = start, ...)
   return(the_glm)
 }
