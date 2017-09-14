@@ -70,6 +70,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
   public =
     list(
       initialize = function(osl, randomVariables, N, B, pre_processor, discrete = TRUE) {
+        private$verbose <- Arguments$getVerbose(-8, timestamp=TRUE)
         private$osl <- Arguments$getInstanceOf(osl, 'OnlineSuperLearner')
 
         private$N <- N##Arguments$getInteger(N, c(1, Inf))
@@ -80,6 +81,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       },
 
       perform = function(initial_estimate, data, variable_of_interest, intervention, tau) {
+        private$verbose && enter(private$verbose, 'Starting efficient influence curve estimation')
         ## Let $B$ be a large integer (the larger $B$ the better the approxmation),
         ## let $N$ be the number of observations,
         N = nrow(data)
@@ -107,7 +109,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
                                                                   tau = tau,
                                                                   intervention = intervention)
 
-        print(D_star_evaluation)
+        private$verbose && cat(private$verbose, 'D-star evaluation is ', D_star_evaluation)
 
         ## Calculate the new estimate
         oos_estimate <- D_star_evaluation %>% unlist %>% sum
@@ -122,13 +124,16 @@ OneStepEstimator <- R6Class("OneStepEstimator",
           oos_estimate = oos_estimate,
           oos_variance = oos_variance
         )
-        print(result)
+        private$verbose && cat(private$verbose, 'Final result: ', result)
 
+        private$verbose && exit(private$verbose)
         result
 
       },
 
       get_h_ratio_estimators = function(tau, intervention, data) {
+        private$verbose && enter(private$verbose, 'Getting the h-ratio estimators')
+
         ## We first sample $B$ observations from $P^N$ (that is, N blocks of
         ## summary relevant history) and then $BN$ observations from $P^N_{s,a}
         ## (that is, $B * N * \tau$ blocks$ of relevant history).
@@ -143,20 +148,20 @@ OneStepEstimator <- R6Class("OneStepEstimator",
           formula <- rv$get_formula_string(Y = 'Delta')
         }) %>% unique
 
-        print('Starting sampling from PN')
+
+        private$verbose && enter(private$verbose, 'Starting sampling from PN')
         tic <- Sys.time()
 
-        ## Draw B integers between 1-N
-        B_samples <- sample(seq(1:self$get_N), self$get_B, replace=TRUE)
-        ## O_0 = data[1,]
-        Osample_p <- foreach(b = B_samples, .combine = rbind) %dopar% {
+        O_0 <- data[1,]
+        ## Run B iterations on O_0 (always start from the same data
+        Osample_p <- foreach(b = seq(1:self$get_B), .combine = rbind) %dopar% {
           ## TODO: Note that the summary measures we currently collect are
           ## NORMALIZED. I think that this does not matter for calculating the
           ## h-ratios (it might even work better), but we need to check this.
 
-          cat('Iteration', b, '\n')
-          ## TODO: Note that we are sampling always starting from data[b,].
-          current <- self$get_osl$sample_iteratively(data = data[b,],
+          private$verbose && cat(private$verbose, 'PN sample - iteration ', b)
+          ## TODO: Note that we are sampling from data[b,], not e.g. data[1,].
+          current <- self$get_osl$sample_iteratively(data = O_0,
                                                      randomVariables = self$get_randomVariables,
                                                      tau = self$get_N,
                                                      discrete = self$get_discrete,
@@ -165,61 +170,77 @@ OneStepEstimator <- R6Class("OneStepEstimator",
           current
         }
 
-        ## We store each observation with the correct Delta
-        ## Because we use $BN$ observations in the previous sampling step, we
-        ## should also draw BN observations from P^N_{s,a}.
-        Osample_p[, Delta := rep(1, nrow(Osample_p))]
-
         toc <- Sys.time()
-        cat('Sampled ', self$get_B,' observations from P^N.\n')
-        print(toc - tic)
+        private$verbose && cat(private$verbose, toc - tic)
+        private$verbose && exit(private$verbose)
+        private$verbose && cat(private$verbose, 'Sampled ', self$get_B,' observations from PN.')
 
+        private$verbose && enter(private$verbose, 'Starting sampling from PN*')
         tic <- Sys.time()
 
-        BN_samples <- sample(seq(1:self$get_N), self$get_B * self$get_N, replace=TRUE)
-
-        Osample_p_star <- foreach(b = BN_samples, .combine = rbind) %dopar% {
-          cat('Iteration ', b, '\n')
-          current <- self$get_osl$sample_iteratively(data = data[b,],
-                                                    randomVariables = self$get_randomVariables,
-                                                    tau = tau,
-                                                    discrete = self$get_discrete,
-                                                    intervention = intervention,
-                                                    return_type = 'full')
+        ## Because we use $BN$ observations in the previous sampling step, we
+        ## should also draw BN observations from P^N_{s,a}.
+        Osample_p_star <- foreach(b = seq(self$get_B * self$get_N), .combine = rbind) %dopar% {
+          private$verbose && cat(private$verbose, 'PN* sample - iteration ', b)
+          current <- self$get_osl$sample_iteratively(data = O_0,
+                                                     randomVariables = self$get_randomVariables,
+                                                     tau = tau,
+                                                     discrete = self$get_discrete,
+                                                     intervention = intervention,
+                                                     return_type = 'full')
           current
         }
         toc <- Sys.time()
-        cat('Sampled ', self$get_B*self$get_N,' observations from PN*\n')
-        print(toc - tic)
-
+        private$verbose && exit(private$verbose)
+        private$verbose && cat(private$verbose, 'Sampled ', self$get_B*self$get_N,' observations from PN*')
+        private$verbose && cat(private$verbose, toc - tic)
 
         ## Add an S column to the data, so we know which summary measure belongs to which s
         time_s_column <- lapply(seq(self$get_N*self$get_B), function(i) ((i - 1) %% tau) + 1)  %>% unlist
-
-        Osample_p_star[, Delta := rep(0, nrow(Osample_p_star))]
         Osample_p_star[, time_s_column := time_s_column]
 
-        ##Osample_p_star <- cbind(, Delta = ), time_s_column = time_s_column)
+        ## Now add the Delta column so we know wcich blocks belong to PN* and which to PN
+        Osample_p[, Delta := rep(1, nrow(Osample_p))]
+        Osample_p_star[, Delta := rep(0, nrow(Osample_p_star))]
 
+        ## Find the time of the first intervention. Before this first intervention no divergence should be possible.
         first_intervention_time <- InterventionParser.first_intervention(intervention)
 
         ## We generate tau estimators here, one for each s to tau
         h_ratio_predictors_per_s <- lapply(seq(tau), function(time_s) {
           
-          ## If no intervention is given, we do not have to calculate the ratio, as it is always 1.
+          ## If no intervention is given, we do not have to calculate the ratio, as it is always (approximately) 1.
           if(time_s < first_intervention_time) {
             h_ratio_predictors <- rep(NA, length(formulae)) %>% as.list
           } else {
-            Osample_p_full <- rbindlist(list(Osample_p, 
-                                            Osample_p_star[time_s_column == time_s][,!'time_s_column']))
+            Osample_p_full <- rbindlist(
+              list(
+                Osample_p, 
+                ## Remove the time_s_column
+                Osample_p_star[time_s_column == time_s][,!'time_s_column']
+              )
+            )
 
-            cat('Running for time ', time_s, '\n')
+            private$verbose && cat(private$verbose, 'Calculating H-estimator for time ', time_s)
+
             h_ratio_predictors <- lapply(formulae, function(formula){
               ##speedglm::speedglm.wfit(formula, Osample_p_full, family = binomial(), method='Cholesky')
               ## TODO: Currently we use GLM here, but we should make use of a SuperLearner here.
-              hide_warning_convergence(ConstrainedGlm.fit(formula = formula(formula),
-                                                          data = Osample_p_full,
-                                                          delta = 0.05))
+              #browser()
+              #formula
+              #res <- glm(formula = formula(formula), data = Osample_p_full, family = binomial() )
+              #res2 <- ConstrainedGlm.fit(formula = formula(formula), data = Osample_p_full, delta = 0.05)
+              #res
+              #res2
+              result = tryCatch({
+                hide_warning_convergence(ConstrainedGlm.fit(formula = formula(formula),
+                                                            data = Osample_p_full,
+                                                            delta = 0.05))
+                
+              }, error = function(e) {
+                warning('We encountered an error running the constrained GLM! Falling back to normal glm')
+                glm(formula = formula(formula), data = Osample_p_full, family = binomial() )
+              })
             })
           }
           ## Store the names of the formulae, so we can index them easily later on
@@ -230,10 +251,13 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         ## The final result is a list of estimators, which contains a GLM for
         ## each $C_W$, $C_A$, and $C_Y$, for each s in tau.  (so 3tau
         ## estimators)
+        private$verbose && exit(private$verbose)
         return(h_ratio_predictors_per_s)
       },
 
       evaluation_of_conditional_expectations = function(h_ratio_predictors, variable_of_interest, data, tau, intervention) {
+        private$verbose && enter(private$verbose, 'Evaluating the conditional expectations')
+
         ## We have to create the conditional expectations using each of the
         ## random variables as a start point
         influence_curve_for_each_rv <- c()
@@ -241,8 +265,9 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         var_of_interest <- variable_of_interest$getY
 
         ## This is the outer loop of the influence curve
+
         efficient_influence_curve <- foreach(t=seq(self$get_N), .combine='sum') %dopar% {
-          cat('Iteration', t, '\n')
+          private$verbose && cat(private$verbose, 'Efficient influence curve iteration ', t)
           current_dat <- data[t,]
 
           ## This is the inner loop of the influence curve
@@ -268,11 +293,13 @@ OneStepEstimator <- R6Class("OneStepEstimator",
           ## Divide within the loop so we reduce the risk of integer overflows. Check if this is the case.
           difference_in_expectations_for_all_s / self$get_N
         }
+        private$verbose && exit(private$verbose)
         efficient_influence_curve
       },
 
       perform_initial_estimation = function(data, intervention, tau) {
-        foreach(i=seq(B), .combine=rbind) %do% {
+        private$verbose && enter(private$verbose, 'Performing initial estimation of parameter of interest')
+        result <- foreach(i=seq(B), .combine=rbind) %do% {
           self$get_osl$sample_iteratively(data = data[1,],
                                           randomVariables = self$get_randomVariables,
                                           intervention = intervention,
@@ -282,6 +309,8 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         } %>%
           unlist %>%
           mean
+        private$verbose && exit(private$verbose)
+        result
       },
 
       calculate_h_ratio = function(h_ratio_predictors, s, formula, data) {
@@ -301,7 +330,11 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         assert_that(!is.null(data))
         h_ratio <- predict(predictor_or_na, newdata = data, type='response') %>% as.numeric
-        return(h_ratio / (1.0 - h_ratio))
+        result <- (h_ratio / (1.0 - h_ratio))
+        if (result > 20) {
+          warning('Calculated h_ratio is relatively large! Are you violating the positivity assumption? Value=', result)
+        }
+        result
       }
     ),
   active =
@@ -332,6 +365,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
     ),
   private =
     list(
+      verbose = NULL,
       osl = NULL,
       N = NULL,
       B = NULL,
@@ -399,13 +433,13 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         result <- h_ratio * (o_sample_conditional - o_sample_marginal)
         if(is.na(result)) {
-          cat('H-ratio: ', h_ratio, 
+          private$verbose && cat(private$verbose, 'H-ratio: ', h_ratio, 
               ' First part inf curve: ', o_sample_conditional,
               ' second part: ', o_sample_marginal,
               ' s: ', s,
-              ' current_rv: ', current_rvs$rv$getY, '\n')
+              ' current_rv: ', current_rvs$rv$getY)
         }
-        h_ratio * (o_sample_conditional - o_sample_marginal)
+        result
       },
 
       sample_for_expectation = function(dat, start_from_variable, start_from_time, intervention, tau, var_of_interest) {

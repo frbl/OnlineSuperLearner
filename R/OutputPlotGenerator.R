@@ -114,21 +114,28 @@ OutputPlotGenerator.create_training_curve = function(historical_cvs, randomVaria
       lapply(epoch, function(algorithm_outcome) algorithm_outcome[, rv$getY, with=FALSE]) %>% unlist
     })
   })
-  
 
   plots <- lapply(seq_along(result), function(rv_id) {
     rv_result <- result[[rv_id]]
     dt <- as.data.table(rv_result)%>% t
-    colnames(dt) <- names(rv_result[[1]]) 
+
+    name_list <- c()
+    the_names <- names(rv_result[[1]])
+    for (name_id in seq_along(the_names)) {
+      name <- the_names[[name_id]]
+      name_list <- c(name_list, letters[name_id])
+      the_key <- paste('algorithm', letters[name_id], sep='_') 
+      OutputPlotGenerator.export_key_value(the_key, name)
+    }
+    
+    colnames(dt) <- name_list
     dt <- data.table(dt)
-    dt
     dt[, id := seq(1, length(rv_result))]
 
     test_data_long <- reshape2::melt(dt, id='id')
     test_data_long
     names(test_data_long)
-    ggplot(data=test_data_long,
-        aes(x=id, y=value, colour=variable)) +
+    ggplot(data=test_data_long, aes(x=id, y=value, colour=variable)) +
         geom_line()+
         theme(axis.text.y = element_text(colour = "black") ) +
         theme(axis.text.x = element_text(colour = "black") ) +
@@ -143,7 +150,6 @@ OutputPlotGenerator.create_training_curve = function(historical_cvs, randomVaria
   pdf(paste(dir,'/',output,'.pdf',sep = ''))
   lapply(plots, plot)
   dev.off()
-
 
 
 
@@ -172,33 +178,41 @@ OutputPlotGenerator.create_training_curve = function(historical_cvs, randomVaria
 #' @param performance a list of list with performances: list 1 the estimators used, list 2 the random variables predicted.
 #' @param output string the filename to use for the plot (without .pdf)
 #' @param dir string the directory to write to
+#' @param make_summary boolean whether or not to sum all error terms to give a summed performance measure
 #' @export
-OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tmp/osl') {
-  # Performance should be a list of lists:
-  # List 1: the estimator used
-  # List 2: the random variable predicted
-
-  performance_dt <- performance %>% rbindlist
+OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tmp/osl', make_summary=FALSE, label='total.risk') {
+  # Performance should be a list of data.tables:
+  # List: the estimator used
+  # Datatable: the random variable predicted
+  if(make_summary) {
+    ## Beware, the unlist is needed, it looks the same but without the unlist the contents are lists instead of numerics
+    performance_dt <- lapply(performance,sum) %>% unlist %>% data.table
+    colnames(performance_dt) <- label
+  } else {
+    performance_dt <- performance %>% rbindlist
+  }
   ml_names <- names(performance)
-  outcomes <- colnames(performance_dt)
 
+  ## Append the names of the algorithms, so ggplot can plot them
   performance_dt[, 'names' :=  ml_names]
+
+  ## Retrieve the names of the outcomes, -1 because the names column does not need a color
+  outcomes <- head(colnames(performance_dt), -1)
 
   dir.create(dir, showWarnings = FALSE, recursive = TRUE)
   pdf(paste(dir, '/', output,'.pdf',sep = ''))
   p <- ggplot(performance_dt)
-  i <- 1
-  colors <- OutputPlotGenerator.get_simple_colors(length(outcomes) -1)
-  names(colors) <- head(outcomes, -1)
-  colors
+
+  colors <- OutputPlotGenerator.get_simple_colors(length(outcomes))
+
+  names(colors) <- outcomes
   for (name in outcomes) {
-    if(name == 'names') next
-    p <- p + geom_point(size = 2, aes_string(x=name, y='names'), color=colors[[i]])+
+    p <- p + geom_point(size = 2, aes_string(x=name, y='names'), color=colors[[name]])+
     theme(legend.position="left")
-    i <- i + 1
   }
+
   p <- p +
-  scale_linetype(guide = guide_legend(override.aes = list(alpha = 1)), labels = names(colors)) + 
+  scale_linetype(guide = guide_legend(override.aes = list(alpha = 1)), labels = outcomes) + 
   theme(legend.position = c(.75, .25))+
   theme(panel.background = element_rect(fill = 'transparent', colour = 'black', size=1))+
   theme(axis.text.y = element_text(colour = "black") ) +

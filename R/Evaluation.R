@@ -14,7 +14,7 @@ Evaluation.get_evaluation_function = function(family, useAsLoss=TRUE) {
       ###throw('No loss function implemented for family ', family)
     ###}
   }
-  return(Evaluation.log_loss)
+  return(Evaluation.log_likelihood_loss)
 
   ##if (family == 'gaussian') {
     ##return(Evaluation.root_mean_squared_error)
@@ -43,9 +43,9 @@ Evaluation.accuracy <- function(data.observed, data.predicted) {
 #' @param data.observed the true data (Y)
 #' @param data.predicted the Y outcome from the estimator 
 #' @param eps is a small offset to let the log not go to Inf
-Evaluation.log_loss <- function(data.observed, data.predicted, eps = 1e-15) {
+Evaluation.log_loss <- function(data.observed, data.predicted, eps = 1e-3) {
   data.predicted = pmin(pmax(data.predicted, eps), 1-eps)
-  res <- c(log_loss = -mean(data.observed * log(data.predicted) + (1 - data.observed) * log(1 - data.predicted)))
+  res <- c(log_loss = sum(- data.observed * log(data.predicted) - (1 - data.observed) * log(1 - data.predicted)))
   #if(is.na(res)) browser()
   res
 }

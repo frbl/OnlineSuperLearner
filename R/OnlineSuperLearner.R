@@ -268,53 +268,53 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$train_all_estimators(data = data.splitted$train, randomVariables = randomVariables)
 
           ## Extract the level 1 data and use it to fit the osl
-            predicted.outcome <- private$online_super_learner_predict$predict_using_all_estimators(
-              data = data.splitted$train,
-              sl_library = private$SL.library.fabricated
-            )
+          predicted.outcome <- private$online_super_learner_predict$predict_using_all_estimators(
+            data = data.splitted$train,
+            sl_library = private$SL.library.fabricated
+          )
 
-            observed.outcome <- data.splitted$train[,outcome.variables, with=FALSE]
-            private$fit_osl(predicted.outcome = predicted.outcome,
-                            observed.outcome = observed.outcome)
-            private$fitted <- TRUE
+          observed.outcome <- data.splitted$train[,outcome.variables, with=FALSE]
+          private$fit_osl(predicted.outcome = predicted.outcome,
+                          observed.outcome = observed.outcome)
+          private$fitted <- TRUE
 
-            ## Make a prediction using the learners on the test data
-            observed.outcome <- data.splitted$test[,outcome.variables, with=FALSE]
+          ## Make a prediction using the learners on the test data
+          observed.outcome <- data.splitted$test[,outcome.variables, with=FALSE]
+          predicted.outcome <- self$predict(data = data.splitted$test,
+                                          randomVariables = randomVariables,
+                                          discrete = TRUE, continuous = TRUE, all_estimators = TRUE)
+
+          ## We need to store the dosl risk, as we will update it later.
+          pre_dosl_risk <- private$cv_risk$dosl.estimator
+
+          ## Calculate the error using the normalized predictions
+          private$update_risk(predicted.outcome = predicted.outcome,
+                              observed.outcome = observed.outcome,
+                              randomVariables = randomVariables)
+
+          ## Update the discrete superlearner (take the first if there are multiple candidates)
+          if (self$fits_dosl) {
+            private$fit_dosl()
+
+            ## Put the CV risk back to what it was before the update. We can now actually fit it correctly.
+            private$cv_risk$dosl.estimator <- pre_dosl_risk
+
+            ## In order to get the initial estimate of the CV error of the DOSL, we first need to fit the other 
+            ## estimators, and after that calculate the dosl error separately. 
             predicted.outcome <- self$predict(data = data.splitted$test,
                                             randomVariables = randomVariables,
-                                            discrete = TRUE, continuous = TRUE, all_estimators = TRUE)
+                                            discrete = TRUE, continuous = FALSE, all_estimators = FALSE)
 
-            ## We need to store the dosl risk, as we will update it later.
-            pre_dosl_risk <- private$cv_risk$dosl.estimator
-
-            ## Calculate the error using the normalized predictions
-            private$update_risk(predicted.outcome = predicted.outcome,
-                                observed.outcome = observed.outcome,
-                                randomVariables = randomVariables)
-
-            ## Update the discrete superlearner (take the first if there are multiple candidates)
-            if (self$fits_dosl) {
-              private$fit_dosl()
-
-              ## Put the CV risk back to what it was before the update. We can now actually fit it correctly.
-              private$cv_risk$dosl.estimator <- pre_dosl_risk
-
-              ## In order to get the initial estimate of the CV error of the DOSL, we first need to fit the other 
-              ## estimators, and after that calculate the dosl error separately. 
-              predicted.outcome <- self$predict(data = data.splitted$test,
-                                              randomVariables = randomVariables,
-                                              discrete = TRUE, continuous = FALSE, all_estimators = FALSE)
-
-              private$cv_risk$dosl.estimator <- 
-                private$cv_risk_calculator$update_risk(predicted.outcome = predicted.outcome,
-                                                                        observed.outcome = observed.outcome,
-                                                                        randomVariables = randomVariables,
-                                                                        current_count = private$cv_risk_count-1,
-                                                                        current_risk = self$get_cv_risk)$dosl.estimator
-                #private$cv_risk_calculator$calculate_risk(predicted.outcome = predicted.outcome,
-                                                          #observed.outcome = observed.outcome,
-                                                          #randomVariables = randomVariables)$dosl.estimator
-            }
+            private$cv_risk$dosl.estimator <- 
+              private$cv_risk_calculator$update_risk(predicted.outcome = predicted.outcome,
+                                                                      observed.outcome = observed.outcome,
+                                                                      randomVariables = randomVariables,
+                                                                      current_count = private$cv_risk_count-1,
+                                                                      current_risk = self$get_cv_risk)$dosl.estimator
+              #private$cv_risk_calculator$calculate_risk(predicted.outcome = predicted.outcome,
+                                                        #observed.outcome = observed.outcome,
+                                                        #randomVariables = randomVariables)$dosl.estimator
+          }
 
           private$update_historical_cv_risk()
 
