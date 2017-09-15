@@ -76,3 +76,17 @@ InterventionParser.generate_intervention <- function(variables, variable_interve
   list(variable = variables, when = rep(when, length(variables)), what = what)
 }
 
+
+#' InterventionParser.is_current_node_treatment
+#' Returns whether the current nodie is a treatment node
+#' @param current_time the time where we are currently
+#' @param intervention the specified intervention
+#' @param current_rv_output the current randomvariable output
+#' @return boolean, whether this is a treatment node
+InterventionParser.is_current_node_treatment = function(current_time, intervention, current_rv_output) {
+  if (intervention$variable != current_rv_output) return(FALSE)
+  if (!(current_time %in% intervention$when)) return(FALSE)
+  return(TRUE)
+}
+
+

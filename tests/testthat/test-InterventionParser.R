@@ -175,3 +175,28 @@ test_that("it should generate an intervention based on the provided when and wha
                    what = c(1,0,0)) 
   expect_equal(expected, result)
 })
+
+context(" InterventionParser.is_current_node_treatment")
+test_that("it should return true if the current node is a treatment node", {
+  intervention <- list(variable = 'A',when = c(2))
+  result <- InterventionParser.is_current_node_treatment(current_time=2, 
+                                                         intervention = intervention,
+                                                         current_rv_output = 'A') 
+  expect_true(result)
+})
+
+test_that("it should return false if the current node is not a treatment node (the time is incorrect)", {
+  intervention <- list(variable = 'A',when = c(2))
+  result <- InterventionParser.is_current_node_treatment(current_time=1, 
+                                                         intervention = intervention,
+                                                         current_rv_output = 'A') 
+  expect_false(result)
+})
+
+test_that("it should return false if the current node is not a treatment node (the variable is incorrect)", {
+  intervention <- list(variable = 'A',when = c(2))
+  result <- InterventionParser.is_current_node_treatment(current_time=2, 
+                                                         intervention = intervention,
+                                                         current_rv_output = 'W') 
+  expect_false(result)
+})

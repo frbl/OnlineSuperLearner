@@ -74,7 +74,7 @@ myglm.fit <-
         ##------------- THE Iteratively Reweighting L.S. iteration -----------
         for (iter in 1L:control$maxit) {
             good <- weights > 0
-            cat('GOOD1: ', sum(good) / length(good), '\n')
+            #cat('GOOD1: ', sum(good) / length(good), '\n')
             varmu <- variance(mu)[good]
             if (anyNA(varmu))
                 stop("NAs in V(mu)")
@@ -85,10 +85,10 @@ myglm.fit <-
                 stop("NAs in d(mu)/d(eta)")
             ## drop observations for which w will be zero
             good <- (weights > 0) & (mu.eta.val != 0)
-            cat('GOOD2: \n')
-            cat(' weights:', sum(weights>0) / length(weights), '(', sum(weights>0) ,')\n')
-            cat(' mu.etav:', sum(mu.eta.val != 0) / length(mu.eta.val), '(', sum(mu.eta.val != 0) ,')\n')
-            cat(' good.va:', sum(good) / length(good), '\n')
+            #cat('GOOD2: \n')
+            #cat(' weights:', sum(weights>0) / length(weights), '(', sum(weights>0) ,')\n')
+            #cat(' mu.etav:', sum(mu.eta.val != 0) / length(mu.eta.val), '(', sum(mu.eta.val != 0) ,')\n')
+            #cat(' good.va:', sum(good) / length(good), '\n')
 
             #if (sum(good) / length(good) == 0) {
              #browser() 
@@ -222,7 +222,7 @@ myglm.fit <-
     ################################################## 
     # It crashes here if we dont add delta in mu.eta #
     ################################################## 
-    cat('GOOD3: ', sum(good) / length(good), '\n')
+    #cat('GOOD3: ', sum(good) / length(good), '\n')
     if(!EMPTY)
         names(fit$effects) <-
             c(xxnames[seq_len(fit$rank)], rep.int("", sum(good) - fit$rank))
@@ -274,43 +274,28 @@ ConstrainedGlm.fit <- function(formula, delta, data, ...) {
   }
   if(any(is.null(data))) warning('Data contains NULL values!')
 
-  ## eta mapsto delta + (1 - 2 delta) expit (eta).
-  linkinv_fun <- function(eta) {
-    delta + ((1-2*delta)*expit(eta))
-  }
-
-  ## mu mapsto logit( [mu - delta]/[1 - 2 delta]  ).
-  linkfun_fun <- function(mu) {
-    # TODO: Movet his to the valid mu function?
-    if(mu <= 0 || mu >= 1) {
-      warning('Mu is incorrect: ', mu)
-      min(max(mu,1-delta),delta)
-    }
-    logit((mu-delta)/(1-2*delta))
-  }
-
-  ## derivative of inverse link wrt eta
-  mu.eta_fun <- function(eta) {
-    expit.eta <- expit(eta)
-    (1-2*delta) * expit.eta*(1-expit.eta)
-  }
-
-  ## Override the residuals function
-  dev.resids_fun <- function(y, eta, wt) {
-    mu <- bd_logit$linkinv(eta)
-    wt*(y/mu + (1-y)/(1-mu))
-    mu
-  }
-
-
   bounded_logit <- function(delta) {
     structure(
-      list(
-        linkfun = linkfun_fun,
-        linkinv = linkinv_fun,
-        mu.eta = mu.eta_fun ,
-        dev.resids = dev.resids_fun,
+      list(## mu mapsto logit( [mu - delta]/[1 - 2 delta]  ).
+        linkfun = function(mu) {
+          # TODO: Movet his to the valid mu function?
+          if(mu <= 0 || mu >= 1) {
+            warning('Mu is incorrect: ', mu)
+            min(max(mu,1-delta),delta)
+          }
+          logit((mu-delta)/(1-2*delta))
+        },
 
+        ## eta mapsto delta + (1 - 2 delta) expit (eta).
+        linkinv = function(eta) {
+          delta + ((1-2*delta)*expit(eta))
+        },
+
+        ## derivative of inverse link wrt eta
+        mu.eta = function(eta) {
+          expit.eta <- expit(eta)
+          (1-2*delta) * expit.eta*(1-expit.eta)
+        },
         ## test of validity for eta
         valideta = function(...) TRUE,
         validmu = function(...) TRUE,
@@ -325,9 +310,27 @@ ConstrainedGlm.fit <- function(formula, delta, data, ...) {
   bd_logit <- bounded_logit(delta)
   family = binomial(link = bd_logit)
 
+  ## Override the residuals function
+  ########################################
+  family$dev.resids <- function(y, eta, wt) {
+    mu <- bd_logit$linkinv(eta)
+    wt*(y/mu + (1-y)/(1-mu))
+    #mu
+  }
+
   ## TODO: Why do the starting values need to be 0.999? If we specify otherwise, everything crashes
-  start <- rep(1/ncovariates, ncovariates)
-  start <- NULL
-  the_glm <- glm(formula = formula, family = family, data=data, start = start, ...)
+  set.seed(1234)
+  glmc <- glm(formula = formula, family = family, data=data, ...)
+  set.seed(1234)
+  glmc <- glm(formula = formula, family = family, data=data, ...)
+  glms <- glm(formula = formula, family = binomial(), data=data, ...)
+  #if (!all(coef(glmc) == coef(glms))) {
+    #browser() 
+  #}
+  #the_glm = tryCatch({
+   the_glm <-  glm(formula = formula, family = family, data=data, ...)
+  #}, error = function(e) {
+    #glm(formula = formula, family = binomial(), data=data, ...)
+  #})
   return(the_glm)
 }

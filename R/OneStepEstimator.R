@@ -157,10 +157,10 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         Osample_p <- foreach(b = seq(1:self$get_B), .combine = rbind) %dopar% {
           ## TODO: Note that the summary measures we currently collect are
           ## NORMALIZED. I think that this does not matter for calculating the
-          ## h-ratios (it might even work better), but we need to check this.
+          ## h-ratios as the ratio stays the same (it might even work better),
+          ## but we need to check this.
 
           private$verbose && cat(private$verbose, 'PN sample - iteration ', b)
-          ## TODO: Note that we are sampling from data[b,], not e.g. data[1,].
           current <- self$get_osl$sample_iteratively(data = O_0,
                                                      randomVariables = self$get_randomVariables,
                                                      tau = self$get_N,
@@ -226,21 +226,15 @@ OneStepEstimator <- R6Class("OneStepEstimator",
             h_ratio_predictors <- lapply(formulae, function(formula){
               ##speedglm::speedglm.wfit(formula, Osample_p_full, family = binomial(), method='Cholesky')
               ## TODO: Currently we use GLM here, but we should make use of a SuperLearner here.
-              #browser()
               #formula
               #res <- glm(formula = formula(formula), data = Osample_p_full, family = binomial() )
               #res2 <- ConstrainedGlm.fit(formula = formula(formula), data = Osample_p_full, delta = 0.05)
               #res
               #res2
-              result = tryCatch({
-                hide_warning_convergence(ConstrainedGlm.fit(formula = formula(formula),
-                                                            data = Osample_p_full,
-                                                            delta = 0.05))
+              hide_warning_convergence(ConstrainedGlm.fit(formula = formula(formula),
+                                                          data = Osample_p_full,
+                                                          delta = 0.05))
                 
-              }, error = function(e) {
-                warning('We encountered an error running the constrained GLM! Falling back to normal glm')
-                glm(formula = formula(formula), data = Osample_p_full, family = binomial() )
-              })
             })
           }
           ## Store the names of the formulae, so we can index them easily later on
@@ -272,9 +266,10 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
           ## This is the inner loop of the influence curve
           difference_in_expectations_for_all_s <- foreach(s=seq(tau), .combine='sum') %do% {
+
             ## Then, we start on a given s, this is for each D in D
             foreach(rv_id=seq_along(self$get_randomVariables), .combine='sum') %do% {
-              current_rvs <- private$get_next_and_current_rv(rv_id)
+              current_rvs <- self$get_next_and_current_rv(rv_id)
               private$get_influence_curve_for_one_random_variable(s = s,
                                                                   tau = tau,
                                                                   intervention = intervention,
@@ -335,7 +330,20 @@ OneStepEstimator <- R6Class("OneStepEstimator",
           warning('Calculated h_ratio is relatively large! Are you violating the positivity assumption? Value=', result)
         }
         result
+      },
+
+      ## Function is public so it can easiliy be tested
+      get_next_and_current_rv = function(current_rv_index) {
+        ## Find the ID for the next random variable
+        next_rv_id <- (current_rv_index %% length(self$get_randomVariables)) + 1
+        rv <- self$get_randomVariables[[current_rv_index]]
+        next_rv <- self$get_randomVariables[[next_rv_id]]
+
+        ## We are actually in next time block if the modulo was applied. This should be reflected in the time s.
+        s_offset <- ifelse(current_rv_index > next_rv_id, 1, 0)
+        list(rv = rv, next_rv = next_rv, s_offset = s_offset)
       }
+
     ),
   active =
     list(
@@ -373,24 +381,6 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       discrete = NULL,
       pre_processor = NULL,
 
-      get_next_and_current_rv = function(current_rv_index) {
-        ## Find the ID for the next random variable
-        next_rv_id <- (current_rv_index %% length(self$get_randomVariables)) + 1
-        rv <- self$get_randomVariables[[current_rv_index]]
-        next_rv <- self$get_randomVariables[[next_rv_id]]
-
-        ## We are actually in next time block if the modulo was applied. This should be reflected in the time s.
-        s_offset <- ifelse(current_rv_index > next_rv_id, 1, 0)
-        list(rv = rv, next_rv = next_rv, s_offset = s_offset)
-      },
-
-      is_current_node_treatment = function(s, intervention, rv) {
-        Y <- rv$getY
-        if (intervention$variable != Y) return(FALSE)
-        if (!(s %in% intervention$when)) return(FALSE)
-        return(TRUE)
-      },
-
       get_influence_curve_for_one_random_variable = function(s, tau, intervention, dat, h_ratio_predictors, current_rvs, var_of_interest) {
         ## Get the formula ant output name so we can retrieve the prediction mechanism.
         formula <- current_rvs$rv$get_formula_string(Y = 'Delta')
@@ -403,13 +393,17 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         ## these values we can sample the next variable in the sequence.
 
         ## indicator function. If the current node is a treatment node, it should be zero in the influence curve.
-        if(private$is_current_node_treatment(s, intervention, rv = current_rvs$rv)) return(0)
+        current_node_is_treatment <- InterventionParser.is_current_node_treatment(current_time=s, 
+                                                        intervention = intervention, 
+                                                        current_rv_output = current_rvs$rv$getY)
+        if(current_node_is_treatment) return(0)
+
+        ## Calculate whether the next variable is still in the same S (the next after Y(s) is W(s +1)
+        starting_time_for_next_rv <- Arguments$getNumerics(s + current_rvs$s_offset)
 
         ## If tau ends up to be 0, and we already know y(tau), we can just get
         ## it from the data. Expectation of a constant is the constant itself,
         ## right?
-        starting_time_for_next_rv <- Arguments$getNumerics(s + current_rvs$s_offset)
-
         if(tau == s && current_rvs$rv$getY == var_of_interest) {
           denorm_dat <- self$get_pre_processor$denormalize(dat)
           o_sample_conditional <- as.numeric(denorm_dat[,var_of_interest, with=FALSE])
@@ -445,15 +439,17 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       sample_for_expectation = function(dat, start_from_variable, start_from_time, intervention, tau, var_of_interest) {
         foreach(b = seq(self$get_B), .combine = 'sum') %do% {
           current <- self$get_osl$sample_iteratively(data = dat,
-                                                      start_from_variable = start_from_variable,
-                                                      start_from_time = start_from_time,
-                                                      randomVariables = self$get_randomVariables,
-                                                      intervention = intervention,
-                                                      tau = tau,
-                                                      discrete = self$get_discrete,
-                                                      return_type = 'observations')
+                                                     start_from_variable = start_from_variable,
+                                                     start_from_time = start_from_time,
+                                                     randomVariables = self$get_randomVariables,
+                                                     intervention = intervention,
+                                                     tau = tau,
+                                                     discrete = self$get_discrete,
+                                                     return_type = 'observations')
 
-          res <- as.numeric(current[nrow(current), var_of_interest, with=FALSE]) / self$get_B 
+          ## Calculate the average over all bootstrap iterations
+          res <- as.numeric(current[nrow(current), var_of_interest, with=FALSE]) 
+          res <- res / self$get_B 
           if(is.na(res)) browser()
           res
         } 

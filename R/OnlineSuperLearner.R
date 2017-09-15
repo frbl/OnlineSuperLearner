@@ -574,17 +574,31 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         },
 
         ## Samples the data iteratively from the fitted distribution, and applies an intervention if necessary
-        ## @param tau is the time at which we want to measure the outcome
+        ## @param data the data to start the sampling from
+        ## @param randomvariables the list of randomvariables to use for the sampling procedure
+        ## @param tau is the time at which we want to measure the outcome (default is 10)
+        ## @param intervention is the intervention we want to give (default is null)
+        ## @param discrete, boolean, should we use the discrete superlearner or the continous one
+        ## @param return_type default is observations, should be one of
+        ## observations, full, summary_measures. When observations, we only
+        ## return the denormalized observations (not the summaries), when
+        ## summary_measures, we only return the normalized summary_measured,
+        ## and when full, we return both (normalized)
+        ## @param start_from_variable the randomvariable to start the sampling from (default null)
+        ## @param start_from_time the start time to start from (default 1)
         sample_iteratively = function(data, randomVariables, tau = 10, intervention = NULL, discrete = TRUE, 
                                       return_type = 'observations', 
                                       start_from_variable = NULL,
                                       start_from_time = 1) {
+
+          ## Check whether the parameters are correct
           randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
           randomVariables <- RandomVariable.find_ordering(randomVariables)
 
-          tau <- Arguments$getNumerics(tau, c(1,Inf))
+          tau             <- Arguments$getNumerics(tau, c(1,Inf))
           start_from_time <- Arguments$getNumerics(start_from_time, c(1,tau))
 
+          ## Check whether the return type is one of the prespecified ones
           return_type <- Arguments$getCharacters(return_type)
           valid_return_types <- c('observations', 'full', 'summary_measures')
           if (!return_type %in% valid_return_types) {
@@ -592,14 +606,17 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           }
 
           if(!is.null(intervention) && !InterventionParser.valid_intervention(intervention)) {
-            throw('The intervention specified is not correct! it should have a when (specifying t), a what (specifying the intervention) and a variable (specifying the name of the variable to intervene on).')
+            throw('The intervention specified is not correct! it should have a
+                  when (specifying t), a what (specifying the intervention) and
+                  a variable (specifying the name of the variable to intervene on).')
           }
 
-          ## If no random variable to start from is provided, just start from the first one
+          ## If no random variable to start from is provided, just start from
+          ## the first one. Note the ordering which is done at the top of this
+          ## function.
           if (is.null(start_from_variable)) {
             start_from_variable <- randomVariables[[1]]
           }
-
           start_from_variable <- Arguments$getInstanceOf(start_from_variable, 'RandomVariable')
 
           result <- data.table()
@@ -608,10 +625,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           ## Just to be certain we don't use future data, we remove a subset:
           remove_vars <- names(randomVariables)
-          started = FALSE
+          started     <- FALSE
 
           ## We need to sample sequentially here, just so we can plugin the value everytime in the next evaluation
-          private$verbose && enter(private$verbose, 'Sampling from PN*')
+          private$verbose && enter(private$verbose, 'Started sampling procedure')
           for (t in seq(start_from_time, tau)) {
             current_denormalized_observation <- list()
             private$verbose && enter(private$verbose,'Sampling at ', t)
@@ -621,19 +638,21 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
               private$verbose && enter(private$verbose, 'Working on randomvariable ', current_outcome)
 
               if (!started) {
+                ## We move forward through the ordering till we find the variable we want to start from
                 if (!equals(current_outcome, start_from_variable$getY)) {
-                  ## The current outcome lies in the past, so it might be that we
+                  ## By default the remove_vars list contains all variables. However
+                  ## the current outcome lies in the past, so it might be that we
                   ## need it later, don't remove it
                   remove_vars <- remove_vars[remove_vars != current_outcome]
                   next
                 }
-                ## set the variables we don't need to NA
+                ## Set the variables we don't need to NA
                 data[,remove_vars] <- NA
-                started = TRUE
+                started <- TRUE
               }
 
               ## Here we select whether the current node is an intervention
-              ## node. This can be moved to a separate function.
+              ## node.
               parsed_intervention <- InterventionParser.parse_intervention(
                 intervention = intervention,
                 current_time = t,
@@ -645,7 +664,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                 outcome <- list(normalized = parsed_intervention$what, denormalized = parsed_intervention$what)
                 private$verbose && cat(private$verbose, 'Setting intervention on ', current_outcome,' with ', outcome, ' on time ', t)
               } else {
-                outcome <- self$predict(data = data, randomVariables = c(rv),
+                outcome <- self$predict(data = data, 
+                                        randomVariables = c(rv),
                                         discrete = discrete,
                                         continuous = !discrete,
                                         all_estimators = FALSE,
@@ -655,23 +675,30 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                                        ' using ', paste(rv$getX, collapse=', '), 
                                        ' and the prediction was ', outcome$denormalized[[1]])
               }
-              ## We need to add the [[1]] because the result is a list of lists (1st norm/denorm, then estimator, then
-              ## values)
-              data[,  (current_outcome) := as.numeric(outcome$normalized[[1]]) ]
+              ## Now we actually add the recently predicted value to the
+              ## dataframe, so it can be used in the next sampling step. This
+              ## is important!  We need to add the [[1]] because the result is
+              ## a list of lists (1st norm/denorm, then estimator, then values)
+              data[, (current_outcome) := as.numeric(outcome$normalized[[1]]) ]
               private$verbose && exit(private$verbose)
               current_denormalized_observation[[current_outcome]] <- outcome$denormalized[[1]] %>%
                 as.numeric
             }
             private$verbose && exit(private$verbose)
+
+            ## Save the observations to the total list of observations. This is
+            ## the list that eventually will be returned. We use the rbindlist
+            ## function so the final result is a datatable.
             result_denormalized_observations <- rbindlist(
               list(
                 result_denormalized_observations, 
                 current_denormalized_observation), 
               fill=TRUE
             )
-
             result <- rbind(result, data)
-            if(t < tau)  data <- private$summaryMeasureGenerator$getLatestCovariates(data)
+
+            ## Now we have stored the new data in the dataframe, we can use it to get the new covariates
+            if(t < tau) data <- private$summaryMeasureGenerator$getLatestCovariates(data)
           }
           private$verbose && exit(private$verbose)
           if (return_type == 'observations') {
@@ -681,7 +708,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
             ## Return the denormalized observations?
             return(result_denormalized_observations[,names(randomVariables), with = FALSE])
-            #return(result[,names(randomVariables), with = FALSE])
           } else if (return_type == 'summary_measures') {
             return(result[, !names(randomVariables), with = FALSE])
           }
