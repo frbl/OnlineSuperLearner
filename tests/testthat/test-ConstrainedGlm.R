@@ -12,7 +12,7 @@ dat <- data.table(cov1, cov2, cov3, cov4, y)
 
 test_that("it should create a GLM based on the formula, delta, and data, and should respect the boundaries", {
 
-  formula <- y ~ cov1 + cov2 + cov3 + cov4 
+  formula <- y ~ cov1 + cov2 + cov3 + cov4
   for(delta in c(0.05, 0.1, 0.15)) {
     suppressWarnings({
       the_glm <- ConstrainedGlm.fit(formula = formula, delta = delta, data = dat)
@@ -36,7 +36,7 @@ test_that("it should, with a delta of 0, return the same as a normal glm", {
 })
 
 test_that("it should return the same as a glm with a delta of 0 and more complex data", {
-    formula <- y ~ cov1 + cov2 + cov3 + cov4 
+    formula <- y ~ cov1 + cov2 + cov3 + cov4
     fit1 <- glm(formula, family=binomial(), data=dat)
     fit2 <- ConstrainedGlm.fit(formula, delta=0, data=dat)
     expect_equal(coef(fit1), coef(fit2))
@@ -47,8 +47,12 @@ test_that("it should work with the data from a file", {
   url <- system.file("testdata",'test-fit-glm-and-constrained-glm.csv',package="OnlineSuperLearner")
   read_data <- read.csv(url) %>% as.data.table
   formula <- Delta ~ Y_lag_1
-  fit1 <- glm(formula, family=binomial(), data=read_data)
-  fit2 <- ConstrainedGlm.fit(formula, delta=0, data=read_data)
-  ## TODO: This fails!
-  #expect_equal(coef(fit1), coef(fit2))
+
+  hide_warning_probabilities_numerically_zero_or_one(
+    hide_warning_convergence({
+      fit1 <- glm(formula, family=binomial(), data=read_data)
+      fit2 <- ConstrainedGlm.fit(formula, delta=0, data=read_data)
+    })
+  )
+  expect_equal(coef(fit1), coef(fit2))
 })

@@ -264,7 +264,7 @@ assign("glm.fit", myglm.fit, getNamespace("stats"))
 #' @return a fitted glm
 #' @importFrom stats glm binomial
 #' @export
-ConstrainedGlm.fit <- function(formula, delta, data, ...) {
+ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, ...) {
   ## 1 for intercept
   ncovariates <- length(labels(terms(formula))) + 1
   
@@ -274,6 +274,8 @@ ConstrainedGlm.fit <- function(formula, delta, data, ...) {
   }
   if(any(is.null(data))) warning('Data contains NULL values!')
 
+  # Use the C functions for expit / logit. Faster and gives the same results as the original GLM function.
+  link <- stats:::make.link("logit")
   bounded_logit <- function(delta) {
     structure(
       list(## mu mapsto logit( [mu - delta]/[1 - 2 delta]  ).
@@ -283,17 +285,17 @@ ConstrainedGlm.fit <- function(formula, delta, data, ...) {
             warning('Mu is incorrect: ', mu)
             min(max(mu,1-delta),delta)
           }
-          logit((mu-delta)/(1-2*delta))
+          link$linkfun((mu-delta)/(1-2*delta))
         },
 
         ## eta mapsto delta + (1 - 2 delta) expit (eta).
         linkinv = function(eta) {
-          delta + ((1-2*delta)*expit(eta))
+          delta + ((1-2*delta)* link$linkinv(eta))
         },
 
         ## derivative of inverse link wrt eta
         mu.eta = function(eta) {
-          expit.eta <- expit(eta)
+          expit.eta <- link$linkinv(eta)
           (1-2*delta) * expit.eta*(1-expit.eta)
         },
         ## test of validity for eta
@@ -312,25 +314,21 @@ ConstrainedGlm.fit <- function(formula, delta, data, ...) {
 
   ## Override the residuals function
   ########################################
-  family$dev.resids <- function(y, eta, wt) {
-    mu <- bd_logit$linkinv(eta)
-    wt*(y/mu + (1-y)/(1-mu))
-    #mu
-  }
+  #family$dev.resids <- function(y, eta, wt) {
+    #mu <- bd_logit$linkinv(eta)
+    #wt*(y/mu + (1-y)/(1-mu))
 
-  ## TODO: Why do the starting values need to be 0.999? If we specify otherwise, everything crashes
-  set.seed(1234)
-  glmc <- glm(formula = formula, family = family, data=data, ...)
-  set.seed(1234)
-  glmc <- glm(formula = formula, family = family, data=data, ...)
-  glms <- glm(formula = formula, family = binomial(), data=data, ...)
-  #if (!all(coef(glmc) == coef(glms))) {
-    #browser() 
+    ## This is the original C code:
+    ##2 * wt * (y * log(y/mu) + (1-y) * log((1-y)/(1-mu)))
   #}
-  #the_glm = tryCatch({
-   the_glm <-  glm(formula = formula, family = family, data=data, ...)
-  #}, error = function(e) {
-    #glm(formula = formula, family = binomial(), data=data, ...)
-  #})
+
+  the_glm = tryCatch({
+    glm(formula = formula, family = family, data=data, ...)
+  }, error = function(e) {
+    if (fall_back_to_glm) {
+      return(glm(formula = formula, family = binomial(), data=data, ...))
+    }
+    stop(e)
+  })
   return(the_glm)
 }

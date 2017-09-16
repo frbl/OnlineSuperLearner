@@ -33,6 +33,11 @@ create_object_from_string <- function(string_object_name, args=list()) {
   packageStartupMessage('The OnlineSuperLearner package is still in beta testing. Interpret results with caution.')
 }
 
+hide_warning_probabilities_numerically_zero_or_one <- function(the_function){
+  h <- function(w) if( any( grepl( "fitted probabilities numerically 0 or 1 occurred", w) ) ) invokeRestart( "muffleWarning" )
+  withCallingHandlers(the_function, warning = h)
+}
+
 hide_warning_convergence <- function(the_function){
   h <- function(w) if( any( grepl( "converge", w) ) ) invokeRestart( "muffleWarning" )
   withCallingHandlers(the_function, warning = h)
@@ -42,7 +47,6 @@ hide_warning_high_h_ratio <- function(the_function){
   h <- function(w) if( any( grepl( "H-ratio is very high", w) ) ) invokeRestart( "muffleWarning" )
   withCallingHandlers(the_function, warning = h)
 }
-
 
 hide_warning_test <- function(the_function){
   h <- function(w) if( any( grepl( "Test function was called!", w) ) ) invokeRestart( "muffleWarning" )
