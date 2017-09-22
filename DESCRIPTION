@@ -63,6 +63,7 @@ Collate:
     'DensityEstimation.R'
     'H2O.initializer.R'
     'H2O.Interactor.R'
+    'InterventionEffectCalculator.R'
     'InterventionParser.R'
     'ML.Local.lm.R'
     'ML.Base.R'

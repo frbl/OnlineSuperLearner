@@ -53,14 +53,6 @@
 #'     @param tau the time till which we have to sample.
 #'   } 
 #' 
-#'   \item{\code{perform_initial_estimation(data, intervention, tau) }}{ 
-#'     This function can be used to generate an initial estimation, calculated using the plain OSL. This method then
-#'     returns a value given the provided data, tau, and intervention.
-#'     @param data the data to seed the sampling procedure.
-#'     @param intervention the intervention itself, see \code{InterventionParser} for more details
-#'     @param tau the time at which we want to evaluate the intervention
-#'   } 
-#' 
 #' }  
 #' @docType class
 #' @include ConstrainedGlm.R
@@ -69,7 +61,7 @@
 OneStepEstimator <- R6Class("OneStepEstimator",
   public =
     list(
-      initialize = function(osl, randomVariables, N, B, pre_processor, discrete = TRUE) {
+      initialize = function(osl, randomVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE) {
         private$verbose <- Arguments$getVerbose(-8, timestamp=TRUE)
         private$osl <- Arguments$getInstanceOf(osl, 'OnlineSuperLearner')
 
@@ -78,42 +70,33 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         private$discrete <- Arguments$getLogical(discrete)
         private$randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
         private$pre_processor <- pre_processor
+        private$tau <- tau
+        private$intervention <- intervention
+        private$variable_of_interest <- Arguments$getCharacters(variable_of_interest$getY)
       },
 
-      perform = function(initial_estimate, data, variable_of_interest, intervention, tau) {
+      perform = function(initial_estimate, data) {
         private$verbose && enter(private$verbose, 'Starting efficient influence curve estimation')
         ## Let $B$ be a large integer (the larger $B$ the better the approxmation),
         ## let $N$ be the number of observations,
         N = nrow(data)
         ## let intervention be the intervention we whish to oppose on the system, and
         ## let tau the the outcome of interest.
-
-        ## 1 Before anything, perform our initial estimation of our parameter of interest
-        if(is.null(initial_estimate)) {
-          initial_estimate <- perform_initial_estimation(data = data,
-                                                        intervention = intervention,
-                                                        variable_of_interest = variable_of_interest,
-                                                        tau = tau)
-        }
+        initial_estimate <- Arguments$getNumerics(initial_estimate)
 
         ## 2 calculate H-ratios
-        h_ratio_predictors <- self$get_h_ratio_estimators(tau = tau,
-                                                     intervention = intervention,
-                                                     data = data)
+        h_ratio_predictors <- self$get_h_ratio_estimators(data = data)
 
         ## 3 Solve expectaions
         ## We want to approximate the conditional expectation from RV (start) till Ytau
         D_star_evaluation = self$evaluation_of_conditional_expectations(h_ratio_predictors = h_ratio_predictors,
-                                                                  variable_of_interest = variable_of_interest,
-                                                                  data = data,
-                                                                  tau = tau,
-                                                                  intervention = intervention)
+                                                                  data = data)
 
         private$verbose && cat(private$verbose, 'D-star evaluation is ', D_star_evaluation)
 
         ## Calculate the new estimate
-        oos_estimate <- D_star_evaluation %>% unlist %>% sum
-        oos_estimate <- oos_estimate + initial_estimate
+        private$last_oos_estimate <- D_star_evaluation %>% unlist %>% sum
+        oos_estimate <- self$get_last_oos_estimate + initial_estimate
         if(is.nan(oos_estimate)) {
           warning('Oos estimate is NaN, setting to zero')
           oos_estimate <- 0
@@ -131,7 +114,11 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
       },
 
-      get_h_ratio_estimators = function(tau, intervention, data) {
+      update = function(new_data, variable_of_interest) {
+
+      },
+
+      get_h_ratio_estimators = function(data) {
         private$verbose && enter(private$verbose, 'Getting the h-ratio estimators')
 
         ## We first sample $B$ observations from $P^N$ (that is, N blocks of
@@ -154,7 +141,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         O_0 <- data[1,]
         ## Run B iterations on O_0 (always start from the same data
-        Osample_p <- foreach(b = seq(1:self$get_B), .combine = rbind) %dopar% {
+        Osample_p <- foreach(b = seq(1:self$get_B), .combine = rbind) %do% {
           ## TODO: Note that the summary measures we currently collect are
           ## NORMALIZED. I think that this does not matter for calculating the
           ## h-ratios as the ratio stays the same (it might even work better),
@@ -180,13 +167,13 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         ## Because we use $BN$ observations in the previous sampling step, we
         ## should also draw BN observations from P^N_{s,a}.
-        Osample_p_star <- foreach(b = seq(self$get_B * self$get_N), .combine = rbind) %dopar% {
+        Osample_p_star <- foreach(b = seq(self$get_B * self$get_N), .combine = rbind) %do% {
           private$verbose && cat(private$verbose, 'PN* sample - iteration ', b)
           current <- self$get_osl$sample_iteratively(data = O_0,
                                                      randomVariables = self$get_randomVariables,
-                                                     tau = tau,
+                                                     tau = self$get_tau,
                                                      discrete = self$get_discrete,
-                                                     intervention = intervention,
+                                                     intervention = self$get_intervention,
                                                      return_type = 'full')
           current
         }
@@ -196,7 +183,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         private$verbose && cat(private$verbose, toc - tic)
 
         ## Add an S column to the data, so we know which summary measure belongs to which s
-        time_s_column <- lapply(seq(self$get_N*self$get_B), function(i) ((i - 1) %% tau) + 1)  %>% unlist
+        time_s_column <- lapply(seq(self$get_N*self$get_B), function(i) ((i - 1) %% self$get_tau) + 1)  %>% unlist
         Osample_p_star[, time_s_column := time_s_column]
 
         ## Now add the Delta column so we know wcich blocks belong to PN* and which to PN
@@ -204,10 +191,10 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         Osample_p_star[, Delta := rep(0, nrow(Osample_p_star))]
 
         ## Find the time of the first intervention. Before this first intervention no divergence should be possible.
-        first_intervention_time <- InterventionParser.first_intervention(intervention)
+        first_intervention_time <- InterventionParser.first_intervention(self$get_intervention)
 
         ## We generate tau estimators here, one for each s to tau
-        h_ratio_predictors_per_s <- lapply(seq(tau), function(time_s) {
+        h_ratio_predictors_per_s <- lapply(seq(self$get_tau), function(time_s) {
           
           ## If no intervention is given, we do not have to calculate the ratio, as it is always (approximately) 1.
           if(time_s < first_intervention_time) {
@@ -226,11 +213,6 @@ OneStepEstimator <- R6Class("OneStepEstimator",
             h_ratio_predictors <- lapply(formulae, function(formula){
               ##speedglm::speedglm.wfit(formula, Osample_p_full, family = binomial(), method='Cholesky')
               ## TODO: Currently we use GLM here, but we should make use of a SuperLearner here.
-              #formula
-              #res <- glm(formula = formula(formula), data = Osample_p_full, family = binomial() )
-              #res2 <- ConstrainedGlm.fit(formula = formula(formula), data = Osample_p_full, delta = 0.05)
-              #res
-              #res2
               hide_warning_convergence(ConstrainedGlm.fit(formula = formula(formula),
                                                           data = Osample_p_full,
                                                           delta = 0.05))
@@ -249,33 +231,30 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         return(h_ratio_predictors_per_s)
       },
 
-      evaluation_of_conditional_expectations = function(h_ratio_predictors, variable_of_interest, data, tau, intervention) {
+      evaluation_of_conditional_expectations = function(h_ratio_predictors, data) {
         private$verbose && enter(private$verbose, 'Evaluating the conditional expectations')
 
         ## We have to create the conditional expectations using each of the
         ## random variables as a start point
         influence_curve_for_each_rv <- c()
 
-        var_of_interest <- variable_of_interest$getY
-
         ## This is the outer loop of the influence curve
 
-        efficient_influence_curve <- foreach(t=seq(self$get_N), .combine='sum') %dopar% {
+        efficient_influence_curve <- foreach(t=seq(self$get_N), .combine='sum') %do% {
           private$verbose && cat(private$verbose, 'Efficient influence curve iteration ', t)
           current_dat <- data[t,]
 
           ## This is the inner loop of the influence curve
-          difference_in_expectations_for_all_s <- foreach(s=seq(tau), .combine='sum') %do% {
+          difference_in_expectations_for_all_s <- foreach(s=seq(self$get_tau), .combine='sum') %do% {
 
             ## Then, we start on a given s, this is for each D in D
             foreach(rv_id=seq_along(self$get_randomVariables), .combine='sum') %do% {
               current_rvs <- self$get_next_and_current_rv(rv_id)
               private$get_influence_curve_for_one_random_variable(s = s,
-                                                                  tau = tau,
-                                                                  intervention = intervention,
+                                                                  tau = self$get_tau,
+                                                                  intervention = self$get_intervention,
                                                                   dat = current_dat,
                                                                   h_ratio_predictors = h_ratio_predictors,
-                                                                  var_of_interest = var_of_interest,
                                                                   current_rvs = current_rvs)
 
               #if(is.na(result)) warning('the influence curve for rv ', current_rvs$rv$getY, 
@@ -290,22 +269,6 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         }
         private$verbose && exit(private$verbose)
         efficient_influence_curve
-      },
-
-      perform_initial_estimation = function(data, intervention, tau) {
-        private$verbose && enter(private$verbose, 'Performing initial estimation of parameter of interest')
-        result <- foreach(i=seq(B), .combine=rbind) %do% {
-          self$get_osl$sample_iteratively(data = data[1,],
-                                          randomVariables = self$get_randomVariables,
-                                          intervention = intervention,
-                                          discrete = self$get_discrete,
-                                          return_type = 'observations',
-                                          tau = tau)[tau, variable_of_interest$getY, with=FALSE]
-        } %>%
-          unlist %>%
-          mean
-        private$verbose && exit(private$verbose)
-        result
       },
 
       calculate_h_ratio = function(h_ratio_predictors, s, formula, data) {
@@ -369,6 +332,22 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
       get_pre_processor = function() {
         return(private$pre_processor)
+      },
+
+      get_variable_of_interest = function() {
+        private$variable_of_interest
+      },
+
+      get_tau = function() {
+        private$tau
+      },
+
+      get_intervention = function() {
+        private$intervention
+      },
+
+      get_last_oos_estimate = function() {
+        private$last_oos_estimate
       }
     ),
   private =
@@ -378,10 +357,14 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       N = NULL,
       B = NULL,
       randomVariables = NULL,
+      variable_of_interest = NULL,
       discrete = NULL,
       pre_processor = NULL,
+      tau = NULL,
+      intervention = NULL,
+      last_oos_estimate = NULL,
 
-      get_influence_curve_for_one_random_variable = function(s, tau, intervention, dat, h_ratio_predictors, current_rvs, var_of_interest) {
+      get_influence_curve_for_one_random_variable = function(s, dat, h_ratio_predictors, current_rvs) {
         ## Get the formula ant output name so we can retrieve the prediction mechanism.
         formula <- current_rvs$rv$get_formula_string(Y = 'Delta')
 
@@ -394,7 +377,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         ## indicator function. If the current node is a treatment node, it should be zero in the influence curve.
         current_node_is_treatment <- InterventionParser.is_current_node_treatment(current_time=s, 
-                                                        intervention = intervention, 
+                                                        intervention = self$get_intervention, 
                                                         current_rv_output = current_rvs$rv$getY)
         if(current_node_is_treatment) return(0)
 
@@ -404,26 +387,22 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         ## If tau ends up to be 0, and we already know y(tau), we can just get
         ## it from the data. Expectation of a constant is the constant itself,
         ## right?
-        if(tau == s && current_rvs$rv$getY == var_of_interest) {
+        if(self$get_tau == s && current_rvs$rv$getY == self$get_variable_of_interst) {
           denorm_dat <- self$get_pre_processor$denormalize(dat)
-          o_sample_conditional <- as.numeric(denorm_dat[,var_of_interest, with=FALSE])
+          o_sample_conditional <- as.numeric(denorm_dat[,self$get_variable_of_interst, with=FALSE])
         } else {
           ## this is the first part of the difference in expectations
           o_sample_conditional <- private$sample_for_expectation(dat = dat,
                                                                  start_from_variable = current_rvs$next_rv,
                                                                  start_from_time = starting_time_for_next_rv,
-                                                                 intervention = intervention,
-                                                                 tau = tau,
-                                                                 var_of_interest = var_of_interest)
+                                                                 tau = self$get_tau)
         }
 
         ## this is the second part of the difference in expectations
         o_sample_marginal <- private$sample_for_expectation(dat = dat,
                                                             start_from_variable = current_rvs$rv,
                                                             start_from_time = s,
-                                                            intervention = intervention,
-                                                            tau = tau,
-                                                            var_of_interest = var_of_interest)
+                                                            tau = self$get_tau)
 
         result <- h_ratio * (o_sample_conditional - o_sample_marginal)
         if(is.na(result)) {
@@ -436,19 +415,19 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         result
       },
 
-      sample_for_expectation = function(dat, start_from_variable, start_from_time, intervention, tau, var_of_interest) {
+      sample_for_expectation = function(dat, start_from_variable, start_from_time) {
         foreach(b = seq(self$get_B), .combine = 'sum') %do% {
           current <- self$get_osl$sample_iteratively(data = dat,
                                                      start_from_variable = start_from_variable,
                                                      start_from_time = start_from_time,
                                                      randomVariables = self$get_randomVariables,
-                                                     intervention = intervention,
-                                                     tau = tau,
+                                                     intervention = self$get_intervention,
+                                                     tau = self$get_tau,
                                                      discrete = self$get_discrete,
                                                      return_type = 'observations')
 
           ## Calculate the average over all bootstrap iterations
-          res <- as.numeric(current[nrow(current), var_of_interest, with=FALSE]) 
+          res <- as.numeric(current[nrow(current), self$get_variable_of_interst, with=FALSE]) 
           res <- res / self$get_B 
           if(is.na(res)) browser()
           res

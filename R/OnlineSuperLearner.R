@@ -1,4 +1,4 @@
-devtools::load_all('~/Workspace/osofr/condensier')
+#devtools::load_all('~/Workspace/osofr/condensier')
 
 #' OnlineSuperLearner
 #'
@@ -192,6 +192,11 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$historical_cv_risk <- append(self$get_historical_cv_risk, list(private$cv_risk))
         },
 
+        update_oos_fit = function(new_data) {
+          browser()
+          N <- nrow(new_data)
+        },
+
         ## Initializes the weighted combination calculators. One for each randomvariable.
         initialize_weighted_combination_calculators = function(randomVariables) {
           lapply(randomVariables, function(rv) {
@@ -305,18 +310,18 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                                             randomVariables = randomVariables,
                                             discrete = TRUE, continuous = FALSE, all_estimators = FALSE)
 
+            ## Note that we are using the cv_risk_calculator here to update the risk, not the wrapper function, hence
+            ## not affecting our earlier risk score.
             private$cv_risk$dosl.estimator <- 
               private$cv_risk_calculator$update_risk(predicted.outcome = predicted.outcome,
-                                                                      observed.outcome = observed.outcome,
-                                                                      randomVariables = randomVariables,
-                                                                      current_count = private$cv_risk_count-1,
-                                                                      current_risk = self$get_cv_risk)$dosl.estimator
-              #private$cv_risk_calculator$calculate_risk(predicted.outcome = predicted.outcome,
-                                                        #observed.outcome = observed.outcome,
-                                                        #randomVariables = randomVariables)$dosl.estimator
+                                                      observed.outcome = observed.outcome,
+                                                      randomVariables  = randomVariables,
+                                                      current_count    = private$cv_risk_count-1,
+                                                      current_risk     = self$get_cv_risk)$dosl.estimator
           }
 
           private$update_historical_cv_risk()
+          private$update_oos_fit(new_data = data_current)
 
         },
 

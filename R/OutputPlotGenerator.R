@@ -288,3 +288,16 @@ OutputPlotGenerator.export_key_value = function(key, value, output='variables.da
   write(line,file=the_file,append=TRUE)
 }
 
+#' OutputPlotGenerator.store_oos_osl_difference
+#' Function to store the differences between the truth and osl in a file.
+#' @param differences a list of differences with a key for each option
+#' @param output the name of the file to write the output to
+#' @param oos boolean was oos used 
+#' @param configuration (optional) which simulation configuration was used?
+OutputPlotGenerator.store_oos_osl_difference = function(differences, output, oos, configuration = 0) {
+  name <- ifelse(oos, 'post-oos', 'pre-oos')
+  for (output_name in names(differences)) {
+    key <- paste('cfg', configuration, output_name, name, sep='-')
+    OutputPlotGenerator.export_key_value(key, differences[[output_name]], output=output)
+  }
+}

@@ -314,6 +314,7 @@ ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, ..
 
   ## Override the residuals function
   ########################################
+  # TODO: Should we actually override this function?
   #family$dev.resids <- function(y, eta, wt) {
     #mu <- bd_logit$linkinv(eta)
     #wt*(y/mu + (1-y)/(1-mu))
