@@ -27,7 +27,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           options(warn=1)
           private$sim  <- Simulator.GAD$new()
-          private$training_set_size <- 1e4
+          private$training_set_size <- 1e2
 
           OutputPlotGenerator.export_key_value('training-set-size', private$training_set_size)
           private$cv_risk_calculator <- CrossValidationRiskCalculator$new()
@@ -49,9 +49,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
 
           alphas <- runif(5,0,1)
-          algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                                  algorithm_params = list(alpha = alphas), 
-                                  params = list(nbins = nbins, online = TRUE))))
+          #algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
+                                  #algorithm_params = list(alpha = alphas), 
+                                  #params = list(nbins = nbins, online = TRUE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
                                   #algorithm_params = list(ntrees=c(10,20), min_rows=1),
@@ -507,7 +507,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           N <- 100 
           if(configuration %in% c(1,3)) {
             B <- 10
-            N <- 90
+            N <- 50
           }
 
           OutputPlotGenerator.export_key_value(output=key_output, 'iterations', B)

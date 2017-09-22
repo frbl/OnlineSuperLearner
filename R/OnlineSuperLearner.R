@@ -1,4 +1,4 @@
-#devtools::load_all('~/Workspace/osofr/condensier')
+devtools::load_all('~/Workspace/osofr/condensier')
 
 #' OnlineSuperLearner
 #'
@@ -193,7 +193,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         },
 
         update_oos_fit = function(new_data) {
-          browser()
+          new_data <- Arguments$getInstanceOf(new_data, 'data.table')
           N <- nrow(new_data)
         },
 

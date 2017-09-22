@@ -115,10 +115,11 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       },
 
       update = function(new_data, variable_of_interest) {
+        get_h_ratio_estimators(data = new_data, last_h_ratio_estimators = self$get_last_h_ratio_estimators)
 
       },
 
-      get_h_ratio_estimators = function(data) {
+      get_h_ratio_estimators = function(data, last_h_ratio_estimators = NULL) {
         private$verbose && enter(private$verbose, 'Getting the h-ratio estimators')
 
         ## We first sample $B$ observations from $P^N$ (that is, N blocks of
@@ -141,7 +142,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         O_0 <- data[1,]
         ## Run B iterations on O_0 (always start from the same data
-        Osample_p <- foreach(b = seq(1:self$get_B), .combine = rbind) %do% {
+        Osample_p <- foreach(b = seq(1:self$get_B), .combine = rbind) %dopar% {
           ## TODO: Note that the summary measures we currently collect are
           ## NORMALIZED. I think that this does not matter for calculating the
           ## h-ratios as the ratio stays the same (it might even work better),
@@ -167,7 +168,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         ## Because we use $BN$ observations in the previous sampling step, we
         ## should also draw BN observations from P^N_{s,a}.
-        Osample_p_star <- foreach(b = seq(self$get_B * self$get_N), .combine = rbind) %do% {
+        Osample_p_star <- foreach(b = seq(self$get_B * self$get_N), .combine = rbind) %dopar% {
           private$verbose && cat(private$verbose, 'PN* sample - iteration ', b)
           current <- self$get_osl$sample_iteratively(data = O_0,
                                                      randomVariables = self$get_randomVariables,
@@ -211,7 +212,6 @@ OneStepEstimator <- R6Class("OneStepEstimator",
             private$verbose && cat(private$verbose, 'Calculating H-estimator for time ', time_s)
 
             h_ratio_predictors <- lapply(formulae, function(formula){
-              ##speedglm::speedglm.wfit(formula, Osample_p_full, family = binomial(), method='Cholesky')
               ## TODO: Currently we use GLM here, but we should make use of a SuperLearner here.
               hide_warning_convergence(ConstrainedGlm.fit(formula = formula(formula),
                                                           data = Osample_p_full,
@@ -228,6 +228,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         ## each $C_W$, $C_A$, and $C_Y$, for each s in tau.  (so 3tau
         ## estimators)
         private$verbose && exit(private$verbose)
+        private$last_h_ratio_estimators <- h_ratio_predictors_per_s
         return(h_ratio_predictors_per_s)
       },
 
@@ -239,7 +240,6 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         influence_curve_for_each_rv <- c()
 
         ## This is the outer loop of the influence curve
-
         efficient_influence_curve <- foreach(t=seq(self$get_N), .combine='sum') %do% {
           private$verbose && cat(private$verbose, 'Efficient influence curve iteration ', t)
           current_dat <- data[t,]
@@ -251,8 +251,6 @@ OneStepEstimator <- R6Class("OneStepEstimator",
             foreach(rv_id=seq_along(self$get_randomVariables), .combine='sum') %do% {
               current_rvs <- self$get_next_and_current_rv(rv_id)
               private$get_influence_curve_for_one_random_variable(s = s,
-                                                                  tau = self$get_tau,
-                                                                  intervention = self$get_intervention,
                                                                   dat = current_dat,
                                                                   h_ratio_predictors = h_ratio_predictors,
                                                                   current_rvs = current_rvs)
@@ -287,7 +285,10 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         }
 
         assert_that(!is.null(data))
-        h_ratio <- predict(predictor_or_na, newdata = data, type='response') %>% as.numeric
+        hide_warning_rank_deficient_fit_prediction({
+          h_ratio <- predict(predictor_or_na, newdata = data, type='response') %>% as.numeric
+        })
+
         result <- (h_ratio / (1.0 - h_ratio))
         if (result > 20) {
           warning('Calculated h_ratio is relatively large! Are you violating the positivity assumption? Value=', result)
@@ -348,6 +349,10 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
       get_last_oos_estimate = function() {
         private$last_oos_estimate
+      },
+
+      get_last_h_ratio_estimators = function() {
+        private$last_h_ratio_estimators
       }
     ),
   private =
@@ -363,6 +368,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       tau = NULL,
       intervention = NULL,
       last_oos_estimate = NULL,
+      last_h_ratio_estimators = NULL,
 
       get_influence_curve_for_one_random_variable = function(s, dat, h_ratio_predictors, current_rvs) {
         ## Get the formula ant output name so we can retrieve the prediction mechanism.
@@ -387,22 +393,20 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         ## If tau ends up to be 0, and we already know y(tau), we can just get
         ## it from the data. Expectation of a constant is the constant itself,
         ## right?
-        if(self$get_tau == s && current_rvs$rv$getY == self$get_variable_of_interst) {
+        if(self$get_tau == s && current_rvs$rv$getY == self$get_variable_of_interest) {
           denorm_dat <- self$get_pre_processor$denormalize(dat)
-          o_sample_conditional <- as.numeric(denorm_dat[,self$get_variable_of_interst, with=FALSE])
+          o_sample_conditional <- as.numeric(denorm_dat[,self$get_variable_of_interest, with=FALSE])
         } else {
           ## this is the first part of the difference in expectations
           o_sample_conditional <- private$sample_for_expectation(dat = dat,
                                                                  start_from_variable = current_rvs$next_rv,
-                                                                 start_from_time = starting_time_for_next_rv,
-                                                                 tau = self$get_tau)
+                                                                 start_from_time = starting_time_for_next_rv)
         }
 
         ## this is the second part of the difference in expectations
         o_sample_marginal <- private$sample_for_expectation(dat = dat,
                                                             start_from_variable = current_rvs$rv,
-                                                            start_from_time = s,
-                                                            tau = self$get_tau)
+                                                            start_from_time = s)
 
         result <- h_ratio * (o_sample_conditional - o_sample_marginal)
         if(is.na(result)) {
@@ -427,7 +431,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
                                                      return_type = 'observations')
 
           ## Calculate the average over all bootstrap iterations
-          res <- as.numeric(current[nrow(current), self$get_variable_of_interst, with=FALSE]) 
+          res <- as.numeric(current[nrow(current), self$get_variable_of_interest, with=FALSE]) 
           res <- res / self$get_B 
           if(is.na(res)) browser()
           res

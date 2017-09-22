@@ -323,7 +323,7 @@ ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, ..
     ##2 * wt * (y * log(y/mu) + (1-y) * log((1-y)/(1-mu)))
   #}
 
-  the_glm = tryCatch({
+  the_glm <- tryCatch({
     glm(formula = formula, family = family, data=data, ...)
   }, error = function(e) {
     if (fall_back_to_glm) {

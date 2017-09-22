@@ -33,6 +33,11 @@ create_object_from_string <- function(string_object_name, args=list()) {
   packageStartupMessage('The OnlineSuperLearner package is still in beta testing. Interpret results with caution.')
 }
 
+hide_warning_rank_deficient_fit_prediction <- function(the_function){
+  h <- function(w) if( any( grepl( "prediction from a rank-deficient fit may be misleading", w) ) ) invokeRestart( "muffleWarning" )
+  withCallingHandlers(the_function, warning = h)
+}
+
 hide_warning_probabilities_numerically_zero_or_one <- function(the_function){
   h <- function(w) if( any( grepl( "fitted probabilities numerically 0 or 1 occurred", w) ) ) invokeRestart( "muffleWarning" )
   withCallingHandlers(the_function, warning = h)
