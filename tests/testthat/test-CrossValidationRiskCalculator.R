@@ -203,3 +203,30 @@ test_that("it should update the risk properly when there already was a risk", {
   expect_equal(names(updated_risk), names(predicted.outcome))
   expect_equal(updated_risk, expected_risk)
 })
+
+test_that("it should update the risk properly when there already was a risk with normalized output", {
+  subject <- described.class$new()
+
+  current_risk <- list(a = data.table(A = 1, W = 2, Y=3), b = data.table(A = 4, W = 5, Y = 6))
+  new_risk     <- list(a = data.table(A = 1, W = 1, Y=1), b = data.table(A = 1, W = 1, Y = 1))
+
+  stub(subject$update_risk, 'self$calculate_risk', new_risk)
+
+  expected_risk <- current_risk
+  for(algo in names(current_risk)) {
+    for (rsk in names(current_risk[[algo]])) {
+      expected_risk[[algo]][[rsk]] <- (expected_risk[[algo]][[rsk]] * 20) + 1 # 1 because 1 is the current risk
+      expected_risk[[algo]][[rsk]] <- expected_risk[[algo]][[rsk]] / 21 
+    }
+  }
+  normalized_predicted_outcome <- list(normalized = predicted.outcome)
+
+  updated_risk <- subject$update_risk(predicted.outcome = normalized_predicted_outcome, 
+                        observed.outcome = observed.outcome, 
+                        randomVariables = randomVariables,
+                        current_count = 20, current_risk = current_risk)
+
+  expect_true(is.a(updated_risk, 'list'))
+  expect_equal(names(updated_risk), names(predicted.outcome))
+  expect_equal(updated_risk, expected_risk)
+})

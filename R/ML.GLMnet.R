@@ -45,7 +45,9 @@ ML.GLMnet <- R6Class("ML.GLMnet",
         if (any(is.na(m.fit$coef))) {
           return(super$do.predict(X_mat, m.fit))
         } else {
-          return(predict(m.fit$coef, X_mat))
+          prediction <- predict(m.fit$coef, X_mat, s=0.01, type='response')
+          if(length(prediction) != nrow(X_mat)) browser()
+          return(prediction)
         }
       },
 

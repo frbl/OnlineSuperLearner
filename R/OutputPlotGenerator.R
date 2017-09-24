@@ -52,12 +52,13 @@ OutputPlotGenerator.create_density_plot = function(yValues, estimated_probabilit
 #' OutputPlotGenerator.create_convergence_plot
 #' Function to plot the convergence to the parameter of interest of both the truth and the estimation.
 #'
-#' @param truth_approximation the truth (i.e., as found using simulation / monte carlo approximation)
-#' @param estimated_approximation the estimate (i.e., as found using machine learning and monte carlo approximation)
 #' @import ggplot2
 #' @import reshape2
-#' @importFrom grDevices dev.off pdf
 #' @importFrom graphics lines plot
+#' @importFrom grDevices dev.off pdf
+#' @param data the truth  and apporoximations to plot
+#' @param output the filename of the output
+#' @param dir the directory name of the output
 #' @export
 OutputPlotGenerator.create_convergence_plot = function(data, output, dir = '~/tmp/osl/convergence') {
   labels = names(data)
@@ -90,42 +91,130 @@ OutputPlotGenerator.create_convergence_plot = function(data, output, dir = '~/tm
 }
 
 
+#' OutputPlotGenerator.create_training_curve
+#' Function to plot the training curve given the number of iterations used
+#'
+#' @import ggplot2
+#' @import reshape2
+#' @importFrom grDevices dev.off pdf
+#' @importFrom graphics plot
+#' @param historical_cvs the historical CV risks. List of lists of datatables.
+#' First list is for each iteration, second for each learner, and the datatable
+#' has columns for each random variable.
+#' @param randomVariables list of randomvariables to use in the output
+#' @param output string the filename to write the pdf to (without .pdf)
+#' @param dir string the directory to write the file to
+#' @export
+OutputPlotGenerator.create_training_curve = function(historical_cvs, randomVariables, output = 'historical_cvs', dir = '~/tmp/osl/') {
+  # historical_cvs is a list of lists of datatables
+  #                     - each iteration
+  #                             - each learner
+  #                                      - each RV
+  result <- lapply(randomVariables, function(rv){
+    lapply (historical_cvs, function(epoch) {
+      lapply(epoch, function(algorithm_outcome) algorithm_outcome[, rv$getY, with=FALSE]) %>% unlist
+    })
+  })
+
+  plots <- lapply(seq_along(result), function(rv_id) {
+    rv_result <- result[[rv_id]]
+    dt <- as.data.table(rv_result)%>% t
+
+    name_list <- c()
+    the_names <- names(rv_result[[1]])
+    for (name_id in seq_along(the_names)) {
+      name <- the_names[[name_id]]
+      name_list <- c(name_list, letters[name_id])
+      the_key <- paste('algorithm', letters[name_id], sep='_') 
+      OutputPlotGenerator.export_key_value(the_key, name)
+    }
+    
+    colnames(dt) <- name_list
+    dt <- data.table(dt)
+    dt[, id := seq(1, length(rv_result))]
+
+    test_data_long <- reshape2::melt(dt, id='id')
+    test_data_long
+    names(test_data_long)
+    ggplot(data=test_data_long, aes(x=id, y=value, colour=variable)) +
+        geom_line()+
+        theme(axis.text.y = element_text(colour = "black") ) +
+        theme(axis.text.x = element_text(colour = "black") ) +
+        theme(axis.title.x = element_text(vjust = -0.5)) +
+        theme(legend.title = element_blank())+
+        theme(legend.background = element_rect(colour="transparent"))+
+        theme(legend.key = element_rect(fill = "transparent", colour = "transparent")) +
+        theme(legend.key.size= unit(1,"lines"))
+
+  })
+  
+  pdf(paste(dir,'/',output,'.pdf',sep = ''))
+  lapply(plots, plot)
+  dev.off()
+
+
+
+  #data <- lapply(data, function(dat) cumsum(dat)/seq(along=dat)) %>%
+    #as.data.frame
+
+  #data$epoch <- seq(nrow(data))
+  #data <- melt(data, id.vars='epoch')
+
+  #plotje <- ggplot(data,aes(epoch,value,color=variable))+
+    #geom_line() + 
+    #scale_color_manual(values = colors[seq_along(labels)])+
+    #theme(panel.background = element_rect(fill = 'transparent', colour = 'black', size=1))+
+    #scale_y_continuous(name="")+
+
+  #plot(plotje)
+}
+
+
 #' OutputPlotGenerator.create_risk_plot
 #' Function to create plots similar to the ones in the OSL papers
-#'
-#' @param performance the performances as as calculated using crossvalidation. See the \code{CrossValidationRiskCalculator} class.
-#' @param output the name of the output file
-#' @param dir the dir to write the output file to
+#' @importFrom stats binomial density terms
 #' @importFrom grDevices dev.off pdf
 #' @importFrom graphics lines plot
 #' @importFrom utils head
+#' @param performance a list of list with performances: list 1 the estimators used, list 2 the random variables predicted.
+#' @param output string the filename to use for the plot (without .pdf)
+#' @param dir string the directory to write to
+#' @param make_summary boolean whether or not to sum all error terms to give a summed performance measure
+#'
 #' @export
-OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tmp/osl') {
-  # Performance should be a list of lists:
-  # List 1: the estimator used
-  # List 2: the random variable predicted
-
-  performance_dt <- performance %>% rbindlist
+OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tmp/osl', make_summary=FALSE, label='total.risk') {
+  # Performance should be a list of data.tables:
+  # List: the estimator used
+  # Datatable: the random variable predicted
+  if(make_summary) {
+    ## Beware, the unlist is needed, it looks the same but without the unlist the contents are lists instead of numerics
+    performance_dt <- lapply(performance,sum) %>% unlist %>% data.table
+    colnames(performance_dt) <- label
+  } else {
+    performance_dt <- performance %>% rbindlist
+  }
   ml_names <- names(performance)
-  outcomes <- colnames(performance_dt)
 
+  ## Append the names of the algorithms, so ggplot can plot them
   performance_dt[, 'names' :=  ml_names]
+
+  ## Retrieve the names of the outcomes, -1 because the names column does not need a color
+  outcomes <- head(colnames(performance_dt), -1)
 
   dir.create(dir, showWarnings = FALSE, recursive = TRUE)
   pdf(paste(dir, '/', output,'.pdf',sep = ''))
   p <- ggplot(performance_dt)
-  i <- 1
-  colors <- OutputPlotGenerator.get_simple_colors(length(outcomes) -1)
-  names(colors) <- head(outcomes, -1)
-  colors
+
+  colors <- OutputPlotGenerator.get_simple_colors(length(outcomes))
+
+  names(colors) <- outcomes
   for (name in outcomes) {
-    if(name == 'names') next
-    p <- p + geom_point(size = 2, aes_string(x=name, y='names'), color=colors[[i]])+
+    p <- p + geom_point(size = 2, aes_string(x=name, y='names'), color=colors[[name]])+
     theme(legend.position="left")
-    i <- i + 1
   }
+
   p <- p +
-  scale_linetype(guide = guide_legend(override.aes = list(alpha = 1)), labels = names(colors)) + 
+  scale_linetype(guide = guide_legend(override.aes = list(alpha = 1)), labels = outcomes) + 
   theme(legend.position = c(.75, .25))+
   theme(panel.background = element_rect(fill = 'transparent', colour = 'black', size=1))+
   theme(axis.text.y = element_text(colour = "black") ) +
@@ -139,7 +228,14 @@ OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tm
   dev.off()
 }
 
+#' OutputPlotGenerator.get_colors
+#' Function to return a list of colors, depending on the number of variables / colors needed, uses hex for colors
+#' @param number_of_variables the number of colors one requires
+#' @return a list of colors
 OutputPlotGenerator.get_colors = function(number_of_variables) {
+  if (number_of_variables > 12 || number_of_variables < 1) {
+    return(NULL) 
+  }
   list(
     tol1qualitative=c("#4477AA"),
     tol2qualitative=c("#4477AA", "#CC6677"),
@@ -156,28 +252,54 @@ OutputPlotGenerator.get_colors = function(number_of_variables) {
   )[[number_of_variables]]
 }
 
+
+#' OutputPlotGenerator.get_simple_colors
+#' Function to return a list of colors, depending on the number of variables / colors needed
+#' @import RColorBrewer
+#' @param number_of_variables the number of colors one requires
+#' @return a list of colors
 OutputPlotGenerator.get_simple_colors = function(number_of_variables) {
-  list(
-    tol1qualitative=c("red"),
-    tol2qualitative=c("red", "green"),
-    tol3qualitative=c("red", "orange", "green"),
-    tol4qualitative=c("red", "blue", "orange", "green"),
-    tol5qualitative=c("brown", "purple", "blue", "orange", "green"),
-    tol6qualitative=c("brown", "purple", "blue", "orange", "green","gray"),
-    tol7qualitative=c("brown", "purple", "black", "blue", "orange", "green","gray"),
-    tol8qualitative=c("brown", "purple", "black", "blue", "#999933", "orange", "green","gray"),
-    tol9qualitative=c("brown", "purple", "black", "blue", "#999933", "orange", "green", "#882255", "gray"),
-    tol10qualitative=c("brown", "purple", "black", "blue", "#999933", "orange", "#661100", "green", "#882255", "gray"),
-    tol11qualitative=c("brown", "#6699CC", "purple", "black", "blue", "#999933", "orange", "#661100", "green", "#882255", "gray"),
-    tol12qualitative=c("brown", "#6699CC", "purple", "black", "blue", "#999933", "orange", "#661100", "green", "#AA4466", "#882255", "gray")
-  )[[number_of_variables]]
+  if (number_of_variables < 1) {
+    return(NULL)
+  }
+  number_of_variables <- abs(number_of_variables)
+  qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+  col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+  sample(col_vector, number_of_variables)
 }
 
-OutputPlotGenerator.export_key_value = function(key, value, dir = '~/tmp/osl') {
+#' OutputPlotGenerator.export_key_value 
+#' Function to export a key value pair to a file
+#'
+#' @param key the key to store the value under
+#' @param value the value to store
+#' @param output string the file
+#' @param dir string the dir to write the file to
+#' @export
+OutputPlotGenerator.export_key_value = function(key, value, output='variables.dat', dir = '~/tmp/osl') {
   if (is.numeric(value)) {
     value <- round(value, 3)
   }
   line <- paste(key,'=',value)
-  write(line,file=paste(dir,"variables.dat", sep='/'),append=TRUE)
+  the_file = paste(dir,output, sep='/')
+  if (!file.exists(the_file)) {
+    dir.create(dir, showWarnings = FALSE, recursive = TRUE)
+    file.create(the_file)
+  }
+
+  write(line,file=the_file,append=TRUE)
 }
 
+#' OutputPlotGenerator.store_oos_osl_difference
+#' Function to store the differences between the truth and osl in a file.
+#' @param differences a list of differences with a key for each option
+#' @param output the name of the file to write the output to
+#' @param oos boolean was oos used 
+#' @param configuration (optional) which simulation configuration was used?
+OutputPlotGenerator.store_oos_osl_difference = function(differences, output, oos, configuration = 0) {
+  name <- ifelse(oos, 'post-oos', 'pre-oos')
+  for (output_name in names(differences)) {
+    key <- paste('cfg', configuration, output_name, name, sep='-')
+    OutputPlotGenerator.export_key_value(key, differences[[output_name]], output=output)
+  }
+}

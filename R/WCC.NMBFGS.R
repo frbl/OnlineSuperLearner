@@ -45,10 +45,19 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
         marap <- param
         lower <- epsilon
         upper <- 1 - lengthOfParam * epsilon
-        for (ii in 1:lengthOfParam) {
-          marap[ii] <- log( (param[ii] - lower) / (upper - param[ii]) )
-          upper <- upper + epsilon - param[ii]
+       
+        ## This function will throw NAN / INF warnings multiple times. Catch them here, and throw them again below.
+        suppressWarnings({
+          for (ii in 1:lengthOfParam) {
+            marap[ii] <- log( (param[ii] - lower) / (upper - param[ii]) )
+            upper <- upper + epsilon - param[ii]
+          }
+        })
+
+        if(any(is.nan(marap) | is.na(marap) | is.infinite(marap))) {
+          warning('In WCC.NMBFGS some of the parameters turned out to be Inf, NaN or NA!')
         }
+
         return(marap)
       },
 

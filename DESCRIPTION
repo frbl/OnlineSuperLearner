@@ -33,12 +33,13 @@ Imports:
     assertthat,
     xgboost,
     speedglm,
+    randomForest,
+    e1071,
     glmnet,
     nloptr,
     future,
+    RColorBrewer,
     foreach,
-    snow,
-    doSNOW,
     doParallel,
     optimr,
     sgd,
@@ -47,11 +48,13 @@ Imports:
     reshape2,
     digest
 Suggests:
+    doRNG,
     roxygen2,
     testthat,
     mockery
 RoxygenNote: 6.0.1
 Collate: 
+    'ConstrainedGlm.R'
     'Evaluation.R'
     'CrossValidationRiskCalculator.R'
     'Data.Base.R'
@@ -63,6 +66,7 @@ Collate:
     'DensityEstimation.R'
     'H2O.initializer.R'
     'H2O.Interactor.R'
+    'InterventionEffectCalculator.R'
     'InterventionParser.R'
     'ML.Local.lm.R'
     'ML.Base.R'
@@ -74,6 +78,8 @@ Collate:
     'ML.H2O.glm.R'
     'ML.H2O.randomForest.R'
     'ML.Local.Speedlm.R'
+    'ML.SVM.R'
+    'ML.randomForest.R'
     'OneStepEstimator.R'
     'OnlineSuperLearner.Predict.R'
     'WCC.SGD.Simplex.R'

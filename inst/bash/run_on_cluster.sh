@@ -1,14 +1,20 @@
 #!/usr/bin/env sh
-server_name=peregrine
-server_name=peregrine-interactive
-scp -r * $server_name:~/osl
 #rsync -ue ssh ./ peregrine:~/osl
-if [[ $server_name != 'peregrine-interactive' ]]; then
-  ssh $server_name -t 'cd osl; srun --ntasks=1 --cpus-per-task=22 --time=00:30:00 --partition=nodes Rscript run.R'
-else
+
+if [ $# -eq 0 ]; then
+  server_name=peregrine-interactive
+  scp -r * $server_name:~/osl
   ssh $server_name -t 'rm -rf ~/tmp; mkdir -p ~/tmp/osl/; cd osl; Rscript run.R'
-  #ssh $server_name -t 'rm -r ~/tmp; mkdir ~/tmp/osl/; cd osl; R'
+  rm -r /tmp/osl/
+  mkdir -p /tmp/osl/
+  scp -r $server_name:~/tmp/* /tmp/osl/
+else
+  server_name=peregrine
+  scp -r * $server_name:~/osl
+  # 4 is the number of configurations
+  for i in $(seq 1 4);
+  do
+    ssh $server_name -t "cd osl; sbatch -o ~/tmp/$i-output.out -e ~/tmp/$i-error.out --job-name=cfg-$i --ntasks=1 --cpus-per-task=23 --time=16:00:00 --partition=regular --mail-user=peregrine@compsy.nl --mail-type=all --wrap=\"Rscript run.R $i\""
+  done
 fi
-rm -r /tmp/osl/
-mkdir -p /tmp/osl/
-scp -r $server_name:~/tmp/* /tmp/osl/
+

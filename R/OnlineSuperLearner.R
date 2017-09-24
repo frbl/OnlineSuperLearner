@@ -136,6 +136,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## default_wcc = WCC.SGD.Simplex,
         default_wcc = WCC.NMBFGS,
         cv_risk = NULL,
+        historical_cv_risk = NULL,
         cv_risk_count = NULL,
         cv_risk_calculator = NULL,
 
@@ -187,6 +188,15 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$cv_risk_count
         },
 
+        update_historical_cv_risk = function() {
+          private$historical_cv_risk <- append(self$get_historical_cv_risk, list(private$cv_risk))
+        },
+
+        update_oos_fit = function(new_data) {
+          new_data <- Arguments$getInstanceOf(new_data, 'data.table')
+          N <- nrow(new_data)
+        },
+
         ## Initializes the weighted combination calculators. One for each randomvariable.
         initialize_weighted_combination_calculators = function(randomVariables) {
           lapply(randomVariables, function(rv) {
@@ -203,11 +213,13 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## @param newdata the new data to add to the cache
         ## @return boolean whether or not it actually needed to update the cache.
         update_cache = function(newdata) {
-          if (!self$is_online) {
-            private$data_cache <- rbindlist(list(private$data, newdata))
-            return(TRUE)
+          if (self$is_online) {
+            ## If we are truly online, just cache the last entry
+            private$data_cache <- newdata
+            return(FALSE)
           }
-          return(FALSE)
+          private$data_cache <- rbindlist(list(private$data, newdata))
+          return(TRUE)
         },
 
         ## Train using all estimators separately.
@@ -228,6 +240,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           #private$SL.library.fabricated <- mclapply(private$SL.library.fabricated, function(estimator) {
           for(estimator in private$SL.library.fabricated) {
+          #estimators <- foreach(estimator=private$SL.library.fabricated) %dopar% {
             if(self$is_fitted && estimator$is_online) {
               # Note that we use the data here, and not the cache, as
               # essentially this cache will be  empty if none of the algorithms
@@ -237,8 +250,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             } else {
               estimator$fit(private$data_cache, randomVariables = randomVariables)
             }
-            #estimator
+            estimator
           }
+          #names(estimators) <- names(private$SL.library.fabricated)
+          #private$SL.library.fabricated <- estimators
           #}, mc.cores = 23)
           private$verbose && exit(private$verbose)
         },
@@ -274,6 +289,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                                           randomVariables = randomVariables,
                                           discrete = TRUE, continuous = TRUE, all_estimators = TRUE)
 
+          ## We need to store the dosl risk, as we will update it later.
+          pre_dosl_risk <- private$cv_risk$dosl.estimator
+
           ## Calculate the error using the normalized predictions
           private$update_risk(predicted.outcome = predicted.outcome,
                               observed.outcome = observed.outcome,
@@ -283,17 +301,27 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           if (self$fits_dosl) {
             private$fit_dosl()
 
+            ## Put the CV risk back to what it was before the update. We can now actually fit it correctly.
+            private$cv_risk$dosl.estimator <- pre_dosl_risk
+
             ## In order to get the initial estimate of the CV error of the DOSL, we first need to fit the other 
             ## estimators, and after that calculate the dosl error separately. 
             predicted.outcome <- self$predict(data = data.splitted$test,
                                             randomVariables = randomVariables,
                                             discrete = TRUE, continuous = FALSE, all_estimators = FALSE)
 
+            ## Note that we are using the cv_risk_calculator here to update the risk, not the wrapper function, hence
+            ## not affecting our earlier risk score.
             private$cv_risk$dosl.estimator <- 
-              private$cv_risk_calculator$calculate_risk(predicted.outcome = predicted.outcome,
-                                                        observed.outcome = observed.outcome,
-                                                        randomVariables = randomVariables)$dosl.estimator
+              private$cv_risk_calculator$update_risk(predicted.outcome = predicted.outcome,
+                                                      observed.outcome = observed.outcome,
+                                                      randomVariables  = randomVariables,
+                                                      current_count    = private$cv_risk_count-1,
+                                                      current_risk     = self$get_cv_risk)$dosl.estimator
           }
+
+          private$update_historical_cv_risk()
+          private$update_oos_fit(new_data = data_current)
 
         },
 
@@ -389,11 +417,28 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
               ## only be one of the candidates, and not the OSL.
               for(name in names(current_risk)[ids]) {
                 if(name %in% names(private$SL.library.fabricated)) {
-                  private$verbose && cat(private$verbose, 'Selecting ', name)
+                  #private$verbose && cat(private$verbose, 'Selecting ', name)
+                  cat(private$verbose, 'Selecting ', name)
                   return(private$SL.library.fabricated[[name]])
                 }
               }
             })
+
+          ## DEBUGGING ONLY
+          ## This function checks the fitted DOSL and checks if each of the
+          ## selected estimators indeed has the lowest risk. 
+          if(FALSE) {
+            for (i in seq_along(private$dosl.estimators)) {
+              estimator <- private$dosl.estimators[[i]]
+              scores <- current_risk[[i]]
+              best_risk <- current_risk[[estimator$get_name]][[i]] 
+              all_risks <- lapply(current_risk, function(x) x[[i]])
+              idx <- names(all_risks) == 'osl.estimator' | names(all_risks)== 'dosl.estimator'
+              min_risks <- all_risks[!(idx)] %>% unlist %>% min
+              assert_that(min_risks == best_risk)
+            }
+          }
+
           private$verbose && exit(private$verbose)
           return(TRUE)
         }
@@ -436,6 +481,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         fits_dosl = function() {
           private$should_fit_dosl
+        },
+
+        get_historical_cv_risk = function() {
+          private$historical_cv_risk
         },
 
         info = function() {
@@ -486,6 +535,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           if (!is.a(private$weightedCombinationComputers, 'list')) {
             throw("The WCC's should be in a list, one for each RV")
           }
+          private$historical_cv_risk <- Arguments$getInstanceOf(private$historical_cv_risk, 'list')
         }
         ),
   public =
@@ -519,6 +569,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$weightedCombinationComputers <- list()
           private$online_super_learner_predict <- OnlineSuperLearner.Predict$new(pre_processor = pre_processor,
                                                                                  verbose = verbose)
+          private$historical_cv_risk <- list()
 
           self$get_validity
         },
@@ -528,33 +579,53 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         },
 
         ## Samples the data iteratively from the fitted distribution, and applies an intervention if necessary
-        ## @param tau is the time at which we want to measure the outcome
-        sample_iteratively = function(data, randomVariables, tau = 10, intervention = NULL, discrete = TRUE, return_type = 'observations', start_from = NULL) {
-          randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
+        ## @param data the data to start the sampling from
+        ## @param randomvariables the list of randomvariables to use for the sampling procedure
+        ## @param tau is the time at which we want to measure the outcome (default is 10)
+        ## @param intervention is the intervention we want to give (default is null)
+        ## @param discrete, boolean, should we use the discrete superlearner or the continous one
+        ## @param return_type default is observations, should be one of
+        ## observations, full, summary_measures. When observations, we only
+        ## return the denormalized observations (not the summaries), when
+        ## summary_measures, we only return the normalized summary_measured,
+        ## and when full, we return both (normalized)
+        ## @param start_from_variable the randomvariable to start the sampling from (default null)
+        ## @param start_from_time the start time to start from (default 1)
+        sample_iteratively = function(data, randomVariables, tau = 10, intervention = NULL, discrete = TRUE, 
+                                      return_type = 'observations', 
+                                      start_from_variable = NULL,
+                                      start_from_time = 1, check=FALSE) {
+
+          ## If no random variable to start from is provided, just start from
+          ## the first one. Note the ordering which is done at the top of this
+          ## function.
+          if (is.null(start_from_variable)) {
+            start_from_variable <- randomVariables[[1]]
+          }
+
+          ## Check whether the parameters are correct
+          if(check) {
+            start_from_variable <- Arguments$getInstanceOf(start_from_variable, 'RandomVariable')
+            randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
+            tau             <- Arguments$getNumerics(tau, c(1,Inf))
+            start_from_time <- Arguments$getNumerics(start_from_time, c(1,tau))
+
+            ## Check whether the return type is one of the prespecified ones
+            return_type <- Arguments$getCharacters(return_type)
+            valid_return_types <- c('observations', 'full', 'summary_measures')
+            if (!return_type %in% valid_return_types) {
+              throw('Return type should be in', valid_return_types)
+            }
+
+            if(!is.null(intervention) && !InterventionParser.valid_intervention(intervention)) {
+              throw('The intervention specified is not correct! it should have a
+                    when (specifying t), a what (specifying the intervention) and
+                    a variable (specifying the name of the variable to intervene on).')
+            }
+          }
+
+          ## The variables need to be ordered when sampling from them
           randomVariables <- RandomVariable.find_ordering(randomVariables)
-
-          tau <- Arguments$getNumerics(tau, c(1,Inf))
-
-          return_type <- Arguments$getCharacters(return_type)
-          valid_return_types <- c('observations', 'full', 'summary_measures')
-          if (!return_type %in% valid_return_types) {
-            throw('Return type should be in', valid_return_types)
-          }
-
-          if(!is.null(intervention)) {
-            intervention <- Arguments$getInstanceOf(intervention, 'list')
-            valid_intervention <- is.numeric(intervention$when) &&
-              is.numeric(intervention$what) &&
-              is.character(intervention$variable) &&
-              length(intervention$when) == length(intervention$what)
-
-            if(!valid_intervention) throw('The intervention specified is not correct! it should have a when (specifying t), a what (specifying the intervention) and a variable (specifying the name of the variable to intervene on).')
-          }
-
-          if (is.null(start_from)) {
-            start_from <- randomVariables[[1]]
-          }
-          start_from <- Arguments$getInstanceOf(start_from, 'RandomVariable')
 
           result <- data.table()
           result_denormalized_observations <- data.table(matrix(nrow=0, ncol=length(randomVariables)))
@@ -562,70 +633,89 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           ## Just to be certain we don't use future data, we remove a subset:
           remove_vars <- names(randomVariables)
-          started = FALSE
+          started     <- FALSE
 
           ## We need to sample sequentially here, just so we can plugin the value everytime in the next evaluation
-          private$verbose && enter(private$verbose, 'Sampling from PN*')
-          for (t in seq(tau)) {
+          private$verbose && enter(private$verbose, 'Started sampling procedure')
+          for (t in seq(start_from_time, tau)) {
             current_denormalized_observation <- list()
             private$verbose && enter(private$verbose,'Sampling at ', t)
+
             for (rv in randomVariables) {
               current_outcome <- rv$getY
               private$verbose && enter(private$verbose, 'Working on randomvariable ', current_outcome)
-              if (!started && !equals(current_outcome, start_from$getY)) {
-                ## The current outcome lies in the past, so it might be that we
-                ## need it later, don't remove it
-                remove_vars <- remove_vars[remove_vars != current_outcome]
-                next
-              }
-              ## set the variables we don't need to NA
-              if (!started) {
-                data[,remove_vars] <- NA
-              }
 
-              started = TRUE
+              if (!started) {
+                ## We move forward through the ordering till we find the variable we want to start from
+                if (!equals(current_outcome, start_from_variable$getY)) {
+                  ## By default the remove_vars list contains all variables. However
+                  ## the current outcome lies in the past, so it might be that we
+                  ## need it later, don't remove it
+                  remove_vars <- remove_vars[remove_vars != current_outcome]
+                  next
+                }
+                ## Set the variables we don't need to NA
+                data[,remove_vars] <- NA
+                started <- TRUE
+              }
 
               ## Here we select whether the current node is an intervention
-              ## node. This can be moved to a separate function.
-              parsed_intervention <- InterventionParser.parse_intervention(intervention = intervention,
-                                                                           current_time = t,
-                                                                           current_outcome = current_outcome)
+              ## node.
+              parsed_intervention <- InterventionParser.parse_intervention(
+                intervention = intervention,
+                current_time = t,
+                current_outcome = current_outcome
+              )
 
               ## If the current t is an intervention t, apply the proposed intervention.
               if (parsed_intervention$should_intervene) {
                 outcome <- list(normalized = parsed_intervention$what, denormalized = parsed_intervention$what)
                 private$verbose && cat(private$verbose, 'Setting intervention on ', current_outcome,' with ', outcome, ' on time ', t)
               } else {
-                outcome <- self$predict(data = data, randomVariables = c(rv),
+                outcome <- self$predict(data = data, 
+                                        randomVariables = c(rv),
                                         discrete = discrete,
                                         continuous = !discrete,
                                         all_estimators = FALSE,
                                         sample = TRUE)
 
-                private$verbose && cat(private$verbose,'Predicting ', current_outcome, ' using ', paste(rv$getX, collapse=', '))
+                private$verbose && cat(private$verbose,'Predicted ', current_outcome, 
+                                       ' using ', paste(rv$getX, collapse=', '), 
+                                       ' and the prediction was ', outcome$denormalized[[1]])
               }
-              ## We need to add the [[1]] because the result is a list of lists (1st norm/denorm, then estimator, then
-              ## values)
-              data[,  (current_outcome) := as.numeric(outcome$normalized[[1]]) ]
+              ## Now we actually add the recently predicted value to the
+              ## dataframe, so it can be used in the next sampling step. This
+              ## is important!  We need to add the [[1]] because the result is
+              ## a list of lists (1st norm/denorm, then estimator, then values)
+              data[, (current_outcome) := as.numeric(outcome$normalized[[1]]) ]
               private$verbose && exit(private$verbose)
               current_denormalized_observation[[current_outcome]] <- outcome$denormalized[[1]] %>%
                 as.numeric
             }
             private$verbose && exit(private$verbose)
-            result_denormalized_observations <- 
-              rbindlist(list(
-                             result_denormalized_observations, 
-                             current_denormalized_observation), 
-                        fill=TRUE)
 
+            ## Save the observations to the total list of observations. This is
+            ## the list that eventually will be returned. We use the rbindlist
+            ## function so the final result is a datatable.
+            result_denormalized_observations <- rbindlist(
+              list(
+                result_denormalized_observations, 
+                current_denormalized_observation), 
+              fill=TRUE
+            )
             result <- rbind(result, data)
-            if(t < tau)  data <- private$summaryMeasureGenerator$getLatestCovariates(data)
+
+            ## Now we have stored the new data in the dataframe, we can use it to get the new covariates
+            if(t < tau) data <- private$summaryMeasureGenerator$getLatestCovariates(data)
           }
           private$verbose && exit(private$verbose)
           if (return_type == 'observations') {
+            #if(any(is.na(result_denormalized_observations[,names(randomVariables), with = FALSE]))){
+              #print(result_denormalized_observations)
+            #}
+
             ## Return the denormalized observations?
             return(result_denormalized_observations[,names(randomVariables), with = FALSE])
-            #return(result[,names(randomVariables), with = FALSE])
           } else if (return_type == 'summary_measures') {
             return(result[, !names(randomVariables), with = FALSE])
           }

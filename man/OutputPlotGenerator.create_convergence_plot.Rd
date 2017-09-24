@@ -9,9 +9,11 @@ OutputPlotGenerator.create_convergence_plot(data, output,
   dir = "~/tmp/osl/convergence")
 }
 \arguments{
-\item{truth_approximation}{the truth (i.e., as found using simulation / monte carlo approximation)}
+\item{data}{the truth  and apporoximations to plot}
 
-\item{estimated_approximation}{the estimate (i.e., as found using machine learning and monte carlo approximation)}
+\item{output}{the filename of the output}
+
+\item{dir}{the directory name of the output}
 }
 \description{
 OutputPlotGenerator.create_convergence_plot

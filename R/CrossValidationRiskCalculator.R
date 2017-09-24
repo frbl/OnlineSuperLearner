@@ -105,9 +105,9 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
             predicted.outcome = predicted.outcome$normalized
           }
 
-          lapply(predicted.outcome, evaluate)
+          evaluation <- lapply(predicted.outcome, evaluate)
 
-          return(lapply(predicted.outcome, evaluate))
+          return(evaluation)
 
         },
 

@@ -14,21 +14,25 @@
 #' @include SMG.Latest.Entry.R
 #' @include SMG.Lag.R
 #' @include SMG.Transformation.R
+#' @include InterventionEffectCalculator.R
 #' @export
 OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
   public =
     list(
-        initialize = function() {
+        initialize = function(configuration = NULL) {
+          tic <- Sys.time()
           condensier_options(parfit=FALSE)
           cat('Starting calculation with ', parallel::detectCores(),' cores\n')
           doParallel::registerDoParallel(cores = parallel::detectCores())
 
           options(warn=1)
           private$sim  <- Simulator.GAD$new()
-          private$training_set_size <- 1e4
+          private$training_set_size <- 1e2
+
+          OutputPlotGenerator.export_key_value('training-set-size', private$training_set_size)
           private$cv_risk_calculator <- CrossValidationRiskCalculator$new()
           private$test_set_size <- 100
-          private$log <- Arguments$getVerbose(-8, timestamp=TRUE)
+          #private$log <- Arguments$getVerbose(-8, timestamp=TRUE)
           private$log <- FALSE
           #algos <- list(list(description='ML.H2O.randomForest-1tree',
                                   #algorithm = 'ML.H2O.randomForest',
@@ -45,9 +49,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
 
           alphas <- runif(5,0,1)
-          algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
+          #algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
                                   #algorithm_params = list(alpha = alphas), 
-                                  params = list(nbins = nbins, online = TRUE))))
+                                  #params = list(nbins = nbins, online = TRUE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
                                   #algorithm_params = list(ntrees=c(10,20), min_rows=1),
@@ -75,24 +79,45 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           private$SL.library.definition <- algos
 
+
           # Run the simulations
-          diff <- self$configuration1()
-          print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$dosl))
-          print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff$osl))
+          if(is.null(configuration)) {
+            diff <- self$configuration1()
+            print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$differences_osl$dosl))
+            print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff$differences_osl$osl))
 
-          diff <- self$configuration2()
-          print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$dosl))
-          print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff$osl))
+            print(paste('The difference between the estimate (DOSL) and approximation (after oos) is: ', diff$differences_oos$dosl))
+            print(paste('The difference between the estimate (OSL) and approximation (after oos) is: ', diff$differences_oos$osl))
 
-          diff <- self$configuration3()
-          print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$dosl))
-          print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff$osl))
+            #diff <- self$configuration2()
+            #print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$dosl))
+            #print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff$osl))
 
-          diff <- self$configuration4()
-          print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$dosl))
-          print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff$osl))
+            #diff <- self$configuration3()
+            #print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$dosl))
+            #print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff$osl))
+
+            #diff <- self$configuration4()
+            #print(paste('The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$dosl))
+            #print(paste('The difference between the estimate (OSL) and approximation (before oos) is: ', diff$osl))
+          } else {
+            if (configuration == 1) {
+              diff <- self$configuration1()
+            } else if (configuration == 2) {
+              diff <- self$configuration2()
+            } else if (configuration == 3) {
+              diff <- self$configuration3()
+            } else {
+              diff <- self$configuration4()
+            }
+            print(paste(configuration,': The difference between the estimate (DOSL) and approximation (before oos) is: ', diff$differences_osl$dosl))
+            print(paste(configuration,': The difference between the estimate (OSL) and approximation (before oos) is: ', diff$differences_osl$osl))
+          }
 
           #stopCluster(cluster)
+          toc <- Sys.time()
+          time.taken <- toc - tic
+          print(time.taken)
         },
 
         configuration1 = function() {
@@ -399,6 +424,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           data.test <- private$sim$simulateWAY(private$test_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
           data.train <- private$sim$simulateWAY(private$training_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
 
+
           # Create the bounds
           bounds <- PreProcessor.generate_bounds(data.train)
 
@@ -428,149 +454,122 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           mini_batch_size <- ifelse(is.na(mini_batch_size) || is.infinite(mini_batch_size), 1, floor(mini_batch_size))
 
           # Store the configuration
-          OutputPlotGenerator.export_key_value('initial-training-set-size', initial_training_set_size)
-          OutputPlotGenerator.export_key_value('minibatch-size', mini_batch_size)
-          OutputPlotGenerator.export_key_value('max-iterations', max_iterations)
-          OutputPlotGenerator.export_key_value('total-iterations', max_iterations+1)
+          key_output = paste('variables_', configuration,'.dat', sep='')
+          OutputPlotGenerator.export_key_value('initial-training-set-size', initial_training_set_size, output=key_output)
+          OutputPlotGenerator.export_key_value('minibatch-size', mini_batch_size, output=key_output)
+          OutputPlotGenerator.export_key_value('max-iterations', max_iterations, output=key_output)
+          OutputPlotGenerator.export_key_value('total-iterations', max_iterations+1, output=key_output)
 
           # Divide by two here just so the initial size is a lot larger then each iteration, not really important
           risk <- osl$fit(data.train, randomVariables = randomVariables,
                                 initial_data_size = initial_training_set_size,
                                 max_iterations = max_iterations,
-                                mini_batch_size = mini_batch_size) %T>%
-            print
+                                mini_batch_size = mini_batch_size) %T>% print
 
 
           private$log && cat(private$log, 'Predicting using all estimators')
 
           # Calculate prediction quality
           observed.outcome <- data.test[, outcome.variables, with=FALSE]
-          predicted.outcome <- osl$predict(data = copy(data.test), randomVariables, plot= TRUE)
+          predicted.outcome <- osl$predict(data = copy(data.test), randomVariables, plot= TRUE, sample=FALSE)$normalized
+
+          Evaluation.log_loss(data.predicted = predicted.outcome$osl.estimator$Y, data.observed = observed.outcome$A)
+          Evaluation.log_loss(data.predicted = predicted.outcome$dosl.estimator$Y, data.observed = observed.outcome$A)
 
           performance <- 
             private$cv_risk_calculator$calculate_evaluation(predicted.outcome = predicted.outcome,
                                                             observed.outcome = observed.outcome,
                                                             randomVariables = randomVariables) 
 
-          OutputPlotGenerator.create_risk_plot(performance, 'performance', '~/tmp/osl/')
+          key_performance = paste('performance_cfg_', configuration, sep='')
+          OutputPlotGenerator.create_risk_plot(performance=performance, output=key_performance)
 
-          #})
-          #performances <- do.call(rbind, lapply(performances, data.frame)) %T>%
-          #print
+          key_performance = paste('risk_cv_cfg_', configuration, sep='')
+          OutputPlotGenerator.create_risk_plot(performance=osl$get_cv_risk, output=key_performance)
 
-          #plot(x=performances$iterations, y=performances$performance)
-          #performances
+          key_performance = paste('performance_summary_cfg_', configuration, sep='')
+          OutputPlotGenerator.create_risk_plot(performance=performance, output=key_performance, make_summary=TRUE, label='total.evaluation')
+
+          key_performance = paste('risk_cv_summary_cfg_', configuration, sep='')
+          OutputPlotGenerator.create_risk_plot(performance=osl$get_cv_risk, output=key_performance, make_summary=TRUE, label='total.risk')
+
+          OutputPlotGenerator.create_training_curve(osl$get_historical_cv_risk, 
+                                                    randomVariables = randomVariables,
+                                                    output = paste('curve',configuration, sep='_'))
+
+
+          data.train$reset
+          summaryMeasureGenerator$setData(data.train)
+          data.train.set <- summaryMeasureGenerator$getNext(private$training_set_size)
+
           tau <- 2
-          B <- 400
+          B <- 500
+          N <- 100 
+          if(configuration %in% c(1,3)) {
+            B <- 10
+            N <- 50
+          }
 
+          OutputPlotGenerator.export_key_value(output=key_output, 'iterations', B)
+          OutputPlotGenerator.export_key_value(output=key_output, 'simulation-number-of-observations', N)
+
+          intervention_effect_caluculator = InterventionEffectCalculator$new(bootstrap_iterations = B, 
+                                                                             randomVariables = randomVariables, 
+                                                                             outcome_variable = variable_of_interest$getY)
+          
           pre <- options('warn')$warn
           options(warn=-1)
 
-          data.aisset <- copy(data.test)
-          result <- osl$predict(data = data.aisset,
-                        randomVariables = randomVariables,
-                        all_estimators = TRUE,
-                        discrete = TRUE,
-                        continuous = TRUE,
-                        sample = TRUE,
-                        plot = TRUE)[[1]]
+          data.aisset <- copy(data.train.set)
+          #result <- osl$predict(data = data.aisset,
+                        #randomVariables = randomVariables,
+                        #all_estimators = TRUE,
+                        #discrete = TRUE,
+                        #continuous = TRUE,
+                        #sample = TRUE,
+                        #plot = TRUE)[[1]]
 
           cat('Approximating truth...\n')
           result.approx <- foreach(i=seq(B), .combine=rbind) %dopar% {
-            print(i)
+            cat('Approximating truth in iteration (under intervention): ', i)
             data.int <- private$sim$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
                                               intervention = intervention, verbose = FALSE)
             data.int$Y[tau]
           }
 
           result.approx_control <- foreach(i=seq(B), .combine=rbind) %dopar% {
-            print(i)
+            cat('Approximating truth in iteration (under control): ', i)
             data.int <- private$sim$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
                                               intervention = control, verbose = FALSE)
             data.int$Y[tau]
           }
 
-          # Note that this won't work when we have an H2O estimator in the set. The parallelization will fail.
-          O_0 <- data.test[1,]
-          cat('Sampling from Pn* (for approximation) intervened ...\n')
-          outcome <- variable_of_interest$getY
+          interventions <- list(intervention = intervention,
+                                control = control)
+
+          result.dosl.full <- intervention_effect_caluculator$calculate_intervention_effect(osl = osl,
+                                                                        interventions = interventions, 
+                                                                        discrete = TRUE, 
+                                                                        initial_data = data.train.set[1,],
+                                                                        tau = tau)
+
+          result.dosl <- result.dosl.full$intervention          
+          result.dosl_control <- result.dosl.full$control
 
 
-          result.dosl <- foreach(i=seq(B), .combine=rbind) %dopar% {
-            print(i)
-            osl$sample_iteratively(data = O_0,
-                                   randomVariables = randomVariables,
-                                   intervention = intervention,
-                                   discrete = TRUE,
-                                   tau = tau)[tau, outcome, with=FALSE]
-          } %>%
-            unlist
+          run_osl <- FALSE
+          if(run_osl) {
+            result.osl.full <- intervention_effect_caluculator$calculate_intervention_effect(osl = osl,
+                                                                          interventions = interventions, 
+                                                                          discrete = FALSE, 
+                                                                          initial_data = data.train.set[1,])
 
-          result.osl <- rep(0.5, B)
-          result.osl <- foreach(i=seq(B), .combine=rbind) %dopar% {
-            print(i)
-            osl$sample_iteratively(data = O_0,
-                                   randomVariables = randomVariables,
-                                   intervention = intervention,
-                                   return_type = 'observations',
-                                   discrete = FALSE,
-                                   tau = tau)[tau, outcome, with=FALSE]
-          } %>%
-            unlist
-
-          cat('Sampling from Pn* (for approximation) controlled ...\n')
-          outcome <- variable_of_interest$getY
-
-
-          result.dosl_control <- foreach(i=seq(B), .combine=rbind) %dopar% {
-            print(i)
-            osl$sample_iteratively(data = O_0,
-                                   randomVariables = randomVariables,
-                                   intervention = control,
-                                   discrete = TRUE,
-                                   tau = tau)[tau, outcome, with=FALSE]
-          } %>%
-            unlist
-
-          result.osl_control <- rep(0.5, B)
-          result.osl_control <- foreach(i=seq(B), .combine=rbind) %dopar% {
-            print(i)
-            osl$sample_iteratively(data = O_0,
-                                   randomVariables = randomVariables,
-                                   intervention = control,
-                                   return_type = 'observations',
-                                   discrete = FALSE,
-                                   tau = tau)[tau, outcome, with=FALSE]
-          } %>%
-            unlist
-
-          options(warn=pre)
-
-          result.approx.mean <- result.approx %>% mean
-          result.approx_control.mean <- result.approx_control %>% mean
-          result.dosl.mean <- result.dosl %>% mean
-          result.dosl_control.mean <- result.dosl_control %>% mean
-          result.osl.mean <- result.osl %>% mean
-          result.osl_control.mean <- result.osl_control %>% mean
-
-          differences <- list(
-                              dosl         = abs(result.dosl.mean - result.approx.mean),
-                              osl          = abs(result.osl.mean - result.approx.mean),
-                              dosl_control = abs(result.dosl_control.mean - result.approx_control.mean),
-                              osl_control  = abs(result.osl_control.mean - result.approx_control.mean)
-                              )
-
-          key <- paste('cfg', configuration, 'osl', 'pre-oos', sep='-')
-          OutputPlotGenerator.export_key_value(key, differences$osl)
-
-          key <- paste('cfg', configuration, 'dosl', 'pre-oos', sep='-')
-          OutputPlotGenerator.export_key_value(key, differences$dosl)
-
-          key <- paste('cfg', configuration, 'osl-control', 'pre-oos', sep='-')
-          OutputPlotGenerator.export_key_value(key, differences$osl_control)
-
-          key <- paste('cfg', configuration, 'dosl-control', 'pre-oos', sep='-')
-          OutputPlotGenerator.export_key_value(key, differences$dosl_control)
+            result.osl <- result.dosl.full$intervention          
+            result.osl_control <- result.dosl.full$control
+          } else {
+            result.osl <- rep(0.5, B)
+            result.osl_control <- rep(0.5, B)
+          }
 
           # Plot the convergence
           data <- list(truth = result.approx, dosl = result.dosl, osl = result.osl)
@@ -581,38 +580,78 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           OutputPlotGenerator.create_convergence_plot(data = data,
                                                       output = paste('convergence_configuration_control',configuration,sep='_'))
 
+          options(warn=pre)
+
+          result.approx.mean <- result.approx %>% mean
+          result.approx_control.mean <- result.approx_control %>% mean
+
+          result.dosl.mean <- result.dosl %>% mean
+          result.dosl_control.mean <- result.dosl_control %>% mean
+
+          result.osl.mean <- result.osl %>% mean
+          result.osl_control.mean <- result.osl_control %>% mean
+
+          ## Store the differences after OSL
+          differences <- list(
+                              dosl         = (result.dosl.mean - result.approx.mean),
+                              osl          = (result.osl.mean - result.approx.mean),
+                              dosl_control = (result.dosl_control.mean - result.approx_control.mean),
+                              osl_control  = (result.osl_control.mean - result.approx_control.mean)
+                              )
+
+          OutputPlotGenerator.store_oos_osl_difference(differences, output=key_output,  oos=FALSE, configuration=configuration)
 
 
-          #browser()
           osl$info
 
-          #lapply(performance, function(x) {lapply(x,mean)})
+          differences_oos <- list(dosl = -1, osl = -1, dosl_control = -1, osl_control = -1 )
+          run_oos <- TRUE
+          if(run_oos){
+            # Now, the final step is to apply the OneStepEstimator
+            OOS.intervention <- OneStepEstimator$new(osl = osl, 
+                                        randomVariables = randomVariables, 
+                                        discrete = TRUE,
+                                        N = N, 
+                                        B = B,
+                                        tau = tau,
+                                        intervention = intervention,
+                                        variable_of_interest = variable_of_interest,
+                                        pre_processor = pre_processor)
 
-          # Now, the fimal step is to apply the OneStepEstimator
-          #OOS <- OneStepEstimator$new(osl = osl, 
-                                            #randomVariables = randomVariables, 
-                                            #discrete = TRUE,
-                                            #N = 90, 
-                                            #B = B,
-                                            #pre_processor = pre_processor
-                                            #)
+            result.dosl.mean.updated <- OOS.intervention$perform(initial_estimate = result.dosl.mean,
+                                                    data = data.train.set)
 
-          #result.approx.mean.updated <- OOS$perform(initial_estimate = result.dosl.mean,
-                                                   #data = data.test,
-                                                   #variable_of_interest = variable_of_interest,
-                                                   #intervention = intervention,
-                                                   #tau = tau)
+            OOS.control <- OneStepEstimator$new(osl = osl, 
+                                        randomVariables = randomVariables, 
+                                        discrete = TRUE,
+                                        N = N, 
+                                        B = B,
+                                        tau = tau,
+                                        intervention = control,
+                                        variable_of_interest = variable_of_interest,
+                                        pre_processor = pre_processor)
 
-          #print(paste('The difference between the estimate and approximation (after oos) for dosl is: ',
-                      #abs(result.approx.mean - result.approx.mean.updated$oos_estimate)))
+            result.dosl_control.mean.updated <- OOS.control$perform(initial_estimate = result.dosl_control.mean,
+                                                    data = data.train.set)
 
-          key <- paste('cfg', configuration, 'osl', 'post-oos', sep='-')
-          OutputPlotGenerator.export_key_value(key, -1)
 
-          key <- paste('cfg', configuration, 'dosl', 'post-oos', sep='-')
-          OutputPlotGenerator.export_key_value(key, -1)
+            ## Store the differences after OOS
+            differences_oos <- list(dosl     = (result.dosl.mean.updated$oos_estimate - result.approx.mean),
+                                osl          = -1,
+                                dosl_control = (result.dosl_control.mean.updated$oos_estimate - result.approx_control.mean),
+                                osl_control  = -1 
+                                )
 
-          differences
+            OutputPlotGenerator.store_oos_osl_difference(differences_oos, output=key_output, oos=TRUE, configuration=configuration)
+
+            key <- paste('cfg', configuration, 'dosl-better-with-oos', sep='-')
+            OutputPlotGenerator.export_key_value(key, abs(differences_oos$dosl) < abs(differences$dosl) , output=key_output)
+
+            key <- paste('cfg', configuration, 'dosl-control-better-with-oos', sep='-')
+            OutputPlotGenerator.export_key_value(key, abs(differences_oos$dosl_control) < abs(differences$dosl_control) , output=key_output)
+
+          }
+          list(differences_osl = differences, differences_oos = differences_oos)
         }
   )
 )

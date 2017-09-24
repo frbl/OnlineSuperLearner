@@ -12,7 +12,7 @@ test_that("it should estimate the true treatment", {
   # we generate number of blocks observations
   condensier_options(parfit=FALSE)
   options(warn=-1)
-  set.seed(12345)
+  doRNG::registerDoRNG(12345)
 
   # Number of cores available
   cores = detectCores()
@@ -145,7 +145,7 @@ test_that("it should estimate the true treatment", {
 
   print(paste('Approximation:', psi.approx, 'estimation:', psi.estimation, 'difference:', abs(psi.approx - psi.estimation)))
 
-  expect_true((abs(psi.approx - psi.estimation)) < 0.1)
+  expect_lt((abs(psi.approx - psi.estimation)),  0.2)
 
 })
 

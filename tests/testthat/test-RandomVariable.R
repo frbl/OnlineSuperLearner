@@ -42,7 +42,9 @@ test_that("it should return the outcome", {
 
 context(" getValidity")
 test_that("it should throw if the provided formula is not a formula", {
-  expect_error(described.class$new(formula = 'not a formula', family='gaussian'), 'Provided formula should be a formula')
+  expect_error(described.class$new(formula = 'not a formula', family='gaussian'), 
+    "Argument 'formula' is neither of nor inherits class formula: character", fixed=TRUE
+  )
 })
 test_that("it should throw if a provided family is not supported", {
   expect_error(described.class$new(formula = a ~ x + y , family='this-family'), 'Provided family this-family not supported')

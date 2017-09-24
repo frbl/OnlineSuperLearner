@@ -9,7 +9,7 @@ respect to the current outcome. If it is, it will return the actual
 intervention.}
 \usage{
 InterventionParser.parse_intervention(intervention, current_time,
-  current_outcome)
+  current_outcome, check = FALSE)
 }
 \arguments{
 \item{intervention}{the intervention to give \code{list(variable, when, what)}}
@@ -17,6 +17,8 @@ InterventionParser.parse_intervention(intervention, current_time,
 \item{current_time}{integer with the current time}
 
 \item{current_outcome}{the current random variable}
+
+\item{check}{boolean perform checks on the input variables}
 }
 \value{
 a list with when, what and if an intervention should be given at this time (\code{list(when, what, should_intervene)})

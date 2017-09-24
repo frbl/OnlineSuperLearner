@@ -4,7 +4,7 @@ context(" Evaluation.get_evaluation_function")
 test_that("it should always return the log loss", {
   fn <- Evaluation.get_evaluation_function('gaussian', TRUE)
   expect_false(is.null(fn))
-  expect_equal(fn, Evaluation.log_loss)
+  expect_equal(fn, Evaluation.log_likelihood_loss)
 })
 #test_that("it should give the mse_loss if a gaussion lossfunction is requested", {
   #fn <- Evaluation.get_evaluation_function('gaussian', TRUE)
@@ -30,11 +30,11 @@ test_that("it should always return the log loss", {
   #expect_equal(fn, Evaluation.root_mean_squared_error)
 #})
 
-#test_that("it should give a accuracy function whenever a binomial performance measure is requested", {
-  #fn <- Evaluation.get_evaluation_function('binomial', FALSE)
-  #expect_false(is.null(fn))
-  #expect_equal(fn, Evaluation.accuracy)
-#})
+test_that("it should give a log_loss function whenever a binomial performance measure is requested", {
+  fn <- Evaluation.get_evaluation_function('binomial', FALSE)
+  expect_false(is.null(fn))
+  expect_equal(fn, Evaluation.log_loss)
+})
 
 #test_that("it should throw if an unknown performance measure is requested", {
   #fake_fam = 'binominominonal'
@@ -45,23 +45,26 @@ test_that("it should always return the log loss", {
 
 context(" Evaluation.log_loss")
 test_that("it should return the a correct log loss and not go to infinity", {
-  nobs <- 10
+  nobs <- 100
+  eps = 1e-13
   observed  <- rep(1, nobs)
   predicted <- rep(0, nobs) 
-  loss <- Evaluation.log_loss(data.observed = observed, data.predicted = predicted)
+  loss <- Evaluation.log_loss(data.observed = observed, data.predicted = predicted, eps = eps)
 
   # Initial loss is large (just a sanity check)
   expect_true(loss > 30)
   expect_true(loss < Inf)
+
+  # Loop over the predicted values and set them to the correct prediction, one by one
   for (i in 1:(nobs)) {
     predicted[i] <- 1
-    new_loss <- Evaluation.log_loss(data.observed = observed, data.predicted = predicted)
+    new_loss <- Evaluation.log_loss(data.observed = observed, data.predicted = predicted, eps = eps)
     expect_true(new_loss < loss)
     loss <- new_loss
   }
 
-  expect_true(loss < 1e-15)
-  expect_true(loss > 0)
+  expect_lt(loss, 1e-10)
+  expect_gt(loss, 0)
 })
 
 context(" Evaluation.log_likelihood_loss")
