@@ -6,8 +6,9 @@
 #' @param estimated_probabilities vector of the estimated y_values (i.e., sampled values)
 #' @param output string with the filename
 #' @param dir the directory to plot to
-#' @importFrom graphics lines plot
+#' @importFrom stats density
 #' @importFrom grDevices dev.off pdf
+#' @importFrom graphics lines plot
 #' @export
 OutputPlotGenerator.create_density_plot = function(yValues, estimated_probabilities, estimated_y_values = NULL, output, dir = '~/tmp/osl/') {
   ## plot densitity first:
@@ -53,7 +54,7 @@ OutputPlotGenerator.create_density_plot = function(yValues, estimated_probabilit
 #'
 #' @import ggplot2
 #' @import reshape2
-#' @importFrom graphics plot
+#' @importFrom graphics lines plot
 #' @importFrom grDevices dev.off pdf
 #' @param data the truth  and apporoximations to plot
 #' @param output the filename of the output
@@ -172,13 +173,14 @@ OutputPlotGenerator.create_training_curve = function(historical_cvs, randomVaria
 #' OutputPlotGenerator.create_risk_plot
 #' Function to create plots similar to the ones in the OSL papers
 #' @importFrom stats binomial density terms
-#' @importFrom utils head
 #' @importFrom grDevices dev.off pdf
-#' @importFrom graphics plot
+#' @importFrom graphics lines plot
+#' @importFrom utils head
 #' @param performance a list of list with performances: list 1 the estimators used, list 2 the random variables predicted.
 #' @param output string the filename to use for the plot (without .pdf)
 #' @param dir string the directory to write to
 #' @param make_summary boolean whether or not to sum all error terms to give a summed performance measure
+#'
 #' @export
 OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tmp/osl', make_summary=FALSE, label='total.risk') {
   # Performance should be a list of data.tables:
