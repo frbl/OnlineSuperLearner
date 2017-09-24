@@ -21,11 +21,13 @@ InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
         private$run_parallel <- Arguments$getLogical(run_parallel)
       },
 
-      calculate_intervention_effect = function(osl, interventions, discrete, initial_data, tau) {
-        #for (intervetion in interventions) {
-          #assert_true(InterventionParser.valid_intervention(intervention))
-        #}
-        osl <- Arguments$getInstanceOf(osl, 'OnlineSuperLearner')
+      calculate_intervention_effect = function(osl, interventions, discrete, initial_data, tau, check = FALSE) {
+        if (check) {
+          for (intervetion in interventions) {
+            assert_that(InterventionParser.valid_intervention(intervention))
+          }
+          osl <- Arguments$getInstanceOf(osl, 'OnlineSuperLearner')
+        }
 
         if (is.null(names(interventions))) {
           warning('Provided interventions do not have a name. Please name them for data management. Continuing without any names.')

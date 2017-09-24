@@ -25,90 +25,98 @@ osl <- list(
     lapply(1:tau, function(x) data) %>% rbindlist
   }
 )
+
 class(osl) <- 'OnlineSuperLearner'
 subject <- described.class$new(
   osl = osl,
   randomVariables = randomVariables,
   N = N,
   B = B,
-  pre_processor = pre_processor
+  pre_processor = pre_processor,
+  tau = tau,
+  intervention = intervention,
+  variable_of_interest = Y
 )
 
 context(" initialize")
 test_that("it should succesfully initialize when the correct arguments are provided", {
-  expect_error(described.class$new(osl = osl, 
-                                   randomVariables = randomVariables, 
-                                   N= N, B=B, 
-                                   pre_processor = pre_processor), NA)
+  expect_error(described.class$new(
+    osl = osl,
+    randomVariables = randomVariables,
+    N = N,
+    B = B,
+    pre_processor = pre_processor,
+    tau = tau,
+    intervention = intervention,
+    variable_of_interest = Y
+  ), NA)
 })
 
 context(" perform")
 
 context(" get_h_ratio_estimators")
-#test_that("it should result in the correct output", {
-  #data <- data.table(Y_lag_1 = 2, W=1, A=1, Y=0)
-  #result <- subject$get_h_ratio_estimators(tau = tau,
-                                           #intervention = intervention,
-                                           #data = data)
+test_that("it should result in the correct output", {
+  data <- data.table(Y_lag_1 = 2, W=1, A=1, Y=0)
+  result <- subject$get_h_ratio_estimators(data = data)
 
-  #expect_true(is(result,'list'))
+  expect_true(is(result,'list'))
   
-  ## We should have tau lists of estimators
-  #expect_equal(length(result), tau)
+  # We should have tau lists of estimators
+  expect_equal(length(result), tau)
 
-  ## Each of the tau lists, should have 3 estimators (one for each covariate)
-  #lapply(result,function(entry){
-    #expect_equal(length(result), length(randomVariables))
-    #lapply(entry,function(estimator){
-      #expect_true(is(estimator, 'glm'))
-    #})
-  #})
+  # Each of the tau lists, should have 3 estimators (one for each covariate)
+  lapply(result,function(entry){
+    expect_equal(length(result), length(randomVariables))
+    lapply(entry,function(estimator){
+      expect_true(is(estimator, 'glm'))
+    })
+  })
+})
+
+
+test_that("it should produce sensible estimators in the correct output", {
+  data <- data.table(Y_lag_1 = 2, W=1, A=1, Y=0)
+  osl <- list(
+    sample_iteratively = function(tau, intervention = NULL, ...) {
+      if(is.null(intervention)) {
+        dat <- rnorm(N*4, 1, 0.1)
+      } else {
+        dat <- rnorm(N*4, 1000, 0.1)
+      }
+      data.table(Y_lag_1 = dat[1:N], 
+                 W = dat[(N + 1):(2*N)],
+                 A = dat[(2*N + 1):(3*N)], 
+                 Y = dat[(3*N + 1):(4*N)])
+    }
+  )
+  class(osl) <- 'OnlineSuperLearner'
+
+  subject <- described.class$new(
+    osl = osl,
+    randomVariables = randomVariables,
+    N = N,
+    B = B,
+    pre_processor = pre_processor,
+    tau = tau,
+    intervention = intervention,
+    variable_of_interest = Y
+  )
+  result <- subject$get_h_ratio_estimators(data = data)
+
+  expect_true(is(result,'list'))
   
-#})
+  # We should have tau lists of estimators
+  expect_equal(length(result), tau)
 
-
-#test_that("it should produce sensible estimators in the correct output", {
-  #data <- data.table(Y_lag_1 = 2, W=1, A=1, Y=0)
-  #osl <- list(
-    #sample_iteratively = function(tau, intervention = NULL, ...) {
-      #if(is.null(intervention)) {
-        #dat <- rnorm(N*4, 1, 0.1)
-      #} else {
-        #dat <- rnorm(N*4, 1000, 0.1)
-      #}
-      #data.table(Y_lag_1 = dat[1:N], 
-                 #W = dat[(N + 1):(2*N)],
-                 #A = dat[(2*N + 1):(3*N)], 
-                 #Y = dat[(3*N + 1):(4*N)])
-    #}
-  #)
-  #class(osl) <- 'OnlineSuperLearner'
-
-  #subject <- described.class$new(
-    #osl = osl,
-    #B = B, 
-    #N = N, 
-    #randomVariables = randomVariables,
-    #pre_processor = pre_processor
-  #)
-  #result <- subject$get_h_ratio_estimators(tau = tau,
-                                           #intervention = intervention,
-                                           #data = data)
-
-  #expect_true(is(result,'list'))
-  
-  ## We should have tau lists of estimators
-  #expect_equal(length(result), tau)
-
-  ## Each of the tau lists, should have 3 estimators (one for each covariate)
-  #lapply(result,function(entry){
-    #expect_equal(length(result), length(randomVariables))
-    #lapply(entry,function(estimator){
-      #expect_true(is(estimator, 'glm'))
-      ## TODO: test whether the estimators make sense
-    #})
-  #})
-#})
+  # Each of the tau lists, should have 3 estimators (one for each covariate)
+  lapply(result,function(entry){
+    expect_equal(length(result), length(randomVariables))
+    lapply(entry,function(estimator){
+      expect_true(is(estimator, 'glm'))
+      # TODO: test whether the estimators make sense
+    })
+  })
+})
 
 test_that("it should create the correct estimators -> the ratio should be approx 20 when there is people with certain covariates received treatment more often", {
   set.seed(12345)
@@ -131,14 +139,15 @@ test_that("it should create the correct estimators -> the ratio should be approx
   subject <- described.class$new(
     osl = osl,
     randomVariables = randomVariables,
-    N = 9,
-    B = 10,
-    pre_processor = pre_processor
+    N = N,
+    B = B,
+    pre_processor = pre_processor,
+    tau = tau,
+    intervention = intervention,
+    variable_of_interest = Y
   )
 
-  h_ratio_predictors <- subject$get_h_ratio_estimators(tau = tau,
-                                           intervention = intervention,
-                                           data = data)
+  h_ratio_predictors <- subject$get_h_ratio_estimators(data = data)
 
   result <- lapply(seq(tau), function(s) {
     lapply(randomVariables, function(rv) {
@@ -182,16 +191,17 @@ test_that("it should create the correct estimators -> the ratio should be approx
   subject <- described.class$new(
     osl = osl,
     randomVariables = randomVariables,
-    N = 9,
-    B = 100,
-    pre_processor = pre_processor
+    N = N,
+    B = B,
+    pre_processor = pre_processor,
+    tau = tau,
+    intervention = intervention,
+    variable_of_interest = Y
   )
 
   # Sample just one observation to start with
   data <- osl$sample_iteratively(tau, intervention, data)[1,]
-  h_ratio_predictors <- subject$get_h_ratio_estimators(tau = tau,
-                                           intervention = intervention,
-                                           data = data)
+  h_ratio_predictors <- subject$get_h_ratio_estimators(data = data)
 
   result <- lapply(seq(tau), function(s) {
     lapply(randomVariables, function(rv) {
@@ -232,12 +242,13 @@ test_that("it should create the correct estimators -> the ratio should be approx
     randomVariables = randomVariables,
     N = 9,
     B = 100,
-    pre_processor = pre_processor
+    pre_processor = pre_processor,
+    tau = tau,
+    intervention = intervention,
+    variable_of_interest = Y
   )
 
-  h_ratio_predictors <- subject$get_h_ratio_estimators(tau = tau,
-                                           intervention = intervention,
-                                           data = data)
+  h_ratio_predictors <- subject$get_h_ratio_estimators(data = data)
 
 
   result <- lapply(seq(tau), function(s) {
@@ -263,14 +274,6 @@ test_that("it should create the correct estimators -> the ratio should be approx
 context(" evaluation_of_conditional_expectations")
 test_that("it should perform the evaluation", {
 
-  subject <- described.class$new(
-    osl = osl,
-    B = B, 
-    N = N, 
-    randomVariables = randomVariables,
-    pre_processor = pre_processor
-  )
-
   my_data <- data
   for (i in seq(N)) {
     my_data <- rbind(my_data, data)
@@ -280,10 +283,7 @@ test_that("it should perform the evaluation", {
   hide_warning_test(
     result <- subject$evaluation_of_conditional_expectations(
       h_ratio_predictors = NULL, 
-      variable_of_interest = Y, 
-      data = my_data, 
-      tau = tau, 
-      intervention = intervention)
+      data = my_data)
   )
 
   expect_equal(result, 0)
@@ -302,8 +302,6 @@ test_that("it should perform the evaluation", {
   
 })
 
-
-context(" perform_initial_estimation")
 
 context(" get_next_and_current_rv")
 test_that("it should get the next and the current random variable without overflowing the S", {
@@ -327,13 +325,5 @@ test_that("it should get the next and current random variable with overvlowing t
   expect_equal(result$next_rv, randomVariables[[1]])
   expect_equal(result$s_offset, 1)
 })
-
-
-
-
-
-
-
-
 
 

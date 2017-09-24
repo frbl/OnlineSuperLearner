@@ -323,10 +323,14 @@ ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, ..
     ##2 * wt * (y * log(y/mu) + (1-y) * log((1-y)/(1-mu)))
   #}
 
+  ## First try speed glm. In case that fails, try the constrained version. In case that fails, try the normal glm.
   the_glm <- tryCatch({
-    glm(formula = formula, family = family, data=data, ...)
+      # TODO: we'd need to use a different method here. The regular GLM does not support online updating. However, speedglm crashes more often. 
+      #speedglm::speedglm(formula = formula, data = data, family = family, method='Cholesky', ...)
+      glm(formula = formula, family = family, data=data, ...)
   }, error = function(e) {
     if (fall_back_to_glm) {
+      warning('Falling back to old glm function (speed glm failed)')
       return(glm(formula = formula, family = binomial(), data=data, ...))
     }
     stop(e)

@@ -594,27 +594,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         sample_iteratively = function(data, randomVariables, tau = 10, intervention = NULL, discrete = TRUE, 
                                       return_type = 'observations', 
                                       start_from_variable = NULL,
-                                      start_from_time = 1) {
-
-          ## Check whether the parameters are correct
-          randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
-          randomVariables <- RandomVariable.find_ordering(randomVariables)
-
-          tau             <- Arguments$getNumerics(tau, c(1,Inf))
-          start_from_time <- Arguments$getNumerics(start_from_time, c(1,tau))
-
-          ## Check whether the return type is one of the prespecified ones
-          return_type <- Arguments$getCharacters(return_type)
-          valid_return_types <- c('observations', 'full', 'summary_measures')
-          if (!return_type %in% valid_return_types) {
-            throw('Return type should be in', valid_return_types)
-          }
-
-          if(!is.null(intervention) && !InterventionParser.valid_intervention(intervention)) {
-            throw('The intervention specified is not correct! it should have a
-                  when (specifying t), a what (specifying the intervention) and
-                  a variable (specifying the name of the variable to intervene on).')
-          }
+                                      start_from_time = 1, check=FALSE) {
 
           ## If no random variable to start from is provided, just start from
           ## the first one. Note the ordering which is done at the top of this
@@ -622,7 +602,30 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           if (is.null(start_from_variable)) {
             start_from_variable <- randomVariables[[1]]
           }
-          start_from_variable <- Arguments$getInstanceOf(start_from_variable, 'RandomVariable')
+
+          ## Check whether the parameters are correct
+          if(check) {
+            start_from_variable <- Arguments$getInstanceOf(start_from_variable, 'RandomVariable')
+            randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
+            tau             <- Arguments$getNumerics(tau, c(1,Inf))
+            start_from_time <- Arguments$getNumerics(start_from_time, c(1,tau))
+
+            ## Check whether the return type is one of the prespecified ones
+            return_type <- Arguments$getCharacters(return_type)
+            valid_return_types <- c('observations', 'full', 'summary_measures')
+            if (!return_type %in% valid_return_types) {
+              throw('Return type should be in', valid_return_types)
+            }
+
+            if(!is.null(intervention) && !InterventionParser.valid_intervention(intervention)) {
+              throw('The intervention specified is not correct! it should have a
+                    when (specifying t), a what (specifying the intervention) and
+                    a variable (specifying the name of the variable to intervene on).')
+            }
+          }
+
+          ## The variables need to be ordered when sampling from them
+          randomVariables <- RandomVariable.find_ordering(randomVariables)
 
           result <- data.table()
           result_denormalized_observations <- data.table(matrix(nrow=0, ncol=length(randomVariables)))

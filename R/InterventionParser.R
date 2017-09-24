@@ -7,17 +7,20 @@
 #' @param intervention the intervention to give \code{list(variable, when, what)}
 #' @param current_time integer with the current time
 #' @param current_outcome the current random variable
+#' @param check boolean perform checks on the input variables
 #' @return a list with when, what and if an intervention should be given at this time (\code{list(when, what, should_intervene)})
-InterventionParser.parse_intervention <- function(intervention, current_time, current_outcome) {
+InterventionParser.parse_intervention <- function(intervention, current_time, current_outcome, check = FALSE) {
   when <- -1
   what <- -1
   # If no intervention is provided, we should never intervene
   if (is.null(intervention)) {
     return(list(when = when, what = what, should_intervene = FALSE))
   }
-  intervention <- Arguments$getInstanceOf(intervention, 'list')
-  current_time <- Arguments$getInteger(current_time)
-  current_outcome <- Arguments$getCharacters(current_outcome)
+  if(check) {
+    intervention <- Arguments$getInstanceOf(intervention, 'list')
+    current_time <- Arguments$getInteger(current_time)
+    current_outcome <- Arguments$getCharacters(current_outcome)
+  }
 
   if(!is.null(intervention) && current_outcome %in% intervention$variable ) {
     var_idx <- which(intervention$variable == current_outcome)

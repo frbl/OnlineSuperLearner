@@ -56,16 +56,18 @@
 #' }  
 #' @docType class
 #' @include ConstrainedGlm.R
+#' @import methods
+#' @import R.oo
+#' @import R.utils
 #' @importFrom R6 R6Class
 #' @importFrom speedglm speedlm updateWithMoreData
 OneStepEstimator <- R6Class("OneStepEstimator",
   public =
     list(
-      initialize = function(osl, randomVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE) {
-        private$verbose <- Arguments$getVerbose(-8, timestamp=TRUE)
+      initialize = function(osl, randomVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE, verbose = FALSE) {
         private$osl <- Arguments$getInstanceOf(osl, 'OnlineSuperLearner')
 
-        private$N <- N##Arguments$getInteger(N, c(1, Inf))
+        private$N <- Arguments$getInteger(N, c(1, Inf))
         private$B <- B##Arguments$getIngeger(B, c(1, Inf))
         private$discrete <- Arguments$getLogical(discrete)
         private$randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
@@ -73,6 +75,9 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         private$tau <- tau
         private$intervention <- intervention
         private$variable_of_interest <- Arguments$getCharacters(variable_of_interest$getY)
+        private$is_parallel <- TRUE
+        private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
+        #private$verbose <- Arguments$getVerbose(-8, timestamp=TRUE)
       },
 
       perform = function(initial_estimate, data) {
@@ -122,6 +127,8 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       get_h_ratio_estimators = function(data, last_h_ratio_estimators = NULL) {
         private$verbose && enter(private$verbose, 'Getting the h-ratio estimators')
 
+        `%looping_function%` <- private$get_looping_function()
+
         ## We first sample $B$ observations from $P^N$ (that is, N blocks of
         ## summary relevant history) and then $BN$ observations from $P^N_{s,a}
         ## (that is, $B * N * \tau$ blocks$ of relevant history).
@@ -142,7 +149,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         O_0 <- data[1,]
         ## Run B iterations on O_0 (always start from the same data
-        Osample_p <- foreach(b = seq(1:self$get_B), .combine = rbind) %dopar% {
+        Osample_p <- foreach(b = seq(1:self$get_B), .combine = rbind) %looping_function% {
           ## TODO: Note that the summary measures we currently collect are
           ## NORMALIZED. I think that this does not matter for calculating the
           ## h-ratios as the ratio stays the same (it might even work better),
@@ -168,7 +175,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         ## Because we use $BN$ observations in the previous sampling step, we
         ## should also draw BN observations from P^N_{s,a}.
-        Osample_p_star <- foreach(b = seq(self$get_B * self$get_N), .combine = rbind) %dopar% {
+        Osample_p_star <- foreach(b = seq(self$get_B * self$get_N), .combine = rbind) %looping_function% {
           private$verbose && cat(private$verbose, 'PN* sample - iteration ', b)
           current <- self$get_osl$sample_iteratively(data = O_0,
                                                      randomVariables = self$get_randomVariables,
@@ -233,6 +240,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       },
 
       evaluation_of_conditional_expectations = function(h_ratio_predictors, data) {
+        `%looping_function%` <- private$get_looping_function()
         private$verbose && enter(private$verbose, 'Evaluating the conditional expectations')
 
         ## We have to create the conditional expectations using each of the
@@ -240,7 +248,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         influence_curve_for_each_rv <- c()
 
         ## This is the outer loop of the influence curve
-        efficient_influence_curve <- foreach(t=seq(self$get_N), .combine='sum') %do% {
+        efficient_influence_curve <- foreach(t=seq(self$get_N), .combine='sum') %looping_function% {
           private$verbose && cat(private$verbose, 'Efficient influence curve iteration ', t)
           current_dat <- data[t,]
 
@@ -286,6 +294,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         assert_that(!is.null(data))
         hide_warning_rank_deficient_fit_prediction({
+          ## Make the actual prediction
           h_ratio <- predict(predictor_or_na, newdata = data, type='response') %>% as.numeric
         })
 
@@ -369,6 +378,14 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       intervention = NULL,
       last_oos_estimate = NULL,
       last_h_ratio_estimators = NULL,
+      is_parallel = NULL,
+
+      get_looping_function = function() {
+        if(private$is_parallel) {
+          return(`%dopar%`)
+        }
+        return(`%do%`)
+      },
 
       get_influence_curve_for_one_random_variable = function(s, dat, h_ratio_predictors, current_rvs) {
         ## Get the formula ant output name so we can retrieve the prediction mechanism.

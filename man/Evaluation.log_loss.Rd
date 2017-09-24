@@ -4,7 +4,7 @@
 \alias{Evaluation.log_loss}
 \title{Log loss evaluation metric}
 \usage{
-Evaluation.log_loss(data.observed, data.predicted, eps = 1e-15)
+Evaluation.log_loss(data.observed, data.predicted, eps = 0.001)
 }
 \arguments{
 \item{data.observed}{the true data (Y)}
