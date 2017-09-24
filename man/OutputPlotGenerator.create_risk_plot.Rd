@@ -5,14 +5,17 @@
 \title{OutputPlotGenerator.create_risk_plot
 Function to create plots similar to the ones in the OSL papers}
 \usage{
-OutputPlotGenerator.create_risk_plot(performance, output, dir = "~/tmp/osl")
+OutputPlotGenerator.create_risk_plot(performance, output, dir = "~/tmp/osl",
+  make_summary = FALSE, label = "total.risk")
 }
 \arguments{
-\item{performance}{the performances as as calculated using crossvalidation. See the \code{CrossValidationRiskCalculator} class.}
+\item{performance}{a list of list with performances: list 1 the estimators used, list 2 the random variables predicted.}
 
-\item{output}{the name of the output file}
+\item{output}{string the filename to use for the plot (without .pdf)}
 
-\item{dir}{the dir to write the output file to}
+\item{dir}{string the directory to write to}
+
+\item{make_summary}{boolean whether or not to sum all error terms to give a summed performance measure}
 }
 \description{
 OutputPlotGenerator.create_risk_plot
