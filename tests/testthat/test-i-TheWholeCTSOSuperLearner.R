@@ -12,7 +12,7 @@ test_that("it should estimate the true treatment", {
   # we generate number of blocks observations
   condensier_options(parfit=FALSE)
   options(warn=-1)
-  set.seed(12345)
+  doRNG::registerDoRNG(12345)
 
   # Number of cores available
   cores = detectCores()

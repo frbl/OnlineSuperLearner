@@ -33,6 +33,8 @@ Imports:
     assertthat,
     xgboost,
     speedglm,
+    randomForest,
+    e1071,
     glmnet,
     nloptr,
     future,
@@ -46,6 +48,7 @@ Imports:
     reshape2,
     digest
 Suggests:
+    doRNG,
     roxygen2,
     testthat,
     mockery
@@ -75,6 +78,8 @@ Collate:
     'ML.H2O.glm.R'
     'ML.H2O.randomForest.R'
     'ML.Local.Speedlm.R'
+    'ML.SVM.R'
+    'ML.randomForest.R'
     'OneStepEstimator.R'
     'OnlineSuperLearner.Predict.R'
     'WCC.SGD.Simplex.R'
