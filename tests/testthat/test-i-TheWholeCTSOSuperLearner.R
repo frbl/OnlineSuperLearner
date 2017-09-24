@@ -145,7 +145,7 @@ test_that("it should estimate the true treatment", {
 
   print(paste('Approximation:', psi.approx, 'estimation:', psi.estimation, 'difference:', abs(psi.approx - psi.estimation)))
 
-  expect_lt((abs(psi.approx - psi.estimation)),  0.1)
+  expect_lt((abs(psi.approx - psi.estimation)),  0.2)
 
 })
 
