@@ -6,6 +6,8 @@
 #' @import purrr
 #' @include ML.XGBoost.R
 #' @include ML.Local.lm.R
+#' @include ML.randomForest.R
+#' @include ML.SVM.R
 #' @section Methods:
 #' \describe{
 #'   \item{\code{new(ML.models.allowed = c('ML.H2O.glm', 'ML.Local.lm', 'ML.XGBoost.glm'))}}{
@@ -161,6 +163,8 @@ LibraryFactory <- R6Class("LibraryFactory",
                                                     'ML.H2O.glm',
                                                     'ML.GLMnet',
                                                     'ML.H2O.randomForest',
+                                                    'ML.randomForest',
+                                                    'ML.SVM',
                                                     'ML.Local.Speedlm',
                                                     'ML.Local.lm',
                                                     'ML.XGBoost'), verbose = FALSE) {

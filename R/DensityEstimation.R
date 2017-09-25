@@ -131,7 +131,6 @@ DensityEstimation <- R6Class ("DensityEstimation",
           ##   # datO[is.na(datO)] <- 0
           ## }
 
-
           # Outcome (sampled_data) is a vector of samples
           sampled_data <- condensier::sample_value(conditionalDensity, datO)
 

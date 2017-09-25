@@ -1,6 +1,4 @@
 #' InterventionEffectCalculator
-#'
-#' 
 #'   \item{\code{perform_initial_estimation(data, intervention, tau) }}{ 
 #'     This function can be used to generate an initial estimation, calculated using the plain OSL. This method then
 #'     returns a value given the provided data, tau, and intervention.
@@ -14,11 +12,11 @@
 InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
   public =
     list(
-      initialize = function(bootstrap_iterations, randomVariables, outcome_variable, run_parallel = TRUE) {
+      initialize = function(bootstrap_iterations, randomVariables, outcome_variable, is_parallel = FALSE) {
         private$bootstrap_iterations <- Arguments$getInteger(bootstrap_iterations, c(1, Inf))
         private$randomVariables <- Arguments$getInstanceOf(randomVariables,'list')
         private$outcome_variable <- Arguments$getCharacters(outcome_variable)
-        private$run_parallel <- Arguments$getLogical(run_parallel)
+        private$is_parallel <- Arguments$getLogical(is_parallel)
       },
 
       calculate_intervention_effect = function(osl, interventions, discrete, initial_data, tau, check = FALSE) {
@@ -57,7 +55,7 @@ InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
   active =
     list(
       is_running_parallel = function() {
-        private$run_parallel
+        private$is_parallel
       },
       get_bootstrap_iterations = function() {
         private$bootstrap_iterations
@@ -71,33 +69,35 @@ InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
     ),
   private =
     list(
-      run_parallel = NULL,
+      is_parallel = NULL,
       bootstrap_iterations = NULL,
       randomVariables = NULL,
       outcome_variable = NULL,
-      evaluate_single_intervention = function(osl, initial_data, intervention, tau, outcome_variable, discrete) {
+
+      get_looping_function = function() {
         if(self$is_running_parallel) {
-          # Note that this won't work when we have an H2O estimator in the set. The parallelization will fail.
-          result <- foreach(i=seq(self$get_bootstrap_iterations), .combine=rbind) %dopar% {
-            cat('Approximating estimation in iteration (under intervention, in parallel): ', i)
-            osl$sample_iteratively(data = initial_data,
-                                  randomVariables = self$get_random_variables,
-                                  intervention = intervention,
-                                  discrete = discrete,
-                                  tau = tau)[tau, self$get_outcome_variable, with=FALSE]
-          } 
-        } else {
-          result <- foreach(i=seq(self$get_bootstrap_iterations), .combine=rbind) %do% {
-            cat('Approximating estimation in iteration (under intervention, not parallel): ', i)
-            osl$sample_iteratively(data = initial_data,
-                                  randomVariables = self$get_random_variables,
-                                  intervention = intervention,
-                                  discrete = discrete,
-                                  tau = tau)[tau, self$get_outcome_variable, with=FALSE]
-          } 
+          return(`%dopar%`)
         }
-        
-        result %>%
+        return(`%do%`)
+      },
+
+      evaluate_single_intervention = function(osl, initial_data, intervention, tau, outcome_variable, discrete) {
+        `%looping_function%` <- private$get_looping_function()
+
+        if(self$is_running_parallel) {
+          cat('Approximating estimation (under intervention, in parallel) \n')
+        } else {
+          cat('Approximating estimation (under intervention, not parallel) \n')
+        }
+        # Note that this won't work when we have an H2O estimator in the set. The parallelization will fail.
+        result <- foreach(i=seq(self$get_bootstrap_iterations), .combine=rbind) %looping_function% {
+          cat('Approximation iteration:', i, '\n')
+          osl$sample_iteratively(data = initial_data,
+                                randomVariables = self$get_random_variables,
+                                intervention = intervention,
+                                discrete = discrete,
+                                tau = tau)[tau, self$get_outcome_variable, with=FALSE]
+        } %>%
           unlist
       }
     )

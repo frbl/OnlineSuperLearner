@@ -24,20 +24,20 @@ ML.randomForest <- R6Class("ML.randomForest",
   private =
     list(
         do.fit = function(X_mat, Y_vals) {
-          randomForest(x = X_mat, y = Y_vals)
+          randomForest(x = X_mat, y = as.factor(Y_vals))
         },
 
-        do.update = function(m.fit, X_mat, Y_vals) {
-          updateWithMoreData(m.fit, X = X_mat, y = Y_vals)
-        },
+        #do.update = function(m.fit, X_mat, Y_vals) {
+          #updateWithMoreData(m.fit, X = X_mat, y = Y_vals)
+        #},
 
         do.predict = function(X_mat, m.fit) {
           if (any(is.na(m.fit$coef))) {
             result <- super$do.predict(X_mat, m.fit)
           } else {
-            result <- predict(m.fit, X_mat, type="response")
+            result <- predict(m.fit$coef, X_mat, type="response")
           }
-          if(any(is.na(result))) browser()
+          if(any(is.na(result)) || any(is.null(result))) browser()
           return(result)
         }
     )

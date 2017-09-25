@@ -124,13 +124,23 @@ OutputPlotGenerator.create_training_curve = function(historical_cvs, randomVaria
     the_names <- names(rv_result[[1]])
     for (name_id in seq_along(the_names)) {
       name <- the_names[[name_id]]
-      name_list <- c(name_list, letters[name_id])
-      the_key <- paste('algorithm', letters[name_id], sep='_') 
+      name_list <- c(name_list, name_id)
+      the_key <- paste('algorithm', name_id, sep='_') 
       OutputPlotGenerator.export_key_value(the_key, name)
     }
     
     colnames(dt) <- name_list
-    dt <- data.table(dt)
+    dt= tryCatch({
+    data.table(dt)
+      
+    }, warning = function(w) {
+      
+    }, error = function(e) {
+      browser()
+      
+    }, finally = {
+       
+    })
     dt[, id := seq(1, length(rv_result))]
 
     test_data_long <- reshape2::melt(dt, id='id')

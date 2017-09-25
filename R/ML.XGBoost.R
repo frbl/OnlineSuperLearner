@@ -73,6 +73,7 @@ ML.XGBoost <- R6Class("ML.XGBoost",
         #result <- ifelse(any(is.na(m.fit$coef)),
                          #super$do.predict(X_mat, m.fit),
                          #predict(m.fit$coef, X_mat))
+        if(!('Intercept' %in% colnames(X_mat))) browser()
         if (any(is.na(m.fit$coef))) {
           result <- super$do.predict(X_mat, m.fit)
         } else {

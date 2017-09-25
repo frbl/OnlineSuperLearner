@@ -24,16 +24,17 @@ ML.SVM <- R6Class("ML.SVM",
   private =
     list(
         do.fit = function(X_mat, Y_vals) {
-          svm(x= X_mat, y = Y_vals, probability = TRUE)
+          svm(x= X_mat, y = Y_vals, probability = TRUE, scale=FALSE, type='C-classification')
         },
 
         do.predict = function(X_mat, m.fit) {
+          if(!('Intercept' %in% colnames(X_mat))) browser()
           if (any(is.na(m.fit$coef))) {
             result <- super$do.predict(X_mat, m.fit)
           } else {
-            result <- predict(m.fit, X_mat)
+            result <- predict(m.fit$coef, X_mat)
           }
-          if(any(is.na(result))) browser()
+          if(any(is.na(result)) || any(is.null(result))) browser()
           return(result)
         }
     )
