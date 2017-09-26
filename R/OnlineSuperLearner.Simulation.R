@@ -3,7 +3,6 @@
 #' suppressWarnings(devtools::load_all()); OnlineSuperLearner.Simulation$new()
 #'
 #' @docType class
-#' @import profvis
 #' @importFrom R6 R6Class
 #' @importFrom condensier condensier_options
 #' @importFrom doParallel registerDoParallel
