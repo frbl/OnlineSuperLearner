@@ -3,6 +3,7 @@
 #' suppressWarnings(devtools::load_all()); OnlineSuperLearner.Simulation$new()
 #'
 #' @docType class
+#' @import profvis
 #' @importFrom R6 R6Class
 #' @importFrom condensier condensier_options
 #' @importFrom doParallel registerDoParallel
@@ -49,9 +50,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
 
           alphas <- runif(5,0,1)
-          algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                                  algorithm_params = list(alpha = alphas), 
-                                  params = list(nbins = nbins, online = TRUE))))
+          #algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
+                                  #algorithm_params = list(alpha = alphas), 
+                                  #params = list(nbins = nbins, online = TRUE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
                                   #algorithm_params = list(ntrees=c(10,20), min_rows=1),
@@ -61,13 +62,13 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   #algorithm_params = list(ntrees=c(10,20)),
                                   #params = list(nbins = nbins, online = TRUE))))
 
-          algos <- append(algos, list(list(algorithm = 'ML.SVM',
+          #algos <- append(algos, list(list(algorithm = 'ML.SVM',
                                   #algorithm_params = list(),
-                                  params = list(nbins = c(39, 40), online = FALSE))))
+                                  #params = list(nbins = c(39, 40), online = FALSE))))
 
-          algos <- append(algos, list(list(algorithm = 'ML.randomForest',
+          #algos <- append(algos, list(list(algorithm = 'ML.randomForest',
                                   #algorithm_params = list(),
-                                  params = list(nbins = c(39, 40), online = FALSE))))
+                                  #params = list(nbins = c(39, 40), online = FALSE))))
 
           algos <- append(algos, list(list(algorithm = 'ML.Local.Speedlm',
                                   #algorithm_params = list(),

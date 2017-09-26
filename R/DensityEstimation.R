@@ -65,6 +65,9 @@
 #'   }
 #' }  
 DensityEstimation <- R6Class ("DensityEstimation",
+  #class = FALSE,
+  #cloneable = FALSE,
+  #portable = FALSE,
   private =
     list(
         ## Variables
@@ -101,7 +104,6 @@ DensityEstimation <- R6Class ("DensityEstimation",
           ## Predict the instances where A=A (i.e., the outcome is the outcome)
           ## NOTE! These estimated probabilities contain NAs whenever an estimator was fitted without any data.
           estimated_probabilities <- condensier::predict_probability(conditionalDensity, datO)
-
           ## We undo our fix here:
           ## if(fixed) { estimated_probabilities <- estimated_probabilities[[1]] }
 
