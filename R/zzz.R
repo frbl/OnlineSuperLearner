@@ -38,6 +38,11 @@ hide_warning_rank_deficient_fit_prediction <- function(the_function){
   withCallingHandlers(the_function, warning = h)
 }
 
+hide_warning_rank_deficient_matrix <- function(the_function){
+  h <- function(w) if( any( grepl( "the matrix is either rank-deficient or indefinite", w) ) ) invokeRestart( "muffleWarning" )
+  withCallingHandlers(the_function, warning = h)
+}
+
 hide_warning_probabilities_numerically_zero_or_one <- function(the_function){
   h <- function(w) if( any( grepl( "fitted probabilities numerically 0 or 1 occurred", w) ) ) invokeRestart( "muffleWarning" )
   withCallingHandlers(the_function, warning = h)

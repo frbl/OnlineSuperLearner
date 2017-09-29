@@ -10,7 +10,7 @@ WCC.SGD.Simplex <- R6Class("WCC.SGD.Simplex",
   inherit = WeightedCombinationComputer,
   public =
     list(
-      initialize = function(weights.initial, step_size = 0.01, auto_update_stepsize = FALSE, iterations = 1000) {
+      initialize = function(weights.initial, step_size = 0.01, auto_update_stepsize = FALSE, iterations = 100) {
         if(is.null(weights.initial)){
           throw('Please provide initial weights (or NA vector with the correct size)')
         } else if (!all(is.na(weights.initial))) {

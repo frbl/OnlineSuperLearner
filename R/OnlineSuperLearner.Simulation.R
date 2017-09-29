@@ -27,7 +27,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           options(warn=1)
           private$sim  <- Simulator.GAD$new()
-          private$training_set_size <- 1e2
+          private$training_set_size <- 1e3
 
           OutputPlotGenerator.export_key_value('training-set-size', private$training_set_size)
           private$cv_risk_calculator <- CrossValidationRiskCalculator$new()
@@ -176,7 +176,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           private$train(intervention = intervention,
                         control = control,
-                        randomVariables, Y,  max_iterations = 12,
+                        randomVariables, Y,  max_iterations = 100,
                         llW = llW,
                         llA = llA, 
                         llY = llY,
@@ -428,7 +428,6 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           data.test <- private$sim$simulateWAY(private$test_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
           data.train <- private$sim$simulateWAY(private$training_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=private$log)
 
-
           # Create the bounds
           bounds <- PreProcessor.generate_bounds(data.train)
 
@@ -454,7 +453,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           private$log && cat(private$log, 'Running OSL')
 
           initial_training_set_size <- floor(private$training_set_size / 2)
-          mini_batch_size <- (private$training_set_size / 2) / max_iterations
+          mini_batch_size <- max((private$training_set_size / 2) / max_iterations, 1)
           mini_batch_size <- ifelse(is.na(mini_batch_size) || is.infinite(mini_batch_size), 1, floor(mini_batch_size))
 
           # Store the configuration
@@ -507,11 +506,11 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           data.train.set <- summaryMeasureGenerator$getNext(private$training_set_size)
 
           tau <- 2
-          B <- 500
+          B <- 100
           N <- 100 
           if(configuration %in% c(1,3)) {
-            B <- 10
-            N <- 50
+            B <- 1000
+            N <- 90
           }
 
           OutputPlotGenerator.export_key_value(output=key_output, 'iterations', B)
@@ -534,19 +533,19 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                         #plot = TRUE)[[1]]
 
           cat('Approximating truth...\n')
-          result.approx <- foreach(i=seq(B), .combine=rbind) %dopar% {
-            cat('Approximating truth in iteration (under intervention): ', i)
+          result.approx <- foreach(i=seq(B)) %dopar% {
+            cat('Approximating truth in iteration (under intervention): ', i, '\n')
             data.int <- private$sim$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
                                               intervention = intervention, verbose = FALSE)
             data.int$Y[tau]
-          }
+          } %>% unlist
 
-          result.approx_control <- foreach(i=seq(B), .combine=rbind) %dopar% {
-            cat('Approximating truth in iteration (under control): ', i)
+          result.approx_control <- foreach(i=seq(B)) %dopar% {
+            cat('Approximating truth in iteration (under control): ', i, '\n')
             data.int <- private$sim$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
                                               intervention = control, verbose = FALSE)
             data.int$Y[tau]
-          }
+          } %>% unlist
 
           interventions <- list(intervention = intervention,
                                 control = control)
@@ -561,21 +560,22 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           result.dosl_control <- result.dosl.full$control
 
 
-          run_osl <- FALSE
+          run_osl <- TRUE
           if(run_osl) {
             result.osl.full <- intervention_effect_caluculator$calculate_intervention_effect(osl = osl,
                                                                           interventions = interventions, 
                                                                           discrete = FALSE, 
-                                                                          initial_data = data.train.set[1,])
+                                                                          initial_data = data.train.set[1,],
+                                                                          tau = tau)
 
-            result.osl <- result.dosl.full$intervention          
-            result.osl_control <- result.dosl.full$control
+            result.osl <- result.osl.full$intervention          
+            result.osl_control <- result.osl.full$control
           } else {
             result.osl <- rep(0.5, B)
             result.osl_control <- rep(0.5, B)
           }
 
-          # Plot the convergence
+          # # Plot the convergence
           data <- list(truth = result.approx, dosl = result.dosl, osl = result.osl)
           OutputPlotGenerator.create_convergence_plot(data = data,
                                                       output = paste('convergence_configuration',configuration,sep='_'))

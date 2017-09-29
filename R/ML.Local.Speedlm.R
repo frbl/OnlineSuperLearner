@@ -25,10 +25,11 @@ ML.Local.Speedlm <- R6Class("ML.Local.Speedlm",
     list(
         do.fit = function(X_mat, Y_vals) {
           # , maxit=1000
-          suppressWarnings(
+          #suppressWarnings(
+          hide_warning_rank_deficient_matrix({
             m.fit <- speedglm::speedglm.wfit(X = X_mat, y = Y_vals, family = binomial(), 
                                               method='Cholesky')
-          )
+          })
           m.fit$coef
         },
 

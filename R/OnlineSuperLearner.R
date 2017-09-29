@@ -1,4 +1,4 @@
-#devtools::load_all('~/Workspace/osofr/condensier')
+devtools::load_all('~/Workspace/osofr/condensier')
 
 #' OnlineSuperLearner
 #'
@@ -134,7 +134,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## =========
         ## The R.cv score of the current fit
         ## default_wcc = WCC.SGD.Simplex,
-        default_wcc = WCC.NMBFGS,
+        default_wcc = WCC.SGD.Simplex,
         cv_risk = NULL,
         historical_cv_risk = NULL,
         cv_risk_count = NULL,
@@ -207,21 +207,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           })
         },
 
-        ## Updates the data cache with the new observations. This function only
-        ## updates the cache if not all estimators are online. It tells the user
-        ## if it has updated by the boolean it returns.
-        ## @param newdata the new data to add to the cache
-        ## @return boolean whether or not it actually needed to update the cache.
-        update_cache = function(newdata) {
-          if (self$is_online) {
-            ## If we are truly online, just cache the last entry
-            private$data_cache <- newdata
-            return(FALSE)
-          }
-          private$data_cache <- rbindlist(list(private$data, newdata))
-          return(TRUE)
-        },
-
         ## Train using all estimators separately.
         ## Postcondition: each of our density estimators will have a fitted conditional
         ## density in them for each of our random vars WAY *AND IT SHOULD DO THIS FOR ALL
@@ -236,11 +221,14 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$verbose && enter(private$verbose, 'Training all estimators')
           
           # If not all estimators are online, we have to keep track of a cache of data.
-          private$update_cache(newdata = data)
+          self$update_cache(newdata = data)
+
+          # Retrieve the cached data, so we can reuse it
+          if(!self$is_online) cache <- self$get_data_cache
 
           #private$SL.library.fabricated <- mclapply(private$SL.library.fabricated, function(estimator) {
-          for(estimator in private$SL.library.fabricated) {
-          #estimators <- foreach(estimator=private$SL.library.fabricated) %dopar% {
+          #for(estimator in private$SL.library.fabricated) {
+          estimators <- foreach(estimator=private$SL.library.fabricated) %do% {
             if(self$is_fitted && estimator$is_online) {
               # Note that we use the data here, and not the cache, as
               # essentially this cache will be  empty if none of the algorithms
@@ -248,12 +236,12 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
               # update the estimator.
               estimator$update(data)
             } else {
-              estimator$fit(private$data_cache, randomVariables = randomVariables)
+              estimator$fit(cache, randomVariables = randomVariables)
             }
             estimator
           }
-          #names(estimators) <- names(private$SL.library.fabricated)
-          #private$SL.library.fabricated <- estimators
+          names(estimators) <- names(private$SL.library.fabricated)
+          private$SL.library.fabricated <- estimators
           #}, mc.cores = 23)
           private$verbose && exit(private$verbose)
         },
@@ -487,6 +475,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$historical_cv_risk
         },
 
+        get_data_cache = function() {
+          private$data_cache
+        },
+
         info = function() {
           if (!self$is_fitted) {
             print('Fit the algorithm first')
@@ -576,6 +568,22 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         set_verbosity = function(verbosity) {
           private$verbose = verbosity
+        },
+
+        ## Updates the data cache with the new observations. This function only
+        ## updates the cache if not all estimators are online. It tells the user
+        ## Public so it can be tested easily
+        ## if it has updated by the boolean it returns.
+        ## @param newdata the new data to add to the cache
+        ## @return boolean whether or not it actually needed to update the cache.
+        update_cache = function(newdata) {
+          if (self$is_online) {
+            ## If we are truly online, just cache the last entry
+            private$data_cache <- newdata
+            return(FALSE)
+          }
+          private$data_cache <- rbindlist(list(self$get_data_cache, newdata))
+          return(TRUE)
         },
 
         ## Samples the data iteratively from the fitted distribution, and applies an intervention if necessary

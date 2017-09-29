@@ -67,7 +67,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
   portable = FALSE,
   public =
     list(
-      initialize = function(osl, randomVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE, parallel= TRUE, verbose = FALSE) {
+      initialize = function(osl, randomVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE, parallel= FALSE, verbose = FALSE) {
         private$osl <- Arguments$getInstanceOf(osl, 'OnlineSuperLearner')
 
         private$N <- Arguments$getInteger(N, c(1, Inf))
