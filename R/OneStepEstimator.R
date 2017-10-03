@@ -62,9 +62,12 @@
 #' @importFrom R6 R6Class
 #' @importFrom speedglm speedlm updateWithMoreData
 OneStepEstimator <- R6Class("OneStepEstimator",
+  class = FALSE,
+  cloneable = FALSE,
+  portable = FALSE,
   public =
     list(
-      initialize = function(osl, randomVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE, verbose = FALSE) {
+      initialize = function(osl, randomVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE, parallel= FALSE, verbose = FALSE) {
         private$osl <- Arguments$getInstanceOf(osl, 'OnlineSuperLearner')
 
         private$N <- Arguments$getInteger(N, c(1, Inf))
@@ -75,7 +78,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         private$tau <- tau
         private$intervention <- intervention
         private$variable_of_interest <- Arguments$getCharacters(variable_of_interest$getY)
-        private$is_parallel <- TRUE
+        private$is_parallel <- parallel
         private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
         #private$verbose <- Arguments$getVerbose(-8, timestamp=TRUE)
       },

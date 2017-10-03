@@ -136,6 +136,8 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
         normalized_results <- list()
         denormalized_results <- list()
         for (estimator in sl_library) {
+          private$verbose && cat(private$verbose, 'Predicting with ', estimator$get_name)
+
           result <- private$predict_with_one_estimator(estimator = estimator,
                                              data = data,
                                              sample = sample,
@@ -165,8 +167,8 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
       predict_with_one_estimator = function(estimator, data, sample, plot) {
         # TODO: Unity in export formats. Probably the best is to enforce a data.table output
         normalized_result <- estimator$predict(data, 
-                                               sample = sample, 
-                                               plot = plot) %>%
+                          sample = sample, 
+                          plot = plot) %>%
           as.data.table
         denormalized_result <- private$denormalize(copy(normalized_result))
 

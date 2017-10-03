@@ -31,6 +31,8 @@ InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
           warning('Provided interventions do not have a name. Please name them for data management. Continuing without any names.')
         }
 
+        cat('Starting evaluation for ', ifelse(discrete, 'discrete', 'continuous'), ' superlearner.\n')
+
         lapply(interventions, function(intervention) {
           private$evaluate_single_intervention(osl = osl,
                                                initial_data = initial_data,
@@ -92,11 +94,11 @@ InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
         # Note that this won't work when we have an H2O estimator in the set. The parallelization will fail.
         result <- foreach(i=seq(self$get_bootstrap_iterations), .combine=rbind) %looping_function% {
           cat('Approximation iteration:', i, '\n')
-          osl$sample_iteratively(data = initial_data,
-                                randomVariables = self$get_random_variables,
-                                intervention = intervention,
-                                discrete = discrete,
-                                tau = tau)[tau, self$get_outcome_variable, with=FALSE]
+            osl$sample_iteratively(data = initial_data,
+                                  randomVariables = self$get_random_variables,
+                                  intervention = intervention,
+                                  discrete = discrete,
+                                  tau = tau)[tau, self$get_outcome_variable, with=FALSE]
         } %>%
           unlist
       }

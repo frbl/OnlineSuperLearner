@@ -48,7 +48,6 @@ Imports:
     reshape2,
     digest
 Suggests:
-    doRNG,
     roxygen2,
     testthat,
     mockery

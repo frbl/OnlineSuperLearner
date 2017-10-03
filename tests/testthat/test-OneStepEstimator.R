@@ -35,7 +35,8 @@ subject <- described.class$new(
   pre_processor = pre_processor,
   tau = tau,
   intervention = intervention,
-  variable_of_interest = Y
+  variable_of_interest = Y,
+  parallel = FALSE
 )
 
 context(" initialize")
@@ -99,7 +100,8 @@ test_that("it should produce sensible estimators in the correct output", {
     pre_processor = pre_processor,
     tau = tau,
     intervention = intervention,
-    variable_of_interest = Y
+    variable_of_interest = Y,
+    parallel = FALSE
   )
   result <- subject$get_h_ratio_estimators(data = data)
 
@@ -144,7 +146,8 @@ test_that("it should create the correct estimators -> the ratio should be approx
     pre_processor = pre_processor,
     tau = tau,
     intervention = intervention,
-    variable_of_interest = Y
+    variable_of_interest = Y,
+    parallel = FALSE
   )
 
   h_ratio_predictors <- subject$get_h_ratio_estimators(data = data)
@@ -196,7 +199,8 @@ test_that("it should create the correct estimators -> the ratio should be approx
     pre_processor = pre_processor,
     tau = tau,
     intervention = intervention,
-    variable_of_interest = Y
+    variable_of_interest = Y,
+    parallel = FALSE
   )
 
   # Sample just one observation to start with
@@ -245,7 +249,8 @@ test_that("it should create the correct estimators -> the ratio should be approx
     pre_processor = pre_processor,
     tau = tau,
     intervention = intervention,
-    variable_of_interest = Y
+    variable_of_interest = Y,
+    parallel = FALSE
   )
 
   h_ratio_predictors <- subject$get_h_ratio_estimators(data = data)

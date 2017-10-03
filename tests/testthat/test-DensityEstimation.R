@@ -103,7 +103,7 @@ test_that("it should sample from the cond densities once they've been fitted", {
 test_that("it should sample from the cond densities once they've been fitted also with NA", {
   # In this test we check what would happen if we'd want to *sample* Y given some predefined
   # W. In this case, we provide Y as NA, and it should not crash.
-  set.seed(1234)
+  set.seed(12345)
   subject <- described.class$new(nbins = 10)
 
   # TODO: fix these warnings
@@ -116,7 +116,7 @@ test_that("it should sample from the cond densities once they've been fitted als
     dat <- data.table(D = 1, W = c(W_val), Y = Y_val)
     # suppressWarnings()
     res <- subject$predict(dat, sample = TRUE)
-    expect_true(abs(res$Y - W_val * 15) < accepted_error)
+    expect_lt(abs(res$Y - W_val * 15), accepted_error)
   }
 })
 
