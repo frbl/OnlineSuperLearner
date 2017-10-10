@@ -9,14 +9,18 @@ ML.H2O <- R6Class("ML.H2O",
   inherit = ML.Base,
   public =
     list(
+      initialize = function() {
+         private$interactor = H2O.Interactor$new()
+      }
     ),
   active = 
     list(
     ),
   private =
     list(
-      # This interactor is shared among all H2O classes! By design
-      interactor = H2O.Interactor$new(),
+      # TODO: This interactor should be shared among all H2O classes! By design, but not its not because it makes the application slower (we don't use H2O)
+      #interactor = H2O.Interactor$new(),
+      interactor = NULL,
 
       get_checkpoint = function(m.fit) {
         checkpoint <- NULL

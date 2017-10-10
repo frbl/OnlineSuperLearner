@@ -48,7 +48,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           algos <- list()
 
 
-          alphas <- runif(5,0,1)
+          alphas <- runif(2,0,1)
           #algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
                                   #algorithm_params = list(alpha = alphas), 
                                   #params = list(nbins = nbins, online = TRUE))))
@@ -262,7 +262,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                         control = control,
                         randomVariables, 
                         Y,
-                        max_iterations = 12, llW, llA, llY,
+                        max_iterations = 100, llW, llA, llY,
                         configuration = 2)
         },
 
@@ -318,7 +318,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           private$train(intervention = intervention,
                         control = control,
                         randomVariables,
-                        Y,  max_iterations = 12,
+                        Y,  max_iterations = 100,
                         llW = llW,
                         llA = llA, 
                         llY = llY,
@@ -404,7 +404,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                         control = control,
                         randomVariables, 
                         Y,
-                        max_iterations = 12, llW, llA, llY,
+                        max_iterations = 100, llW, llA, llY,
                         configuration = 4)
         },
 
@@ -506,11 +506,11 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           data.train.set <- summaryMeasureGenerator$getNext(private$training_set_size)
 
           tau <- 2
-          B <- 100
-          N <- 100 
+          B <- 500
+          N <- 200 
           if(configuration %in% c(1,3)) {
-            B <- 1000
-            N <- 90
+            B <- 100
+            N <- 100
           }
 
           OutputPlotGenerator.export_key_value(output=key_output, 'iterations', B)
@@ -560,7 +560,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           result.dosl_control <- result.dosl.full$control
 
 
-          run_osl <- TRUE
+          run_osl <- FALSE
           if(run_osl) {
             result.osl.full <- intervention_effect_caluculator$calculate_intervention_effect(osl = osl,
                                                                           interventions = interventions, 
@@ -623,20 +623,26 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                         pre_processor = pre_processor)
 
             result.dosl.mean.updated <- OOS.intervention$perform(initial_estimate = result.dosl.mean,
-                                                    data = data.train.set)
+                                                    data = data.train.set,
+																										truth = result.approx.mean)
 
-            OOS.control <- OneStepEstimator$new(osl = osl, 
-                                        randomVariables = randomVariables, 
-                                        discrete = TRUE,
-                                        N = N, 
-                                        B = B,
-                                        tau = tau,
-                                        intervention = control,
-                                        variable_of_interest = variable_of_interest,
-                                        pre_processor = pre_processor)
+            OOS.control <- OneStepEstimator$new(
+							osl = osl, 
+							randomVariables = randomVariables, 
+							discrete = TRUE,
+							N = N, 
+							B = B,
+							tau = tau,
+							intervention = control,
+							variable_of_interest = variable_of_interest,
+							pre_processor = pre_processor
+						)
 
-            result.dosl_control.mean.updated <- OOS.control$perform(initial_estimate = result.dosl_control.mean,
-                                                    data = data.train.set)
+            result.dosl_control.mean.updated <- OOS.control$perform(
+							initial_estimate = result.dosl_control.mean,
+							data = data.train.set,
+							truth = result.approx_control.mean
+            )
 
 
             ## Store the differences after OOS

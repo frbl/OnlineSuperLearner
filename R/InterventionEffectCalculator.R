@@ -12,7 +12,7 @@
 InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
   public =
     list(
-      initialize = function(bootstrap_iterations, randomVariables, outcome_variable, is_parallel = FALSE) {
+      initialize = function(bootstrap_iterations, randomVariables, outcome_variable, is_parallel = TRUE) {
         private$bootstrap_iterations <- Arguments$getInteger(bootstrap_iterations, c(1, Inf))
         private$randomVariables <- Arguments$getInstanceOf(randomVariables,'list')
         private$outcome_variable <- Arguments$getCharacters(outcome_variable)

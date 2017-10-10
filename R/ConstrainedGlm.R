@@ -264,7 +264,7 @@ assign("glm.fit", myglm.fit, getNamespace("stats"))
 #' @return a fitted glm
 #' @importFrom stats glm binomial
 #' @export
-ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, ...) {
+ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, previous_glm = NULL, ...) {
   ## 1 for intercept
   ncovariates <- length(labels(terms(formula))) + 1
   
@@ -272,6 +272,7 @@ ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, ..
     browser()
     warning('Data contains NA values!')
   }
+
   if(any(is.null(data))) warning('Data contains NULL values!')
 
   # Use the C functions for expit / logit. Faster and gives the same results as the original GLM function.
@@ -323,17 +324,36 @@ ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, ..
     ##2 * wt * (y * log(y/mu) + (1-y) * log((1-y)/(1-mu)))
   #}
 
+  if (is.null(previous_glm)) {
+    return(ConstrainedGlm.fit_new_glm(formula = formula, family = family, data = data, fall_back_to_glm = fall_back_to_glm, ...))
+  } 
+  return(ConstrainedGlm.update_gm(previous_glm, data = data, ...))
+}
+
+ConstrainedGlm.update_glm <- function(previous_glm, data, ...) {
+  return(update(previous_glm, data))
+}
+
+ConstrainedGlm.fit_new_glm <- function(formula, family, data, fall_back_to_glm, ...) {
+  ## TODO: UGLY CODE!
   ## First try speed glm. In case that fails, try the constrained version. In case that fails, try the normal glm.
   the_glm <- tryCatch({
-      # TODO: we'd need to use a different method here. The regular GLM does not support online updating. However, speedglm crashes more often. 
-      #speedglm::speedglm(formula = formula, data = data, family = family, method='Cholesky', ...)
-      glm(formula = formula, family = family, data=data, ...)
+    # TODO: we'd need to use a different method here. The regular GLM does not support online updating. However, speedglm crashes more often. 
+    speedglm::speedglm(formula = formula, data = data, family = family, ...)
+    #glm(formula = formula, family = family, data=data, ...)
   }, error = function(e) {
-    if (fall_back_to_glm) {
-      warning('Falling back to old glm function (speed glm failed)')
-      return(glm(formula = formula, family = binomial(), data=data, ...))
-    }
-    stop(e)
+    #tryCatch({
+    #<simpleError in solve.default(XTX, XTz, tol = tol.solve): system is computationally singular: reciprocal condition number = 2.65004e-18>
+    warning('Constrained GLM failed, using speedglm binomial')
+    print(e)
+    speedglm::speedglm(formula = formula, data = data, family = binomial(), ...)
+    #}, error = function(e) {
+      #if (fall_back_to_glm) {
+        #warning('Falling back to old glm function (speed glm failed)')
+        #return(glm(formula = formula, family = binomial(), data=data, ...))
+      #}
+      #stop(e)
+    #})
   })
   return(the_glm)
 }

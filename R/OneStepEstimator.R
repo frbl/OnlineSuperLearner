@@ -43,14 +43,12 @@
 #'     list, we have another list for each outcome measure, as indexed using their prediction formulae.
 #'   } 
 #' 
-#'   \item{\code{evaluation_of_conditional_expectations(h_ratio_predictors, variable_of_interest, data, tau}}{ 
+#'   \item{\code{evaluation_of_conditional_expectations(data, h_ratio_predictors}}{ 
 #'     In this function one can perform the second step of OOS, calculate the conditional expectations / difference in
 #'     conditional expectations. 
+#'     @param data the data to seed the sampling procedure and thereby conditional expectation evaluation. 
 #'     @param h_ratio_predictors the list of predictors, in a format returned using the \code{get_h_ratio_estimators}
 #'     format.
-#'     @param variable_of_interest the variable we are currently interested in (the outcome variable, Y).
-#'     @param data the data to seed the sampling procedure and thereby conditional expectation evaluation. 
-#'     @param tau the time till which we have to sample.
 #'   } 
 #' 
 #' }  
@@ -67,7 +65,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
   portable = FALSE,
   public =
     list(
-      initialize = function(osl, randomVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE, parallel= FALSE, verbose = FALSE) {
+      initialize = function(osl, randomVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE, parallel= TRUE, verbose = FALSE) {
         private$osl <- Arguments$getInstanceOf(osl, 'OnlineSuperLearner')
 
         private$N <- Arguments$getInteger(N, c(1, Inf))
@@ -79,31 +77,50 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         private$intervention <- intervention
         private$variable_of_interest <- Arguments$getCharacters(variable_of_interest$getY)
         private$is_parallel <- parallel
-        private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
-        #private$verbose <- Arguments$getVerbose(-8, timestamp=TRUE)
+        #private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
+        private$verbose <- Arguments$getVerbose(-8, timestamp=TRUE)
       },
 
-      perform = function(initial_estimate, data) {
+      perform = function(initial_estimate, data, truth = NULL) {
         private$verbose && enter(private$verbose, 'Starting efficient influence curve estimation')
         ## Let $B$ be a large integer (the larger $B$ the better the approxmation),
         ## let $N$ be the number of observations,
-        N = nrow(data)
+
+        N <- nrow(data)
         ## let intervention be the intervention we whish to oppose on the system, and
         ## let tau the the outcome of interest.
         initial_estimate <- Arguments$getNumerics(initial_estimate)
 
-        ## 2 calculate H-ratios
-        h_ratio_predictors <- self$get_h_ratio_estimators(data = data)
+        #D_star_evaluation <- foreach(t = seq(1:N), .combine = 'sum') %do% {
+        D_star_evaluation <- 0
+        for (t in 1:N) {
+          current_data <- data[t,]
+          ## 2 calculate H-ratios
+          ## Note that the last_h_ratio_estimators parameter is either null (i.e., this is the first run),
+          ## Or contains the h_ratios of the previous iteration
+          private$last_h_ratio_estimators <- self$get_h_ratio_estimators(
+            data = current_data, 
+            last_h_ratio_estimators = self$get_last_h_ratio_estimators
+          )
 
-        ## 3 Solve expectaions
-        ## We want to approximate the conditional expectation from RV (start) till Ytau
-        D_star_evaluation = self$evaluation_of_conditional_expectations(h_ratio_predictors = h_ratio_predictors,
-                                                                  data = data)
+          ## 3 Solve expectaions
+          ## We want to approximate the conditional expectation from RV (start) till Ytau
+          one_iteration_D_star_evaluation <- self$evaluation_of_conditional_expectations(
+            data = current_data,
+            h_ratio_predictors = self$get_last_h_ratio_estimators
+          )
 
-        private$verbose && cat(private$verbose, 'D-star evaluation is ', D_star_evaluation)
+          D_star_evaluation <- (((t-1) * D_star_evaluation) + one_iteration_D_star_evaluation) / t
+          private$verbose && cat(private$verbose, 'Current D-star evaluation is ', one_iteration_D_star_evaluation,
+                                                  ' Total evaluation is ', D_star_evaluation)
+          if(!is.null(truth)) {
+            private$verbose && cat(private$verbose, 'Abs difference with truth: ', abs((truth - (initial_estimate + D_star_evaluation))),
+                                                    ' Initial difference with truth: ', abs(truth - initial_estimate ))
+          }
+        }
 
         ## Calculate the new estimate
-        private$last_oos_estimate <- D_star_evaluation %>% unlist %>% sum
+        private$last_oos_estimate <- D_star_evaluation #%>% unlist %>% sum
         oos_estimate <- self$get_last_oos_estimate + initial_estimate
         if(is.nan(oos_estimate)) {
           warning('Oos estimate is NaN, setting to zero')
@@ -119,11 +136,6 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         private$verbose && exit(private$verbose)
         result
-
-      },
-
-      update = function(new_data, variable_of_interest) {
-        get_h_ratio_estimators(data = new_data, last_h_ratio_estimators = self$get_last_h_ratio_estimators)
 
       },
 
@@ -146,22 +158,24 @@ OneStepEstimator <- R6Class("OneStepEstimator",
           formula <- rv$get_formula_string(Y = 'Delta')
         }) %>% unique
 
-
         private$verbose && enter(private$verbose, 'Starting sampling from PN')
+        self$print_parallel
         tic <- Sys.time()
+
+        N <- nrow(data)
 
         O_0 <- data[1,]
         ## Run B iterations on O_0 (always start from the same data
         Osample_p <- foreach(b = seq(1:self$get_B), .combine = rbind) %looping_function% {
+
           ## TODO: Note that the summary measures we currently collect are
           ## NORMALIZED. I think that this does not matter for calculating the
           ## h-ratios as the ratio stays the same (it might even work better),
           ## but we need to check this.
-
           private$verbose && cat(private$verbose, 'PN sample - iteration ', b)
           current <- self$get_osl$sample_iteratively(data = O_0,
                                                      randomVariables = self$get_randomVariables,
-                                                     tau = self$get_N,
+                                                     tau = N,
                                                      discrete = self$get_discrete,
                                                      intervention = NULL,
                                                      return_type = 'full')
@@ -178,7 +192,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         ## Because we use $BN$ observations in the previous sampling step, we
         ## should also draw BN observations from P^N_{s,a}.
-        Osample_p_star <- foreach(b = seq(self$get_B * self$get_N), .combine = rbind) %looping_function% {
+        Osample_p_star <- foreach(b = seq(self$get_B * N), .combine = rbind) %looping_function% {
           private$verbose && cat(private$verbose, 'PN* sample - iteration ', b)
           current <- self$get_osl$sample_iteratively(data = O_0,
                                                      randomVariables = self$get_randomVariables,
@@ -190,11 +204,11 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         }
         toc <- Sys.time()
         private$verbose && exit(private$verbose)
-        private$verbose && cat(private$verbose, 'Sampled ', self$get_B*self$get_N,' observations from PN*')
+        private$verbose && cat(private$verbose, 'Sampled ', self$get_B * N,' observations from PN*')
         private$verbose && cat(private$verbose, toc - tic)
 
         ## Add an S column to the data, so we know which summary measure belongs to which s
-        time_s_column <- lapply(seq(self$get_N*self$get_B), function(i) ((i - 1) %% self$get_tau) + 1)  %>% unlist
+        time_s_column <- lapply(seq(N*self$get_B), function(i) ((i - 1) %% self$get_tau) + 1)  %>% unlist
         Osample_p_star[, time_s_column := time_s_column]
 
         ## Now add the Delta column so we know wcich blocks belong to PN* and which to PN
@@ -242,39 +256,38 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         return(h_ratio_predictors_per_s)
       },
 
-      evaluation_of_conditional_expectations = function(h_ratio_predictors, data) {
-        `%looping_function%` <- private$get_looping_function()
+      evaluation_of_conditional_expectations = function(data, h_ratio_predictors) {
         private$verbose && enter(private$verbose, 'Evaluating the conditional expectations')
+        self$print_parallel
 
         ## We have to create the conditional expectations using each of the
         ## random variables as a start point
         influence_curve_for_each_rv <- c()
+        
+        N <- nrow(data)
 
         ## This is the outer loop of the influence curve
-        efficient_influence_curve <- foreach(t=seq(self$get_N), .combine='sum') %looping_function% {
+        efficient_influence_curve <- foreach(t=seq(N), .combine='sum') %do% {
           private$verbose && cat(private$verbose, 'Efficient influence curve iteration ', t)
           current_dat <- data[t,]
 
-          ## This is the inner loop of the influence curve
-          difference_in_expectations_for_all_s <- foreach(s=seq(self$get_tau), .combine='sum') %do% {
-
-            ## Then, we start on a given s, this is for each D in D
-            foreach(rv_id=seq_along(self$get_randomVariables), .combine='sum') %do% {
-              current_rvs <- self$get_next_and_current_rv(rv_id)
-              private$get_influence_curve_for_one_random_variable(s = s,
-                                                                  dat = current_dat,
-                                                                  h_ratio_predictors = h_ratio_predictors,
-                                                                  current_rvs = current_rvs)
-
-              #if(is.na(result)) warning('the influence curve for rv ', current_rvs$rv$getY, 
-                                        # at time s=',s, ' and t=',t,' is NA')
-
-
-            }
+          difference_in_expectations_for_all_s <- 
+            ## This is the inner loop of the influence curve (for 1 to tau)
+            foreach(s=seq(self$get_tau), .combine='sum') %:% 
+              ## Then, we start on a given s, this is for each D in D
+              foreach(rv_id=seq_along(self$get_randomVariables), .combine='sum') %do% {
+                private$verbose && cat(private$verbose, 'This is RV: ', rv_id, ' for s: ', s)
+                current_rvs <- self$get_next_and_current_rv(rv_id)
+                private$get_influence_curve_for_one_random_variable(
+                  s = s,
+                  dat = current_dat,
+                  h_ratio_predictors = h_ratio_predictors,
+                  current_rvs = current_rvs
+                )
           }
 
           ## Divide within the loop so we reduce the risk of integer overflows. Check if this is the case.
-          difference_in_expectations_for_all_s / self$get_N
+          difference_in_expectations_for_all_s / N
         }
         private$verbose && exit(private$verbose)
         efficient_influence_curve
@@ -302,8 +315,10 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         })
 
         result <- (h_ratio / (1.0 - h_ratio))
-        if (result > 20) {
-          warning('Calculated h_ratio is relatively large! Are you violating the positivity assumption? Value=', result)
+        if (result > 19) {
+          warning('Calculated h_ratio is relatively large! Are you violating the positivity assumption? Value=', result, '. Were setting it to 0, to be sure')
+          warning('Data used: ', paste(data, collapse = '-'))
+          result = 0 
         }
         result
       },
@@ -365,6 +380,12 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
       get_last_h_ratio_estimators = function() {
         private$last_h_ratio_estimators
+      },
+
+      print_parallel = function() {
+        if (private$is_parallel) {
+          private$verbose && cat(private$verbose, 'In parallel')
+        }
       }
     ),
   private =
@@ -440,7 +461,8 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       },
 
       sample_for_expectation = function(dat, start_from_variable, start_from_time) {
-        foreach(b = seq(self$get_B), .combine = 'sum') %do% {
+        `%looping_function%` <- private$get_looping_function()
+        foreach(b = seq(self$get_B), .combine = 'sum') %looping_function% {
           current <- self$get_osl$sample_iteratively(data = dat,
                                                      start_from_variable = start_from_variable,
                                                      start_from_time = start_from_time,
