@@ -103,5 +103,5 @@ Collate:
     'WCC.NNLS.R'
     'WCC.SGD.R'
 Remotes: 
-    github::osofr/condensier@fb-add-update
+    github::osofr/condensier@fb-add-update,
     github::n-s-f/mockery@master
