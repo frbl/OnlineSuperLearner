@@ -112,7 +112,8 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
           D_star_evaluation <- (((t-1) * D_star_evaluation) + one_iteration_D_star_evaluation) / t
           private$verbose && cat(private$verbose, 'Current D-star evaluation is ', one_iteration_D_star_evaluation,
-                                                  ' Total evaluation is ', D_star_evaluation)
+                                                  ' Total evaluation is ', D_star_evaluation, 
+                                                  ' and t (iteration) is ', t)
           if(!is.null(truth)) {
             private$verbose && cat(private$verbose, 'Abs difference with truth: ', abs((truth - (initial_estimate + D_star_evaluation))),
                                                     ' Initial difference with truth: ', abs(truth - initial_estimate ))
@@ -316,9 +317,9 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         result <- (h_ratio / (1.0 - h_ratio))
         if (result > 19) {
-          warning('Calculated h_ratio is relatively large! Are you violating the positivity assumption? Value=', result, '. Were setting it to 0, to be sure')
+          warning('Calculated h_ratio is relatively large! Are you violating the positivity assumption? Value=', result, '. Were setting it to 19, to be sure')
           warning('Data used: ', paste(data, collapse = '-'))
-          result = 0 
+          result = 19 
         }
         result
       },
@@ -417,6 +418,9 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         ## First we have to estimate the h_ratio based on the C_rv, and the current s and random variable
         h_ratio <- self$calculate_h_ratio(h_ratio_predictors, s, formula, dat)
+
+        ## We don't have to go through all the trouble if the h_ratio is 0 (0 * x = 0)
+        if(h_ratio == 0) return(0)
 
         ## Now we have to sample from the conditional distribution of rv + 1.
         ## I.e., we have the our value for RV, and its corresponding C. Using
