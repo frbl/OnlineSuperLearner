@@ -4,7 +4,7 @@ Title: Online SuperLearner package
 Version: 0.0.1
 Date: 2017-01-25
 Authors@R: c(person("Frank", "Blaauw", role=c("aut", "cre"), email="f.j.blaauw@rug.nl"),
-             person("Antoine", "Chambaz", role=c("aut", "cre"), email="achambaz@u-paris10.fr"))
+             person("Antoine", "Chambaz", role=c("aut"), email="achambaz@u-paris10.fr"))
 Maintainer: Frank Blaauw <f.j.blaauw@rug.nl>
 Description: Package that enabling online super learning. This package runs a
     set of estimators and tries to find the conditional densities of randomvariables
