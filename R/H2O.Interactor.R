@@ -5,6 +5,7 @@
 #' @docType class
 #' @importFrom R6 R6Class
 #' @importFrom digest digest
+#' @importFrom h2o as.h2o
 #' @include H2O.initializer.R
 #'
 #' @section Methods:
@@ -42,32 +43,44 @@ H2O.Interactor <- R6Class("H2O.Interactor",
       },
 
       generate_hash = function(data) {
-        digest(data, algo = private$digest_algorithm, serialize=TRUE)
+        hash <- digest(data, algo = private$digest_algorithm, serialize=TRUE)
+        # We add the a here because h2o needs a name that starts with a char. We could replace the sha1 
+        # with something that only produces characters
+        paste('a',hash,sep='_')
       },
 
       get_data_pointer = function(data) {
         # TODO: This is a critical section and should be made threadsafe if we have more than 1 thread
 
-        # We add the a here because h2o needs a name that starts with a char. We could replace the sha1 
-        # with something that only produces characters
-        hash <- paste('a',self$generate_hash(data),sep='_')
+        hash <- self$generate_hash(data = data)
         if(hash %in% names(private$h2o_objects)) {
           private$verbose && cat(private$verbose, 'Not uploading data to h2o...')
           return(private$h2o_objects[[hash]])
         }
         private$verbose && cat(private$verbose, 'Uploading data to h2o...')
-        private$h2o_objects[[hash]] <- as.h2o(data, destination = hash)
+        self$add_and_return_data_hash(hash = hash, data = data)
+      },
+
+      add_and_return_data_hash = function(hash, data){
+        private$h2o_objects[[hash]] <- private$as_h2o(data = data, destination = hash)
         private$h2o_objects[[hash]]
       }
     ),
   active =
     list(
+      get_h2o_objects = function(){
+        private$h2o_objects
+      }
     ),
   private =
     list(
       verbose = NULL,
       digest_algorithm = NULL,
       h2o_objects = NULL,
+
+      as_h2o = function(data, destination) {
+        as.h2o(data, destination = destination)
+      },
 
       do.predict = function(X_mat, m.fit) {
         # Upload the data to h2o. 

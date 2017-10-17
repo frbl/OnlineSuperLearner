@@ -163,10 +163,6 @@ test_that("it should set the name correctly", {
   expect_equal(names(accuracy), expected)
 })
 
-test_that("it should predict the accuracy correctly with matrices", {
-  
-})
-
 context(" Evaluation.mean_squared_error")
 true.data <-      c(1,1,6,4,6,4,1,1,4,9)
 predicted.data <- c(1,2,3,3,4,4,1,1,4,9)

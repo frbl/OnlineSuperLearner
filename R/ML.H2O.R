@@ -11,6 +11,15 @@ ML.H2O <- R6Class("ML.H2O",
     list(
       initialize = function() {
          private$interactor = H2O.Interactor$new()
+      },
+
+      get_checkpoint = function(m.fit) {
+        checkpoint <- NULL
+        print(m.fit)
+        if(!is.null(m.fit) && 'coef' %in% m.fit){
+          checkpoint <- m.fit$coef@model_id
+        }
+        checkpoint
       }
     ),
   active = 
@@ -22,18 +31,10 @@ ML.H2O <- R6Class("ML.H2O",
       #interactor = H2O.Interactor$new(),
       interactor = NULL,
 
-      get_checkpoint = function(m.fit) {
-        checkpoint <- NULL
-        if(!is.null(m.fit) && 'coef' %in% m.fit){
-          checkpoint <- m.fit$coef@model_id
-        }
-        checkpoint
-      },
-
       do.update = function(X_mat, Y_vals, m.fit) {
         # Every update adds a new tree, so we have to increase the number of trees
         private$ntrees <- private$ntrees + 1
-        checkpoint <- private$get_checkpoint(m.fit)
+        checkpoint <- self$get_checkpoint(m.fit)
         private$do.fit(X_mat, Y_vals, checkpoint = checkpoint)
       },
 

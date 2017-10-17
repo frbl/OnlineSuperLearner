@@ -69,7 +69,7 @@ test_that("it should result in the correct output", {
   lapply(result,function(entry){
     expect_equal(length(result), length(randomVariables))
     lapply(entry,function(estimator){
-      expect_true(is(estimator, 'glm'))
+      expect_true(is(estimator, 'speedglm'))
     })
   })
 })
@@ -114,7 +114,7 @@ test_that("it should produce sensible estimators in the correct output", {
   lapply(result,function(entry){
     expect_equal(length(result), length(randomVariables))
     lapply(entry,function(estimator){
-      expect_true(is(estimator, 'glm'))
+      expect_true(is(estimator, 'speedglm'))
       # TODO: test whether the estimators make sense
     })
   })
@@ -300,7 +300,7 @@ test_that("it should perform the evaluation", {
   #lapply(result,function(entry){
     #expect_equal(length(result), length(randomVariables))
     #lapply(entry,function(estimator){
-      #expect_true(is(estimator, 'glm'))
+      #expect_true(is(estimator, 'speedglm'))
        #TODO: test whether the estimators make sense
     #})
   #})

@@ -131,15 +131,9 @@ OutputPlotGenerator.create_training_curve = function(historical_cvs, randomVaria
     
     colnames(dt) <- name_list
     dt= tryCatch({
-    data.table(dt)
-      
-    }, warning = function(w) {
-      
+      data.table(dt)
     }, error = function(e) {
       browser()
-      
-    }, finally = {
-       
     })
     dt[, id := seq(1, length(rv_result))]
 

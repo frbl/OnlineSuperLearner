@@ -29,13 +29,8 @@ Evaluation.get_evaluation_function = function(family, useAsLoss=TRUE) {
 #' @param data.observed the true data (Y)
 #' @param data.predicted the Y outcome from the estimator 
 Evaluation.accuracy <- function(data.observed, data.predicted) {
-  boolean.predicted <- as.numeric(data.predicted >= 0.5)
   boolean.observed <- as.numeric(data.observed >= 0.5)
-  if (is.a(boolean.predicted, 'matrix')) {
-    means <- colMeans(as.numeric(boolean.observed == boolean.predicted))
-    names(means) <- names(data.predicted)
-    return(means)
-  }
+  boolean.predicted <- as.numeric(data.predicted >= 0.5)
   c(accuracy = mean(as.numeric(boolean.observed == boolean.predicted)))
 }
 
