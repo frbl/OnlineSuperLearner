@@ -54,18 +54,18 @@
 #' }  
 #' @docType class
 #' @include ConstrainedGlm.R
+#' @include DataCache.R
 #' @import methods
 #' @import R.oo
 #' @import R.utils
 #' @importFrom R6 R6Class
-#' @importFrom speedglm speedlm updateWithMoreData
 OneStepEstimator <- R6Class("OneStepEstimator",
   class = FALSE,
   cloneable = FALSE,
   portable = FALSE,
   public =
     list(
-      initialize = function(osl, randomVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE, parallel= TRUE, verbose = FALSE) {
+      initialize = function(osl, randomVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE, parallel= TRUE, online = FALSE, verbose = FALSE) {
         private$osl <- Arguments$getInstanceOf(osl, 'OnlineSuperLearner')
 
         private$N <- Arguments$getInteger(N, c(1, Inf))
@@ -78,6 +78,8 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         private$variable_of_interest <- Arguments$getCharacters(variable_of_interest$getY)
         private$is_parallel <- parallel
         #private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
+        private$online <- online
+        private$data_cache <- DataCache$new(online = self$is_online)
         private$verbose <- Arguments$getVerbose(-8, timestamp=TRUE)
       },
 
@@ -95,7 +97,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         D_star_evaluation <- 0
         for (t in 1:N) {
           current_data <- data[t,]
-          ## 2 calculate H-ratios
+          ## 1 calculate H-ratios
           ## Note that the last_h_ratio_estimators parameter is either null (i.e., this is the first run),
           ## Or contains the h_ratios of the previous iteration
           private$last_h_ratio_estimators <- self$get_h_ratio_estimators(
@@ -103,7 +105,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
             last_h_ratio_estimators = self$get_last_h_ratio_estimators
           )
 
-          ## 3 Solve expectaions
+          ## 2 Solve expectaions
           ## We want to approximate the conditional expectation from RV (start) till Ytau
           one_iteration_D_star_evaluation <- self$evaluation_of_conditional_expectations(
             data = current_data,
@@ -234,13 +236,19 @@ OneStepEstimator <- R6Class("OneStepEstimator",
               )
             )
 
+            ########################
+            # Fake the Online part #
+            ########################
+            self$get_data_cache$update_cache(newdata = Osample_p_full)
+
             private$verbose && cat(private$verbose, 'Calculating H-estimator for time ', time_s)
 
             h_ratio_predictors <- lapply(formulae, function(formula){
               ## TODO: Currently we use GLM here, but we should make use of a SuperLearner here.
               hide_warning_convergence(ConstrainedGlm.fit(formula = formula(formula),
-                                                          data = Osample_p_full,
-                                                          delta = 0.05))
+                                                          data = self$get_data_cache$get_data_cache,
+                                                          delta = 0.05,
+                                                          previous_glm = private$get_previous_h_ratio_estimator(formula = formula, s = time_s)))
                 
             })
           }
@@ -253,7 +261,6 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         ## each $C_W$, $C_A$, and $C_Y$, for each s in tau.  (so 3tau
         ## estimators)
         private$verbose && exit(private$verbose)
-        private$last_h_ratio_estimators <- h_ratio_predictors_per_s
         return(h_ratio_predictors_per_s)
       },
 
@@ -305,7 +312,8 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         ## If we didn't find a predictor_or_na, it means that the the numerator and
         ## denominator are equal. Hence their ratio = 1. This is the case for
         ## the pre-treatment distributions.
-        if (is(predictor_or_na, 'logical') && is.na(predictor_or_na)) {
+        ## It is null if the matrix was singular.
+        if (is.null(predictor_or_na) || (is(predictor_or_na, 'logical') && is.na(predictor_or_na))) {
           return(1) 
         }
 
@@ -383,6 +391,14 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         private$last_h_ratio_estimators
       },
 
+      get_data_cache = function() {
+        private$data_cache
+      },
+
+      is_online = function() {
+        private$online
+      },
+
       print_parallel = function() {
         if (private$is_parallel) {
           private$verbose && cat(private$verbose, 'In parallel')
@@ -395,6 +411,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       osl = NULL,
       N = NULL,
       B = NULL,
+      online = NULL,
       randomVariables = NULL,
       variable_of_interest = NULL,
       discrete = NULL,
@@ -404,6 +421,13 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       last_oos_estimate = NULL,
       last_h_ratio_estimators = NULL,
       is_parallel = NULL,
+      data_cache = NULL,
+
+      get_previous_h_ratio_estimator = function(s, formula) {
+        estimators <- self$get_last_h_ratio_estimators
+        if (is.null(estimators) || !self$is_online) return(NULL)
+        estimators[[s]][[formula]]
+      },
 
       get_looping_function = function() {
         if(private$is_parallel) {

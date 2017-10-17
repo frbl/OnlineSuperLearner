@@ -146,17 +146,3 @@ test_that("it should return an empty list after initialization", {
 context(' get_validity') 
 # Hard to test explicitly, it is called by the initialize function
  
-context(" update_cache") 
-test_that("it should update existing cache", {
-  SL.Library <- c('ML.Local.lm', 'ML.XGBoost')
-  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG)
-  expect_null(subject$get_data_cache)
-  added_data <- data.table(a = 123)
-  subject$update_cache(added_data)
-  expect_equal(subject$get_data_cache, added_data)
-
-  ## Add it again to actually test if it gets appended
-  subject$update_cache(added_data)
-  expect_equal(subject$get_data_cache, rbindlist(list(added_data, added_data)))
-})
- 

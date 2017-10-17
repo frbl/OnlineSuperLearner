@@ -61,6 +61,7 @@ Collate:
     'Data.Stream.R'
     'Simulator.Simple.R'
     'Data.Stream.Simulator.R'
+    'DataCache.R'
     'DataSplitter.R'
     'DensityEstimation.R'
     'H2O.initializer.R'

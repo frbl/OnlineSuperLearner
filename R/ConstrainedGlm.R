@@ -325,13 +325,16 @@ ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, pr
   #}
 
   if (is.null(previous_glm)) {
+    cat('Creating new glm.\n')
     return(ConstrainedGlm.fit_new_glm(formula = formula, family = family, data = data, fall_back_to_glm = fall_back_to_glm, ...))
   } 
-  return(ConstrainedGlm.update_gm(previous_glm, data = data, ...))
+  cat('Updating previous glm.\n')
+  return(ConstrainedGlm.update_glm(previous_glm = previous_glm, data = data, ...))
 }
 
 ConstrainedGlm.update_glm <- function(previous_glm, data, ...) {
-  return(update(previous_glm, data))
+  browser()
+  return(update(previous_glm, data = data))
 }
 
 ConstrainedGlm.fit_new_glm <- function(formula, family, data, fall_back_to_glm, ...) {
@@ -342,18 +345,10 @@ ConstrainedGlm.fit_new_glm <- function(formula, family, data, fall_back_to_glm, 
     speedglm::speedglm(formula = formula, data = data, family = family, ...)
     #glm(formula = formula, family = family, data=data, ...)
   }, error = function(e) {
-    #tryCatch({
     #<simpleError in solve.default(XTX, XTz, tol = tol.solve): system is computationally singular: reciprocal condition number = 2.65004e-18>
-    warning('Constrained GLM failed, using speedglm binomial')
     print(e)
+    warning('Constrained GLM failed, using speedglm binomial')
     speedglm::speedglm(formula = formula, data = data, family = binomial(), ...)
-    #}, error = function(e) {
-      #if (fall_back_to_glm) {
-        #warning('Falling back to old glm function (speed glm failed)')
-        #return(glm(formula = formula, family = binomial(), data=data, ...))
-      #}
-      #stop(e)
-    #})
   })
   return(the_glm)
 }

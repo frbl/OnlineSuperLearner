@@ -14,6 +14,7 @@
 #' @include DensityEstimation.R
 #' @include SummaryMeasureGenerator.R
 #' @include WeightedCombinationComputer.R
+#' @include DataCache.R
 #' @include WCC.NMBFGS.R
 #' @include WCC.SGD.Simplex.R
 #' @include CrossValidationRiskCalculator.R
@@ -221,10 +222,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$verbose && enter(private$verbose, 'Training all estimators')
           
           # If not all estimators are online, we have to keep track of a cache of data.
-          self$update_cache(newdata = data)
+          self$get_data_cache$update_cache(newdata = data)
 
           # Retrieve the cached data, so we can reuse it
-          if(!self$is_online) cache <- self$get_data_cache
+          if(!self$is_online) cache <- self$get_data_cache$get_data_cache
 
           #private$SL.library.fabricated <- mclapply(private$SL.library.fabricated, function(estimator) {
           #for(estimator in private$SL.library.fabricated) {
@@ -554,7 +555,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$SL.library.fabricated <- libraryFactory$fabricate(SL.library.definition)
           private$SL.library.descriptions <- names(private$SL.library.fabricated)
           private$all_estimators_online <- DensityEstimation.are_all_estimators_online(private$SL.library.fabricated)
-
+          private$data_cache <- DataCache$new(self$is_online)
           ## We need a weighted combination computer for each of the randomvariables.
           ## We could reuse the WCC, and just save the weights here. However, this way we do allow
           ## to use a different wcc for each of the random variables.
@@ -568,22 +569,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         set_verbosity = function(verbosity) {
           private$verbose = verbosity
-        },
-
-        ## Updates the data cache with the new observations. This function only
-        ## updates the cache if not all estimators are online. It tells the user
-        ## Public so it can be tested easily
-        ## if it has updated by the boolean it returns.
-        ## @param newdata the new data to add to the cache
-        ## @return boolean whether or not it actually needed to update the cache.
-        update_cache = function(newdata) {
-          if (self$is_online) {
-            ## If we are truly online, just cache the last entry
-            private$data_cache <- newdata
-            return(FALSE)
-          }
-          private$data_cache <- rbindlist(list(self$get_data_cache, newdata))
-          return(TRUE)
         },
 
         ## Samples the data iteratively from the fitted distribution, and applies an intervention if necessary

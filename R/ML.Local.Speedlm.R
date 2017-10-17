@@ -34,6 +34,7 @@ ML.Local.Speedlm <- R6Class("ML.Local.Speedlm",
         },
 
         do.update = function(m.fit, X_mat, Y_vals) {
+          ## !!! This function only workds with a speed LM funcion, not the speed GLM function!
           updateWithMoreData(m.fit, X = X_mat, y = Y_vals)
         },
 
