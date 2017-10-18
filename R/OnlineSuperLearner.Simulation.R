@@ -147,10 +147,10 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           # Define the variables in the initial dataset we'd like to use
           #private$train(data.test, data.train, bounds, randomVariables, 2)
           intervention <- list(variable = 'A',
-                               when = c(2), 
+                               when = c(3), 
                                what = c(1))
           control <- list(variable = 'A',
-                               when = c(2), 
+                               when = c(3), 
                                what = c(0))
 
 
@@ -492,9 +492,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           summaryMeasureGenerator$setData(data.train)
           data.train.set <- summaryMeasureGenerator$getNext(private$training_set_size)
 
-          tau <- 2
-          B <- 100
-          N <- 100 
+          tau <- 4
+          B <- 50
+          N <- 50 
 
           OutputPlotGenerator.export_key_value(output=key_output, 'iterations', B)
           OutputPlotGenerator.export_key_value(output=key_output, 'simulation-number-of-observations', N)
@@ -551,7 +551,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
             result.osl_control <- rep(0.5, B)
           }
 
-          # # Plot the convergence
+          ## Plot the convergence
           data <- list(truth = result.approx, dosl = result.dosl, osl = result.osl)
           OutputPlotGenerator.create_convergence_plot(data = data,
                                                       output = paste('convergence_configuration',configuration,sep='_'))
@@ -581,7 +581,6 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                               )
 
           OutputPlotGenerator.store_oos_osl_difference(differences, output=key_output,  oos=FALSE, configuration=configuration)
-
 
           osl$info
 
@@ -685,7 +684,8 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
               osl_oos          = result.osl.mean.updated$oos_estimate,
               osl_oos_control  = result.osl_control.mean.updated$oos_estimate,
 
-              approx           = result.approx.mean
+              approx           = result.approx.mean,
+              approx_control   = result.approx_control.mean
             )
 
             OutputPlotGenerator.store_oos_osl_difference(differences_oos, output=key_output, oos=TRUE, configuration=configuration)

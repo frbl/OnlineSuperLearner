@@ -65,9 +65,9 @@
 #'   }
 #' }  
 DensityEstimation <- R6Class ("DensityEstimation",
-  #class = FALSE,
-  #cloneable = FALSE,
-  #portable = FALSE,
+  class = FALSE,
+  cloneable = FALSE,
+  portable = FALSE,
   private =
     list(
         ## Variables

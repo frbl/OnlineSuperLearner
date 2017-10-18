@@ -129,6 +129,9 @@
 #' }
 #' @export
 OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
+  #class = FALSE,
+  cloneable = FALSE,
+  portable = FALSE,
   private =
     list(
         ## Variables

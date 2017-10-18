@@ -269,7 +269,6 @@ ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, pr
   ncovariates <- length(labels(terms(formula))) + 1
   
   if(any(is.na(data))) {
-    browser()
     warning('Data contains NA values!')
   }
 
@@ -325,10 +324,16 @@ ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, pr
   #}
 
   if (is.null(previous_glm)) {
-    cat('Creating new glm.\n')
-    return(ConstrainedGlm.fit_new_glm(formula = formula, family = family, data = data, fall_back_to_glm = fall_back_to_glm, ...))
+    #cat('Creating new glm.\n')
+    return(ConstrainedGlm.fit_new_glm(
+      formula = formula,
+      family = family,
+      data = data,
+      fall_back_to_glm = fall_back_to_glm,
+      ...)
+    )
   } 
-  cat('Updating previous glm.\n')
+  #cat('Updating previous glm.\n')
   return(ConstrainedGlm.update_glm(previous_glm = previous_glm, data = data, ...))
 }
 
@@ -351,4 +356,14 @@ ConstrainedGlm.fit_new_glm <- function(formula, family, data, fall_back_to_glm, 
     speedglm::speedglm(formula = formula, data = data, family = binomial(), ...)
   })
   return(the_glm)
+}
+
+ConstrainedGlm.predict <- function(constrained_glm, newdata) {
+  assert_that(!is.null(data))
+  assert_that(!is.null(constrained_glm))
+  prediction <- hide_warning_rank_deficient_fit_prediction({
+    ## Make the actual prediction
+    predict(constrained_glm, newdata = newdata, type='response')
+  })
+  as.numeric(prediction)
 }
