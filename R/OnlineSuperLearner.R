@@ -165,7 +165,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         all_estimators_online = NULL,
 
         ## Summary measures and a generator
-        summaryMeasureGenerator = NULL,
+        summary_measure_generator = NULL,
 
         ## Verbosity of the logs
         verbose = FALSE,
@@ -332,7 +332,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           ## Set the current timestep to 1
           t <- 0
-          data_current <- private$summaryMeasureGenerator$getNext(mini_batch_size)
+          data_current <- self$get_summary_measure_generator$getNext(mini_batch_size)
 
           ## TODO: Check wether the stopping criteria are met (e.g., improvement < theta)
           while(t < max_iterations && nrow(data_current) >= 1 && !is.null(data_current)) {
@@ -352,7 +352,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
  
 
             ## Get the new row of data
-            data_current <- private$summaryMeasureGenerator$getNext(mini_batch_size)
+            data_current <- self$get_summary_measure_generator$getNext(mini_batch_size)
             t <- t + 1
           }
           private$verbose && exit(private$verbose)
@@ -521,11 +521,15 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           return(private$cv_risk)
         },
 
+        get_summary_measure_generator = function() {
+          private$summary_measure_generator
+        },
+
         get_validity = function() {
           if (length(private$SL.library.descriptions) == 0 || length(private$SL.library.fabricated) == 0 ) {
             throw("There should be at least one estimator in the library")
           }
-          if (is.null(private$summaryMeasureGenerator) || class(private$summaryMeasureGenerator) != 'SummaryMeasureGenerator') {
+          if (is.null(self$get_summary_measure_generator) || class(self$get_summary_measure_generator) != 'SummaryMeasureGenerator') {
             throw("You need to provide a summary measure generator of class SummaryMeasureGenerator")
           }
           if (!is.a(private$weightedCombinationComputers, 'list')) {
@@ -543,7 +547,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                               verbose = FALSE ) {
           self$set_verbosity(Arguments$getVerbose(verbose, timestamp = TRUE))
           private$fitted = FALSE
-          private$summaryMeasureGenerator <- Arguments$getInstanceOf(summaryMeasureGenerator, 'SummaryMeasureGenerator')
+          private$summary_measure_generator <- Arguments$getInstanceOf(summaryMeasureGenerator, 'SummaryMeasureGenerator')
           private$should_fit_dosl <- Arguments$getLogical(should_fit_dosl)
           private$should_fit_osl <- Arguments$getLogical(should_fit_osl)
 
@@ -574,7 +578,11 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$verbose = verbosity
         },
 
-        ## Samples the data iteratively from the fitted distribution, and applies an intervention if necessary
+        ## Samples the data iteratively from the fitted distribution, and
+        ## applies an intervention if necessary. Note that some preliminary
+        ## analysis showed that for this function approx 94% - 99% of time is
+        ## spent in the predict function.
+        ##
         ## @param data the data to start the sampling from
         ## @param randomvariables the list of randomvariables to use for the sampling procedure
         ## @param tau is the time at which we want to measure the outcome (default is 10)
@@ -587,17 +595,18 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## and when full, we return both (normalized)
         ## @param start_from_variable the randomvariable to start the sampling from (default null)
         ## @param start_from_time the start time to start from (default 1)
+        ## @param check boolean perform checks on the provided variables
+        ## @param order_variables boolean should this function order the variables? This is neccessary, but can be done beforehand.
+        ## @param remove_future_vars boolean set the future variables to NA (safety feature, should not be necessary)
         sample_iteratively = function(data, randomVariables, tau = 10, intervention = NULL, discrete = TRUE, 
                                       return_type = 'observations', 
                                       start_from_variable = NULL,
-                                      start_from_time = 1, check=FALSE) {
+                                      start_from_time = 1, check=FALSE, order_variables = TRUE, remove_future_vars= FALSE) {
 
           ## If no random variable to start from is provided, just start from
           ## the first one. Note the ordering which is done at the top of this
           ## function.
-          if (is.null(start_from_variable)) {
-            start_from_variable <- randomVariables[[1]]
-          }
+          if (is.null(start_from_variable)) start_from_variable <- randomVariables[[1]]
 
           ## Check whether the parameters are correct
           if(check) {
@@ -621,7 +630,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           }
 
           ## The variables need to be ordered when sampling from them
-          randomVariables <- RandomVariable.find_ordering(randomVariables)
+          if(order_variables) randomVariables <- RandomVariable.find_ordering(randomVariables)
 
           result <- data.table()
           result_denormalized_observations <- data.table(matrix(nrow=0, ncol=length(randomVariables)))
@@ -641,7 +650,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
               current_outcome <- rv$getY
               private$verbose && enter(private$verbose, 'Working on randomvariable ', current_outcome)
 
-              if (!started) {
+              if (remove_future_vars && !started) {
                 ## We move forward through the ordering till we find the variable we want to start from
                 if (!equals(current_outcome, start_from_variable$getY)) {
                   ## By default the remove_vars list contains all variables. However
@@ -668,6 +677,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                 outcome <- list(normalized = parsed_intervention$what, denormalized = parsed_intervention$what)
                 private$verbose && cat(private$verbose, 'Setting intervention on ', current_outcome,' with ', outcome, ' on time ', t)
               } else {
+
                 outcome <- self$predict(data = data, 
                                         randomVariables = c(rv),
                                         discrete = discrete,
@@ -702,19 +712,17 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             result <- rbind(result, data)
 
             ## Now we have stored the new data in the dataframe, we can use it to get the new covariates
-            if(t < tau) data <- private$summaryMeasureGenerator$getLatestCovariates(data)
+            if(t < tau) data <- self$get_summary_measure_generator$getLatestCovariates(data)
           }
           private$verbose && exit(private$verbose)
           if (return_type == 'observations') {
-            #if(any(is.na(result_denormalized_observations[,names(randomVariables), with = FALSE]))){
-              #print(result_denormalized_observations)
-            #}
-
             ## Return the denormalized observations?
-            return(result_denormalized_observations[,names(randomVariables), with = FALSE])
+            result <- (result_denormalized_observations[,names(randomVariables), with = FALSE])
           } else if (return_type == 'summary_measures') {
-            return(result[, !names(randomVariables), with = FALSE])
+            ## Return the denormalized observations?
+            result <- (result[, !names(randomVariables), with = FALSE])
           }
+
           return(result)
         },
 
@@ -726,10 +734,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           max_iterations <- Arguments$getInteger(max_iterations, c(0,Inf))
           data <- Arguments$getInstanceOf(data, 'Data.Base')
 
-          private$summaryMeasureGenerator$setData(data = data)
+          self$get_summary_measure_generator$setData(data = data)
 
           ## TODO: Move to check validity? Needs moving of the equations as well.
-          private$summaryMeasureGenerator$checkEnoughDataAvailable(randomVariables = randomVariables)
+          self$get_summary_measure_generator$checkEnoughDataAvailable(randomVariables = randomVariables)
 
           ## We initialize the WCC's here because we need to have the randomVariables
           private$initialize_weighted_combination_calculators(randomVariables)
@@ -741,7 +749,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           ## Get the initial data for fitting the first estimator and train the initial models
           private$verbose && enter(private$verbose, 'Fitting initial estimators')
-          private$summaryMeasureGenerator$getNext(initial_data_size) %>%
+          self$get_summary_measure_generator$getNext(initial_data_size) %>%
             private$train_library(data_current = ., randomVariables = randomVariables)
           private$verbose && exit(private$verbose)
 

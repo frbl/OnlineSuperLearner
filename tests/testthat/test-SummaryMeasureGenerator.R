@@ -16,7 +16,7 @@ test_that("it should set the minimal measurements needed correctly", {
     mylist <- append(mylist, SMG.Mock$new(minimalObservations = i))
   }
   subject <- described.class$new(SMG.list = mylist)
-  expect_equal(subject$minimal.measurements.needed, (max - 1))
+  expect_equal(subject$get_minimal_measurements_needed, (max - 1))
 })
 
 test_that("it should throw when pre_processor is set but are not a pre_processor", {

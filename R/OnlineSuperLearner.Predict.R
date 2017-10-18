@@ -16,9 +16,7 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
 
       predict = function(osl, data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, 
                          sample = FALSE, plot = FALSE) {
-        if (!osl$is_fitted){
-          return(NA)
-        }
+        if (!osl$is_fitted) return(NA)
 
         all_estimators <- Arguments$getLogical(all_estimators)
         discrete <- Arguments$getLogical(discrete) && osl$fits_dosl
@@ -57,6 +55,8 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
           predictions <- self$predict_dosl(osl$get_dosl, data, randomVariables,
                                                      sample = sample, plot = plot)
 
+
+
           result$normalized$dosl.estimator <-  predictions$normalized
           result$denormalized$dosl.estimator <- predictions$denormalized
 
@@ -65,6 +65,7 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
 
         # Result is a list of lists. first list has  two entries: Normalized and denormalized. Each of these lists hase
         # the outcomes for each of the estimators. In each of those entries a data.table is contained.
+
         result
       },
 
@@ -96,7 +97,7 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
 
       predict_dosl = function(dosl, data, randomVariables, sample = FALSE, plot = FALSE) {
         private$verbose && cat(private$verbose, 'discrete SL')
-        normalized_result <- lapply(randomVariables, function(rv) {
+        normalized_result <- foreach(rv = randomVariables) %do% {
             outcome_name <- rv$getY
 
             # This is for the first iteration, we don't have a dosl yet as it get's selected based
@@ -112,7 +113,7 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
             prediction %<>% as.matrix(prediction)
             colnames(prediction) <- outcome_name
             prediction
-          }) %>%
+          } %>%
           do.call(cbind, .) %>%
           as.data.table
 

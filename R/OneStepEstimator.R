@@ -65,14 +65,19 @@ OneStepEstimator <- R6Class("OneStepEstimator",
   portable = FALSE,
   public =
     list(
-      initialize = function(osl, randomVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE, parallel= TRUE, online = FALSE, verbose = FALSE) {
+      initialize = function(osl, randomVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE, parallel= TRUE, online = FALSE, verbose = FALSE, minimal_measurements_needed = 1) {
         private$osl <- Arguments$getInstanceOf(osl, 'OnlineSuperLearner')
 
         private$last_oos_estimate <- 0
         private$N <- Arguments$getInteger(N, c(1, Inf))
         private$B <- B##Arguments$getIngeger(B, c(1, Inf))
         private$discrete <- Arguments$getLogical(discrete)
+
         private$randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
+
+        # Also order the variables for the sampling process (so we don't have to do this every time)
+        private$randomVariables <- RandomVariable.find_ordering(private$randomVariables)
+
         private$pre_processor <- pre_processor
         private$tau <- tau
         private$intervention <- intervention
@@ -81,7 +86,8 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         private$online <- online
         private$P_data_cache <- DataCache$new(online = self$is_online)
         private$Pstar_data_cache <- DataCache$new(online = self$is_online)
-        private$verbose <- Arguments$getVerbose(-8, timestamp=TRUE)
+        private$minimal_measurements_needed <- minimal_measurements_needed
+        private$verbose <- Arguments$getVerbose(-1, timestamp=TRUE)
         #private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
       },
 
@@ -108,7 +114,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       calculate_full_oos = function(initial_estimate, data, truth = NULL) {
         ## Let $B$ be a large integer (the larger $B$ the better the approxmation),
         ## let $N$ be the number of observations,
-        N <- nrow(data)
+        N <- self$get_N#nrow(data)
 
         ## let intervention be the intervention we whish to oppose on the system, and
         ## let tau the the outcome of interest.
@@ -117,38 +123,36 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         #D_star_evaluation <- foreach(t = seq(1:N), .combine = 'sum') %do% {
         D_star_evaluation <- self$get_last_oos_estimate
 
-        #for (t in 1:N) {
-        t = 1
-        current_data <- data#[t,]
+        for (t in 1:N) {
+          current_data <- data[t,]
 
-        ## 1. calculate H-ratios
-        ## Note that the last_h_ratio_estimators parameter is either null (i.e., this is the first run),
-        ## Or contains the h_ratios of the previous iteration
-        private$last_h_ratio_estimators <- self$get_h_ratio_estimators(
-          data = current_data, 
-          last_h_ratio_estimators = self$get_last_h_ratio_estimators
-        )
+          ## 1. calculate H-ratios
+          ## Note that the last_h_ratio_estimators parameter is either null (i.e., this is the first run),
+          ## Or contains the h_ratios of the previous iteration
+          private$last_h_ratio_estimators <- self$get_h_ratio_estimators(
+            data = current_data, 
+            last_h_ratio_estimators = self$get_last_h_ratio_estimators
+          )
 
-        ## 2. Solve expectaions
-        ## We want to approximate the conditional expectation from RV (start) till Ytau
-        one_iteration_D_star_evaluation <- self$evaluation_of_conditional_expectations(
-          data = current_data,
-          h_ratio_predictors = self$get_last_h_ratio_estimators
-        )
+          ## 2. Solve expectaions
+          ## We want to approximate the conditional expectation from RV (start) till Ytau
+          one_iteration_D_star_evaluation <- self$evaluation_of_conditional_expectations(
+            data = current_data,
+            h_ratio_predictors = self$get_last_h_ratio_estimators
+          )
 
-        ## 3. Online update the dstar value
-        D_star_evaluation <- (((t-1) * D_star_evaluation) + one_iteration_D_star_evaluation) / t
+          ## 3. Online update the dstar value
+          D_star_evaluation <- (((t-1) * D_star_evaluation) + one_iteration_D_star_evaluation) / t
 
-        private$verbose && cat(private$verbose, 'Current D-star evaluation is ', one_iteration_D_star_evaluation,
-                                                ' Total evaluation is ', D_star_evaluation, 
-                                                ' and t (iteration) is ', t)
+          private$verbose && cat(private$verbose, 'Current D-star evaluation is ', one_iteration_D_star_evaluation,
+                                                  ' Total evaluation is ', D_star_evaluation, 
+                                                  ' and t (iteration) is ', t)
 
-        if(!is.null(truth)) {
-          private$verbose && cat(private$verbose, 'Abs difference with truth: ', abs((truth - (initial_estimate + D_star_evaluation))),
-                                                  ' Initial difference with truth: ', abs(truth - initial_estimate ))
+          if(!is.null(truth)) {
+            private$verbose && cat(private$verbose, 'Abs difference with truth: ', abs((truth - (initial_estimate + D_star_evaluation))),
+                                                    ' Initial difference with truth: ', abs(truth - initial_estimate ))
+          }
         }
-
-        # }
 
         ## Store the last OOS (for when it becomes online)
         private$last_oos_estimate <- D_star_evaluation
@@ -185,9 +189,14 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         self$print_parallel
         tic <- Sys.time()
 
-        N <- self$get_N#nrow(data)
+        N <- nrow(data)
 
         O_0 <- data[1,]
+
+        ## Note the +1, without it the highest lag in the system would still
+        ## remain constant / degenerate.
+        sampling_iterations_needed <- private$minimal_measurements_needed + 1
+
         ## Run B iterations on O_0 (always start from the same data
         Osample_p <- foreach(b = seq(1:self$get_B), .combine = rbind) %looping_function% {
 
@@ -196,13 +205,17 @@ OneStepEstimator <- R6Class("OneStepEstimator",
           ## h-ratios as the ratio stays the same (it might even work better),
           ## but we need to check this.
           private$verbose && cat(private$verbose, 'PN sample - iteration ', b)
+
+          ## Sample minimal measurements needed blocks. This way we are certain
+          ## that we actually sample the relevant historical measurements.
           current <- self$get_osl$sample_iteratively(data = O_0,
                                                      randomVariables = self$get_randomVariables,
-                                                     tau = N,
+                                                     tau = sampling_iterations_needed,
                                                      discrete = self$get_discrete,
                                                      intervention = NULL,
-                                                     return_type = 'full')
-          current
+                                                     return_type = 'full',
+                                                     order_variables = FALSE)
+          current[sampling_iterations_needed,]
         }
 
         toc <- Sys.time()
@@ -226,7 +239,6 @@ OneStepEstimator <- R6Class("OneStepEstimator",
           current
         }
 
-        #browser()
         toc <- Sys.time()
         private$verbose && exit(private$verbose)
         private$verbose && cat(private$verbose, 'Sampled ', self$get_B * N,' observations from PN*')
@@ -243,7 +255,6 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         time_s_column <- lapply(seq(Pstar_rows), function(i) ((i - 1) %% self$get_tau) + 1)  %>% unlist
         Osample_p_star[, time_s_column := time_s_column]
 
-        rbindlist(list(Osample_p, Osample_p_star[time_s_column == 1][,!'time_s_column']))
         ## Perform the actual learning of the h_ratio predictors
         h_ratio_predictors_per_s <- self$calculate_h_ratio_predictors(Osample_p, Osample_p_star)
 
@@ -261,7 +272,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         ## We have to create the conditional expectations using each of the
         ## random variables as a start point
         influence_curve_for_each_rv <- c()
-        N <- self$get_N#nrow(data)
+        N <- nrow(data)
 
         ## This is the outer loop of the influence curve
         #browser()
@@ -330,13 +341,16 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
             h_ratio_predictors <- lapply(formulae, function(formula){
               ## TODO: Currently we use GLM here, but we should make use of a SuperLearner here.
-                                           #browser()
               hide_warning_convergence(
                 ConstrainedGlm.fit(formula = formula(formula),
                                   data = Osample_p_full,
                                   delta = 0.05,
                                   previous_glm = private$get_previous_h_ratio_estimator(formula = formula, s = time_s))
               )
+              #abc <- glm(formula = formula(formula), data = Osample_p_full, family= binomial())
+              #mean(predict(abc, newdata = Osample_p_full[Osample_p_full$A == 1], type='response'))
+              #mean(predict(abc, newdata = Osample_p_full[Osample_p_full$A == 0], type='response'))
+              #print()
               #formula
               #cop <- Osample_p_full
               #form <- Delta ~ A_lag_1 + W_lag_1 + Y_lag_1 + Y_lag_2
@@ -373,10 +387,18 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         h_prediction <- ConstrainedGlm.predict(constrained_glm = predictor_or_na, newdata = data)
 
         h_ratio <- (h_prediction / (1.0 - h_prediction))
-        if (h_ratio > 19 || h_ratio < 0.05) {
-          warning('Calculated h_ratio is relatively large or very small! Are you violating the positivity assumption? Value=', h_ratio, '. Were setting it to 0, to be sure')
+        if (h_ratio > 19) {
+          warning('Calculated h_ratio is relatively large! Are
+                  you violating the positivity assumption? Value=', h_ratio, '.
+                  Were setting it to 19, to be sure')
           warning('Data used: ', paste(data, collapse = '-'))
-          h_ratio = 0 
+          h_ratio = 19 
+        } else if (h_ratio < 0.05) {
+          warning('Calculated h_ratio is very small! Are
+                  you violating the positivity assumption? Value=', h_ratio, '.
+                  Were setting it to 0.05, to be sure')
+          warning('Data used: ', paste(data, collapse = '-'))
+          h_ratio = 0.05 
         }
 
         h_ratio
@@ -394,9 +416,9 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         if(current_node_is_treatment) return(0)
 
         ## Calculate whether the next variable is still in the same S (the next after Y(s) is W(s +1)
-        starting_time_for_next_rv <- Arguments$getNumerics(s + current_rvs$s_offset)
+        starting_time_for_next_rv <- s + current_rvs$s_offset
 
-        ## If tau ends up to be 0, and we already know y(tau), we can just get
+        ## If s ends up to be tau, and we already know y(tau), we can just get
         ## it from the data. Expectation of a constant is the constant itself,
         ## right?
         if(self$get_tau == s && current_rvs$rv$getY == self$get_variable_of_interest) {
@@ -515,6 +537,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       is_parallel = NULL,
       P_data_cache = NULL,
       Pstar_data_cache = NULL,
+      minimal_measurements_needed = NULL,
 
       get_previous_h_ratio_estimator = function(s, formula) {
         estimators <- self$get_last_h_ratio_estimators
@@ -537,7 +560,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         h_ratio    <- self$calculate_h_ratio(h_ratio_predictors, s, formula, dat)
 
         ## We don't have to go through all the trouble if the h_ratio is 0 (0 * x = 0)
-        if(h_ratio == 0) return(0)
+        if(h_ratio <= 1e-4) return(0)
 
         ## 2. Calculate the difference between the expected values
         difference <- self$calculate_difference_in_expectations(s, dat, formula, current_rvs)

@@ -39,7 +39,8 @@ create_subject <- function(other_B = NULL, other_osl = NULL) {
     tau = tau,
     intervention = intervention,
     variable_of_interest = Y,
-    parallel = FALSE
+    parallel = FALSE,
+    minimal_measurements_needed = 1 # Minimal 1, because lag 1
   )
 }
 

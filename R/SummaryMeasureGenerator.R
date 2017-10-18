@@ -20,8 +20,6 @@
 SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
   public =
     list(
-        minimal.measurements.needed = NULL,
-
         initialize = function(data = NULL, SMG.list, verbose = FALSE, pre_processor = NULL, 
                               number_of_observations_per_timeseries = Inf) {
           private$number_of_observations_per_timeseries <- Arguments$getNumerics(number_of_observations_per_timeseries , c(1,Inf))
@@ -41,7 +39,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
           # support all our SMGs
           # TODO: We do the -1 so we can just get new measurements, without caring about the cache getting filled or not.
           # This could be made more explicit
-          self$minimal.measurements.needed <- max(sapply(SMG.list, function(obj) obj$minimalObservations)) - 1
+          private$minimal_measurements_needed <- max(sapply(SMG.list, function(obj) obj$minimalObservations)) - 1
         },
 
         reset = function() {
@@ -73,7 +71,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
           private$checkDataAvailable()
 
           # If no history is needed, we don't have to fill the cache
-          if(self$minimal.measurements.needed == 0) return(FALSE)
+          if(self$get_minimal_measurements_needed == 0) return(FALSE)
 
           # If the timeseries we are requesting is a new one (i.e., the next
           # person when multiple timeseries are provided) we should reset the
@@ -86,7 +84,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
             self$reset()
           }
 
-          extraMeasurementsNeeded <- nrow(self$getCache) - self$minimal.measurements.needed
+          extraMeasurementsNeeded <- nrow(self$getCache) - self$get_minimal_measurements_needed
           if(extraMeasurementsNeeded < 0) {
             private$cache <- private$get_next_normalized(n = abs(extraMeasurementsNeeded))
             return(TRUE)
@@ -103,7 +101,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
         },
 
         summarizeData = function(data, n = 1){
-          if(nrow(data) <= self$minimal.measurements.needed){
+          if(nrow(data) <= self$get_minimal_measurements_needed){
             #throw('Not enough data provided to support all summary measures')
             return(data)
           }
@@ -160,32 +158,39 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
 
         get_smg_list = function() {
           return(private$SMG.list)
-        }
-        ),
-  private =
-    list(
-        ts = NULL,
-        data = NULL,
-        number_of_observations_per_timeseries = NULL,
-        cache = data.table(),
-        SMG.list = NULL,
-        verbose = NULL,
-        normalized = NULL,
-        pre_processor = NULL,
-
-        get_next_normalized = function(n) {
-          # Get the next N observations, rely on the data source to get this data efficient
-          current <- private$data$getNextN(n = n)
-          if (is.null(current)) return(NULL)
-
-          if (self$is_normalized) current %<>% self$get_pre_processor$normalize(.)
-          current
         },
 
-        checkDataAvailable = function() {
-          if(is.null(private$data)) {
-            throw('Please set the data of the summary measure generator first')
-          }
+        get_minimal_measurements_needed = function() {
+          ## This value is equal to the highest lag in the system. That is, if
+          ## we have a lag_2 variable, this variable is 2.
+          return(private$minimal_measurements_needed)
         }
+    ),
+  private =
+    list(
+      minimal_measurements_needed = NULL,
+      ts = NULL,
+      data = NULL,
+      number_of_observations_per_timeseries = NULL,
+      cache = data.table(),
+      SMG.list = NULL,
+      verbose = NULL,
+      normalized = NULL,
+      pre_processor = NULL,
+
+      get_next_normalized = function(n) {
+        # Get the next N observations, rely on the data source to get this data efficient
+        current <- private$data$getNextN(n = n)
+        if (is.null(current)) return(NULL)
+
+        if (self$is_normalized) current %<>% self$get_pre_processor$normalize(.)
+        current
+      },
+
+      checkDataAvailable = function() {
+        if(is.null(private$data)) {
+          throw('Please set the data of the summary measure generator first')
+        }
+      }
     )
 )
