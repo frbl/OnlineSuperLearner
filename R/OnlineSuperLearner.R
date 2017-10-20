@@ -176,6 +176,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## The class to make predictions on the data
         online_super_learner_predict = NULL,
 
+        ## Train / update CV in parallel?
+        is_parallel = NULL,
+
         ## Functions
         ## =========
 
@@ -230,9 +233,11 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           # Retrieve the cached data, so we can reuse it
           if(!self$is_online) cache <- self$get_data_cache$get_data_cache
 
+          `%looping_function%` <- private$get_looping_function()
           #private$SL.library.fabricated <- mclapply(private$SL.library.fabricated, function(estimator) {
           #for(estimator in private$SL.library.fabricated) {
-          estimators <- foreach(estimator=private$SL.library.fabricated) %do% {
+          estimators <- foreach(estimator=private$SL.library.fabricated) %looping_function% {
+            private$verbose && cat(private$verbose, 'Training ', estimator$get_name)
             if(self$is_fitted && estimator$is_online) {
               # Note that we use the data here, and not the cache, as
               # essentially this cache will be  empty if none of the algorithms
@@ -242,8 +247,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             } else {
               estimator$fit(cache, randomVariables = randomVariables)
             }
+            private$verbose && cat(private$verbose, 'Done training (or updating) ', estimator$get_name)
             estimator
           }
+          private$verbose && cat(private$verbose, 'Trained all estimators for this RV in this iteration.')
           names(estimators) <- names(private$SL.library.fabricated)
           private$SL.library.fabricated <- estimators
           #}, mc.cores = 23)
@@ -433,28 +440,15 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           private$verbose && exit(private$verbose)
           return(TRUE)
+        },
+
+        get_looping_function = function() {
+          if(private$is_parallel) {
+            return(`%dopar%`)
+          }
+          return(`%do%`)
         }
 
-
-        ## Fit the actual super learner on all models in the current set of models
-        ##
-        ## Params:
-        ## @param predicted.outcome: the predicted.outcome by the learning algorithms
-        ## @param observed.outcome: the outcome we observed in the actual dataset
-        #fit = function(predicted.outcome, observed.outcome) {
-
-          #fit_dosl(predicted.outcome, observed.outcome)
-          #private$dosl.estimators <- private$fit_dosl()
-
-          ## Do gradient descent update
-          ## Something like:
-          ##Xmat <- model.matrix(formula, train)
-          ##suppressWarnings(prediction <- self$predict(train, A, W))
-          ##gradient <- (t(Xmat) %*% (prediction - Ymat))
-          ##self$estimator <- self$estimator - private$learning.rate * gradient
-
-          ##prediction <- self$predict(train, A, W)
-        #}
 
         ),
   active =
@@ -571,6 +565,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                                                                                  verbose = verbose)
           private$historical_cv_risk <- list()
 
+          private$is_parallel = FALSE
           self$get_validity
         },
 
@@ -751,11 +746,12 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$verbose && enter(private$verbose, 'Fitting initial estimators')
           self$get_summary_measure_generator$getNext(initial_data_size) %>%
             private$train_library(data_current = ., randomVariables = randomVariables)
+
           private$verbose && exit(private$verbose)
 
           private$verbose && enter(private$verbose, 'Updating estimators')
           ## Update the library of models using a given number of max_iterations
-          private$update_library(randomVariables = randomVariables, max_iterations = max_iterations,
+          private$update_library(randomVariables <- randomVariables, max_iterations = max_iterations,
                                 mini_batch_size = mini_batch_size)
 
           ## Return the cross validated risk

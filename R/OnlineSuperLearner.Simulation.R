@@ -27,13 +27,13 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           options(warn=1)
           private$sim  <- Simulator.GAD$new()
-          private$training_set_size <- 1e2
+          private$training_set_size <- 1e3
 
           OutputPlotGenerator.export_key_value('training-set-size', private$training_set_size)
           private$cv_risk_calculator <- CrossValidationRiskCalculator$new()
           private$test_set_size <- 100
-          #private$log <- Arguments$getVerbose(-8, timestamp=TRUE)
-          private$log <- FALSE
+          private$log <- Arguments$getVerbose(-3, timestamp=TRUE)
+          #private$log <- FALSE
           #algos <- list(list(description='ML.H2O.randomForest-1tree',
                                   #algorithm = 'ML.H2O.randomForest',
                                   #params = list(ntrees = 1)))
@@ -44,14 +44,14 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           #algos <- append(algos, list(list(description='ML.H2O.gbm',
                                   #algorithm = 'ML.H2O.gbm')))
-          nbins <- c(30, 40, 50, 60)
+          nbins <- c(30, 40)#, 50, 60, 70)
           algos <- list()
 
 
-          alphas <- runif(2,0,1)
-          algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                                  algorithm_params = list(alpha = alphas), 
-                                  params = list(nbins = nbins, online = FALSE))))
+          alphas <- runif(4,0,1)
+          #algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
+                                  #algorithm_params = list(alpha = alphas), 
+                                  #params = list(nbins = nbins, online = TRUE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
                                   #algorithm_params = list(ntrees=c(10,20), min_rows=1),
@@ -62,19 +62,19 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   #params = list(nbins = nbins, online = TRUE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.SVM',
-                                  #algorithm_params = list(),
-                                  #params = list(nbins = c(39, 40), online = FALSE))))
+                                  ##algorithm_params = list(),
+                                  #params = list(nbins = nbins, online = FALSE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.randomForest',
-                                  #algorithm_params = list(),
-                                  #params = list(nbins = c(39, 40), online = FALSE))))
+                                  ##algorithm_params = list(),
+                                  #params = list(nbins = nbins, online = FALSE))))
 
           algos <- append(algos, list(list(algorithm = 'ML.Local.Speedlm',
                                   #algorithm_params = list(),
                                   params = list(nbins = nbins, online = FALSE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
-                                  #algorithm_params = list(alpha = alphas),
+                                  ##algorithm_params = list(alpha = alphas),
                                   #params = list(nbins = nbins, online = FALSE))))
 
           #algos <- append(algos, list(list(algorithm = 'condensier::glmR6',
@@ -406,8 +406,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           # Initialize variables
           tau <- 3
-          B <- 50
-          N <- 10 
+          B <- 500
+          B_oos <- 50
+          N <- 20 
           margin <- 100
 
           result.dosl.mean                 <- -1
@@ -424,8 +425,6 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           result.dosl_control              <- rep(0.5, B)
           result.osl                       <- rep(0.5, B)
           result.osl_control               <- rep(0.5, B)
-
-
 
           # Generate a dataset we will use for testing.
           # We add a margin so we don't have to worry about the presence of enough history
@@ -596,6 +595,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           ## Retrieve the minimal number of blocks needed before we have truly updating relevant history
           minimal_measurements_needed <- osl$get_summary_measure_generator$get_minimal_measurements_needed
 
+          private$log && cat(private$log, 'Starting OOS!')
           oos_options <- c('dosl', 'dosl_control', 'osl', 'osl_control')
           #oos_options <- c('dosl', 'osl')
           # Now, the final step is to apply the OneStepEstimator
@@ -607,7 +607,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
               randomVariables = randomVariables, 
               discrete = TRUE,
               N = N, 
-              B = B,
+              B = B_oos,
               tau = tau,
               intervention = intervention,
               variable_of_interest = variable_of_interest,
@@ -629,7 +629,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 							randomVariables = randomVariables, 
 							discrete = TRUE,
 							N = N, 
-							B = B,
+							B = B_oos,
 							tau = tau,
 							intervention = control,
 							variable_of_interest = variable_of_interest,
@@ -651,7 +651,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 							randomVariables = randomVariables, 
 							discrete = FALSE,
 							N = N, 
-							B = B,
+							B = B_oos,
 							tau = tau,
 							intervention = intervention,
 							variable_of_interest = variable_of_interest,
@@ -673,7 +673,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 							randomVariables = randomVariables, 
 							discrete = FALSE,
 							N = N, 
-							B = B,
+							B = B_oos,
 							tau = tau,
 							intervention = control,
 							variable_of_interest = variable_of_interest,

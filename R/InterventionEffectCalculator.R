@@ -87,18 +87,22 @@ InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
         `%looping_function%` <- private$get_looping_function()
 
         if(self$is_running_parallel) {
-          cat('Approximating estimation (under intervention, in parallel) \n')
+          cat('Approximating estimation (under intervention, in parallel)\n')
         } else {
-          cat('Approximating estimation (under intervention, not parallel) \n')
+          cat('Approximating estimation (under intervention, not parallel)\n')
         }
+
         # Note that this won't work when we have an H2O estimator in the set. The parallelization will fail.
         result <- foreach(i=seq(self$get_bootstrap_iterations), .combine=rbind) %looping_function% {
-          cat('Approximation iteration:', i, '\n')
-            osl$sample_iteratively(data = initial_data,
-                                  randomVariables = self$get_random_variables,
-                                  intervention = intervention,
-                                  discrete = discrete,
-                                  tau = tau)[tau, self$get_outcome_variable, with=FALSE]
+          cat('Approximation iteration for:', i, '\n')
+          sample <- osl$sample_iteratively(data = initial_data,
+                                randomVariables = self$get_random_variables,
+                                intervention = intervention,
+                                discrete = discrete,
+                                tau = tau)
+          
+          print(sample)
+          sample[tau, self$get_outcome_variable, with=FALSE]
         } %>%
           unlist
       }

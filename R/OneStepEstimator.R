@@ -87,6 +87,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         private$P_data_cache <- DataCache$new(online = self$is_online)
         private$Pstar_data_cache <- DataCache$new(online = self$is_online)
         private$minimal_measurements_needed <- minimal_measurements_needed
+        private$history <- NULL
         private$verbose <- Arguments$getVerbose(-1, timestamp=TRUE)
         #private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
       },
@@ -149,13 +150,23 @@ OneStepEstimator <- R6Class("OneStepEstimator",
                                                   ' and t (iteration) is ', t)
 
           if(!is.null(truth)) {
-            private$verbose && cat(private$verbose, 'Abs difference with truth: ', abs((truth - (initial_estimate + D_star_evaluation))),
-                                                    ' Initial difference with truth: ', abs(truth - initial_estimate ))
+            initial_difference <- abs(truth - initial_estimate)
+            current_difference <- abs(truth - (initial_estimate + D_star_evaluation))
+
+            increased_or_decreased <- ifelse(initial_difference > current_difference, 'decreased', 'increased')
+            private$verbose && cat(private$verbose, 'Initial difference with truth was: ', initial_difference)
+            private$verbose && cat(private$verbose, 'Current difference with truth has ', increased_or_decreased,
+                                                    ' and is: ', current_difference)
           }
+
+          ## Store the last OOS (for when it becomes online)
+          private$last_oos_estimate <- D_star_evaluation
+          private$append_to_history(truth = truth, initial_estimate = initial_estimate)
         }
 
-        ## Store the last OOS (for when it becomes online)
-        private$last_oos_estimate <- D_star_evaluation
+
+        ## Print the history (plot it later)
+        print(self$get_history)
 
         oos_estimate <- D_star_evaluation + initial_estimate
         if(is.nan(oos_estimate)) {
@@ -277,7 +288,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         ## This is the outer loop of the influence curve
         #browser()
         efficient_influence_curve <- foreach(t=seq(N), .combine='sum') %do% {
-          private$verbose && cat(private$verbose, 'Efficient influence curve iteration ', t)
+          private$verbose && cat(private$verbose, 'Efficient influence curve iteration (part of the full curve)', t)
           current_dat <- data[t,]
 
           difference_in_expectations_for_all_s <- 
@@ -385,20 +396,15 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         ## Make the actual H prediction
         h_prediction <- ConstrainedGlm.predict(constrained_glm = predictor_or_na, newdata = data)
+        h_ratio <- (1.0 - h_prediction / h_prediction)
 
-        h_ratio <- (h_prediction / (1.0 - h_prediction))
         if (h_ratio > 19) {
+          browser()
           warning('Calculated h_ratio is relatively large! Are
                   you violating the positivity assumption? Value=', h_ratio, '.
                   Were setting it to 19, to be sure')
           warning('Data used: ', paste(data, collapse = '-'))
           h_ratio = 19 
-        } else if (h_ratio < 0.05) {
-          warning('Calculated h_ratio is very small! Are
-                  you violating the positivity assumption? Value=', h_ratio, '.
-                  Were setting it to 0.05, to be sure')
-          warning('Data used: ', paste(data, collapse = '-'))
-          h_ratio = 0.05 
         }
 
         h_ratio
@@ -459,6 +465,10 @@ OneStepEstimator <- R6Class("OneStepEstimator",
     ),
   active =
     list(
+      get_history = function() {
+        return(private$history)
+      },
+
       get_osl = function() {
         return(private$osl)
       },
@@ -538,6 +548,21 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       P_data_cache = NULL,
       Pstar_data_cache = NULL,
       minimal_measurements_needed = NULL,
+      history = NULL,
+
+      append_to_history = function(truth = NULL, initial_estimate = NULL) {
+        if(!is.null(truth) && !is.null(initial_estimate)) {
+          difference <- truth - (initial_estimate + self$get_last_oos_estimate)
+          appendable <- data.table(oos_estimate = self$get_last_oos_estimate, difference = difference)
+        } else {
+          appendable <- data.table(oos_estimate = self$get_last_oos_estimate)
+        }
+        if(is.null(private$history)) {
+          private$history <- appendable
+        } else {
+          private$history <- rbindlist(list(private$history, appendable))
+        }
+      },
 
       get_previous_h_ratio_estimator = function(s, formula) {
         estimators <- self$get_last_h_ratio_estimators

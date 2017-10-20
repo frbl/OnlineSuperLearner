@@ -347,20 +347,21 @@ ConstrainedGlm.fit_new_glm <- function(formula, family, data, fall_back_to_glm, 
   ## First try speed glm. In case that fails, try the constrained version. In case that fails, try the normal glm.
   the_glm <- tryCatch({
     # TODO: we'd need to use a different method here. The regular GLM does not support online updating. However, speedglm crashes more often. 
-    speedglm::speedglm(formula = formula, data = data, family = family, ...)
-    #glm(formula = formula, family = family, data=data, ...)
+    #speedglm::speedglm(formula = formula, data = data, family = family, ...)
+    glm(formula = formula, data = data, family = family, ...)
   }, error = function(e) {
     #<simpleError in solve.default(XTX, XTz, tol = tol.solve): system is computationally singular: reciprocal condition number = 2.65004e-18>
     print(e)
     warning('Constrained GLM failed, using speedglm binomial')
-    speedglm::speedglm(formula = formula, data = data, family = binomial(), ...)
+    #speedglm::speedglm(formula = formula, data = data, family = binomial(), ...)
+    glm(formula = formula, data = data, family = binomial(), ...)
   })
   return(the_glm)
 }
 
 ConstrainedGlm.predict <- function(constrained_glm, newdata) {
-  assert_that(!is.null(data))
   assert_that(!is.null(constrained_glm))
+  assert_that(!is.null(newdata))
   prediction <- hide_warning_rank_deficient_fit_prediction({
     ## Make the actual prediction
     predict(constrained_glm, newdata = newdata, type='response')
