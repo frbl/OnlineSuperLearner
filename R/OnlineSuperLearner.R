@@ -137,7 +137,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## Variables
         ## =========
         ## The R.cv score of the current fit
-        ## default_wcc = WCC.SGD.Simplex,
+        #default_wcc = WCC.NMBFGS,
         default_wcc = WCC.SGD.Simplex,
         cv_risk = NULL,
         historical_cv_risk = NULL,
@@ -202,6 +202,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         update_oos_fit = function(new_data) {
           new_data <- Arguments$getInstanceOf(new_data, 'data.table')
           N <- nrow(new_data)
+
+          ## TODO: Implement
         },
 
         ## Initializes the weighted combination calculators. One for each randomvariable.
@@ -226,12 +228,16 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## @return a vector of outcomes, each entry being the predicted outcome of an estimator on the test set
         train_all_estimators = function(data, randomVariables) {
           private$verbose && enter(private$verbose, 'Training all estimators')
-          
+
           # If not all estimators are online, we have to keep track of a cache of data.
           self$get_data_cache$update_cache(newdata = data)
 
           # Retrieve the cached data, so we can reuse it
-          if(!self$is_online) cache <- self$get_data_cache$get_data_cache
+          cache <- data
+          if(!self$is_online) {
+            cache <- self$get_data_cache$get_data_cache
+          }
+
 
           `%looping_function%` <- private$get_looping_function()
           #private$SL.library.fabricated <- mclapply(private$SL.library.fabricated, function(estimator) {
@@ -303,15 +309,16 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             ## Put the CV risk back to what it was before the update. We can now actually fit it correctly.
             private$cv_risk$dosl.estimator <- pre_dosl_risk
 
-            ## In order to get the initial estimate of the CV error of the DOSL, we first need to fit the other 
-            ## estimators, and after that calculate the dosl error separately. 
+            ## In order to get the initial estimate of the CV error of the
+            ## DOSL, we first need to fit the other estimators, and after that
+            ## calculate the dosl error separately.
             predicted.outcome <- self$predict(data = data.splitted$test,
                                             randomVariables = randomVariables,
                                             discrete = TRUE, continuous = FALSE, all_estimators = FALSE)
 
             ## Note that we are using the cv_risk_calculator here to update the risk, not the wrapper function, hence
             ## not affecting our earlier risk score.
-            private$cv_risk$dosl.estimator <- 
+            private$cv_risk$dosl.estimator <-
               private$cv_risk_calculator$update_risk(predicted.outcome = predicted.outcome,
                                                       observed.outcome = observed.outcome,
                                                       randomVariables  = randomVariables,
@@ -356,7 +363,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             private$train_library(data_current = data_current, randomVariables = randomVariables)
             output = paste('performance_iteration',t,sep='_')
             OutputPlotGenerator.create_risk_plot(self$get_cv_risk, output, '/tmp/osl/')
- 
+
 
             ## Get the new row of data
             data_current <- self$get_summary_measure_generator$getNext(mini_batch_size)
@@ -399,6 +406,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                                                         Y = as.matrix(observed_outcome),
                                                         private$SL.library.descriptions)
           })
+
         },
 
         ## Find the best estimator among the current set, for each of the densities (WAY)
@@ -425,12 +433,12 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           ## DEBUGGING ONLY
           ## This function checks the fitted DOSL and checks if each of the
-          ## selected estimators indeed has the lowest risk. 
+          ## selected estimators indeed has the lowest risk.
           if(FALSE) {
             for (i in seq_along(private$dosl.estimators)) {
               estimator <- private$dosl.estimators[[i]]
               scores <- current_risk[[i]]
-              best_risk <- current_risk[[estimator$get_name]][[i]] 
+              best_risk <- current_risk[[estimator$get_name]][[i]]
               all_risks <- lapply(current_risk, function(x) x[[i]])
               idx <- names(all_risks) == 'osl.estimator' | names(all_risks)== 'dosl.estimator'
               min_risks <- all_risks[!(idx)] %>% unlist %>% min
@@ -593,8 +601,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## @param check boolean perform checks on the provided variables
         ## @param order_variables boolean should this function order the variables? This is neccessary, but can be done beforehand.
         ## @param remove_future_vars boolean set the future variables to NA (safety feature, should not be necessary)
-        sample_iteratively = function(data, randomVariables, tau = 10, intervention = NULL, discrete = TRUE, 
-                                      return_type = 'observations', 
+        sample_iteratively = function(data, randomVariables, tau = 10, intervention = NULL, discrete = TRUE,
+                                      return_type = 'observations',
                                       start_from_variable = NULL,
                                       start_from_time = 1, check=FALSE, order_variables = TRUE, remove_future_vars= FALSE) {
 
@@ -673,15 +681,15 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                 private$verbose && cat(private$verbose, 'Setting intervention on ', current_outcome,' with ', outcome, ' on time ', t)
               } else {
 
-                outcome <- self$predict(data = data, 
+                outcome <- self$predict(data = data,
                                         randomVariables = c(rv),
                                         discrete = discrete,
                                         continuous = !discrete,
                                         all_estimators = FALSE,
                                         sample = TRUE)
 
-                private$verbose && cat(private$verbose,'Predicted ', current_outcome, 
-                                       ' using ', paste(rv$getX, collapse=', '), 
+                private$verbose && cat(private$verbose,'Predicted ', current_outcome,
+                                       ' using ', paste(rv$getX, collapse=', '),
                                        ' and the prediction was ', outcome$denormalized[[1]])
               }
               ## Now we actually add the recently predicted value to the
@@ -700,8 +708,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             ## function so the final result is a datatable.
             result_denormalized_observations <- rbindlist(
               list(
-                result_denormalized_observations, 
-                current_denormalized_observation), 
+                result_denormalized_observations,
+                current_denormalized_observation),
               fill=TRUE
             )
             result <- rbind(result, data)

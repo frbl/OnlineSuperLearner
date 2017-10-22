@@ -16,6 +16,7 @@ packages <- c(
 "glmnet",
 "speedglm",
 "randomForest",
+"neuralnet",
 "e1071",
 "doRNG",
 "nnls",

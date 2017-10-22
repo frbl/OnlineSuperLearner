@@ -34,6 +34,7 @@ Imports:
     xgboost,
     speedglm,
     randomForest,
+    neuralnet,
     e1071,
     glmnet,
     nloptr,
@@ -71,6 +72,7 @@ Collate:
     'ML.SVM.R'
     'ML.randomForest.R'
     'ML.Local.lm.R'
+    'ML.NeuralNet.R'
     'ML.Base.R'
     'ML.XGBoost.R'
     'LibraryFactory.R'
@@ -80,6 +82,7 @@ Collate:
     'ML.H2O.glm.R'
     'ML.H2O.randomForest.R'
     'ML.Local.Speedlm.R'
+    'ML.Neuralnet.R'
     'OneStepEstimator.R'
     'OnlineSuperLearner.Predict.R'
     'WCC.SGD.Simplex.R'

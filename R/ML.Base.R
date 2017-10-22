@@ -39,6 +39,10 @@ ML.Base <- R6Class("ML.Base",
 
       perform_update = function(...) {
         private$do.update(...)
+      },
+
+      create_formula = function(X_mat) {
+        as.formula(paste("Y ~", paste(colnames(X_mat), collapse = " + ")))
       }
     ),
   active =

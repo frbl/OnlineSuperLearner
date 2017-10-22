@@ -12,11 +12,12 @@
 InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
   public =
     list(
-      initialize = function(bootstrap_iterations, randomVariables, outcome_variable, is_parallel = TRUE) {
+      initialize = function(bootstrap_iterations, randomVariables, outcome_variable, is_parallel = TRUE, verbose = FALSE) {
         private$bootstrap_iterations <- Arguments$getInteger(bootstrap_iterations, c(1, Inf))
         private$randomVariables <- Arguments$getInstanceOf(randomVariables,'list')
         private$outcome_variable <- Arguments$getCharacters(outcome_variable)
         private$is_parallel <- Arguments$getLogical(is_parallel)
+        private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
       },
 
       calculate_intervention_effect = function(osl, interventions, discrete, initial_data, tau, check = FALSE) {
@@ -31,9 +32,10 @@ InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
           warning('Provided interventions do not have a name. Please name them for data management. Continuing without any names.')
         }
 
-        cat('Starting evaluation for ', ifelse(discrete, 'discrete', 'continuous'), ' superlearner.\n')
+        private$verbose && enter(private$verbose, 'Starting evaluation for ', ifelse(discrete, 'discrete', 'continuous'), ' superlearner.')
 
-        lapply(interventions, function(intervention) {
+        result <- lapply(interventions, function(intervention) {
+          private$verbose && cat(private$verbose, 'Runninng new intervention')
           private$evaluate_single_intervention(osl = osl,
                                                initial_data = initial_data,
                                                intervention = intervention,
@@ -41,6 +43,8 @@ InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
                                                outcome_variable = outcome_variable,
                                                discrete = discrete)
         })
+        private$verbose && exit(private$verbose)
+        result
       },
 
       perform_initial_estimation = function(osl, interventions, discrete, initial_data,  tau) {
@@ -75,6 +79,7 @@ InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
       bootstrap_iterations = NULL,
       randomVariables = NULL,
       outcome_variable = NULL,
+      verbose = NULL,
 
       get_looping_function = function() {
         if(self$is_running_parallel) {
@@ -87,21 +92,20 @@ InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
         `%looping_function%` <- private$get_looping_function()
 
         if(self$is_running_parallel) {
-          cat('Approximating estimation (under intervention, in parallel)\n')
+          private$verbose && cat(private$verbose, 'Approximating estimation (under intervention, in parallel)')
         } else {
-          cat('Approximating estimation (under intervention, not parallel)\n')
+          private$verbose && cat(private$verbose, 'Approximating estimation (under intervention, not parallel)')
         }
 
         # Note that this won't work when we have an H2O estimator in the set. The parallelization will fail.
         result <- foreach(i=seq(self$get_bootstrap_iterations), .combine=rbind) %looping_function% {
-          cat('Approximation iteration for:', i, '\n')
+          private$verbose && cat(private$verbose, 'Approximation iteration for:', i)
           sample <- osl$sample_iteratively(data = initial_data,
                                 randomVariables = self$get_random_variables,
                                 intervention = intervention,
                                 discrete = discrete,
                                 tau = tau)
           
-          print(sample)
           sample[tau, self$get_outcome_variable, with=FALSE]
         } %>%
           unlist

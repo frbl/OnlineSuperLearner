@@ -84,8 +84,8 @@ ML.XGBoost <- R6Class("ML.XGBoost",
       },
 
       do.update = function(X_mat, Y_vals, m.fit, ...) {
-        # By default the xgbtrain function uses the old model as a parameter. Therefore we can just simply call
-        # the fit function
+        # By default the xgbtrain function uses the old model as a parameter.
+        # Therefore we can just simply call the fit function
         private$do.fit(X_mat, Y_vals, m.fit$coef)
 
       },
@@ -117,7 +117,7 @@ ML.XGBoost <- R6Class("ML.XGBoost",
                   nrounds    = private$rounds,
                   #watchlist = watchlist,
                   xgb_model  = coef,
-                  verbose    = private$verbosity)
+                  verbose    = TRUE) #private$verbosity)
         if(any(is.na(estimator))) browser()
 
         return(estimator)

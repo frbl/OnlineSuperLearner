@@ -5,6 +5,7 @@
 #' @import data.table
 #' @import purrr
 #' @include ML.XGBoost.R
+#' @include ML.NeuralNet.R
 #' @include ML.Local.lm.R
 #' @include ML.randomForest.R
 #' @include ML.SVM.R
@@ -167,6 +168,7 @@ LibraryFactory <- R6Class("LibraryFactory",
                                                     'ML.SVM',
                                                     'ML.Local.Speedlm',
                                                     'ML.Local.lm',
+                                                    'ML.NeuralNet',
                                                     'ML.XGBoost'), verbose = FALSE) {
           private$ML.models.allowed = ML.models.allowed
           private$verbose <- verbose

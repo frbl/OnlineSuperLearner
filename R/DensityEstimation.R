@@ -65,7 +65,7 @@
 #'   }
 #' }  
 DensityEstimation <- R6Class ("DensityEstimation",
-  class = FALSE,
+  #class = FALSE,
   cloneable = FALSE,
   portable = FALSE,
   private =
@@ -248,12 +248,18 @@ DensityEstimation <- R6Class ("DensityEstimation",
             ## 2) Sample from that fit just like conditional density
             X <- rv$getX
             Y <- rv$getY
+            if (rv$getFamily == 'binomial') {
+              bins <- 2
+            } else {
+              bins <- private$nbins
+            }
+
             if(length(X) > 0) {
               private$verbose && cat(private$verbose, 'Fitting density: ', Y, ' on ', self$get_name)
               dens_fit <- condensier::fit_density(X = X,
                                       Y = Y,
                                       input_data = datO,
-                                      nbins = private$nbins,
+                                      nbins = bins,
                                       bin_estimator = private$bin_estimator)
               private$conditional_densities[Y] <- list(dens_fit)
             }

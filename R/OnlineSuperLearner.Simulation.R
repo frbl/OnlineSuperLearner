@@ -32,7 +32,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           OutputPlotGenerator.export_key_value('training-set-size', private$training_set_size)
           private$cv_risk_calculator <- CrossValidationRiskCalculator$new()
           private$test_set_size <- 100
-          private$log <- Arguments$getVerbose(-3, timestamp=TRUE)
+          private$log <- Arguments$getVerbose(-1, timestamp=TRUE)
           #private$log <- FALSE
           #algos <- list(list(description='ML.H2O.randomForest-1tree',
                                   #algorithm = 'ML.H2O.randomForest',
@@ -44,14 +44,15 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           #algos <- append(algos, list(list(description='ML.H2O.gbm',
                                   #algorithm = 'ML.H2O.gbm')))
-          nbins <- c(30, 40)#, 50, 60, 70)
+          nbins <- c(40, 50, 60, 70)
           algos <- list()
 
 
-          alphas <- runif(4,0,1)
-          #algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                                  #algorithm_params = list(alpha = alphas), 
-                                  #params = list(nbins = nbins, online = TRUE))))
+          alphas <- runif(3,0,1)
+          alphas <- c(0, alphas)
+          algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
+                                  algorithm_params = list(alpha = alphas), 
+                                  params = list(nbins = nbins, online = FALSE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
                                   #algorithm_params = list(ntrees=c(10,20), min_rows=1),
@@ -65,8 +66,12 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   ##algorithm_params = list(),
                                   #params = list(nbins = nbins, online = FALSE))))
 
+          #algos <- append(algos, list(list(algorithm = 'ML.NeuralNet',
+                                  ###algorithm_params = list(),
+                                  #params = list(nbins = nbins, online = TRUE))))
+
           #algos <- append(algos, list(list(algorithm = 'ML.randomForest',
-                                  ##algorithm_params = list(),
+                                  #algorithm_params = list(ntrees=c(500,1000)),
                                   #params = list(nbins = nbins, online = FALSE))))
 
           algos <- append(algos, list(list(algorithm = 'ML.Local.Speedlm',
@@ -88,14 +93,16 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           if(is.null(configuration)) {
             self$configuration1()
           } else {
+            id = configuration
+            configuration = (as.numeric(configuration) - 1) %% 4 + 1 
             if (configuration == 1) {
-              self$configuration1()
+              self$configuration1(id)
             } else if (configuration == 2) {
-              self$configuration2()
+              self$configuration2(id)
             } else if (configuration == 3) {
-              self$configuration3()
+              self$configuration3(id)
             } else {
-              self$configuration4()
+              self$configuration4(id)
             }
           }
 
@@ -104,7 +111,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           print(time.taken)
         },
 
-        configuration1 = function() {
+        configuration1 = function(id) {
           set.seed(12345)
 
           # Generate the true data generating distributions
@@ -160,10 +167,10 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                         llW = llW,
                         llA = llA, 
                         llY = llY,
-                        configuration = 1)
+                        configuration = id)
         },
 
-        configuration2 = function() {
+        configuration2 = function(id) {
           set.seed(12345)
 
           ######################################
@@ -243,10 +250,10 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                         randomVariables, 
                         Y,
                         max_iterations = 100, llW, llA, llY,
-                        configuration = 2)
+                        configuration = id)
         },
 
-        configuration3 = function() {
+        configuration3 = function(id) {
           set.seed(12345)
 
           # Generate the true data generating distributions
@@ -302,10 +309,10 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                         llW = llW,
                         llA = llA, 
                         llY = llY,
-                        configuration = 3)
+                        configuration = id)
         },
 
-        configuration4 = function() {
+        configuration4 = function(id) {
           set.seed(12345)
 
           ######################################
@@ -385,7 +392,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                         randomVariables, 
                         Y,
                         max_iterations = 100, llW, llA, llY,
-                        configuration = 4)
+                        configuration = id)
         },
 
         configuration5 = function() {
@@ -406,9 +413,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           # Initialize variables
           tau <- 3
-          B <- 500
+          B <- 100
           B_oos <- 50
-          N <- 20 
+          N <- 10 
           margin <- 100
 
           result.dosl.mean                 <- -1
@@ -504,6 +511,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           toc <- Sys.time()
           time.taken <- toc - tic
+          print(time.taken)
+
+          key <- paste('cfg', configuration, 'time-taken-training', sep='-')
           key <- paste('cfg', configuration, 'time-taken-training', sep='-')
           OutputPlotGenerator.export_key_value(key, output=key_output, time.taken)
 
@@ -517,7 +527,8 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           intervention_effect_caluculator = InterventionEffectCalculator$new(bootstrap_iterations = B, 
                                                                              randomVariables = randomVariables, 
-                                                                             outcome_variable = variable_of_interest$getY)
+                                                                             outcome_variable = variable_of_interest$getY,
+                                                                             verbose = private$log)
           
           pre <- options('warn')$warn
           options(warn=-1)
@@ -543,6 +554,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                 control = control)
 
           osl_options <- c('dosl', 'osl')
+          #osl_options <- c('dosl')
+          #osl_options <- c('osl')
+          #osl_options <- c('nothing')
 
           if('dosl' %in% osl_options) {
             result.dosl.full <- intervention_effect_caluculator$calculate_intervention_effect(
@@ -594,10 +608,20 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           ## Retrieve the minimal number of blocks needed before we have truly updating relevant history
           minimal_measurements_needed <- osl$get_summary_measure_generator$get_minimal_measurements_needed
+          print(time.taken)
+
+          private$log && cat(private$log, 'Initial estimates!')
+          print(result.approx.mean)
+          print(result.approx_control.mean)
+          print(result.dosl.mean)
+          print(result.dosl_control.mean)
+          print(result.osl.mean)
+          print(result.osl_control.mean)
 
           private$log && cat(private$log, 'Starting OOS!')
           oos_options <- c('dosl', 'dosl_control', 'osl', 'osl_control')
-          #oos_options <- c('dosl', 'osl')
+          #oos_options <- c('dosl', 'dosl_control')
+          #oos_options <- c('nothing')
           # Now, the final step is to apply the OneStepEstimator
 
           ## DOSL Intervention

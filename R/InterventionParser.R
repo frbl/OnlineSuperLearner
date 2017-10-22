@@ -73,9 +73,14 @@ InterventionParser.valid_intervention <- function(intervention) {
 #' @param when integer when the intervention should take place
 #' @export
 InterventionParser.generate_intervention <- function(variables, variable_intervened, when, what) {
-  what <- lapply(variables, function(a) {
-    ifelse(a == variable_intervened, what, 1 - what) 
-  }) %>% unlist
+  # If no what is given, make them all 0
+  if(is.null(variable_intervened)) {
+    what <- rep(0, length(variables))
+  } else {
+    what <- lapply(variables, function(a) {
+      ifelse(a == variable_intervened, what, 1 - what) 
+    }) %>% unlist
+  }
   list(variable = variables, when = rep(when, length(variables)), what = what)
 }
 

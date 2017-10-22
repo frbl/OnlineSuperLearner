@@ -288,7 +288,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         ## This is the outer loop of the influence curve
         #browser()
         efficient_influence_curve <- foreach(t=seq(N), .combine='sum') %do% {
-          private$verbose && cat(private$verbose, 'Efficient influence curve iteration (part of the full curve)', t)
+          private$verbose && cat(private$verbose, 'Efficient influence curve iteration (part of the full curve) at time t: ', t, ' of ', N)
           current_dat <- data[t,]
 
           difference_in_expectations_for_all_s <- 
@@ -396,7 +396,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         ## Make the actual H prediction
         h_prediction <- ConstrainedGlm.predict(constrained_glm = predictor_or_na, newdata = data)
-        h_ratio <- (1.0 - h_prediction / h_prediction)
+        h_ratio <- ((1.0 - h_prediction) / h_prediction)
 
         if (h_ratio > 19) {
           browser()
@@ -404,6 +404,8 @@ OneStepEstimator <- R6Class("OneStepEstimator",
                   you violating the positivity assumption? Value=', h_ratio, '.
                   Were setting it to 19, to be sure')
           warning('Data used: ', paste(data, collapse = '-'))
+          warning('Glm used: ')
+          print(predictor_or_na)
           h_ratio = 19 
         }
 
