@@ -91,7 +91,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           # Run the simulations
           if(is.null(configuration)) {
-            self$configuration1()
+            self$configuration1(1)
           } else {
             id = configuration
             configuration = (as.numeric(configuration) - 1) %% 4 + 1 

@@ -83,80 +83,95 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
 
         ## Output is a list of data.tables
         calculate_evaluation = function(predicted.outcome, observed.outcome, randomVariables, add_evaluation_measure_name=TRUE) {
-          # Evaluate should receive the outcome of 1 estimator
-          evaluate <- function(current.predicted.outcome) {
-            sapply(randomVariables, function(rv) {
-              current_outcome <- rv$getY
-              lossFn <- Evaluation.get_evaluation_function(rv$getFamily, useAsLoss = FALSE)
-              result <- lossFn(data.observed  = observed.outcome[[current_outcome]],
-                               data.predicted = current.predicted.outcome[[current_outcome]])
-              if (add_evaluation_measure_name){
-                names(result) <- paste(names(result), current_outcome, sep='.')
-              } else {
-                names(result) <- current_outcome
-              }
-              result
-            }) %>% t %>% as.data.table
-          }
-          
-          predicted.outcome <- Arguments$getInstanceOf(predicted.outcome, 'list')
+          # predicted.outcome <- Arguments$getInstanceOf(predicted.outcome, 'list')
 
-          if ('normalized' %in% names(predicted.outcome)) {
-            predicted.outcome = predicted.outcome$normalized
-          }
+          ## If there is a normalized field, prefer the normalized outcomes
+          if ('normalized' %in% names(predicted.outcome)) predicted.outcome = predicted.outcome$normalized 
 
-          evaluation <- lapply(predicted.outcome, evaluate)
+          ## Calculate the evaluations
+          lapply(predicted.outcome, function(one.outcome) {
+            self$evaluate_single_outcome( 
+              observed.outcome = observed.outcome,
+              predicted.outcome = one.outcome,
+              randomVariables = randomVariables,
+              add_evaluation_measure_name = add_evaluation_measure_name
+            )
+          })
+        },
 
-          return(evaluation)
+        ## Evaluate should receive the outcome of 1 estimator
+        evaluate_single_outcome = function(observed.outcome, predicted.outcome, randomVariables, add_evaluation_measure_name) {
+          sapply(randomVariables, function(rv) {
+            current_outcome <- rv$getY
+            lossFn <- Evaluation.get_evaluation_function(family = rv$getFamily, useAsLoss = FALSE)
+            result <- lossFn(data.observed = observed.outcome[[current_outcome]],
+                              data.predicted = predicted.outcome[[current_outcome]])
 
+            ## Add the name of the evaluation used
+            if (add_evaluation_measure_name){
+              names(result) <- paste(names(result), current_outcome, sep='.')
+            } else {
+              names(result) <- current_outcome
+            }
+            result
+          }) %>% t %>% as.data.table
         },
 
         ## Calculate the CV risk for each of the random variables provided
         ## Output is a list of data.tables
-        calculate_risk = function(predicted.outcome, observed.outcome, randomVariables){
-          if ('normalized' %in% names(predicted.outcome)) {
-            predicted.outcome = predicted.outcome$normalized
-          }
+        calculate_risk = function(predicted.outcome, observed.outcome, randomVariables, check=FALSE){
+          if ('normalized' %in% names(predicted.outcome)) predicted.outcome = predicted.outcome$normalized
             
-          predicted.outcome <- Arguments$getInstanceOf(predicted.outcome, 'list')
-          observed.outcome <- Arguments$getInstanceOf(observed.outcome, 'data.table')
+          if (check) {
+            predicted.outcome <- Arguments$getInstanceOf(predicted.outcome, 'list')
+            observed.outcome <- Arguments$getInstanceOf(observed.outcome, 'data.table')
+          }
 
           cv_risk <- lapply(predicted.outcome, function(algorithm_outcome) {
-            lapply(randomVariables, function(rv) {
-              current_outcome <- rv$getY
-              lossFn <- Evaluation.get_evaluation_function(rv$getFamily, useAsLoss = TRUE)
-              risk <- lossFn(data.observed = observed.outcome[[current_outcome]],
-                                     data.predicted = algorithm_outcome[[current_outcome]])
-              names(risk) <- current_outcome
-              risk
-            }) %>% unlist %>% t %>% as.data.table
-            ## The unlist t is a hack to flatten the result, but to keep the correct names
-            ## that the entries got in the loop.
+            self$risk_single_outcome(
+              observed.outcome = observed.outcome,
+              predicted.outcome = algorithm_outcome,
+              randomVariables = randomVariables
+            )
           })
 
           return(cv_risk)
         },
 
-        ## Outcome is a list of datatables
-        update_risk = function(predicted.outcome, observed.outcome, randomVariables,
-                               current_count, current_risk) {
+        risk_single_outcome = function(observed.outcome, predicted.outcome, randomVariables) {
+          result <- lapply(randomVariables, function(rv) {
+            current_outcome <- rv$getY
+            lossFn <- Evaluation.get_evaluation_function(family = rv$getFamily, useAsLoss = TRUE)
+            risk <- lossFn(data.observed = observed.outcome[[current_outcome]],
+                           data.predicted = predicted.outcome[[current_outcome]])
+            names(risk) <- current_outcome
+            risk
+          }) 
 
-          if ('normalized' %in% names(predicted.outcome)) {
-            predicted.outcome = predicted.outcome$normalized
+          ## The unlist t is a hack to flatten the result, but to keep the correct names
+          ## that the entries got in the loop.
+          as.data.table(t(unlist(result)))
+        },
+
+        ## Outcome is a list of datatables
+        update_risk = function(predicted.outcome, observed.outcome, randomVariables, current_count, current_risk, check = FALSE) {
+          ## Note that we don't need to check whether data is normalized, as we
+          ## are passing it to the calculate_risk function, which will pick the
+          ## correct one.
+          if(check) {
+            current_count <- Arguments$getInteger(current_count, c(0, Inf))
+            predicted.outcome <- Arguments$getInstanceOf(predicted.outcome, 'list')
+            observed.outcome <- Arguments$getInstanceOf(observed.outcome, 'data.table')
+            if(is.null(predicted.outcome) || length(predicted.outcome) == 0) throw('Predicted outcome is empty!')
+            if(is.null(observed.outcome) || all(dim(observed.outcome) == c(0,0))) throw('Observed outcome is empty!')
           }
 
-          current_count <- Arguments$getInteger(current_count, c(0, Inf))
-
-          if(is.null(predicted.outcome) || length(predicted.outcome) == 0) throw('Predicted outcome is empty!')
-          if(is.null(observed.outcome) || all(dim(observed.outcome) == c(0,0))) throw('Observed outcome is empty!')
-
-          predicted.outcome <- Arguments$getInstanceOf(predicted.outcome, 'list')
-          observed.outcome <- Arguments$getInstanceOf(observed.outcome, 'data.table')
-
-          updated_risk <- self$calculate_risk(predicted.outcome = predicted.outcome,
-                                              observed.outcome = observed.outcome,
-                                              randomVariables = randomVariables)
-
+          ## Calculate the risk for the current observations / predictions
+          updated_risk <- self$calculate_risk(
+            predicted.outcome = predicted.outcome,
+            observed.outcome = observed.outcome,
+            randomVariables = randomVariables
+          )
 
           ## Note that we need to update the risk for every algorithm and every RV
           algorithm_names <- names(updated_risk)
@@ -165,33 +180,43 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
             new_risks <- updated_risk[[algorithm_name]]
             old_risk <- current_risk[[algorithm_name]]
 
-            lapply(randomVariables, function(rv) {
-              current <- rv$getY
-
-              ## The score up to now needs to be calculated current_count times, the other score 1 time.
-              ## new_risk <- (1 / (current_count + 1)) * new_risks[[current]]
-              new_risk <- new_risks[[current]]
-
-              if(!is.null(old_risk) && is.na(old_risk[[current]])) {
-                ## If our previous risk is NA, that means that we had a previous iteration in which we could
-                ## not calculate the risk. Most likely because of the initialization of the DOSL. In the next
-                ## iteration we can make a prediction, but it is out of sync with the provided count. Therefore,
-                ## set the old risk to the new risk and resync with the count.
-                old_risk[[current]] <- new_risk
-              }
-
-              if(!is.null(old_risk)) {
-                new_risk <- (new_risk + (current_count * old_risk[[current]])) / (current_count + 1)
-              }
-
-              names(new_risk) <- current
-              new_risk
-            }) %>% unlist %>% t %>% as.data.table
+            self$update_single_risk(
+              old_risk = old_risk, 
+              new_risks = new_risks, 
+              current_count = current_count, 
+              randomVariables = randomVariables
+            )
           })
 
           names(current_risk) <- algorithm_names
           return(current_risk)
+        },
+
+        update_single_risk = function(old_risk, new_risks, current_count, randomVariables) {
+          lapply(randomVariables, function(rv) {
+            current <- rv$getY
+
+            ## The score up to now needs to be calculated current_count times, the other score 1 time.
+            ## new_risk <- (1 / (current_count + 1)) * new_risks[[current]]
+            new_risk <- new_risks[[current]]
+
+            if(!is.null(old_risk) && is.na(old_risk[[current]])) {
+              ## If our previous risk is NA, that means that we had a previous iteration in which we could
+              ## not calculate the risk. Most likely because of the initialization of the DOSL. In the next
+              ## iteration we can make a prediction, but it is out of sync with the provided count. Therefore,
+              ## set the old risk to the new risk and resync with the count.
+              old_risk[[current]] <- new_risk
+            }
+
+            if(!is.null(old_risk)) {
+              new_risk <- (new_risk + (current_count * old_risk[[current]])) / (current_count + 1)
+            }
+
+            names(new_risk) <- current
+            new_risk
+          }) %>% unlist %>% t %>% as.data.table
         }
+
 
         ),
   active =
