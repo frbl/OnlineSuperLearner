@@ -6,7 +6,8 @@
 In this function we create a regression for which the predicted probabilities are contstrained. That is, they can not be
 less than a minimum of delta, or a maxiumum of 1 - delta.}
 \usage{
-ConstrainedGlm.fit(formula, delta, data, fall_back_to_glm = TRUE, ...)
+ConstrainedGlm.fit(formula, delta, data, fall_back_to_glm = TRUE,
+  previous_glm = NULL, ...)
 }
 \arguments{
 \item{formula}{the formula to use for the regression}

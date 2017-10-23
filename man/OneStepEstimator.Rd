@@ -54,14 +54,12 @@ number of conditional expectations. This procedure is implemented in this class 
     list, we have another list for each outcome measure, as indexed using their prediction formulae.
   } 
 
-  \item{\code{evaluation_of_conditional_expectations(h_ratio_predictors, variable_of_interest, data, tau}}{ 
+  \item{\code{evaluation_of_conditional_expectations(data, h_ratio_predictors}}{ 
     In this function one can perform the second step of OOS, calculate the conditional expectations / difference in
     conditional expectations. 
+    @param data the data to seed the sampling procedure and thereby conditional expectation evaluation. 
     @param h_ratio_predictors the list of predictors, in a format returned using the \code{get_h_ratio_estimators}
     format.
-    @param variable_of_interest the variable we are currently interested in (the outcome variable, Y).
-    @param data the data to seed the sampling procedure and thereby conditional expectation evaluation. 
-    @param tau the time till which we have to sample.
   } 
 
 }
