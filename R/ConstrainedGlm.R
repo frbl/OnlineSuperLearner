@@ -265,14 +265,8 @@
 #' @importFrom stats glm binomial
 #' @export
 ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, previous_glm = NULL, ...) {
-  ## 1 for intercept
-  ncovariates <- length(labels(terms(formula))) + 1
-  
-  if(any(is.na(data))) {
-    warning('Data contains NA values!')
-  }
 
-  if(any(is.null(data))) warning('Data contains NULL values!')
+  if(any(is.na(data))) warning('Data contains NA values!')
 
   # Use the C functions for expit / logit. Faster and gives the same results as the original GLM function.
   link <- stats:::make.link("logit")
@@ -280,11 +274,6 @@ ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, pr
     structure(
       list(## mu mapsto logit( [mu - delta]/[1 - 2 delta]  ).
         linkfun = function(mu) {
-          # TODO: Movet his to the valid mu function?
-          if(mu <= 0 || mu >= 1) {
-            warning('Mu is incorrect: ', mu)
-            min(max(mu,1-delta),delta)
-          }
           link$linkfun((mu-delta)/(1-2*delta))
         },
 
@@ -300,7 +289,6 @@ ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, pr
         },
         ## test of validity for eta
         valideta = function(...) TRUE,
-        validmu = function(...) TRUE,
         name = 'bounded-logit'
       ),
       class = "link-glm"
@@ -338,8 +326,8 @@ ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, pr
 }
 
 ConstrainedGlm.update_glm <- function(previous_glm, data, ...) {
-  browser()
-  return(update(previous_glm, data = data))
+  assert_that(!is.null(previous_glm))
+  return(update(object = previous_glm, data = data))
 }
 
 ConstrainedGlm.fit_new_glm <- function(formula, family, data, fall_back_to_glm, ...) {
@@ -351,8 +339,8 @@ ConstrainedGlm.fit_new_glm <- function(formula, family, data, fall_back_to_glm, 
     glm(formula = formula, data = data, family = family, ...)
   }, error = function(e) {
     #<simpleError in solve.default(XTX, XTz, tol = tol.solve): system is computationally singular: reciprocal condition number = 2.65004e-18>
-    print(e)
-    warning('Constrained GLM failed, using speedglm binomial')
+    warning('Constrained GLM failed, using glm binomial: ') 
+    warning(paste(e$message, collapse = ' '))
     #speedglm::speedglm(formula = formula, data = data, family = binomial(), ...)
     glm(formula = formula, data = data, family = binomial(), ...)
   })
@@ -364,7 +352,7 @@ ConstrainedGlm.predict <- function(constrained_glm, newdata) {
   assert_that(!is.null(newdata))
   prediction <- hide_warning_rank_deficient_fit_prediction({
     ## Make the actual prediction
-    predict(constrained_glm, newdata = newdata, type='response')
+    predict(object = constrained_glm, newdata = newdata, type='response')
   })
   as.numeric(prediction)
 }
