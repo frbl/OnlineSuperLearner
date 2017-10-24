@@ -58,7 +58,7 @@ test_that("it should throw whenever not enough data is provided", {
   subject <- described.class$new()
   expect_error(subject$split(data), 'At least 2 rows of data are needed, 1 train and 1 test')
 
-  # No error if enough data is in fact available
+  ## No error if enough data is in fact available
   data <- data.table(x=c(1,2), y=c(4,3))
   expect_error(subject$split(data), NA)
 })

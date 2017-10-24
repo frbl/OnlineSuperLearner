@@ -38,6 +38,7 @@ rv.Y <- RandomVariable$new(formula = Y ~ W, family = 'gaussian')
 #estimated_densities <- estimated_densities[subs]
 
 context(' initialize')
+#==========================================================
 test_that("it should initialize by default", {
   expect_error(described.class$new(), NA)
 })
@@ -54,6 +55,7 @@ test_that("it should floor the number of bins if it is a float", {
 })
 
 context(' predict')
+#==========================================================
 test_that("it should throw if the provided data is not a datatable", {
   subject <- described.class$new(nbins = 10)
   expect_error(subject$predict(NULL), "Argument 'data' is neither of nor inherits class data.table: NULL")
@@ -71,6 +73,7 @@ test_that("it should throw if the cond densities have not yet been fitted", {
 })
 
 context(' > sample')
+#==========================================================
 test_that("it should sample from the cond densities once they've been fitted", {
   set.seed(12345)
   subject <- described.class$new(nbins = 30)
@@ -134,6 +137,7 @@ test_that("it should sample from the cond densities once they've been fitted als
 #})
 
 context(' > predict')
+#==========================================================
 test_that("it should get the correct probabilities from the cond densities", {
   set.seed(12345)
   subject <- described.class$new(nbins = 13)
@@ -218,6 +222,7 @@ test_that("it should throw if no output column is provided in the data", {
 })
 
 context(' fit')
+#==========================================================
 test_that("it should fit the conditional densities", {
   subject <- described.class$new(nbins = 3)
   # TODO: fix these warnings
@@ -238,6 +243,7 @@ test_that("it should throw when the list provided does not consist of randomvari
 })
 
 context(' update')
+#==========================================================
 test_that("it should update existing estimators with new data and still sets the correct names", {
   subject <- described.class$new(nbins = 20)
 
@@ -257,6 +263,7 @@ test_that("it should update existing estimators with new data and still sets the
 
 
 context(' getConditionalDensities')
+#==========================================================
 test_that("it should throw if the densities were not yet fitted", {
   subject <- described.class$new(nbins = 3)
   expect_error(length(subject$getConditionalDensities()) == 0, 'Densities not yet fitted')
@@ -292,7 +299,9 @@ test_that("it should throw whenever a CD is provided as outcome that has not bee
 })
 
 context(' Static methods')
+#==========================================================
 context(' > DensityEstimation.are_all_estimators_online')
+#==========================================================
 test_that("it should return true if a whole list of estimators is online", {
   SL.Library <- list()
   SL.Library <- append(SL.Library, list( described.class$new(nbins = 3, online=TRUE)))
