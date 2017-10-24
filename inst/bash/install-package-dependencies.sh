@@ -1,6 +1,7 @@
 #! /usr/bin/env Rscript
 # General packages
 options(repos = structure(c(CRAN = "http://cran-mirror.cs.uu.nl/")))
+
 packages <- c(
 "devtools",
 "ggplot2",
@@ -12,7 +13,7 @@ packages <- c(
 "R.methodsS3",
 "R.oo",
 "testthat",
-"xgboost",
+#"xgboost",
 "glmnet",
 "speedglm",
 "randomForest",
@@ -34,7 +35,8 @@ packages <- c(
 "matrixStats",
 "digest",
 "future",
-"roxygen2"
+"roxygen2",
+"drat"
 )
 
 gh_packages <- list(
@@ -54,6 +56,10 @@ install <- function(packages, installfunc, ...){
 
 install(packages, install.packages)
 lapply(gh_packages, function(pkg) install(pkg$repo, devtools::install_github, ref = pkg$branch))
+
+# Install latext xgboost
+drat:::addRepo("dmlc")
+install.packages("xgboost", repos="http://dmlc.ml/drat/", type = "source")
 
 # Specific packages
 # Finds and remove any previously installed H2O packages for R.

@@ -1,7 +1,8 @@
 #' DataCache
 #' @docType class
-#' @section Methods:
 #' @importFrom R6 R6Class
+#'
+#' @section Methods:
 #' \describe{
 #'   \item{\code{initialize(online = TRUE)}}{
 #'     Creates a new data cache. Can be online (so new data gets overwritten),
