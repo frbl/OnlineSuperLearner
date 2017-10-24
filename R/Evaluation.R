@@ -58,6 +58,7 @@ Evaluation.log_likelihood_loss <- function(data.observed = NULL, data.predicted,
 #' @param data.observed the true data (Y)
 #' @param data.predicted the Y outcome from the estimator 
 Evaluation.mse_loss <-  function(data.observed, data.predicted) {
+  data.predicted <- Arguments$getInstanceOf(data.predicted, 'numeric')
   c(mse_loss = mean((data.predicted - data.observed)^2))
 }
 
@@ -67,11 +68,6 @@ Evaluation.mse_loss <-  function(data.observed, data.predicted) {
 Evaluation.mean_squared_error <- function(data.observed, data.predicted) {
   ## Calculate the MSE
   se <- Evaluation.mse_loss(data.predicted, data.observed)
-  if (is.a(data.predicted, 'matrix')) {
-    means <- colMeans(se)
-    names(means) <- names(data.predicted)
-    return(means)
-  }
   c(mse = mean(se))
 }
 

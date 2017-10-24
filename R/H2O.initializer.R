@@ -15,13 +15,13 @@ H2O.Initializer <- function(host = "localhost", port = 54321, runlocal = TRUE, v
     return(FALSE)
   }
   verbose && enter(verbose, 'Initializing cluster...')
-  GlobalH2OCluster <- h2o.init(ip = host,
-                               port = port,
-                               startH2O = runlocal)
+  h2o.init(
+    ip = host,
+    port = port,
+    startH2O = runlocal
+  )
 
-  if(!h2o.clusterIsUp()) {
-    throw('Connecting to cluster failed, at host', host)
-  }
+  if(!h2o.clusterIsUp()) throw('Connecting to cluster failed, at host ', host)
   verbose && exit(verbose)
   return(TRUE)
 }
@@ -38,7 +38,7 @@ H2O.Available <- function() {
     }
     return(TRUE) 
   }, warning = function(e) {
-    print('Warning!')
+    warning(e)
     return(FALSE) 
   }, error = function(e) {
     return(FALSE) 
