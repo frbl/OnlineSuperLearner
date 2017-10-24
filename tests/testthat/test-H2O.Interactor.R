@@ -5,6 +5,7 @@ context("H2O.Interactor.R")
 described.class <- H2O.Interactor
 
 context(" generate_hash")
+#==========================================================
 test_that("it should generate a hash fast", {
   subject <- described.class$new()
   n <- 1e5 
@@ -36,6 +37,7 @@ test_that("it should generate a hash correctly", {
 })
 
 context(" get_data_pointer")
+#==========================================================
 test_that("it should should upload to h2o if the hash is not on there", {
   subject <- described.class$new()
   data = data.table(a= c(1,2,3), b=c(4,3,2))
@@ -61,4 +63,5 @@ test_that("it should return the existing h2o hash if it is already on h2o", {
 })
 
 context(" add_and_return_data_hash")
+#==========================================================
 
