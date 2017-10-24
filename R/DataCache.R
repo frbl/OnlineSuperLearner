@@ -21,7 +21,6 @@ DataCache <- R6Class("DataCache",
     list(
       initialize = function(online = TRUE) {
         private$online = online
-
       },
 
       update_cache = function(newdata) {

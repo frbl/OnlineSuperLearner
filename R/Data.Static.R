@@ -68,12 +68,11 @@ Data.Static <-
     list(
         initialize = function(dataset = NULL, url = NULL, verbose = FALSE) {
           if (!is.null(dataset)) {
-            if (!is.data.table(dataset)) {
-              dataset <- data.table(dataset)
-            }
+            ## Make sure the dataset is a data table
+            if (!is.data.table(dataset)) dataset <- data.table(dataset)
             private$dataset <- dataset
           } else if (!is.null(url)) {
-            private$dataset <- private$readDataFromUrl(url)
+            private$dataset <- private$read_data_from_url(url = url)
           } else {
             throw('You need to provide at least a datatable or url')
           }
@@ -87,20 +86,20 @@ Data.Static <-
 
         getNext = function() {
           temp <- private$dataset[private$currentrow, ]
-          private$currentrow <- private$currentrow + 1
+          private$increase_pointer(1)
           return(temp)
         },
 
         getNextN = function(n = 1) {
-          max <- nrow(private$dataset) - private$currentrow + 1 %>%
-           Arguments$getInteger(., c(1, Inf))
+          max <- self$get_remaining_length
 
-          # Check if the max value > 0
+          ## Check if the max value > 0
+          ## And return less than n if it is smaller than max
           n <- min(n, max)
           if(n <= 0) return(NULL)
 
           temp <- private$dataset[private$currentrow:((private$currentrow + n)-1), ]
-          private$currentrow <- private$currentrow + n
+          private$increase_pointer(n)
           return(temp)
         }
     ),
@@ -132,7 +131,11 @@ Data.Static <-
       currentrow = NULL,
       verbose = NULL,
 
-      readDataFromUrl = function(url) {
+      increase_pointer = function(n = 1) {
+        private$currentrow <- private$currentrow + n
+      },
+
+      read_data_from_url = function(url) {
         ## TODO: Test the file, which format it should be
         data.table(read.csv(url))
       }
