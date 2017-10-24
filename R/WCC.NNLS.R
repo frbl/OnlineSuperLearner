@@ -26,7 +26,15 @@
 WCC.NNLS <- R6Class("WCC.NNLS",
   inherit = WeightedCombinationComputer,
   private =
+    list(),
+  active =
+    list(),
+  public =
     list(
+        initialize = function(weights.initial) {
+          super$initialize(weights.initial)
+        },
+
         compute = function(Z, Y, libraryNames ) {
           # Compute the best convex combination
           weights <- coef(nnls(Z,Y))
@@ -39,14 +47,6 @@ WCC.NNLS <- R6Class("WCC.NNLS",
           # Normalize the weights and store them for later use
           private$weights <- weights/sum(weights)
           private$weights
-        }
-        ),
-  active =
-    list(),
-  public =
-    list(
-        initialize = function(weights.initial) {
-          super$initialize(weights.initial)
         }
     )
 )

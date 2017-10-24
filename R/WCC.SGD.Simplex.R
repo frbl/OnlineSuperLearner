@@ -10,7 +10,7 @@ WCC.SGD.Simplex <- R6Class("WCC.SGD.Simplex",
   inherit = WeightedCombinationComputer,
   public =
     list(
-      initialize = function(weights.initial, step_size = 0.0001, auto_update_stepsize = TRUE, iterations = 1000) {
+      initialize = function(weights.initial, step_size = 0.0001, auto_update_stepsize = FALSE, iterations = 1000) {
         if(is.null(weights.initial)){
           throw('Please provide initial weights (or NA vector with the correct size)')
         } else if (!all(is.na(weights.initial))) {
@@ -25,24 +25,7 @@ WCC.SGD.Simplex <- R6Class("WCC.SGD.Simplex",
 
         private$step_size <- Arguments$getNumerics(step_size, c(0.0000000001, Inf))
         private$iterations <- Arguments$getInteger(iterations, c(1, Inf))
-      }
-    ),
-  active =
-    list(
-      get_step_size = function() {
-        if (private$auto_update_stepsize) {
-          private$step_size <- 1 / private$increase_and_return_counter()
-        } 
-
-        private$step_size
-      }
-    ),
-  private =
-    list(
-      iterations = NULL,
-      step_size = NULL,
-      step_count = NULL,
-      auto_update_stepsize = NULL,
+      },
 
       # This function performs several iterations (\code{private$iterations}) steps of gradient descent
       # on the weight vector in \code{private$weights}.
@@ -55,7 +38,12 @@ WCC.SGD.Simplex <- R6Class("WCC.SGD.Simplex",
         names(current_weights) <- libraryNames
         #df <- data.table(t(current_weights))
         for (i in seq(private$iterations)) {
-          current_weights <- private$get_updated_weights(Z=Z, Y=Y, libraryNames = libraryNames, current_weights = current_weights)
+          current_weights <- private$get_updated_weights(
+            Z = Z,
+            Y = Y,
+            libraryNames = libraryNames,
+            current_weights = current_weights
+          )
           #df <- rbind(df, t(current_weights))
         }
         #plot.new()
@@ -67,7 +55,36 @@ WCC.SGD.Simplex <- R6Class("WCC.SGD.Simplex",
         #par(new=TRUE)
         #plot(df$d, ylim=range(c(0, 1)), col="purple", axes = FALSE, xlab = "", ylab = "")
         private$weights <- current_weights
+      }
+    ),
+  active =
+    list(
+      get_step_count = function() {
+        return(private$step_count)
       },
+
+      get_step_size = function() {
+        if (self$is_auto_updating_stepsize) {
+          private$step_size <- 1 / private$increase_and_return_counter()
+        } 
+
+        private$step_size
+      },
+
+      is_auto_updating_stepsize = function() {
+        return(private$auto_update_stepsize)
+      },
+
+      get_iterations = function() {
+        return(private$iterations)
+      }
+    ),
+  private =
+    list(
+      iterations = NULL,
+      step_size = NULL,
+      step_count = NULL,
+      auto_update_stepsize = NULL,
 
       # This function performs one step of gradient descent on the weight vector provided to it. 
       # After computing these new weights, it projects them onto the L1 simplex, scaling them between
@@ -103,7 +120,6 @@ WCC.SGD.Simplex <- R6Class("WCC.SGD.Simplex",
           as.vector
       },
       
-
       # Function to project a vector of weights (weights) to the  L1-simplex. Essentially, this function
       # makes sure that all values aree scaled between 0 and 1
       # @param weights the vector of weights to be projected

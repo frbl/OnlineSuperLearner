@@ -22,11 +22,7 @@
 WeightedCombinationComputer <- R6Class("WeightedCombinationComputer",
   private =
     list(
-        weights = NULL,
-
-        compute = function(Z, Y, libraryNames ) {
-          throw('This method is not implemented, please inherit this class and implement it.')
-        }
+        weights = NULL
         ),
   active = 
       list(
@@ -42,6 +38,10 @@ WeightedCombinationComputer <- R6Class("WeightedCombinationComputer",
           if (sum_of_weights != 1) {
             throw("The sum of the initial weights, ", sum_of_weights, ", does not equal 1")
           }
+        },
+
+        compute = function(Z, Y, libraryNames ) {
+          throw('This method is not implemented, please inherit this class and implement it.')
         },
 
         process = function(Z, Y, libraryNames, ...) {
@@ -61,9 +61,8 @@ WeightedCombinationComputer <- R6Class("WeightedCombinationComputer",
           libraryNames <- Arguments$getCharacters(libraryNames)
 
           # Call the subclass
-          private$compute(Z, Y, libraryNames, ...)
+          self$compute(Z, Y, libraryNames, ...)
           return(private$weights)
         }
-
     )
 )

@@ -16,14 +16,8 @@ WCC.SGD <- R6Class("WCC.SGD",
           weights.initial <- runif(length(weights.initial), 0, 1)
           weights.initial <- weights.initial / sum(weights.initial)
           super$initialize(weights.initial)
-        }
-        ),
-  active =
-    list(
-        ),
-  private =
-    list(
-        sgd_weights = NULL,
+        },
+
         compute = function(Z, Y, libraryNames) {
           dat <- data.frame(y=Y, x=Z)
 
@@ -51,5 +45,12 @@ WCC.SGD <- R6Class("WCC.SGD",
           private$weights <- private$weights / sum(private$weights)
         }
 
+        ),
+  active =
+    list(
+        ),
+  private =
+    list(
+        sgd_weights = NULL
     )
 )
