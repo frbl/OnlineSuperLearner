@@ -19,6 +19,7 @@
 #' @include WCC.SGD.Simplex.R
 #' @include CrossValidationRiskCalculator.R
 #' @include InterventionParser.R
+#' @include OnlineSuperLearner.SampleIteratively.R
 #'
 #' @section Methods:
 #' \describe{
@@ -132,6 +133,230 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
   #class = FALSE,
   cloneable = FALSE,
   portable = FALSE,
+  public =
+    list(
+        ## Functions
+        ## =========
+        initialize = function(SL.library.definition = c('ML.Local.lm', 'ML.H2O.glm'),
+                              summaryMeasureGenerator, should_fit_osl = TRUE, should_fit_dosl = TRUE, pre_processor = NULL,
+                              verbose = FALSE ) {
+
+          self$set_verbosity(Arguments$getVerbose(verbose, timestamp = TRUE))
+          private$fitted = FALSE
+          private$summary_measure_generator <- Arguments$getInstanceOf(summaryMeasureGenerator, 'SummaryMeasureGenerator')
+          private$should_fit_dosl <- Arguments$getLogical(should_fit_dosl)
+          private$should_fit_osl <- Arguments$getLogical(should_fit_osl)
+
+          ## Cross validation initialization
+          private$cv_risk = list()
+          private$cv_risk_count = 0
+          private$cv_risk_calculator = CrossValidationRiskCalculator$new()
+          private$data_splitter <- DataSplitter$new()
+
+          ## Initialization, Fabricate the various models
+          libraryFactory <- LibraryFactory$new(verbose = verbose)
+          private$fabricated_estimators <- libraryFactory$fabricate(SL.library.definition)
+          private$SL.library.descriptions <- names(self$get_estimators)
+          private$all_estimators_online <- DensityEstimation.are_all_estimators_online(self$get_estimators)
+          private$data_cache <- DataCache$new(self$is_online)
+          ## We need a weighted combination computer for each of the randomvariables.
+          ## We could reuse the WCC, and just save the weights here. However, this way we do allow
+          ## to use a different wcc for each of the random variables.
+          private$weightedCombinationComputers <- list()
+          private$online_super_learner_predict <- OnlineSuperLearner.Predict$new(pre_processor = pre_processor,
+                                                                                 verbose = verbose)
+          private$historical_cv_risk <- list()
+
+          private$is_parallel = FALSE
+          self$get_validity
+        },
+
+        set_verbosity = function(verbosity) {
+          private$verbose = verbosity
+        },
+
+        ## Data = the data object from which the data can be retrieved
+        ## initial_data_size = the number of observations needed to fit the initial estimator
+        fit = function(data, randomVariables, initial_data_size = 5, max_iterations = 20, mini_batch_size = 20) {
+          tic <- Sys.time()
+          initial_data_size <- Arguments$getInteger(initial_data_size, c(1,Inf))
+          max_iterations <- Arguments$getInteger(max_iterations, c(0,Inf))
+          data <- Arguments$getInstanceOf(data, 'Data.Base')
+
+          self$get_summary_measure_generator$setData(data = data)
+
+          ## TODO: Move to check validity? Needs moving of the equations as well.
+          self$get_summary_measure_generator$checkEnoughDataAvailable(randomVariables = randomVariables)
+
+          ## We initialize the WCC's here because we need to have the randomVariables
+          private$initialize_weighted_combination_calculators(randomVariables)
+
+          print(paste('Fitting OnlineSuperLearner with a library:', paste(self$get_estimator_descriptions, collapse = ', '),
+                      'and we use an initial data size of', initial_data_size,
+                      'with',max_iterations,'iterations,',
+                      'and a minibatch of',mini_batch_size))
+
+          ## Get the initial data for fitting the first estimator and train the initial models
+          private$verbose && enter(private$verbose, 'Fitting initial estimators')
+          self$get_summary_measure_generator$getNext(initial_data_size) %>%
+            private$train_library(data_current = ., randomVariables = randomVariables)
+
+          private$verbose && exit(private$verbose)
+
+          private$verbose && enter(private$verbose, 'Updating estimators')
+          ## Update the library of models using a given number of max_iterations
+          private$update_library(randomVariables <- randomVariables, max_iterations = max_iterations,
+                                mini_batch_size = mini_batch_size)
+
+          ## Return the cross validated risk
+          private$verbose && exit(private$verbose)
+
+          toc <- Sys.time()
+          private$verbose && cat(private$verbose, 'The whole procedure took ', (toc - tic), ' seconds.')
+          return(self$get_cv_risk)
+        },
+
+        ## Predict should return a nrow(data) * 1 matrix, where the predictions are multiplied by
+        ## the weights of each estimator.
+        predict = function(data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE) {
+
+          ## Pass the function to the separate class so it won't fill up this class
+          self$get_online_super_learner_predict$predict(osl = self, data = data, randomVariables = randomVariables,
+                                               all_estimators = all_estimators, discrete = discrete, continuous = continuous,
+                                               sample = sample, plot = plot)
+
+        },
+
+        sample_iteratively = function(data, randomVariables, tau = 10, intervention = NULL, discrete = TRUE, 
+                                      return_type = 'observations', start_from_variable = NULL, 
+                                      start_from_time = 1, check = FALSE) {
+          
+          # TODO: Store this object, and reuse it
+          osl_sampler <- OnlineSuperLearner.SampleIteratively$new(
+            osl = self,
+            randomVariables = randomVariables,
+            summary_measure_generator = self$get_summary_measure_generator,
+            remove_future_variables = FALSE
+          )
+
+          osl_sampler$sample_iteratively(
+            data = data,
+            tau = tau,
+            intervention = intervention,
+            discrete = discrete,
+            return_type = return_type,
+            start_from_variable = start_from_variable,
+            start_from_time = start_from_time,
+            check = check
+          )
+        }
+  ),
+  active =
+    list(
+        is_online = function() {
+          return(private$all_estimators_online)
+        },
+
+        is_fitted = function() {
+          return(private$fitted)
+        },
+
+        fits_osl = function() {
+          return(private$should_fit_osl)
+        },
+
+        fits_dosl = function() {
+          return(private$should_fit_dosl)
+        },
+
+        get_historical_cv_risk = function() {
+          return(private$historical_cv_risk)
+        },
+
+        get_data_cache = function() {
+          return(private$data_cache)
+        },
+
+        get_online_super_learner_predict = function() {
+          return(private$online_super_learner_predict)
+        },
+
+        info = function() {
+          if (!self$is_fitted) {
+            print('Fit the algorithm first')
+            return(-1)
+          }
+          print('Information about the current OSL fit')
+          print('=====================================')
+          print('The online super learner (CTS) was fit using the following weights:')
+          print(self$get_osl_weights)
+          print('\n-------------------------------------')
+          print('The online super learner (DSC) was fit using the following estimators:')
+          print('-------------------------------------')
+          lapply(self$get_dosl, function(estimator) {list(estimator$get_estimator_type, bins=estimator$get_nbins)}) %>%
+            print
+          print('\n-------------------------------------')
+          print('The cross validated risk of each estimator is')
+          print('-------------------------------------')
+          print(self$get_cv_risk)
+          print('=====================================')
+        },
+
+        get_estimators = function() {
+          return(private$fabricated_estimators)
+        },
+
+        get_estimator_descriptions = function() {
+          return(private$SL.library.descriptions)
+        },
+
+        get_weighted_combination_computers = function() {
+          return(private$weightedCombinationComputers)
+        },
+
+        get_osl_weights = function() {
+          sapply(self$get_weighted_combination_computers, function(wcc) wcc$get_weights) %>%
+            unlist
+        },
+
+        get_dosl = function() {
+          return(private$dosl.estimators)
+        },
+
+        get_cv_risk = function() {
+          return(private$cv_risk)
+        },
+
+        get_summary_measure_generator = function() {
+          private$summary_measure_generator
+        },
+
+        get_validity = function() {
+          if (length(self$get_estimator_descriptions) == 0 || length(self$get_estimators) == 0 ) {
+            throw("There should be at least one estimator in the library")
+          }
+          if (is.null(self$get_summary_measure_generator) || class(self$get_summary_measure_generator) != 'SummaryMeasureGenerator') {
+            throw("You need to provide a summary measure generator of class SummaryMeasureGenerator")
+          }
+          if (!is.a(self$get_weighted_combination_computers, 'list')) {
+            throw("The WCC's should be in a list, one for each RV")
+          }
+          private$historical_cv_risk <- Arguments$getInstanceOf(private$historical_cv_risk, 'list')
+        },
+
+        get_cv_risk_count = function() {
+          return(private$cv_risk_count)
+        },
+
+        get_cv_risk_calculator = function() {
+          return(private$cv_risk_calculator)
+        },
+
+        get_data_splitter = function() {
+          return(private$data_splitter)
+        }
+
+        ),
   private =
     list(
         ## Variables
@@ -150,7 +375,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## ML Library
         SL.library.names = NULL,
         SL.library.descriptions = NULL,
-        SL.library.fabricated = NULL,
+        fabricated_estimators = NULL,
         fitted = NULL,
 
         ## Options for fitting
@@ -190,9 +415,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                                                                     current_count = private$cv_risk_count,
                                                                     current_risk = self$get_cv_risk)
           if (update_counter) {
-            private$cv_risk_count <- private$cv_risk_count + 1
+            private$cv_risk_count <- self$get_cv_risk_count + 1
           }
-          private$cv_risk_count
+          self$get_cv_risk_count
         },
 
         update_historical_cv_risk = function() {
@@ -209,7 +434,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## Initializes the weighted combination calculators. One for each randomvariable.
         initialize_weighted_combination_calculators = function(randomVariables) {
           lapply(randomVariables, function(rv) {
-            weights.initial <- rep(1 / length(private$SL.library.descriptions), length(private$SL.library.descriptions))
+            weights.initial <- rep(1 / length(self$get_estimator_descriptions), length(self$get_estimator_descriptions))
 
             ## TODO: DIP the WCC
             private$weightedCombinationComputers[[rv$getY]] <- private$default_wcc$new(weights.initial = weights.initial)
@@ -240,9 +465,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
 
           `%looping_function%` <- private$get_looping_function()
-          #private$SL.library.fabricated <- mclapply(private$SL.library.fabricated, function(estimator) {
-          #for(estimator in private$SL.library.fabricated) {
-          estimators <- foreach(estimator=private$SL.library.fabricated) %looping_function% {
+          #private$fabricated_estimators <- mclapply(self$get_estimators, function(estimator) {
+          #for(estimator in self$get_estimators) {
+          estimators <- foreach(estimator=self$get_estimators) %looping_function% {
             private$verbose && cat(private$verbose, 'Training ', estimator$get_name)
             if(self$is_fitted && estimator$is_online) {
               # Note that we use the data here, and not the cache, as
@@ -257,8 +482,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             estimator
           }
           private$verbose && cat(private$verbose, 'Trained all estimators for this RV in this iteration.')
-          names(estimators) <- names(private$SL.library.fabricated)
-          private$SL.library.fabricated <- estimators
+          names(estimators) <- names(self$get_estimators)
+          private$fabricated_estimators <- estimators
           #}, mc.cores = 23)
           private$verbose && exit(private$verbose)
         },
@@ -272,15 +497,15 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## @param W: the column names used for the covariates
         train_library = function(data_current, randomVariables) {
           ## Fit or update the  estimators
-          data.splitted <- private$data_splitter$split(data_current)
+          data.splitted <- self$get_data_splitter$split(data_current)
           outcome.variables <- sapply(randomVariables, function(rv) rv$getY)
 
           private$train_all_estimators(data = data.splitted$train, randomVariables = randomVariables)
 
           ## Extract the level 1 data and use it to fit the osl
-          predicted.outcome <- private$online_super_learner_predict$predict_using_all_estimators(
+          predicted.outcome <- self$get_online_super_learner_predict$predict_using_all_estimators(
             data = data.splitted$train,
-            sl_library = private$SL.library.fabricated
+            sl_library = self$get_estimators
           )
 
           observed.outcome <- data.splitted$train[,outcome.variables, with=FALSE]
@@ -322,7 +547,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
               private$cv_risk_calculator$update_risk(predicted.outcome = predicted.outcome,
                                                       observed.outcome = observed.outcome,
                                                       randomVariables  = randomVariables,
-                                                      current_count    = private$cv_risk_count-1,
+                                                      current_count    = self$get_cv_risk_count-1,
                                                       current_risk     = self$get_cv_risk)$dosl.estimator
           }
 
@@ -402,9 +627,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
             if(is.null(colnames(predicted_outcomes))) throw('Something went wrong, the predicted_outcome colnames are not defined')
 
-            private$weightedCombinationComputers[[random_variable_name]]$process(Z = as.matrix(predicted_outcomes),
+            self$get_weighted_combination_computers[[random_variable_name]]$process(Z = as.matrix(predicted_outcomes),
                                                         Y = as.matrix(observed_outcome),
-                                                        private$SL.library.descriptions)
+                                                        self$get_estimator_descriptions)
           })
 
         },
@@ -423,10 +648,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
               ## might be something we want, but for now the discrete SL can
               ## only be one of the candidates, and not the OSL.
               for(name in names(current_risk)[ids]) {
-                if(name %in% names(private$SL.library.fabricated)) {
+                if(name %in% names(self$get_estimators)) {
                   #private$verbose && cat(private$verbose, 'Selecting ', name)
                   cat(private$verbose, 'Selecting ', name)
-                  return(private$SL.library.fabricated[[name]])
+                  return(self$get_estimators[[name]])
                 }
               }
             })
@@ -456,329 +681,5 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           }
           return(`%do%`)
         }
-
-
-        ),
-  active =
-    list(
-        is_online = function() {
-          private$all_estimators_online
-        },
-
-        is_fitted = function() {
-          private$fitted
-        },
-
-        fits_osl = function() {
-          private$should_fit_osl
-        },
-
-        fits_dosl = function() {
-          private$should_fit_dosl
-        },
-
-        get_historical_cv_risk = function() {
-          private$historical_cv_risk
-        },
-
-        get_data_cache = function() {
-          private$data_cache
-        },
-
-        info = function() {
-          if (!self$is_fitted) {
-            print('Fit the algorithm first')
-            return(-1)
-          }
-          print('Information about the current OSL fit')
-          print('=====================================')
-          print('The online super learner (CTS) was fit using the following weights:')
-          print(self$get_osl_weights)
-          print('\n-------------------------------------')
-          print('The online super learner (DSC) was fit using the following estimators:')
-          print('-------------------------------------')
-          lapply(self$get_dosl, function(estimator) {list(estimator$get_estimator_type, bins=estimator$get_nbins)}) %>%
-            print
-          print('\n-------------------------------------')
-          print('The cross validated risk of each estimator is')
-          print('-------------------------------------')
-          print(self$get_cv_risk)
-          print('=====================================')
-        },
-
-        get_estimators = function() {
-          return(private$SL.library.fabricated)
-        },
-
-        get_osl_weights = function() {
-          sapply(private$weightedCombinationComputers, function(wcc) wcc$get_weights) %>%
-            unlist
-        },
-
-        get_dosl = function() {
-          return(private$dosl.estimators)
-        },
-
-        get_cv_risk = function() {
-          return(private$cv_risk)
-        },
-
-        get_summary_measure_generator = function() {
-          private$summary_measure_generator
-        },
-
-        get_validity = function() {
-          if (length(private$SL.library.descriptions) == 0 || length(private$SL.library.fabricated) == 0 ) {
-            throw("There should be at least one estimator in the library")
-          }
-          if (is.null(self$get_summary_measure_generator) || class(self$get_summary_measure_generator) != 'SummaryMeasureGenerator') {
-            throw("You need to provide a summary measure generator of class SummaryMeasureGenerator")
-          }
-          if (!is.a(private$weightedCombinationComputers, 'list')) {
-            throw("The WCC's should be in a list, one for each RV")
-          }
-          private$historical_cv_risk <- Arguments$getInstanceOf(private$historical_cv_risk, 'list')
-        }
-        ),
-  public =
-    list(
-        ## Functions
-        ## =========
-        initialize = function(SL.library.definition = c('ML.Local.lm', 'ML.H2O.glm'),
-                              summaryMeasureGenerator, should_fit_osl = TRUE, should_fit_dosl = TRUE, pre_processor = NULL,
-                              verbose = FALSE ) {
-          self$set_verbosity(Arguments$getVerbose(verbose, timestamp = TRUE))
-          private$fitted = FALSE
-          private$summary_measure_generator <- Arguments$getInstanceOf(summaryMeasureGenerator, 'SummaryMeasureGenerator')
-          private$should_fit_dosl <- Arguments$getLogical(should_fit_dosl)
-          private$should_fit_osl <- Arguments$getLogical(should_fit_osl)
-
-          ## Cross validation initialization
-          private$cv_risk = list()
-          private$cv_risk_count = 0
-          private$cv_risk_calculator = CrossValidationRiskCalculator$new()
-          private$data_splitter <- DataSplitter$new()
-
-          ## Initialization, Fabricate the various models
-          libraryFactory <- LibraryFactory$new(verbose = verbose)
-          private$SL.library.fabricated <- libraryFactory$fabricate(SL.library.definition)
-          private$SL.library.descriptions <- names(private$SL.library.fabricated)
-          private$all_estimators_online <- DensityEstimation.are_all_estimators_online(private$SL.library.fabricated)
-          private$data_cache <- DataCache$new(self$is_online)
-          ## We need a weighted combination computer for each of the randomvariables.
-          ## We could reuse the WCC, and just save the weights here. However, this way we do allow
-          ## to use a different wcc for each of the random variables.
-          private$weightedCombinationComputers <- list()
-          private$online_super_learner_predict <- OnlineSuperLearner.Predict$new(pre_processor = pre_processor,
-                                                                                 verbose = verbose)
-          private$historical_cv_risk <- list()
-
-          private$is_parallel = FALSE
-          self$get_validity
-        },
-
-        set_verbosity = function(verbosity) {
-          private$verbose = verbosity
-        },
-
-        ## Samples the data iteratively from the fitted distribution, and
-        ## applies an intervention if necessary. Note that some preliminary
-        ## analysis showed that for this function approx 94% - 99% of time is
-        ## spent in the predict function.
-        ##
-        ## @param data the data to start the sampling from
-        ## @param randomvariables the list of randomvariables to use for the sampling procedure
-        ## @param tau is the time at which we want to measure the outcome (default is 10)
-        ## @param intervention is the intervention we want to give (default is null)
-        ## @param discrete, boolean, should we use the discrete superlearner or the continous one
-        ## @param return_type default is observations, should be one of
-        ## observations, full, summary_measures. When observations, we only
-        ## return the denormalized observations (not the summaries), when
-        ## summary_measures, we only return the normalized summary_measured,
-        ## and when full, we return both (normalized)
-        ## @param start_from_variable the randomvariable to start the sampling from (default null)
-        ## @param start_from_time the start time to start from (default 1)
-        ## @param check boolean perform checks on the provided variables
-        ## @param order_variables boolean should this function order the variables? This is neccessary, but can be done beforehand.
-        ## @param remove_future_vars boolean set the future variables to NA (safety feature, should not be necessary)
-        sample_iteratively = function(data, randomVariables, tau = 10, intervention = NULL, discrete = TRUE,
-                                      return_type = 'observations',
-                                      start_from_variable = NULL,
-                                      start_from_time = 1, check=FALSE, order_variables = TRUE, remove_future_vars= FALSE) {
-
-          ## If no random variable to start from is provided, just start from
-          ## the first one. Note the ordering which is done at the top of this
-          ## function.
-          if (is.null(start_from_variable)) start_from_variable <- randomVariables[[1]]
-
-          ## Check whether the parameters are correct
-          if(check) {
-            start_from_variable <- Arguments$getInstanceOf(start_from_variable, 'RandomVariable')
-            randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
-            tau             <- Arguments$getNumerics(tau, c(1,Inf))
-            start_from_time <- Arguments$getNumerics(start_from_time, c(1,tau))
-
-            ## Check whether the return type is one of the prespecified ones
-            return_type <- Arguments$getCharacters(return_type)
-            valid_return_types <- c('observations', 'full', 'summary_measures')
-            if (!return_type %in% valid_return_types) {
-              throw('Return type should be in', valid_return_types)
-            }
-
-            if(!is.null(intervention) && !InterventionParser.valid_intervention(intervention)) {
-              throw('The intervention specified is not correct! it should have a
-                    when (specifying t), a what (specifying the intervention) and
-                    a variable (specifying the name of the variable to intervene on).')
-            }
-          }
-
-          ## The variables need to be ordered when sampling from them
-          if(order_variables) randomVariables <- RandomVariable.find_ordering(randomVariables)
-
-          result <- data.table()
-          result_denormalized_observations <- data.table(matrix(nrow=0, ncol=length(randomVariables)))
-          colnames(result_denormalized_observations) <- names(randomVariables)
-
-          ## Just to be certain we don't use future data, we remove a subset:
-          remove_vars <- names(randomVariables)
-          started     <- FALSE
-
-          ## We need to sample sequentially here, just so we can plugin the value everytime in the next evaluation
-          private$verbose && enter(private$verbose, 'Started sampling procedure')
-          for (t in seq(start_from_time, tau)) {
-            current_denormalized_observation <- list()
-            private$verbose && enter(private$verbose,'Sampling at ', t)
-
-            for (rv in randomVariables) {
-              current_outcome <- rv$getY
-              private$verbose && enter(private$verbose, 'Working on randomvariable ', current_outcome)
-
-              if (remove_future_vars && !started) {
-                ## We move forward through the ordering till we find the variable we want to start from
-                if (!equals(current_outcome, start_from_variable$getY)) {
-                  ## By default the remove_vars list contains all variables. However
-                  ## the current outcome lies in the past, so it might be that we
-                  ## need it later, don't remove it
-                  remove_vars <- remove_vars[remove_vars != current_outcome]
-                  next
-                }
-                ## Set the variables we don't need to NA
-                data[,remove_vars] <- NA
-                started <- TRUE
-              }
-
-              ## Here we select whether the current node is an intervention
-              ## node.
-              parsed_intervention <- InterventionParser.parse_intervention(
-                intervention = intervention,
-                current_time = t,
-                current_outcome = current_outcome
-              )
-
-              ## If the current t is an intervention t, apply the proposed intervention.
-              if (parsed_intervention$should_intervene) {
-                outcome <- list(normalized = parsed_intervention$what, denormalized = parsed_intervention$what)
-                private$verbose && cat(private$verbose, 'Setting intervention on ', current_outcome,' with ', outcome, ' on time ', t)
-              } else {
-
-                outcome <- self$predict(data = data,
-                                        randomVariables = c(rv),
-                                        discrete = discrete,
-                                        continuous = !discrete,
-                                        all_estimators = FALSE,
-                                        sample = TRUE)
-
-                private$verbose && cat(private$verbose,'Predicted ', current_outcome,
-                                       ' using ', paste(rv$getX, collapse=', '),
-                                       ' and the prediction was ', outcome$denormalized[[1]])
-              }
-              ## Now we actually add the recently predicted value to the
-              ## dataframe, so it can be used in the next sampling step. This
-              ## is important!  We need to add the [[1]] because the result is
-              ## a list of lists (1st norm/denorm, then estimator, then values)
-              data[, (current_outcome) := as.numeric(outcome$normalized[[1]]) ]
-              private$verbose && exit(private$verbose)
-              current_denormalized_observation[[current_outcome]] <- outcome$denormalized[[1]] %>%
-                as.numeric
-            }
-            private$verbose && exit(private$verbose)
-
-            ## Save the observations to the total list of observations. This is
-            ## the list that eventually will be returned. We use the rbindlist
-            ## function so the final result is a datatable.
-            result_denormalized_observations <- rbindlist(
-              list(
-                result_denormalized_observations,
-                current_denormalized_observation),
-              fill=TRUE
-            )
-            result <- rbind(result, data)
-
-            ## Now we have stored the new data in the dataframe, we can use it to get the new covariates
-            if(t < tau) data <- self$get_summary_measure_generator$getLatestCovariates(data)
-          }
-          private$verbose && exit(private$verbose)
-          if (return_type == 'observations') {
-            ## Return the denormalized observations?
-            result <- (result_denormalized_observations[,names(randomVariables), with = FALSE])
-          } else if (return_type == 'summary_measures') {
-            ## Return the denormalized observations?
-            result <- (result[, !names(randomVariables), with = FALSE])
-          }
-
-          return(result)
-        },
-
-        ## Data = the data object from which the data can be retrieved
-        ## initial_data_size = the number of observations needed to fit the initial estimator
-        fit = function(data, randomVariables, initial_data_size = 5, max_iterations = 20, mini_batch_size = 20) {
-          tic <- Sys.time()
-          initial_data_size <- Arguments$getInteger(initial_data_size, c(1,Inf))
-          max_iterations <- Arguments$getInteger(max_iterations, c(0,Inf))
-          data <- Arguments$getInstanceOf(data, 'Data.Base')
-
-          self$get_summary_measure_generator$setData(data = data)
-
-          ## TODO: Move to check validity? Needs moving of the equations as well.
-          self$get_summary_measure_generator$checkEnoughDataAvailable(randomVariables = randomVariables)
-
-          ## We initialize the WCC's here because we need to have the randomVariables
-          private$initialize_weighted_combination_calculators(randomVariables)
-
-          print(paste('Fitting OnlineSuperLearner with a library:', paste(private$SL.library.descriptions, collapse = ', '),
-                      'and we use an initial data size of', initial_data_size,
-                      'with',max_iterations,'iterations,',
-                      'and a minibatch of',mini_batch_size))
-
-          ## Get the initial data for fitting the first estimator and train the initial models
-          private$verbose && enter(private$verbose, 'Fitting initial estimators')
-          self$get_summary_measure_generator$getNext(initial_data_size) %>%
-            private$train_library(data_current = ., randomVariables = randomVariables)
-
-          private$verbose && exit(private$verbose)
-
-          private$verbose && enter(private$verbose, 'Updating estimators')
-          ## Update the library of models using a given number of max_iterations
-          private$update_library(randomVariables <- randomVariables, max_iterations = max_iterations,
-                                mini_batch_size = mini_batch_size)
-
-          ## Return the cross validated risk
-          private$verbose && exit(private$verbose)
-
-          toc <- Sys.time()
-          private$verbose && cat(private$verbose, 'The whole procedure took ', (toc - tic), ' seconds.')
-          return(self$get_cv_risk)
-        },
-
-        ## Predict should return a nrow(data) * 1 matrix, where the predictions are multiplied by
-        ## the weights of each estimator.
-        predict = function(data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE) {
-
-          ## Pass the function to the separate class so it won't fill up this class
-          private$online_super_learner_predict$predict(osl = self, data = data, randomVariables = randomVariables,
-                                               all_estimators = all_estimators, discrete = discrete, continuous = continuous,
-                                               sample = sample, plot = plot)
-
-        }
-  )
+    )
 )

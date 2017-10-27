@@ -3,7 +3,7 @@
 #' @docType class
 #' @importFrom R6 R6Class
 #' @import data.table
-#' @import purrr
+#' @importFrom purrr cross_df
 #' @include ML.XGBoost.R
 #' @include ML.NeuralNet.R
 #' @include ML.Local.lm.R
@@ -90,7 +90,7 @@ LibraryFactory <- R6Class("LibraryFactory",
               algorithm_instances <- list(create_object_from_string(entry$algorithm, args = list()))
               names(algorithm_instances) <- name
             } else {
-              algorithm_param_list <- entry$algorithm_params %>% purrr::cross_d()
+              algorithm_param_list <- entry$algorithm_params %>% purrr::cross_df()
               data.table::setDT(algorithm_param_list)
 
               ## Initialize the actual algorithms
@@ -118,7 +118,7 @@ LibraryFactory <- R6Class("LibraryFactory",
               if (!('params' %in% names(entry))){
                 result <- list('vanillaDE' = DensityEstimation$new(bin_estimator = algorithm_instance))
               } else {
-                param_list <- entry$params %>% purrr::cross_d()
+                param_list <- entry$params %>% purrr::cross_df()
                 data.table::setDT(param_list)
 
                 ## We iterate over the numbers, we still keep the correct names when we pass the list

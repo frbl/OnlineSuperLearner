@@ -35,15 +35,15 @@ packages <- c(
 "matrixStats",
 "digest",
 "future",
-"roxygen2",
-"drat"
+"roxygen2"
 )
 
 gh_packages <- list(
   list(repo = "jeroenooms/jsonlite", branch = 'master'),
   list(repo = "osofr/condensier", branch = 'fb-add-update'),
   list(repo = "jimhester/covr", branch = 'master'),
-  list(repo = "n-s-f/mockery", branch = 'master') #,
+  list(repo = "n-s-f/mockery", branch = 'master'),
+  list(repo = "dmlc/xgboost/R-package", branch = 'master') #,
   #list(repo = 'cran/rkafka', branch = 'master')
 )
 
@@ -56,10 +56,6 @@ install <- function(packages, installfunc, ...){
 
 install(packages, install.packages)
 lapply(gh_packages, function(pkg) install(pkg$repo, devtools::install_github, ref = pkg$branch))
-
-# Install latext xgboost
-drat:::addRepo("dmlc")
-install.packages("xgboost", repos="http://dmlc.ml/drat/", type = "source")
 
 # Specific packages
 # Finds and remove any previously installed H2O packages for R.

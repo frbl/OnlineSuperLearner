@@ -85,6 +85,7 @@ Collate:
     'ML.Neuralnet.R'
     'OneStepEstimator.R'
     'OnlineSuperLearner.Predict.R'
+    'OnlineSuperLearner.SampleIteratively.R'
     'WCC.SGD.Simplex.R'
     'WCC.NMBFGS.R'
     'WeightedCombinationComputer.R'

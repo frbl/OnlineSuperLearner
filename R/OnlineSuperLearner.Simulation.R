@@ -44,14 +44,14 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           #algos <- append(algos, list(list(description='ML.H2O.gbm',
                                   #algorithm = 'ML.H2O.gbm')))
-          nbins <- c(40, 50, 60, 70)
+          nbins <- c(40, 50)#, 60, 70)
           algos <- list()
 
 
           alphas <- runif(3,0,1)
           alphas <- c(0, alphas)
           algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                                  algorithm_params = list(alpha = alphas), 
+                                  #algorithm_params = list(alpha = alphas), 
                                   params = list(nbins = nbins, online = FALSE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
@@ -74,9 +74,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   #algorithm_params = list(ntrees=c(500,1000)),
                                   #params = list(nbins = nbins, online = FALSE))))
 
-          algos <- append(algos, list(list(algorithm = 'ML.Local.Speedlm',
-                                  #algorithm_params = list(),
-                                  params = list(nbins = nbins, online = FALSE))))
+          #algos <- append(algos, list(list(algorithm = 'ML.Local.Speedlm',
+                                  ##algorithm_params = list(),
+                                  #params = list(nbins = nbins, online = FALSE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
                                   ##algorithm_params = list(alpha = alphas),
@@ -528,7 +528,8 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           intervention_effect_caluculator = InterventionEffectCalculator$new(bootstrap_iterations = B, 
                                                                              randomVariables = randomVariables, 
                                                                              outcome_variable = variable_of_interest$getY,
-                                                                             verbose = private$log)
+                                                                             verbose = private$log,
+                                                                             parallel = TRUE)
           
           pre <- options('warn')$warn
           options(warn=-1)
