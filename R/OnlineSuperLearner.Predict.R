@@ -169,10 +169,12 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
         for (estimator in sl_library) {
           private$verbose && cat(private$verbose, 'Predicting with ', estimator$get_name)
 
-          result <- private$predict_with_one_estimator(estimator = estimator,
-                                             data = data,
-                                             sample = sample,
-                                             plot = plot)
+          result <- private$predict_with_one_estimator(
+            estimator = estimator,
+            data = data,
+            sample = sample,
+            plot = plot
+          )
           normalized_results <- append(normalized_results, list(result$normalized))
           denormalized_results <- append(denormalized_results, list(result$denormalized))
         }

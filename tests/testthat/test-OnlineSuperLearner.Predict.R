@@ -3,6 +3,12 @@ library(mockery)
 context("OnlineSuperLearner.Predict.R")
 described.class <- OnlineSuperLearner.Predict
 
+glob_randomVariables <- list(
+  list(getY='W', getX='X', getFamily='gaussian'),
+  list(getY='A', getX='X', getFamily='binomial'),
+  list(getY='Y', getX='X', getFamily='gaussian')
+)
+
 glob_data <- data.table(W=c(1,2,3),A= c(3,2,1), Y=c(1,0,1))
 glob_current_result <- list(denormalized = list(), normalized = list())
 glob_sample <- TRUE
@@ -132,12 +138,6 @@ test_that("it should update the predictions according to the osl_weights", {
       return(df + 2)
   }))
 
-  randomVariables <- list(
-    list(getY='W', getFamily='gaussian'),
-    list(getY='A', getFamily='gaussian'),
-    list(getY='Y', getFamily='gaussian')
-  )
-
   df <- data.table(
     W=rep(1, nobs),
     A=rep(1, nobs),
@@ -163,7 +163,7 @@ test_that("it should update the predictions according to the osl_weights", {
     osl_weights = osl_weights,
     current_result = predictions, 
     sl_library = cur.sl_library, 
-    randomVariables = randomVariables,
+    randomVariables = glob_randomVariables,
     weight_threshold = 0.01,
     sample = FALSE,
     plot = FALSE
@@ -185,12 +185,6 @@ test_that("it should calculate new predictions if not all are available", {
     Y=rep(1, nobs)
   ) 
 
-  randomVariables <- list(
-    list(getY='W', getFamily='gaussian'),
-    list(getY='A', getFamily='gaussian'),
-    list(getY='Y', getFamily='gaussian')
-  )
-
 
   ## Each entry is an algorithm !! Note the missing c
   predictions <- list(
@@ -216,7 +210,7 @@ test_that("it should calculate new predictions if not all are available", {
     osl_weights = osl_weights,
     current_result = predictions, 
     sl_library = cur.sl_library, 
-    randomVariables = randomVariables,
+    randomVariables = glob_randomVariables,
     weight_threshold = 0.01,
     sample = FALSE,
     plot = FALSE
@@ -238,11 +232,6 @@ test_that("it should return the whole data set, not just the osl estimed ones", 
     Y=rep(1, nobs)
   ) 
 
-  randomVariables <- list(
-    list(getY='W', getFamily='gaussian'),
-    list(getY='A', getFamily='gaussian'),
-    list(getY='Y', getFamily='gaussian')
-  )
 
 
   ## Each entry is an algorithm !! Note the missing c
@@ -269,7 +258,7 @@ test_that("it should return the whole data set, not just the osl estimed ones", 
     osl_weights = osl_weights,
     current_result = predictions, 
     sl_library = cur.sl_library, 
-    randomVariables = randomVariables,
+    randomVariables = glob_randomVariables,
     weight_threshold = 0.01,
     sample = FALSE,
     plot = FALSE
@@ -315,33 +304,26 @@ Y_mock_estimator = list(predict = function(data, sample, subset, plot) {
 dosl <- list(W = W_mock_estimator, A = A_mock_estimator, Y = Y_mock_estimator)
 
 test_that("it should should predict using the dosl provided", {
-  randomVariables <- list(
-                          list(getY='W', getX='X', getFamily='gaussian'),
-                          list(getY='A', getX='X', getFamily='binomial'),
-                          list(getY='Y', getX='X', getFamily='gaussian')
-                          )
   subject <- described.class$new(pre_processor = NULL)
 
 
 
   result <- subject$predict_dosl(dosl = dosl, data = glob_data, current_result = glob_current_result, sample = glob_sample, plot = glob_plot,
-                                randomVariables = randomVariables)
+                                randomVariables = glob_randomVariables)
+
   expect_true(is(result, 'list'))
   expect_named(result, c('denormalized', 'normalized'), ignore.order = TRUE)
 
-  lapply(result, function(current_result) {
-    expect_true(is(current_result, 'data.table'))
-    expect_equal(current_result, glob_data[, c('W','A','Y'), with=FALSE])
+  lapply(result, function(norm_denorm_result) {
+    lapply(norm_denorm_result$normalized, function(current_result) {
+      expect_true(is(current_result, 'data.table'))
+      expect_equal(current_result, glob_data[, c('W','A','Y'), with=FALSE])
+    })
   })
 })
 
 test_that("it should not predict if the predictions have been done before", {
   nobs <- 10
-  randomVariables <- list(
-    list(getY='W', getX='X', getFamily='gaussian'),
-    list(getY='A', getX='X', getFamily='binomial'),
-    list(getY='Y', getX='X', getFamily='gaussian')
-  )
 
   alg_a = list(predict = function(...) {should_not_be_called <<- TRUE }, get_name = 'a')
   alg_b = list(predict = function(...) {should_not_be_called <<- TRUE }, get_name = 'b')
@@ -367,25 +349,13 @@ test_that("it should not predict if the predictions have been done before", {
     current_result = predictions,
     sample = glob_sample,
     plot = glob_plot,
-    randomVariables = randomVariables
+    randomVariables = glob_randomVariables
   )
 
   expect_false(should_not_be_called)
-  #expect_true(is(result, 'list'))
-  #expect_named(result, c('denormalized', 'normalized'), ignore.order = TRUE)
-
-  #lapply(result, function(current_result) {
-    #expect_true(is(current_result, 'data.table'))
-    #expect_equal(current_result, glob_data[, c('W','A','Y'), with=FALSE])
-  #})
 })
 
 test_that("it should predict and normalize if set", {
-  randomVariables <- list(
-                          list(getY='W', getX='X', getFamily='gaussian'),
-                          list(getY='A', getX='X', getFamily='binomial'),
-                          list(getY='Y', getX='X', getFamily='gaussian')
-                          )
   expected <- 123
 
   # Mock the preprocessor
@@ -402,7 +372,7 @@ test_that("it should predict and normalize if set", {
   subject <- described.class$new(pre_processor = pre_processor)
 
   result <- subject$predict_dosl(dosl = dosl, data = glob_data,  current_result = glob_current_result, sample = glob_sample, plot = glob_plot,
-                                randomVariables = randomVariables)
+                                randomVariables = glob_randomVariables)
 
   expect_named(result, c('denormalized', 'normalized'), ignore.order = TRUE)
   expect_equal(result$denormalized$dosl.estimator, data.table(W=expected, A=expected, Y=expected))
@@ -422,12 +392,6 @@ test_that("it should return the whole data set, not just the dosl estimed ones",
     Y=rep(1, nobs)
   ) 
 
-  randomVariables <- list(
-    list(getY='W', getFamily='gaussian'),
-    list(getY='A', getFamily='gaussian'),
-    list(getY='Y', getFamily='gaussian')
-  )
-
   ## Each entry is an algorithm !! Note the missing c
   predictions <- list(
     normalized = list(a=df, b=df+1, c = df + 3),
@@ -440,7 +404,7 @@ test_that("it should return the whole data set, not just the dosl estimed ones",
     current_result = predictions,
     sample = FALSE,
     plot = FALSE,
-    randomVariables = randomVariables  
+    randomVariables = glob_randomVariables  
   )
   
   expect_named(result, c('normalized', 'denormalized'))
@@ -451,45 +415,46 @@ test_that("it should return the whole data set, not just the dosl estimed ones",
 })
 
 #context(" predict_using_all_estimators")
-##==========================================================
-#test_that("it should call all estimators and estimate using those estimators", {
-  #randomVariables <- list(
-                          #list(getY='W', getX='X', getFamily='gaussian'),
-                          #list(getY='A', getX='X', getFamily='binomial'),
-                          #list(getY='Y', getX='X', getFamily='gaussian')
-                          #)
-  #expected_W = 1
-  #expected_A = 2
-  #expected_Y = 3
+#==========================================================
+test_that("it should call all estimators and estimate using those estimators", {
+  expected_W = 1
+  expected_A = 2
+  expected_Y = 3
 
-  #subject <- described.class$new(pre_processor = NULL)
+  subject <- described.class$new(pre_processor = NULL)
 
-  #mock_estimator = list(predict = function(data, sample, plot) {
-   #expect_equal(data, glob_data) 
-   #expect_equal(sample, glob_sample) 
-   #expect_equal(plot, glob_plot) 
-   #result <- list(W = rep(1,nrow(data)), A = rep(2,nrow(data)), Y = rep(3,nrow(data)))
-  #})
+  mock_estimator = list(predict = function(data, sample, plot) {
+   expect_equal(data, glob_data) 
+   expect_equal(sample, glob_sample) 
+   expect_equal(plot, glob_plot) 
+   result <- list(W = rep(expected_W,nrow(glob_data)),
+                  A = rep(expected_A,nrow(glob_data)),
+                  Y = rep(expected_Y,nrow(glob_data)))
+  })
 
-  #sl_lib <- list(mock_estimator, mock_estimator, mock_estimator, mock_estimator)
-  #result <- subject$predict_using_all_estimators(data = glob_data, sl_library = sl_lib,
-                                                 #sample = glob_sample, plot = glob_plot)
+  sl_lib <- list(a = mock_estimator, b = mock_estimator, c = mock_estimator, d = mock_estimator)
+  result <- subject$predict_using_all_estimators(
+    data = glob_data,
+    sl_library = sl_lib,
+    sample = glob_sample,
+    plot = glob_plot
+  )
 
-  ## Each estimator should both have a normalized and denormalized outcome
-  #expect_equal(length(result), 2)
-  #expect_named(result, c('denormalized', 'normalized'), ignore.order = TRUE)
+  # Each estimator should both have a normalized and denormalized outcome
+  expect_length(result, 2)
+  expect_named(result, c('denormalized', 'normalized'), ignore.order = TRUE)
 
-  #lapply(result, function(current_result) {
+  lapply(result, function(current_result) {
+           current_result <- result[[1]]
+    # Each estimator should have an outcome
+    expect_equal(length(current_result), length(sl_lib))
 
-    ## Each estimator should have an outcome
-    #expect_equal(length(current_result), length(sl_lib))
+    # Each estimate should contain all RV's
+    lapply(current_result, function(entry){
+      expect_equal(entry$W, rep(expected_W, nrow(glob_data)))
+      expect_equal(entry$A, rep(expected_A, nrow(glob_data)))
+      expect_equal(entry$Y, rep(expected_Y, nrow(glob_data)))
+    })
+  })
 
-    ## Each estimate should contain all RV's
-    #lapply(current_result, function(entry){
-      #expect_equal(entry$W, expected_W)
-      #expect_equal(entry$A, expected_A)
-      #expect_equal(entry$Y, expected_Y)
-    #})
-  #})
-
-#})
+})
