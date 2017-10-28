@@ -15,7 +15,7 @@ pre_processor <- list(
 
 B <- 10
 N <- 10
-tau <- 3
+glob_tau <- 3
 intervention <- list(variable = 'A',
                      when=c(1),
                      what=c(1))
@@ -37,7 +37,7 @@ create_subject <- function(other_B = NULL, other_osl = NULL) {
     N = N,
     B = other_B,
     pre_processor = pre_processor,
-    tau = tau,
+    tau = glob_tau,
     intervention = intervention,
     variable_of_interest = Y,
     parallel = FALSE,
@@ -56,7 +56,7 @@ test_that("it should succesfully initialize when the correct arguments are provi
     N = N,
     B = B,
     pre_processor = pre_processor,
-    tau = tau,
+    tau = glob_tau,
     intervention = intervention,
     variable_of_interest = Y
   ), NA)
@@ -69,7 +69,7 @@ test_that("it should initialize the last oos estimate", {
     N = N,
     B = B,
     pre_processor = pre_processor,
-    tau = tau,
+    tau = glob_tau,
     intervention = intervention,
     variable_of_interest = Y
   )
@@ -84,7 +84,7 @@ test_that("it should throw if the provided osl is not an online super learner", 
     N = N,
     B = B,
     pre_processor = pre_processor,
-    tau = tau,
+    tau = glob_tau,
     intervention = intervention,
     variable_of_interest = Y
   ), "Argument 'osl' is neither of nor inherits class OnlineSuperLearner: function", fixed = TRUE)
@@ -99,7 +99,7 @@ test_that("it should throw if the provided N is not valid", {
       N = cur.N,
       B = B,
       pre_processor = pre_processor,
-      tau = tau,
+      tau = glob_tau,
       intervention = intervention,
       variable_of_interest = Y
     ), "Argument 'N' is out of range")
@@ -117,7 +117,7 @@ test_that("it should throw if the provided B is not valid", {
       N = N,
       B = cur.B,
       pre_processor = pre_processor,
-      tau = tau,
+      tau = glob_tau,
       intervention = intervention,
       variable_of_interest = Y
     ), "Argument 'N' is out of range")
@@ -133,7 +133,7 @@ test_that("it should should throw if the provided 'discrete' is not valid", {
       N = N,
       B = B,
       pre_processor = pre_processor,
-      tau = tau,
+      tau = glob_tau,
       discrete = cur.discrete,
       intervention = intervention,
       variable_of_interest = Y
@@ -148,7 +148,7 @@ test_that("it should throw if the provided random variables are not a list", {
       N = N,
       B = B,
       pre_processor = pre_processor,
-      tau = tau,
+      tau = glob_tau,
       intervention = intervention,
       variable_of_interest = Y
     ), "Argument 'randomVariables' is neither of nor inherits class list: RandomVariable, R6", fixed = TRUE)
@@ -164,7 +164,7 @@ test_that("it should order the random variables in the beginning", {
     N = N,
     B = B,
     pre_processor = pre_processor,
-    tau = tau,
+    tau = glob_tau,
     intervention = intervention,
     variable_of_interest = Y
   ))
@@ -182,7 +182,7 @@ test_that("it should should store the preprocessor", {
     N = N,
     B = B,
     pre_processor = pre_processor_mock,
-    tau = tau,
+    tau = glob_tau,
     intervention = intervention,
     variable_of_interest = Y
   )
@@ -214,7 +214,7 @@ test_that("it should store the intervention", {
     N = N,
     B = B,
     pre_processor = pre_processor,
-    tau = tau,
+    tau = glob_tau,
     intervention = mock_intervention,
     variable_of_interest = Y
   )
@@ -228,7 +228,7 @@ test_that("it should store the variable of interest", {
     N = N,
     B = B,
     pre_processor = pre_processor,
-    tau = tau,
+    tau = glob_tau,
     intervention = intervention,
     variable_of_interest = Y
   )
@@ -243,7 +243,7 @@ test_that("it should determine wheter it is parallel or not", {
       N = N,
       B = B,
       pre_processor = pre_processor,
-      tau = tau,
+      tau = glob_tau,
       intervention = intervention,
       parallel = parallel,
       variable_of_interest = Y
@@ -261,7 +261,7 @@ test_that("it should determine wheter it is online or not", {
       N = N,
       B = B,
       pre_processor = pre_processor,
-      tau = tau,
+      tau = glob_tau,
       intervention = intervention,
       online = online,
       variable_of_interest = Y
@@ -278,7 +278,7 @@ test_that("it should create a data cache for storing the P values", {
       N = N,
       B = B,
       pre_processor = pre_processor,
-      tau = tau,
+      tau = glob_tau,
       intervention = intervention,
       online = online,
       variable_of_interest = Y
@@ -297,7 +297,7 @@ test_that("it should store a data cach for storing the Pstar values", {
       N = N,
       B = B,
       pre_processor = pre_processor,
-      tau = tau,
+      tau = glob_tau,
       intervention = intervention,
       online = online,
       variable_of_interest = Y
@@ -316,7 +316,7 @@ test_that("it should store the minimal values needed before a complete block is 
     N = N,
     B = B,
     pre_processor = pre_processor,
-    tau = tau,
+    tau = glob_tau,
     intervention = intervention,
     minimal_measurements_needed = mock_minimal_measurements,
     variable_of_interest = Y
@@ -332,7 +332,7 @@ test_that("it should throw if the provided verbosity is invalid", {
     N = N,
     B = B,
     pre_processor = pre_processor,
-    tau = tau,
+    tau = glob_tau,
     intervention = intervention,
     variable_of_interest = Y,
     verbose = glm
@@ -348,7 +348,7 @@ test_that("it should call the caluclate full oos function with the correct param
     N = N,
     B = B,
     pre_processor = pre_processor,
-    tau = tau,
+    tau = glob_tau,
     intervention = intervention,
     variable_of_interest = Y
   )
@@ -383,7 +383,7 @@ test_that("it should call the calculate variance function (which doesnt do anyth
     N = N,
     B = B,
     pre_processor = pre_processor,
-    tau = tau,
+    tau = glob_tau,
     intervention = intervention,
     variable_of_interest = Y
   )
@@ -414,7 +414,7 @@ test_that("it should return a list with two entries (variance and estimate)", {
     N = N,
     B = B,
     pre_processor = pre_processor,
-    tau = tau,
+    tau = glob_tau,
     intervention = intervention,
     variable_of_interest = Y
   )
@@ -445,7 +445,7 @@ test_that("it should throw if the initial estimate is not numeric", {
     N = N,
     B = B,
     pre_processor = pre_processor,
-    tau = tau,
+    tau = glob_tau,
     intervention = intervention,
     variable_of_interest = Y
   )
@@ -468,7 +468,7 @@ test_that("it should call, from 1:N times, the get H ratio function", {
     N = cur.N,
     B = B,
     pre_processor = pre_processor,
-    tau = tau,
+    tau = glob_tau,
     intervention = intervention,
     variable_of_interest = Y
   )
@@ -505,7 +505,7 @@ test_that("it should call, from 1:N times, the evaluation of conditional expecta
     N = cur.N,
     B = B,
     pre_processor = pre_processor,
-    tau = tau,
+    tau = glob_tau,
     intervention = intervention,
     variable_of_interest = Y
   )
@@ -538,7 +538,7 @@ test_that("it should calculate the correct dstar, and update it every N iteratio
     N = cur.N,
     B = B,
     pre_processor = pre_processor,
-    tau = tau,
+    tau = glob_tau,
     intervention = intervention,
     variable_of_interest = Y
   )
@@ -578,7 +578,7 @@ test_that("it should return the initial estimate if the oos estimate is NA or na
     N = cur.N,
     B = B,
     pre_processor = pre_processor,
-    tau = tau,
+    tau = glob_tau,
     intervention = intervention,
     variable_of_interest = Y
   )
@@ -623,21 +623,23 @@ test_that("it should be implemented", {
 context(" get_h_ratio_estimators")
 #==========================================================
 test_that("it should sample N observations from both P and P*, and call the h ratio predictor function with them", {
+  subject <- create_subject()
   data <- data.table(Y_lag_1 = 2, W=1, A=1, Y=0)
-  result <- subject$get_h_ratio_estimators(data = data)
-
-  expect_true(is(result,'list'))
   
-  # We should have tau lists of estimators
-  expect_equal(length(result), tau)
+  stub(subject$get_h_ratio_estimators, 'self$calculate_h_ratio_predictors',
+    function(Osample_p, Osample_p_star) {
+      expect_equal(glob_tau * nrow(Osample_p), nrow(Osample_p_star))
+      expect_equal(nrow(Osample_p), B)
+      expect_equal(nrow(Osample_p_star), glob_tau * B)
+      ## +1 for the s col
+      expect_equal(1 + ncol(Osample_p), ncol(Osample_p_star))
+      expect_true('Delta' %in% colnames(Osample_p))
+      expect_true('Delta' %in% colnames(Osample_p_star))
+      throw('stop_execution') 
+    }
+  )
 
-  # Each of the tau lists, should have 3 estimators (one for each covariate)
-  lapply(result,function(entry){
-    expect_equal(length(result), length(glob_randomVariables))
-    lapply(entry,function(estimator){
-      expect_true(is(estimator, 'speedglm'))
-    })
-  })
+  expect_error(subject$get_h_ratio_estimators(data = data), 'stop_execution')
   
 })
 
@@ -649,7 +651,7 @@ test_that("it should result in the correct output", {
   expect_true(is(result,'list'))
   
   # We should have tau lists of estimators
-  expect_equal(length(result), tau)
+  expect_equal(length(result), glob_tau)
 
   # Each of the tau lists, should have 3 estimators (one for each covariate)
   lapply(result,function(entry){

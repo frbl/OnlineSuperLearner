@@ -195,7 +195,10 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         samples <- private$sample_observations(start_data = O_0, N = N)
 
         ## Perform the actual learning of the h_ratio predictors
-        h_ratio_predictors_per_s <- self$calculate_h_ratio_predictors(samples$Osample_p, samples$Osample_p_star)
+        h_ratio_predictors_per_s <- self$calculate_h_ratio_predictors(
+          Osample_p = samples$Osample_p, 
+          Osample_p_star = samples$Osample_p_star
+        )
 
         ## The final result is a list of estimators, which contains a GLM for
         ## each $C_W$, $C_A$, and $C_Y$, for each s in tau.  (so 3tau
