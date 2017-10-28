@@ -30,7 +30,7 @@ ML.XGBoost <- R6Class("ML.XGBoost",
     list(
       fitfunname='xgboost',
       lmclass='xgboostR6',
-      initialize = function(booster = 'gbtree', nthread = 1, alpha = 0, lambda = 0, rounds = 1, gamma = 0, eta = 0.3, objective = 'binary:logistic', verbose = FALSE) {
+      initialize = function(booster = 'gblinear', max_depth = 6, nthread = 1, alpha = 0, lambda = 0, rounds = 1, gamma = 0, eta = 0.3, objective = 'binary:logistic', verbose = FALSE) {
 
         if (nthread == -1) nthread <- parallel::detectCores()
 
@@ -38,6 +38,7 @@ ML.XGBoost <- R6Class("ML.XGBoost",
         private$params <- list(objective = Arguments$getCharacter(objective),
                               booster = Arguments$getCharacter(booster),
                               nthread = nthread,
+                              max_depth =  Arguments$getNumeric(max_depth, c(1, Inf)),
                               alpha   = Arguments$getNumeric(alpha, c(0, 1)),
                               gamma   = Arguments$getNumeric(gamma, c(0, Inf)),
                               eta     = Arguments$getNumeric(eta, c(1e-10, Inf)),
@@ -76,9 +77,6 @@ ML.XGBoost <- R6Class("ML.XGBoost",
 
       do.predict = function(X_mat, m.fit) {
 
-        #result <- ifelse(any(is.na(m.fit$coef)),
-                         #super$do.predict(X_mat, m.fit),
-                         #predict(m.fit$coef, X_mat))
         #if(!('Intercept' %in% colnames(X_mat))) browser()
         if (any(is.na(m.fit$coef))) {
           result <- super$do.predict(X_mat, m.fit)
@@ -92,7 +90,9 @@ ML.XGBoost <- R6Class("ML.XGBoost",
       do.update = function(X_mat, Y_vals, m.fit, ...) {
         # By default the xgbtrain function uses the old model as a parameter.
         # Therefore we can just simply call the fit function
-        private$params <- modifyList(self$get_params, list(process_type = 'update', updater = 'refresh', refresh_leaf = FALSE))
+        if (self$get_params$booster != 'gblinear') {
+          private$params <- modifyList(self$get_params, list(process_type = 'update', updater = 'refresh', refresh_leaf = FALSE))
+        }
         private$do.fit(X_mat = X_mat, Y_vals = Y_vals, coef = m.fit$coef)
       },
 

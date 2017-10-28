@@ -224,8 +224,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
                                                      tau = sampling_iterations_needed,
                                                      discrete = self$get_discrete,
                                                      intervention = NULL,
-                                                     return_type = 'full',
-                                                     order_variables = FALSE)
+                                                     return_type = 'full')
           current[sampling_iterations_needed,]
         }
 

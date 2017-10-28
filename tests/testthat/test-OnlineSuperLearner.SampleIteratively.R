@@ -509,7 +509,7 @@ test_that("it should call the osl predict function", {
   mock_normal_outcome <- list(normalized = 1, denormalized = 1)
   cur.osl <- list(predict = function(data, randomVariables, discrete, continuous, all_estimators, sample)  {
     expect_equal(data, glob_data[1,])                  
-    expect_equal(randomVariables, rv.W)                  
+    expect_equal(randomVariables, c(rv.W))                  
     expect_equal(discrete, glob_discrete)                  
     expect_equal(continuous, !glob_discrete)                  
     expect_equal(all_estimators, FALSE)                  

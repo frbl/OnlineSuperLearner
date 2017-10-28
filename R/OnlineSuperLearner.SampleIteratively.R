@@ -61,7 +61,7 @@ OnlineSuperLearner.SampleIteratively <- R6Class("OnlineSuperLearner.SampleIterat
       sample_iteratively = function(data, tau = 10, intervention = NULL, discrete = TRUE,
                                     return_type = 'observations',
                                     start_from_variable = NULL,
-                                    start_from_time = 1, check=FALSE) {
+                                    start_from_time = 1, check=TRUE) {
 
         ## If no random variable to start from is provided, just start from
         ## the first one. Note the ordering which is done at the top of this
@@ -202,7 +202,7 @@ OnlineSuperLearner.SampleIteratively <- R6Class("OnlineSuperLearner.SampleIterat
         osl <- self$get_online_super_learner
         outcome <- osl$predict(
           data = data,
-          randomVariables = current_rv,
+          randomVariables = c(current_rv),
           discrete = discrete,
           continuous = !discrete,
           all_estimators = FALSE,

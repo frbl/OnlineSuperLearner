@@ -92,6 +92,8 @@ test_that("it should initialize the historical cv risk variable", {
 })
 
 # HERE ================================
+context(" perform_sample")
+
 
 context(" fit")
 #==========================================================
@@ -121,6 +123,14 @@ test_that("it should throw if the provided data is not a data object", {
   expect_error(
     subject$fit(data, randomVariables, initial_data_size = 1, max_iterations = 1, mini_batch_size = 20),
     "Argument 'data' is neither of nor inherits class Data.Base: mock")
+})
+
+test_that("it should call the train_library function", {
+  
+})
+
+test_that("it should call the update_library function", {
+  
 })
 
 context(" predict")

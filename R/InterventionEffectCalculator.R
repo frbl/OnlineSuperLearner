@@ -71,10 +71,17 @@ InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
         } %>% unlist %>% unname
       },
 
-      perform_initial_estimation = function(osl, interventions, discrete, initial_data,  tau) {
+      perform_initial_estimation = function(osl, interventions, discrete, initial_data, tau) {
         private$verbose && enter(private$verbose, 'Performing initial estimation of parameter of interest')
 
-        result <- self$calculate_intervention_effect(osl, interventions, discrete, initial_data, tau)
+        result <- self$calculate_intervention_effect(
+          osl = osl,
+          interventions = interventions,
+          discrete = discrete,
+          initial_data = initial_data,
+          tau = tau,
+          check = TRUE
+        )
         result <- lapply(result, mean)
 
         private$verbose && exit(private$verbose)

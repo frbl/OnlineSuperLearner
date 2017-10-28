@@ -50,9 +50,10 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           alphas <- runif(3,0,1)
           alphas <- c(0, alphas)
+          lambdas <- runif(3,0,1)
           algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                                  #algorithm_params = list(alpha = alphas), 
-                                  params = list(nbins = nbins, online = FALSE))))
+                                  algorithm_params = list(alpha = alphas, lambda = lambdas), 
+                                  params = list(nbins = nbins, online = TRUE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
                                   #algorithm_params = list(ntrees=c(10,20), min_rows=1),
@@ -508,6 +509,8 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           OutputPlotGenerator.create_training_curve(osl$get_historical_cv_risk, 
                                                     randomVariables = randomVariables,
                                                     output = paste('curve',configuration, sep='_'))
+
+          browser()
 
           toc <- Sys.time()
           time.taken <- toc - tic

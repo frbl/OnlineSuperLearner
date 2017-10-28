@@ -191,24 +191,32 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           ## We initialize the WCC's here because we need to have the randomVariables
           private$initialize_weighted_combination_calculators(randomVariables)
 
-          print(paste('Fitting OnlineSuperLearner with a library:', paste(self$get_estimator_descriptions, collapse = ', '),
-                      'and we use an initial data size of', initial_data_size,
-                      'with',max_iterations,'iterations,',
-                      'and a minibatch of',mini_batch_size))
+          private$verbose && cat(private$verbose, 
+            'Fitting OnlineSuperLearner with a library: ', paste(self$get_estimator_descriptions, collapse = ', '),
+            ' and we use an initial data size of ', initial_data_size,
+            ' with ',max_iterations,' iterations,',
+            ' and a minibatch of ',mini_batch_size
+          )
 
           ## Get the initial data for fitting the first estimator and train the initial models
-          private$verbose && enter(private$verbose, 'Fitting initial estimators')
-          self$get_summary_measure_generator$getNext(initial_data_size) %>%
-            private$train_library(data_current = ., randomVariables = randomVariables)
+          next_data <- self$get_summary_measure_generator$getNext(initial_data_size)
 
+          ## Create the initial fit
+          private$verbose && enter(private$verbose, 'Fitting initial estimators')
+          self$train_library(
+            data_current = next_data,
+            randomVariables = randomVariables
+          )
           private$verbose && exit(private$verbose)
 
-          private$verbose && enter(private$verbose, 'Updating estimators')
-          ## Update the library of models using a given number of max_iterations
-          private$update_library(randomVariables <- randomVariables, max_iterations = max_iterations,
-                                mini_batch_size = mini_batch_size)
 
-          ## Return the cross validated risk
+          ## Update the library of models using a given number of max_iterations
+          private$verbose && enter(private$verbose, 'Updating estimators')
+          self$update_library(
+            randomVariables = randomVariables,
+            max_iterations = max_iterations,
+            mini_batch_size = mini_batch_size
+          )
           private$verbose && exit(private$verbose)
 
           toc <- Sys.time()
@@ -249,6 +257,117 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             start_from_time = start_from_time,
             check = check
           )
+        },
+
+        ## Functions
+        ## Function to train the initial set of models
+        ## Params:
+        ## @param data_current: the initial dataset to train the estimators on
+        ## @param Y: the column names used for the outcome
+        ## @param A: the column names used for the treatment
+        ## @param W: the column names used for the covariates
+        ## TODO: Move function to separate file
+        train_library = function(data_current, randomVariables) {
+          ## Fit or update the  estimators
+          data.splitted <- self$get_data_splitter$split(data_current)
+          outcome.variables <- sapply(randomVariables, function(rv) rv$getY)
+
+          private$train_all_estimators(data = data.splitted$train, randomVariables = randomVariables)
+
+          ## Extract the level 1 data and use it to fit the osl
+          predicted.outcome <- self$get_online_super_learner_predict$predict_using_all_estimators(
+            data = data.splitted$train,
+            sl_library = self$get_estimators
+          )
+
+          observed.outcome <- data.splitted$train[,outcome.variables, with=FALSE]
+          private$fit_osl(predicted.outcome = predicted.outcome,
+                          observed.outcome = observed.outcome)
+          private$fitted <- TRUE
+
+          ## Make a prediction using the learners on the test data
+          observed.outcome <- data.splitted$test[,outcome.variables, with=FALSE]
+          predicted.outcome <- self$predict(data = data.splitted$test,
+                                          randomVariables = randomVariables,
+                                          discrete = TRUE, continuous = TRUE, all_estimators = TRUE)
+
+          ## We need to store the dosl risk, as we will update it later.
+          pre_dosl_risk <- private$cv_risk$dosl.estimator
+
+          ## Calculate the error using the normalized predictions
+          private$update_risk(predicted.outcome = predicted.outcome,
+                              observed.outcome = observed.outcome,
+                              randomVariables = randomVariables)
+
+          ## Update the discrete superlearner (take the first if there are multiple candidates)
+          if (self$fits_dosl) {
+            private$fit_dosl()
+
+            ## Put the CV risk back to what it was before the update. We can now actually fit it correctly.
+            private$cv_risk$dosl.estimator <- pre_dosl_risk
+
+            ## In order to get the initial estimate of the CV error of the
+            ## DOSL, we first need to fit the other estimators, and after that
+            ## calculate the dosl error separately.
+            predicted.outcome <- self$predict(data = data.splitted$test,
+                                            randomVariables = randomVariables,
+                                            discrete = TRUE, continuous = FALSE, all_estimators = FALSE)
+
+            ## Note that we are using the cv_risk_calculator here to update the risk, not the wrapper function, hence
+            ## not affecting our earlier risk score.
+            private$cv_risk$dosl.estimator <-
+              private$cv_risk_calculator$update_risk(predicted.outcome = predicted.outcome,
+                                                      observed.outcome = observed.outcome,
+                                                      randomVariables  = randomVariables,
+                                                      current_count    = self$get_cv_risk_count-1,
+                                                      current_risk     = self$get_cv_risk)$dosl.estimator
+          }
+
+          private$update_historical_cv_risk()
+          private$update_oos_fit(new_data = data_current)
+
+        },
+
+        ## Function to update the models with the available data
+        ## Params:
+        ## @param Y: the column names used for the outcome
+        ## @param A: the column names used for the treatment
+        ## @param W: the column names used for the covariates
+        ## @param max_iterations: the number of iterations we can maximaly run for training
+        ## @param mini_batch_size: size of the batch we use
+        ## TODO: Move function to separate file
+        update_library = function(randomVariables, max_iterations, mini_batch_size){
+          private$verbose && enter(private$verbose, 'Starting estimator updating')
+          if(!self$is_fitted){
+            throw('Fit the inital D-OSL and OSL first')
+          }
+
+          ## Set the current timestep to 1
+          t <- 0
+          data_current <- self$get_summary_measure_generator$getNext(mini_batch_size)
+
+          ## TODO: Check wether the stopping criteria are met (e.g., improvement < theta)
+          while(t < max_iterations && nrow(data_current) >= 1 && !is.null(data_current)) {
+
+            ## Only show this log every 5 times
+            if(t %% 5 == 0 && private$verbose) {
+              lapply(names(self$get_cv_risk), function(cv_name) {
+                cat(private$verbose, paste('Updating OSL at iteration', t,
+                                          'error for', cv_name,
+                                          'is', self$get_cv_risk[cv_name]))
+              })
+            }
+
+            self$train_library(data_current = data_current, randomVariables = randomVariables)
+            output = paste('performance_iteration',t,sep='_')
+            OutputPlotGenerator.create_risk_plot(self$get_cv_risk, output, '/tmp/osl/')
+
+
+            ## Get the new row of data
+            data_current <- self$get_summary_measure_generator$getNext(mini_batch_size)
+            t <- t + 1
+          }
+          private$verbose && exit(private$verbose)
         }
   ),
   active =
@@ -488,114 +607,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$verbose && exit(private$verbose)
         },
 
-        ## Functions
-        ## Function to train the initial set of models
-        ## Params:
-        ## @param data_current: the initial dataset to train the estimators on
-        ## @param Y: the column names used for the outcome
-        ## @param A: the column names used for the treatment
-        ## @param W: the column names used for the covariates
-        train_library = function(data_current, randomVariables) {
-          ## Fit or update the  estimators
-          data.splitted <- self$get_data_splitter$split(data_current)
-          outcome.variables <- sapply(randomVariables, function(rv) rv$getY)
-
-          private$train_all_estimators(data = data.splitted$train, randomVariables = randomVariables)
-
-          ## Extract the level 1 data and use it to fit the osl
-          predicted.outcome <- self$get_online_super_learner_predict$predict_using_all_estimators(
-            data = data.splitted$train,
-            sl_library = self$get_estimators
-          )
-
-          observed.outcome <- data.splitted$train[,outcome.variables, with=FALSE]
-          private$fit_osl(predicted.outcome = predicted.outcome,
-                          observed.outcome = observed.outcome)
-          private$fitted <- TRUE
-
-          ## Make a prediction using the learners on the test data
-          observed.outcome <- data.splitted$test[,outcome.variables, with=FALSE]
-          predicted.outcome <- self$predict(data = data.splitted$test,
-                                          randomVariables = randomVariables,
-                                          discrete = TRUE, continuous = TRUE, all_estimators = TRUE)
-
-          ## We need to store the dosl risk, as we will update it later.
-          pre_dosl_risk <- private$cv_risk$dosl.estimator
-
-          ## Calculate the error using the normalized predictions
-          private$update_risk(predicted.outcome = predicted.outcome,
-                              observed.outcome = observed.outcome,
-                              randomVariables = randomVariables)
-
-          ## Update the discrete superlearner (take the first if there are multiple candidates)
-          if (self$fits_dosl) {
-            private$fit_dosl()
-
-            ## Put the CV risk back to what it was before the update. We can now actually fit it correctly.
-            private$cv_risk$dosl.estimator <- pre_dosl_risk
-
-            ## In order to get the initial estimate of the CV error of the
-            ## DOSL, we first need to fit the other estimators, and after that
-            ## calculate the dosl error separately.
-            predicted.outcome <- self$predict(data = data.splitted$test,
-                                            randomVariables = randomVariables,
-                                            discrete = TRUE, continuous = FALSE, all_estimators = FALSE)
-
-            ## Note that we are using the cv_risk_calculator here to update the risk, not the wrapper function, hence
-            ## not affecting our earlier risk score.
-            private$cv_risk$dosl.estimator <-
-              private$cv_risk_calculator$update_risk(predicted.outcome = predicted.outcome,
-                                                      observed.outcome = observed.outcome,
-                                                      randomVariables  = randomVariables,
-                                                      current_count    = self$get_cv_risk_count-1,
-                                                      current_risk     = self$get_cv_risk)$dosl.estimator
-          }
-
-          private$update_historical_cv_risk()
-          private$update_oos_fit(new_data = data_current)
-
-        },
-
-        ## Function to update the models with the available data
-        ## Params:
-        ## @param Y: the column names used for the outcome
-        ## @param A: the column names used for the treatment
-        ## @param W: the column names used for the covariates
-        ## @param max_iterations: the number of iterations we can maximaly run for training
-        ## @param mini_batch_size: size of the batch we use
-        update_library = function(randomVariables, max_iterations, mini_batch_size){
-          private$verbose && enter(private$verbose, 'Starting estimator updating')
-          if(!self$is_fitted){
-            throw('Fit the inital D-OSL and OSL first')
-          }
-
-          ## Set the current timestep to 1
-          t <- 0
-          data_current <- self$get_summary_measure_generator$getNext(mini_batch_size)
-
-          ## TODO: Check wether the stopping criteria are met (e.g., improvement < theta)
-          while(t < max_iterations && nrow(data_current) >= 1 && !is.null(data_current)) {
-
-            ## Only show this log every 5 times
-            if(t %% 5 == 0 && private$verbose) {
-              lapply(names(self$get_cv_risk), function(cv_name) {
-                cat(private$verbose, paste('Updating OSL at iteration', t,
-                                          'error for', cv_name,
-                                          'is', self$get_cv_risk[cv_name]))
-              })
-            }
-
-            private$train_library(data_current = data_current, randomVariables = randomVariables)
-            output = paste('performance_iteration',t,sep='_')
-            OutputPlotGenerator.create_risk_plot(self$get_cv_risk, output, '/tmp/osl/')
-
-
-            ## Get the new row of data
-            data_current <- self$get_summary_measure_generator$getNext(mini_batch_size)
-            t <- t + 1
-          }
-          private$verbose && exit(private$verbose)
-        },
 
         fit_osl = function(predicted.outcome, observed.outcome){
           if(!self$fits_osl) return(NULL)

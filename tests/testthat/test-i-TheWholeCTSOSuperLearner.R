@@ -12,7 +12,8 @@ test_that("it should estimate the true treatment", {
   # we generate number of blocks observations
   condensier_options(parfit=FALSE)
   options(warn=-1)
-  doRNG::registerDoRNG(12345)
+  set.seed(12345)
+  doParallel::registerDoParallel(cores = parallel::detectCores())
 
   # Number of cores available
   cores = detectCores()
@@ -37,7 +38,7 @@ test_that("it should estimate the true treatment", {
   B <- 1e2
 
   # The intervention we are interested in
-  intervention  <- list(when = c(2), what = c(1), variable ='A')
+  interventions  <- list(intervention = list(when = c(2), what = c(1), variable ='A'))
 
   # The time of the outcome
   tau = 2
@@ -79,9 +80,9 @@ test_that("it should estimate the true treatment", {
   # This is a little slow, because 'simulateWAY' is designed to simulate quickly a long time series,
   # as opposed to many short time series.
   psi.approx <- mclapply(seq(B), function(bb) {
-    when <- max(intervention$when)
+    when <- max(interventions$intervention$when)
     data.int <- simulator$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
-                                intervention = intervention, verbose = FALSE)
+                                intervention = interventions$intervention, verbose = FALSE)
     data.int$Y[tau]
   }, mc.cores = cores) %>%
     unlist %>%
@@ -127,25 +128,24 @@ test_that("it should estimate the true treatment", {
                           #variable_of_interest = Y,
                           #tau = tau)
   #}, mc.cores=cores)
-  result <- lapply(seq(B), function(i) {
-   osl$sample_iteratively(data = datas[i,],
-                          randomVariables = randomVariables,
-                          intervention = intervention,
-                          discrete = FALSE,
-                          tau = tau)
-  })
-  
-  result %<>%
-    lapply(., function(x) { tail(x, 1)$Y }) %>%
-    unlist
+  intervention_effect_caluculator = InterventionEffectCalculator$new(bootstrap_iterations = B, 
+                                                                    randomVariables = randomVariables, 
+                                                                    outcome_variable = Y$getY,
+                                                                    verbose = FALSE,
+                                                                    parallel = FALSE)
 
-  #plot(cumsum(result)/seq(along=result))
+
+  result <- intervention_effect_caluculator$perform_initial_estimation(
+    osl = osl,
+    interventions = interventions, 
+    discrete = FALSE, 
+    initial_data = datas[1,],
+    tau = tau
+  )$intervention
 
   psi.estimation <- mean(result)
 
   print(paste('Approximation:', psi.approx, 'estimation:', psi.estimation, 'difference:', abs(psi.approx - psi.estimation)))
-
   expect_lt((abs(psi.approx - psi.estimation)),  0.2)
-
 })
 
