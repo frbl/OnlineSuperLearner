@@ -4,7 +4,6 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
-#' @importFrom condensier condensier_options
 #' @importFrom doParallel registerDoParallel
 #' @importFrom foreach foreach
 #' @include RandomVariable.R
@@ -21,7 +20,6 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
     list(
         initialize = function(configuration = NULL) {
           tic <- Sys.time()
-          condensier_options(parfit=FALSE)
           cat('Starting calculation with ', parallel::detectCores(),' cores\n')
           doParallel::registerDoParallel(cores = parallel::detectCores())
 

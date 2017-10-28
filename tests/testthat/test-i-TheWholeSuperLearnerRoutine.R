@@ -11,7 +11,6 @@ test_that("it should estimate the true treatment", {
   ## INITIALIZATION
   # Generate the mehanisms
   # we generate number of blocks observations
-  condensier_options(parfit=FALSE)
   options(warn=-1)
   set.seed(12345)
 

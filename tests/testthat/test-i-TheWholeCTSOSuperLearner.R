@@ -10,7 +10,6 @@ test_that("it should estimate the true treatment", {
   ## INITIALIZATION
   # Generate the mehanisms
   # we generate number of blocks observations
-  condensier_options(parfit=FALSE)
   options(warn=-1)
   set.seed(12345)
   doParallel::registerDoParallel(cores = parallel::detectCores())
@@ -32,6 +31,8 @@ test_that("it should estimate the true treatment", {
 
   # Do logging?
   log <- FALSE
+  #log <- Arguments$getVerbose(-1, timestamp=TRUE)
+
   algos <- list()
 
   # Number of iterations for approximation of the true parameter of interest
@@ -113,12 +114,14 @@ test_that("it should estimate the true treatment", {
                                 should_fit_osl = TRUE,
                                 should_fit_dosl = FALSE,
                                 pre_processor = pre_processor)
-  risk <- osl$fit(data.train, randomVariables = randomVariables,
-                        initial_data_size = training_set_size / 2,
-                        max_iterations = max_iterations,
-                        mini_batch_size = (training_set_size / 2) / max_iterations)
+  hide_warning_replace_weights_osl(
+    risk <- osl$fit(data.train, randomVariables = randomVariables,
+                          initial_data_size = training_set_size / 2,
+                          max_iterations = max_iterations,
+                          mini_batch_size = (training_set_size / 2) / max_iterations)
+  )
 
-  summaryMeasureGenerator$reset
+  summaryMeasureGenerator$reset()
   datas <- summaryMeasureGenerator$getNext(n = B)
 
   #result <- mclapply(seq(B), function(i) {

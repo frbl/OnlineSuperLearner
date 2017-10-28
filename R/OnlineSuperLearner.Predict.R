@@ -16,6 +16,7 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
 
       predict = function(osl, data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, 
                          sample = FALSE, plot = FALSE) {
+
         if (!osl$is_fitted) return(NA)
 
         all_estimators <- Arguments$getLogical(all_estimators)
@@ -72,7 +73,7 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
         result
       },
 
-      predict_osl = function(data, osl_weights, current_result, sl_library, randomVariables, weight_threshold = 0.01, sample = FALSE, plot = FALSE) {
+      predict_osl = function(data, osl_weights, current_result, sl_library, randomVariables, weight_threshold = 0.00, sample = FALSE, plot = FALSE) {
         private$verbose && cat(private$verbose, 'continuous SL')
         # TODO: What if A ends up not being binary?
         # TODO: More important, what if a variable is discrete?
@@ -94,6 +95,7 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
             algorithm_names = algorithm_names,
             predictions = current_result
           )
+          current_result
 
           outcomes <- lapply(current_result$normalized[algorithm_names], function(x) x[[current_rv_name]])
 

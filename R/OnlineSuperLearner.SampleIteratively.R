@@ -160,8 +160,8 @@ OnlineSuperLearner.SampleIteratively <- R6Class("OnlineSuperLearner.SampleIterat
           ## dataframe, so it can be used in the next sampling step. This
           ## is important!  We need to add the [[1]] because the result is
           ## a list of lists (1st norm/denorm, then estimator, then values)
-          data[, (current_outcome) := as.numeric(outcome$normalized[[1]]) ]
-          current_denormalized_observation[[current_outcome]] <- outcome$denormalized[[1]] %>% as.numeric
+          data[, (current_outcome) := as.numeric(outcome$normalized) ]
+          current_denormalized_observation[[current_outcome]] <- outcome$denormalized %>% as.numeric
           private$verbose && exit(private$verbose)
         }
         private$verbose && exit(private$verbose)
@@ -208,10 +208,13 @@ OnlineSuperLearner.SampleIteratively <- R6Class("OnlineSuperLearner.SampleIterat
           all_estimators = FALSE,
           sample = TRUE
         )
-        private$verbose && cat(private$verbose,'Predicted ', current_outcome,
-                                ' using ', paste(current_rv$getX, collapse=', '),
-                                ' and the prediction was ', outcome$denormalized[[1]])
-        outcome
+        if(discrete) {
+          return(list(normalized = outcome$denormalized$dosl.estimator,
+                      denormalized = outcome$denormalized$dosl.estimator))
+        } else {
+          return(list(normalized = outcome$denormalized$osl.estimator,
+                      denormalized = outcome$denormalized$osl.estimator))
+        }
       },
 
       create_correct_result = function(result, result_denormalized_observations, return_type) {

@@ -372,7 +372,7 @@ test_that("it should call the intervention effect calculator with the correct pa
   mock_result <- data.table(W = c(1,2,3,4), Y = c(4,3,2,1))
 
   stub(subject$perform_initial_estimation, 'self$calculate_intervention_effect', 
-    function(osl, interventions, discrete, initial_data, tau) {
+    function(osl, interventions, discrete, initial_data, tau, check) {
       expect_equal(osl, glob_osl)
       expect_equal(interventions, cur.interventions)
       expect_equal(discrete, cur.discrete)
@@ -411,7 +411,7 @@ test_that("it should return the mean of all outcomes with their correct names", 
   mock_result <- c(1,2,3,4,5)
 
   stub(subject$perform_initial_estimation, 'self$calculate_intervention_effect', 
-    function(osl, interventions, discrete, initial_data, tau) {
+    function(interventions, ...) {
       cur.result <- lapply(seq_along(interventions), function(x) mock_result)
       names(cur.result) <- names(interventions)
       iter <<- iter + 1

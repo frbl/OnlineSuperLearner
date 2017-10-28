@@ -70,26 +70,26 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
         private$last_oos_estimate <- 0
         private$N <- Arguments$getInteger(N, c(1, Inf))
-        private$B <- B##Arguments$getIngeger(B, c(1, Inf))
+        private$B <- B# Arguments$getIngeger(B, c(1, Inf))
         private$discrete <- Arguments$getLogical(discrete)
 
         private$randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
 
         # Also order the variables for the sampling process (so we don't have to do this every time)
-        private$randomVariables <- RandomVariable.find_ordering(private$randomVariables)
+        private$randomVariables <- RandomVariable.find_ordering(randomVariables = private$randomVariables)
 
         private$pre_processor <- pre_processor
         private$tau <- tau
         private$intervention <- intervention
         private$variable_of_interest <- Arguments$getCharacters(variable_of_interest$getY)
-        private$is_parallel <- parallel
+        private$parallel <- parallel
         private$online <- online
         private$P_data_cache <- DataCache$new(online = self$is_online)
         private$Pstar_data_cache <- DataCache$new(online = self$is_online)
         private$minimal_measurements_needed <- minimal_measurements_needed
         private$history <- NULL
-        private$verbose <- Arguments$getVerbose(-1, timestamp=TRUE)
-        #private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
+        #private$verbose <- Arguments$getVerbose(-1, timestamp=TRUE)
+        private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
       },
 
       perform = function(initial_estimate, data, truth = NULL) {
@@ -520,12 +520,20 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         private$last_h_ratio_estimators
       },
 
+      get_minimal_measurements_needed = function() {
+        private$minimal_measurements_needed
+      },
+
       is_online = function() {
         private$online
       },
 
+      is_parallel = function() {
+        private$parallel
+      },
+
       print_parallel = function() {
-        if (private$is_parallel) {
+        if (self$is_parallel) {
           private$verbose && cat(private$verbose, 'In parallel')
         }
       }
@@ -545,7 +553,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       intervention = NULL,
       last_oos_estimate = NULL,
       last_h_ratio_estimators = NULL,
-      is_parallel = NULL,
+      parallel = NULL,
       P_data_cache = NULL,
       Pstar_data_cache = NULL,
       minimal_measurements_needed = NULL,
@@ -572,7 +580,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       },
 
       get_looping_function = function() {
-        if(private$is_parallel) {
+        if(self$is_parallel) {
           return(`%dopar%`)
         }
         return(`%do%`)
