@@ -82,7 +82,6 @@ Collate:
     'ML.H2O.glm.R'
     'ML.H2O.randomForest.R'
     'ML.Local.Speedlm.R'
-    'ML.Neuralnet.R'
     'OneStepEstimator.R'
     'OnlineSuperLearner.Predict.R'
     'OnlineSuperLearner.SampleIteratively.R'

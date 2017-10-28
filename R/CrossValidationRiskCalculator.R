@@ -17,32 +17,32 @@
 #'     <<description>>
 #'     The input data looks as followos:
 #'     \code{
-#'       $normalized
-#'       $normalized$`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
+#'       normalized
+#'       normalized`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
 #'               W         A         Y
 #'       1: 1.94863 0.5234383 0.3501003
 #'
-#'       $normalized$`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`
+#'       normalized`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`
 #'                 W         A         Y
 #'       1: 1.818194 0.5234383 0.3501003
 #'
-#'       $denormalized
-#'       $denormalized$`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
+#'       denormalized
+#'       denormalized`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
 #'               W         A         Y
 #'       1: 10.8308 0.5234383 0.3501003
 #'
-#'       $denormalized$`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`
+#'       denormalized`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`
 #'                 W         A         Y
 #'       1: 9.889878 0.5234383 0.3501003
 #'     }
 #'
 #'     The output data looks as follows:
 #'     \code{
-#'      $`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
+#'      `ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
 #'             #.W        .W2        .W3       .A        .Y
 #'      1: 34.53878 0.02225018 -0.0507633 0.545403 -5.335295
 #'
-#'      $`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`
+#'      `ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`
 #'             #.W          .W2         .W3       .A        .Y
 #'      1: 34.53878 -0.005705135 -0.03595754 0.545403 -4.499685
 #'     }
