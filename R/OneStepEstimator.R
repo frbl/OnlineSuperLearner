@@ -184,89 +184,18 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       get_h_ratio_estimators = function(data, last_h_ratio_estimators = NULL) {
         private$verbose && enter(private$verbose, 'Getting the h-ratio estimators')
 
-        `%looping_function%` <- private$get_looping_function()
-
-        ## We first sample $B$ observations from $P^N$ (that is, N blocks of
-        ## summary relevant history) and then $BN$ observations from $P^N_{s,a}
-        ## (that is, $B * N * \tau$ blocks$ of relevant history).
-        ## The size of Osample will be $B N$.
-        ##
-        ## After we have sampled these $BN$ observations, we augment the data
-        ## with a $\Delta$ column, which is either $1$ (when the data was
-        ## sampled from P^N), or $0$, whenever the data was sampled from
-        ## $P^N_{a,s}$. Using these fully augmented data frames we now create
-        ## $3$ (one for each W,A,Y) times $\tau$ machine learning estimators.
         private$verbose && enter(private$verbose, 'Starting sampling from PN')
         self$print_parallel
         tic <- Sys.time()
 
         N <- nrow(data)
-
         O_0 <- data[1,]
 
-        ## Note the +1, without it the highest lag in the system would still
-        ## remain constant / degenerate.
-        sampling_iterations_needed <- private$minimal_measurements_needed + 1
-
-        ## Run B iterations on O_0 (always start from the same data
-        Osample_p <- foreach(b = seq(1:self$get_B), .combine = rbind) %looping_function% {
-
-          ## TODO: Note that the summary measures we currently collect are
-          ## NORMALIZED. I think that this does not matter for calculating the
-          ## h-ratios as the ratio stays the same (it might even work better),
-          ## but we need to check this.
-          private$verbose && cat(private$verbose, 'PN sample - iteration ', b)
-
-          ## Sample minimal measurements needed blocks. This way we are certain
-          ## that we actually sample the relevant historical measurements.
-          current <- self$get_osl$sample_iteratively(data = O_0,
-                                                     randomVariables = self$get_randomVariables,
-                                                     tau = sampling_iterations_needed,
-                                                     discrete = self$get_discrete,
-                                                     intervention = NULL,
-                                                     return_type = 'full')
-          current[sampling_iterations_needed,]
-        }
-
-        toc <- Sys.time()
-        private$verbose && cat(private$verbose, toc - tic)
-        private$verbose && exit(private$verbose)
-        private$verbose && cat(private$verbose, 'Sampled ', self$get_B,' observations from PN.')
-
-        private$verbose && enter(private$verbose, 'Starting sampling from PN*')
-        tic <- Sys.time()
-
-        ## Because we use $BN$ observations in the previous sampling step, we
-        ## should also draw BN observations from P^N_{s,a}.
-        Osample_p_star <- foreach(b = seq(self$get_B * N), .combine = rbind) %looping_function% {
-          private$verbose && cat(private$verbose, 'PN* sample - iteration ', b)
-          current <- self$get_osl$sample_iteratively(data = O_0,
-                                                     randomVariables = self$get_randomVariables,
-                                                     tau = self$get_tau,
-                                                     discrete = self$get_discrete,
-                                                     intervention = self$get_intervention,
-                                                     return_type = 'full')
-          current
-        }
-
-        toc <- Sys.time()
-        private$verbose && exit(private$verbose)
-        private$verbose && cat(private$verbose, 'Sampled ', self$get_B * N,' observations from PN*')
-        private$verbose && cat(private$verbose, toc - tic)
-
-        P_rows <- nrow(Osample_p)
-        Pstar_rows <- nrow(Osample_p_star)
-
-        ## Now add the Delta column so we know which blocks belong to PN* and which to PN
-        Osample_p[, Delta := rep(1, P_rows)]
-        Osample_p_star[, Delta := rep(0, Pstar_rows)]
-
-        ## Add an S column to the data, so we know which summary measure belongs to which s
-        time_s_column <- lapply(seq(Pstar_rows), function(i) ((i - 1) %% self$get_tau) + 1)  %>% unlist
-        Osample_p_star[, time_s_column := time_s_column]
+        ## Sample the observations
+        samples <- private$sample_observations(start_data = O_0, N = N)
 
         ## Perform the actual learning of the h_ratio predictors
-        h_ratio_predictors_per_s <- self$calculate_h_ratio_predictors(Osample_p, Osample_p_star)
+        h_ratio_predictors_per_s <- self$calculate_h_ratio_predictors(samples$Osample_p, samples$Osample_p_star)
 
         ## The final result is a list of estimators, which contains a GLM for
         ## each $C_W$, $C_A$, and $C_Y$, for each s in tau.  (so 3tau
@@ -558,6 +487,83 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       Pstar_data_cache = NULL,
       minimal_measurements_needed = NULL,
       history = NULL,
+
+      sample_observations = function(start_data, N) {
+        `%looping_function%` <- private$get_looping_function()
+
+        ## We first sample $B$ observations from $P^N$ (that is, N blocks of
+        ## summary relevant history) and then $BN$ observations from $P^N_{s,a}
+        ## (that is, $B * N * \tau$ blocks$ of relevant history).
+        ## The size of Osample will be $B N$.
+        ##
+        ## After we have sampled these $BN$ observations, we augment the data
+        ## with a $\Delta$ column, which is either $1$ (when the data was
+        ## sampled from P^N), or $0$, whenever the data was sampled from
+        ## $P^N_{a,s}$. Using these fully augmented data frames we now create
+        ## $3$ (one for each W,A,Y) times $\tau$ machine learning estimators.
+        ## Note the +1, without it the highest lag in the system would still
+        ## remain constant / degenerate.
+        sampling_iterations_needed <- private$minimal_measurements_needed + 1
+
+        ## Run B iterations on start_data (always start from the same data
+        Osample_p <- foreach(b = seq(1:self$get_B), .combine = rbind) %looping_function% {
+
+          ## TODO: Note that the summary measures we currently collect are
+          ## NORMALIZED. I think that this does not matter for calculating the
+          ## h-ratios as the ratio stays the same (it might even work better),
+          ## but we need to check this.
+          private$verbose && cat(private$verbose, 'PN sample - iteration ', b)
+
+          ## Sample minimal measurements needed blocks. This way we are certain
+          ## that we actually sample the relevant historical measurements.
+          current <- self$get_osl$sample_iteratively(data = start_data,
+                                                     randomVariables = self$get_randomVariables,
+                                                     tau = sampling_iterations_needed,
+                                                     discrete = self$get_discrete,
+                                                     intervention = NULL,
+                                                     return_type = 'full')
+          current[sampling_iterations_needed,]
+        }
+
+        toc <- Sys.time()
+        private$verbose && cat(private$verbose, toc - tic)
+        private$verbose && exit(private$verbose)
+        private$verbose && cat(private$verbose, 'Sampled ', self$get_B,' observations from PN.')
+
+        private$verbose && enter(private$verbose, 'Starting sampling from PN*')
+        tic <- Sys.time()
+
+        ## Because we use $BN$ observations in the previous sampling step, we
+        ## should also draw BN observations from P^N_{s,a}.
+        Osample_p_star <- foreach(b = seq(self$get_B * N), .combine = rbind) %looping_function% {
+          private$verbose && cat(private$verbose, 'PN* sample - iteration ', b)
+          current <- self$get_osl$sample_iteratively(data = start_data,
+                                                     randomVariables = self$get_randomVariables,
+                                                     tau = self$get_tau,
+                                                     discrete = self$get_discrete,
+                                                     intervention = self$get_intervention,
+                                                     return_type = 'full')
+          current
+        }
+
+        toc <- Sys.time()
+        private$verbose && exit(private$verbose)
+        private$verbose && cat(private$verbose, 'Sampled ', self$get_B * N,' observations from PN*')
+        private$verbose && cat(private$verbose, toc - tic)
+
+        P_rows <- nrow(Osample_p)
+        Pstar_rows <- nrow(Osample_p_star)
+
+        ## Now add the Delta column so we know which blocks belong to PN* and which to PN
+        Osample_p[, Delta := rep(1, P_rows)]
+        Osample_p_star[, Delta := rep(0, Pstar_rows)]
+
+        ## Add an S column to the data, so we know which summary measure belongs to which s
+        time_s_column <- lapply(seq(Pstar_rows), function(i) ((i - 1) %% self$get_tau) + 1)  %>% unlist
+        Osample_p_star[, time_s_column := time_s_column]
+
+        list(Osample_p = Osample_p, Osample_p_star = Osample_p_star)
+      },
 
       append_to_history = function(truth = NULL, initial_estimate = NULL) {
         if(!is.null(truth) && !is.null(initial_estimate)) {

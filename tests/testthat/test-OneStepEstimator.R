@@ -620,26 +620,45 @@ test_that("it should be implemented", {
   skip('Not yet implemented') 
 })
 
-if(FALSE) {
 context(" get_h_ratio_estimators")
 #==========================================================
-#test_that("it should result in the correct output", {
-  #data <- data.table(Y_lag_1 = 2, W=1, A=1, Y=0)
-  #result <- subject$get_h_ratio_estimators(data = data)
+test_that("it should sample N observations from both P and P*, and call the h ratio predictor function with them", {
+  data <- data.table(Y_lag_1 = 2, W=1, A=1, Y=0)
+  result <- subject$get_h_ratio_estimators(data = data)
 
-  #expect_true(is(result,'list'))
+  expect_true(is(result,'list'))
   
-  ## We should have tau lists of estimators
-  #expect_equal(length(result), tau)
+  # We should have tau lists of estimators
+  expect_equal(length(result), tau)
 
-  ## Each of the tau lists, should have 3 estimators (one for each covariate)
-  #lapply(result,function(entry){
-    #expect_equal(length(result), length(glob_randomVariables))
-    #lapply(entry,function(estimator){
-      #expect_true(is(estimator, 'speedglm'))
-    #})
-  #})
-#})
+  # Each of the tau lists, should have 3 estimators (one for each covariate)
+  lapply(result,function(entry){
+    expect_equal(length(result), length(glob_randomVariables))
+    lapply(entry,function(estimator){
+      expect_true(is(estimator, 'speedglm'))
+    })
+  })
+  
+})
+
+if(FALSE) {
+test_that("it should result in the correct output", {
+  data <- data.table(Y_lag_1 = 2, W=1, A=1, Y=0)
+  result <- subject$get_h_ratio_estimators(data = data)
+
+  expect_true(is(result,'list'))
+  
+  # We should have tau lists of estimators
+  expect_equal(length(result), tau)
+
+  # Each of the tau lists, should have 3 estimators (one for each covariate)
+  lapply(result,function(entry){
+    expect_equal(length(result), length(glob_randomVariables))
+    lapply(entry,function(estimator){
+      expect_true(is(estimator, 'speedglm'))
+    })
+  })
+})
 
 
 #test_that("it should produce sensible estimators in the correct output", {
