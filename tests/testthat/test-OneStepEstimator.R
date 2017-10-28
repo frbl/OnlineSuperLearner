@@ -62,6 +62,20 @@ test_that("it should succesfully initialize when the correct arguments are provi
   ), NA)
 })
 
+test_that("it should initialize the last oos estimate", {
+  result <- described.class$new(
+    osl = glob_osl,
+    randomVariables = glob_randomVariables,
+    N = N,
+    B = B,
+    pre_processor = pre_processor,
+    tau = tau,
+    intervention = intervention,
+    variable_of_interest = Y
+  )
+  expect_equal(result$get_last_oos_estimate, 0)
+})
+
 test_that("it should throw if the provided osl is not an online super learner", {
   wrong_osl <- glm
   expect_error(described.class$new(
@@ -421,6 +435,134 @@ test_that("it should return a list with two entries (variance and estimate)", {
   expect_equal(result$oos_estimate, 1)
   expect_equal(result$oos_variance, 2)
 })
+
+context(" calculate_full_oos")
+#==========================================================
+test_that("it should throw if the initial estimate is not numeric", {
+   subject <- described.class$new(
+    osl = glob_osl,
+    randomVariables = glob_randomVariables,
+    N = N,
+    B = B,
+    pre_processor = pre_processor,
+    tau = tau,
+    intervention = intervention,
+    variable_of_interest = Y
+  )
+
+  cur.initial_estimate = glm
+  cur.truth = -12
+
+  expect_error(subject$calculate_full_oos(
+    initial_estimate = cur.initial_estimate,
+    data = glob_data,
+    truth = cur.truth
+  ), "cannot coerce type 'closure' to vector of type 'double'", fixed = TRUE)
+})
+
+test_that("it should call, from 1:N times, the get H ratio function", {
+  cur.N <- 10
+  subject <- described.class$new(
+    osl = glob_osl,
+    randomVariables = glob_randomVariables,
+    N = cur.N,
+    B = B,
+    pre_processor = pre_processor,
+    tau = tau,
+    intervention = intervention,
+    variable_of_interest = Y
+  )
+
+  cur.initial_estimate = 1
+  cur.truth = -12
+
+  stub(subject$calculate_full_oos, 'self$get_h_ratio_estimators', function(data, last_h_ratio_estimators) {
+    iter <<- iter + 1
+    expect_equal(data, glob_data[iter,])
+    if(iter == 1) {
+      expect_null(last_h_ratio_estimators)
+    } else {
+      expect_equal(last_h_ratio_estimators, 1)
+    }
+    return(1)
+  })
+  stub(subject$calculate_full_oos, 'self$evaluation_of_conditional_expectations', function(...) {1 })
+
+  iter <<- 0
+  subject$calculate_full_oos(
+    initial_estimate = cur.initial_estimate,
+    data = glob_data,
+    truth = cur.truth
+  )
+  expect_equal(iter, cur.N)
+})
+
+test_that("it should call, from 1:N times, the evaluation of conditional expectaions function ", {
+  cur.N <- 10
+  subject <- described.class$new(
+    osl = glob_osl,
+    randomVariables = glob_randomVariables,
+    N = cur.N,
+    B = B,
+    pre_processor = pre_processor,
+    tau = tau,
+    intervention = intervention,
+    variable_of_interest = Y
+  )
+
+  cur.initial_estimate = 1
+  cur.truth = -12
+
+  stub(subject$calculate_full_oos, 'self$get_h_ratio_estimators', function(...) { 1 })
+  stub(subject$calculate_full_oos, 'self$evaluation_of_conditional_expectations', function(data, h_ratio_predictors) {
+    iter <<- iter + 1
+    expect_equal(data, glob_data[iter,])
+    expect_equal(h_ratio_predictors, 1)
+    return(1)
+  })
+
+  iter <<- 0
+  subject$calculate_full_oos(
+    initial_estimate = cur.initial_estimate,
+    data = glob_data,
+    truth = cur.truth
+  )
+  expect_equal(iter, cur.N)
+})
+
+test_that("it should calculate the correct dstar, and update it every N iteration", {
+  cur.N <- 10
+  subject <- described.class$new(
+    osl = glob_osl,
+    randomVariables = glob_randomVariables,
+    N = cur.N,
+    B = B,
+    pre_processor = pre_processor,
+    tau = tau,
+    intervention = intervention,
+    variable_of_interest = Y
+  )
+
+  cur.initial_estimate = 1
+  cur.truth = -12
+
+  stub(subject$calculate_full_oos, 'self$get_h_ratio_estimators', function(...) { 1 })
+  stub(subject$calculate_full_oos, 'self$evaluation_of_conditional_expectations', function(data, h_ratio_predictors) {
+    iter <<- iter + 1
+    expect_equal(data, glob_data[iter,])
+    expect_equal(h_ratio_predictors, 1)
+    return(1)
+  })
+
+  iter <<- 0
+  subject$calculate_full_oos(
+    initial_estimate = cur.initial_estimate,
+    data = glob_data,
+    truth = cur.truth
+  )
+  expect_equal(iter, cur.N)
+})
+
 
 if(FALSE) {
 context(" get_h_ratio_estimators")
