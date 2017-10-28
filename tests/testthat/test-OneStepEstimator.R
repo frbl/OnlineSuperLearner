@@ -546,23 +546,79 @@ test_that("it should calculate the correct dstar, and update it every N iteratio
   cur.initial_estimate = 1
   cur.truth = -12
 
-  stub(subject$calculate_full_oos, 'self$get_h_ratio_estimators', function(...) { 1 })
-  stub(subject$calculate_full_oos, 'self$evaluation_of_conditional_expectations', function(data, h_ratio_predictors) {
+  stub(subject$calculate_full_oos, 'self$get_h_ratio_estimators', function(...) { iter })
+  stub(subject$calculate_full_oos, 'self$evaluation_of_conditional_expectations', function(...) {
     iter <<- iter + 1
-    expect_equal(data, glob_data[iter,])
-    expect_equal(h_ratio_predictors, 1)
-    return(1)
+    return(iter)
   })
 
+
   iter <<- 0
-  subject$calculate_full_oos(
+  result <- subject$calculate_full_oos(
     initial_estimate = cur.initial_estimate,
     data = glob_data,
     truth = cur.truth
   )
-  expect_equal(iter, cur.N)
+
+  expected_d_star_evaluation <- 0
+  for (i in 1:cur.N) {
+    previous_unmeaned <- (i - 1) * expected_d_star_evaluation
+    current <- i
+    expected_d_star_evaluation <- (previous_unmeaned + current) / i
+  }
+  
+  expect_equal(result, expected_d_star_evaluation + cur.initial_estimate)
 })
 
+test_that("it should return the initial estimate if the oos estimate is NA or nan", {
+  cur.N <- 10
+  subject <- described.class$new(
+    osl = glob_osl,
+    randomVariables = glob_randomVariables,
+    N = cur.N,
+    B = B,
+    pre_processor = pre_processor,
+    tau = tau,
+    intervention = intervention,
+    variable_of_interest = Y
+  )
+
+  cur.initial_estimate = 1
+  cur.truth = -12
+
+  stub(subject$calculate_full_oos, 'self$get_h_ratio_estimators', function(...) { 1 })
+  stub(subject$calculate_full_oos, 'self$evaluation_of_conditional_expectations', function(...) {
+    return(NA)
+  })
+
+  expect_warning(result <- subject$calculate_full_oos(
+    initial_estimate = cur.initial_estimate,
+    data = glob_data,
+    truth = cur.truth
+  ), 'Oos estimate is NaN or na')
+
+  expected <- cur.initial_estimate 
+  expect_equal(result, expected)
+
+  stub(subject$calculate_full_oos, 'self$evaluation_of_conditional_expectations', function(...) {
+    return(NaN)
+  })
+
+  expect_warning(result <- subject$calculate_full_oos(
+    initial_estimate = cur.initial_estimate,
+    data = glob_data,
+    truth = cur.truth
+  ), 'Oos estimate is NaN or na')
+
+  expected <- cur.initial_estimate 
+  expect_equal(result, expected)
+})
+
+context(" calculate_oos_variance")
+#==========================================================
+test_that("it should be implemented", {
+  skip('Not yet implemented') 
+})
 
 if(FALSE) {
 context(" get_h_ratio_estimators")

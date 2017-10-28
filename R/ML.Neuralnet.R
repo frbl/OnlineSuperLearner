@@ -3,6 +3,7 @@
 #'
 #' @docType class
 #' @importFrom neuralnet neuralnet
+#'
 #' @section Methods:
 #' \describe{
 #'   \item{\code{initialize(hidden)}}{

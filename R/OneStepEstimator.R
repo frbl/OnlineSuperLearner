@@ -169,9 +169,9 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         print(self$get_history)
 
         oos_estimate <- D_star_evaluation + initial_estimate
-        if(is.nan(oos_estimate)) {
-          warning('Oos estimate is NaN, setting to zero')
-          oos_estimate <- 0
+        if(is.na(oos_estimate) || is.nan(oos_estimate)) {
+          warning('Oos estimate is NaN or na, setting to zero and returning initial estimate')
+          oos_estimate <- initial_estimate 
         }
         oos_estimate
       },
