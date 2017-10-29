@@ -70,7 +70,7 @@ InterventionParser.valid_intervention <- function(intervention) {
 #' @param variables the variables to create the intervention for (a list of all intervention nodes)
 #' @param variable_intervened the variable to perform the intervention on
 #' @param when integer when the intervention should take place
-#' @param when integer when the intervention should take place
+#' @param what integer hat the intervention should be
 #' @export
 InterventionParser.generate_intervention <- function(variables, variable_intervened, when, what) {
   # If no what is given, make them all 0

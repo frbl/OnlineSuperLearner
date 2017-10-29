@@ -256,20 +256,25 @@
 #assign("glm.fit", myglm.fit, getNamespace("stats"))
 
 #' Constrained logistic regression
-#' In this function we create a regression for which the predicted probabilities are contstrained. That is, they can not be
-#' less than a minimum of delta, or a maxiumum of 1 - delta.
+#' In this function we create a regression for which the predicted
+#' probabilities are contstrained. That is, they can not be less than a minimum
+#' of delta, or a maxiumum of 1 - delta.
 #' @param formula the formula to use for the regression
 #' @param delta the threshold used for constraining the probabilities
+#' @param data the data to train the glm on
+#' @param fall_back_to_glm boolean should we fall back to traditional glm
+#' @param previous_glm glm object. A previously trained GLM instance, so it can be updated
 #' @param ... the other arguments passed to GLM
 #' @return a fitted glm
-#' @importFrom stats glm binomial
+#' @importFrom stats glm binomial make.link
 #' @export
 ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, previous_glm = NULL, ...) {
 
   if(any(is.na(data))) warning('Data contains NA values!')
 
   # Use the C functions for expit / logit. Faster and gives the same results as the original GLM function.
-  link <- stats:::make.link("logit")
+  link <- make.link("logit")
+
   bounded_logit <- function(delta) {
     structure(
       list(## mu mapsto logit( [mu - delta]/[1 - 2 delta]  ).
@@ -325,11 +330,31 @@ ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, pr
   return(ConstrainedGlm.update_glm(previous_glm = previous_glm, data = data, ...))
 }
 
+#' Update Constrained logistic regression
+#' In this function we update a previously trained instance of a (constrained)
+#' glm fit.
+#'
+#' @param previous_glm glm object. A previously trained GLM instance, so it can be updated
+#' @param data the newdata to update the glm on
+#' @param ... the other arguments passed to GLM
+#' @return a fitted, updated glm
+#' @importFrom stats update
 ConstrainedGlm.update_glm <- function(previous_glm, data, ...) {
   assert_that(!is.null(previous_glm))
   return(update(object = previous_glm, data = data))
 }
 
+#' Fit a new GLM
+#' In this function we create a new instance a (constrained)
+#' glm fit.
+#'
+#' @param formula the formula to use for the regression
+#' @param family the family used for fitting the GLM (binomial, etc)
+#' @param data the data to train the glm on
+#' @param fall_back_to_glm boolean should we fall back to traditional glm
+#' @param ... the other arguments passed to GLM
+#' @return a fitted glm
+#' @importFrom stats glm binomial
 ConstrainedGlm.fit_new_glm <- function(formula, family, data, fall_back_to_glm, ...) {
   ## TODO: UGLY CODE!
   ## First try speed glm. In case that fails, try the constrained version. In case that fails, try the normal glm.
@@ -347,6 +372,15 @@ ConstrainedGlm.fit_new_glm <- function(formula, family, data, fall_back_to_glm, 
   return(the_glm)
 }
 
+#' Predict using a constrained glm
+#' In this function we predict usng an instance of a (constrained)
+#' glm fit.
+#'
+#' @param constrained_glm a fitted constrained glm instance
+#' @param newdata the data to perform the predictions with
+#' @return a prediction
+#' @importFrom stats predict
+#' @export
 ConstrainedGlm.predict <- function(constrained_glm, newdata) {
   assert_that(!is.null(constrained_glm))
   assert_that(!is.null(newdata))

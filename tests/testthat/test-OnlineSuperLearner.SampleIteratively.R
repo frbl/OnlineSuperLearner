@@ -506,7 +506,7 @@ test_that("it should return a list with a normalized and denormalized value acco
 context(" perform_sample")
 #==========================================================
 test_that("it should call the osl predict function", {
-  mock_normal_outcome <- list(normalized = 1, denormalized = 1)
+  mock_normal_outcome <- list(normalized = list(osl.estimator = 1), denormalized = list(osl.estimator = 1))
   cur.osl <- list(predict = function(data, randomVariables, discrete, continuous, all_estimators, sample)  {
     expect_equal(data, glob_data[1,])                  
     expect_equal(randomVariables, c(rv.W))                  

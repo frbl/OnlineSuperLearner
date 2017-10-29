@@ -19,7 +19,7 @@ InterventionParser.generate_intervention(variables, variable_intervened, when,
 
 \item{when}{integer when the intervention should take place}
 
-\item{when}{integer when the intervention should take place}
+\item{what}{integer hat the intervention should be}
 }
 \description{
 InterventionParser.generate_intervention

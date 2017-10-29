@@ -48,9 +48,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           alphas <- runif(3,0,1)
           alphas <- c(0, alphas)
-          lambdas <- runif(3,0,1)
+          #lambdas <- runif(3,0,1)
           algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                                  algorithm_params = list(alpha = alphas, lambda = lambdas), 
+                                  algorithm_params = list(alpha = 0.3, lambda = 0.5), 
                                   params = list(nbins = nbins, online = TRUE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
@@ -73,9 +73,9 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                   #algorithm_params = list(ntrees=c(500,1000)),
                                   #params = list(nbins = nbins, online = FALSE))))
 
-          #algos <- append(algos, list(list(algorithm = 'ML.Local.Speedlm',
-                                  ##algorithm_params = list(),
-                                  #params = list(nbins = nbins, online = FALSE))))
+          algos <- append(algos, list(list(algorithm = 'ML.Local.Speedlm',
+                                  #algorithm_params = list(),
+                                  params = list(nbins = nbins, online = FALSE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.GLMnet',
                                   ##algorithm_params = list(alpha = alphas),
@@ -90,7 +90,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           # Run the simulations
           if(is.null(configuration)) {
-            self$configuration1(1)
+            self$configuration2(2)
           } else {
             id = configuration
             configuration = (as.numeric(configuration) - 1) %% 4 + 1 
@@ -507,8 +507,6 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           OutputPlotGenerator.create_training_curve(osl$get_historical_cv_risk, 
                                                     randomVariables = randomVariables,
                                                     output = paste('curve',configuration, sep='_'))
-
-          browser()
 
           toc <- Sys.time()
           time.taken <- toc - tic

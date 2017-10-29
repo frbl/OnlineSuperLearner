@@ -1,4 +1,7 @@
 \.git
+\.ipynb*
+\.ipynb_checkpoints
+OnlineSuperLearner_example\.ipynb
 run.R
 ^README\.md$
 \.gitignore

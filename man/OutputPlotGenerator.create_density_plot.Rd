@@ -13,11 +13,11 @@ OutputPlotGenerator.create_density_plot(yValues, estimated_probabilities,
 
 \item{estimated_probabilities}{vector of the estimated probabilities}
 
+\item{estimated_y_values}{vector of the estimated y_values (i.e., sampled values)}
+
 \item{output}{string with the filename}
 
 \item{dir}{the directory to plot to}
-
-\item{estimated_probabilities}{vector of the estimated y_values (i.e., sampled values)}
 }
 \description{
 OutputPlotGenerator.create_density_plot

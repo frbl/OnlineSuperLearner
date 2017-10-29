@@ -3,7 +3,7 @@
 #'
 #' @param yValues vector of the true outcome values 
 #' @param estimated_probabilities vector of the estimated probabilities
-#' @param estimated_probabilities vector of the estimated y_values (i.e., sampled values)
+#' @param estimated_y_values vector of the estimated y_values (i.e., sampled values)
 #' @param output string with the filename
 #' @param dir the directory to plot to
 #' @importFrom stats density
@@ -72,7 +72,7 @@ OutputPlotGenerator.create_convergence_plot = function(data, output, dir = '~/tm
   data$epoch <- seq(nrow(data))
   data <- melt(data, id.vars='epoch')
 
-  plotje <- ggplot(data,aes(epoch,value,color=variable))+
+  plotje <- ggplot(data,aes(epoch, value, color=variable))+
     geom_line() + 
     scale_color_manual(values = colors[seq_along(labels)])+
     theme(panel.background = element_rect(fill = 'transparent', colour = 'black', size=1))+
@@ -182,6 +182,7 @@ OutputPlotGenerator.create_training_curve = function(historical_cvs, randomVaria
 #' @importFrom utils head
 #' @param performance a list of list with performances: list 1 the estimators used, list 2 the random variables predicted.
 #' @param output string the filename to use for the plot (without .pdf)
+#' @param label string the label to use when making a summary plot
 #' @param dir string the directory to write to
 #' @param make_summary boolean whether or not to sum all error terms to give a summed performance measure
 #'
@@ -259,7 +260,7 @@ OutputPlotGenerator.get_colors = function(number_of_variables) {
 
 #' OutputPlotGenerator.get_simple_colors
 #' Function to return a list of colors, depending on the number of variables / colors needed
-#' @import RColorBrewer
+#' @importFrom RColorBrewer brewer.pal.info brewer.pal
 #' @param number_of_variables the number of colors one requires
 #' @return a list of colors
 OutputPlotGenerator.get_simple_colors = function(number_of_variables) {

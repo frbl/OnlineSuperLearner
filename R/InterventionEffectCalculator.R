@@ -1,4 +1,6 @@
 #' InterventionEffectCalculator
+#' @section Methods:
+#' \describe{
 #'   \item{\code{perform_initial_estimation(data, intervention, tau) }}{ 
 #'     This function can be used to generate an initial estimation, calculated using the plain OSL. This method then
 #'     returns a value given the provided data, tau, and intervention.
@@ -6,6 +8,7 @@
 #'     @param intervention the intervention itself, see \code{InterventionParser} for more details
 #'     @param tau the time at which we want to evaluate the intervention
 #'   } 
+#' }
 #' @docType class
 #' @importFrom R6 R6Class
 #' @import magrittr
