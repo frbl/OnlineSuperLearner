@@ -273,7 +273,7 @@ ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, pr
   if(any(is.na(data))) warning('Data contains NA values!')
 
   # Use the C functions for expit / logit. Faster and gives the same results as the original GLM function.
-  link <- make.link("logit")
+  link <- stats::make.link("logit")
 
   bounded_logit <- function(delta) {
     structure(
@@ -339,6 +339,7 @@ ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, pr
 #' @param ... the other arguments passed to GLM
 #' @return a fitted, updated glm
 #' @importFrom stats update
+#' @export
 ConstrainedGlm.update_glm <- function(previous_glm, data, ...) {
   assert_that(!is.null(previous_glm))
   return(update(object = previous_glm, data = data))
@@ -355,6 +356,7 @@ ConstrainedGlm.update_glm <- function(previous_glm, data, ...) {
 #' @param ... the other arguments passed to GLM
 #' @return a fitted glm
 #' @importFrom stats glm binomial
+#' @export
 ConstrainedGlm.fit_new_glm <- function(formula, family, data, fall_back_to_glm, ...) {
   ## TODO: UGLY CODE!
   ## First try speed glm. In case that fails, try the constrained version. In case that fails, try the normal glm.
