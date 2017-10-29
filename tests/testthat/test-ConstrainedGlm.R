@@ -28,6 +28,7 @@ test_that("it should throw a warning whenever the data contains NA values", {
 })
 
 test_that("it should, with a delta of 0, return the same as a normal glm", {
+  set.seed(12345)
   x <- rep(1/2, 10)
   y <- rbinom(10, size = 1, prob=x)
   dat <- data.frame(x=x, y=y)
@@ -173,6 +174,7 @@ test_that("it should should throw whenever the data is null", {
 })
 
 test_that("it should call the predict function with the glm", {
+  set.seed(12345)
   nobs <- 100
   cov1 <- rnorm(nobs, 0, 1)
   cov2 <- rnorm(nobs, 1, 1)
