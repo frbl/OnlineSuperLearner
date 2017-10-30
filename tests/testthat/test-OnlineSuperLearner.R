@@ -223,7 +223,7 @@ context(' get_cv_risk')
 test_that("it should return an empty list after initialization", {
   SL.Library <- c('ML.Local.lm', 'ML.XGBoost')
   subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG)
-  result <- subject$get_cv_risk
+  result <- subject$get_cv_risk()
   expect_false(is.null(result))
   expect_equal(result, list())
 })
@@ -232,3 +232,116 @@ context(' get_validity')
 #==========================================================
 # Hard to test explicitly, it is called by the initialize function
  
+context(" fit_dosl")
+#==========================================================
+test_that("it should return false if the current osl does not fit a dosl", {
+  SL.Library <- c('ML.Local.lm', 'ML.XGBoost', 'ML.SVM', 'ML.NeuralNet', 'ML.randomForest')
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, should_fit_dosl = FALSE)
+  expect_false(subject$fit_dosl())
+})
+
+test_that("it should return the correct estimators", {
+  SL.Library <- c('ML.Local.lm', 'ML.XGBoost', 'ML.SVM', 'ML.NeuralNet', 'ML.randomForest')
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG)
+
+  cv_risk <- list(
+    ML.Local.lm = data.table(W = 0.3, A = 0.3, Y = 0.3),
+    ML.XGBoost = data.table(W = 0.1, A = 0.9, Y = 0.3),
+    ML.SVM = data.table(W = 0.9, A = 0.1, Y = 0.3),
+    ML.NeuralNet = data.table(W = 0.3, A = 0.9, Y = 0.1),
+    ML.RandomForest = data.table(W = 0.9, A = 0.9, Y = 0.9)
+  )
+  ## w is best for w, a for A, y for Y
+
+  stub(subject$fit_dosl, 'self$get_cv_risk',  function() { return(cv_risk)})
+  expect_true(subject$fit_dosl())
+
+  result <- lapply(subject$get_dosl, function(x) x$get_name)
+  expect_equal(result$W, SL.Library[[2]])
+  expect_equal(result$A, SL.Library[[3]])
+  expect_equal(result$Y, SL.Library[[4]])
+})
+
+test_that("it should not pick itself", {
+  SL.Library <- c('ML.Local.lm', 'ML.XGBoost', 'ML.SVM', 'ML.NeuralNet', 'ML.randomForest')
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG)
+
+  cv_risk <- list(
+    ML.Local.lm = data.table(W = 0.3, A = 0.3, Y = 0.3),
+    ML.XGBoost = data.table(W = 0.1, A = 0.9, Y = 0.3),
+    ML.SVM = data.table(W = 0.9, A = 0.1, Y = 0.3),
+    ML.NeuralNet = data.table(W = 0.3, A = 0.9, Y = 0.1),
+    ML.RandomForest = data.table(W = 0.9, A = 0.9, Y = 0.9),
+    dosl.estimator = data.table(W = 0.01, A = 0.01, Y = 0.01)
+  )
+  ## w is best for w, a for A, y for Y
+
+  stub(subject$fit_dosl, 'self$get_cv_risk',  function() { return(cv_risk)})
+  expect_true(subject$fit_dosl())
+
+  result <- lapply(subject$get_dosl, function(x) x$get_name)
+  expect_false('dosl.estimator' %in% result)
+})
+
+test_that("it should not pick the osl", {
+  SL.Library <- c('ML.Local.lm', 'ML.XGBoost', 'ML.SVM', 'ML.NeuralNet', 'ML.randomForest')
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG)
+
+  cv_risk <- list(
+    ML.XGBoost = data.table(W = 0.1, A = 0.9, Y = 0.3),
+    ML.SVM = data.table(W = 0.9, A = 0.1, Y = 0.3),
+    ML.NeuralNet = data.table(W = 0.3, A = 0.9, Y = 0.1),
+    ML.RandomForest = data.table(W = 0.9, A = 0.9, Y = 0.9),
+    osl.estimator = data.table(W = 0.01, A = 0.01, Y = 0.01)
+  )
+  ## w is best for w, a for A, y for Y
+
+  stub(subject$fit_dosl, 'self$get_cv_risk',  function() { return(cv_risk)})
+  expect_true(subject$fit_dosl())
+
+  result <- lapply(subject$get_dosl, function(x) x$get_name)
+  expect_false('osl.estimator' %in% result)
+})
+
+test_that("it should work with an NA dosl.estimator", {
+  SL.Library <- c('ML.Local.lm', 'ML.XGBoost', 'ML.SVM', 'ML.NeuralNet', 'ML.randomForest')
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG)
+
+  cv_risk <- list(
+    dosl.estimator = data.table(W = NA, A = NA, Y = NA),
+    ML.XGBoost = data.table(W = 0.1, A = 0.9, Y = 0.3),
+    ML.SVM = data.table(W = 0.9, A = 0.1, Y = 0.3),
+    ML.NeuralNet = data.table(W = 0.3, A = 0.9, Y = 0.1),
+    ML.RandomForest = data.table(W = 0.9, A = 0.9, Y = 0.9)
+  )
+  ## w is best for w, a for A, y for Y
+
+  stub(subject$fit_dosl, 'self$get_cv_risk',  function() { return(cv_risk)})
+  expect_true(subject$fit_dosl())
+
+  result <- lapply(subject$get_dosl, function(x) x$get_name)
+  expect_equal(result$W, SL.Library[[2]])
+  expect_equal(result$A, SL.Library[[3]])
+  expect_equal(result$Y, SL.Library[[4]])
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

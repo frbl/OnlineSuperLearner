@@ -30,7 +30,7 @@ ML.XGBoost <- R6Class("ML.XGBoost",
     list(
       fitfunname='xgboost',
       lmclass='xgboostR6',
-      initialize = function(booster = 'gblinear', max_depth = 6, nthread = 1, alpha = 0, lambda = 0, rounds = 1, gamma = 0, eta = 0.3, objective = 'binary:logistic', verbose = FALSE) {
+      initialize = function(booster = 'gblinear', max_depth = 6, nthread = 1, alpha = 0, lambda = 0, rounds = 200, gamma = 0, eta = 0.3, objective = 'binary:logistic', verbose = FALSE) {
 
         if (nthread == -1) nthread <- parallel::detectCores()
 

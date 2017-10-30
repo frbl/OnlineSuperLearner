@@ -115,6 +115,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
         },
 
         getNext = function(n = 1) {
+          #if(nrow(private$cache) == 0) browser()
           private$checkDataAvailable()
 
           # TODO: Make this much more efficient

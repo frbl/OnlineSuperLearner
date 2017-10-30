@@ -44,9 +44,12 @@ test_that("it should estimate the true treatment", {
   # The time of the outcome
   tau = 2
 
+  #algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
+                          ##algorithm_params = list(alpha = 0),
+                          #params = list(nbins = c(3,4,5), online = FALSE))))
   algos <- append(algos, list(list(algorithm = 'condensier::speedglmR6',
                           #algorithm_params = list(),
-                          params = list(nbins = c(3,4, 5), online = FALSE))))
+                          params = list(nbins = c(3,4,5), online = FALSE))))
 
 
   llW <- list(stochMech=function(numberOfBlocks) {
@@ -122,7 +125,7 @@ test_that("it should estimate the true treatment", {
   )
 
   summaryMeasureGenerator$reset()
-  datas <- summaryMeasureGenerator$getNext(n = B)
+  datas <- summaryMeasureGenerator$getNext(n = 1)
 
   #result <- mclapply(seq(B), function(i) {
    #osl$sample_iteratively(data = datas[i,],

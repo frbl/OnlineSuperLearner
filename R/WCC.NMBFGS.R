@@ -131,7 +131,7 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
     ),
   public =
     list(
-      initialize = function(weights.initial, function_to_optimize = NULL, epsilon = 1e-3, verbose = FALSE) {
+      initialize = function(weights.initial, function_to_optimize = NULL, epsilon = 1e-6, verbose = FALSE) {
         private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
         super$initialize(weights.initial)
         if (is.null(function_to_optimize)) {

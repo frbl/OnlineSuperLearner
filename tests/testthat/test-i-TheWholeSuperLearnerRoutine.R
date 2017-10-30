@@ -37,7 +37,7 @@ test_that("it should estimate the true treatment", {
   B <- 1e2
 
   # The intervention we are interested in
-  intervention  <- list(when = c(2), what = c(1), variable ='A')
+  interventions  <- list(intervention = list(when = c(2), what = c(1), variable ='A'))
 
   # The time of the outcome
   tau = 2
@@ -53,9 +53,9 @@ test_that("it should estimate the true treatment", {
   #algos <- append(algos, list(list(description='ML.H2O.gbm',
                           #algorithm = 'ML.H2O.gbm')))
 
-  #algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                          #algorithm_params = list(alpha = 0),
-                          #params = list(nbins = c(6,40), online = TRUE))))
+  algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
+                          algorithm_params = list(alpha = 0),
+                          params = list(nbins = c(6,40), online = FALSE))))
 
   #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
                           #algorithm_params = list(ntrees=c(10,20), min_rows=1),
@@ -93,7 +93,7 @@ test_that("it should estimate the true treatment", {
   llY <- list(rgen={function(AW){
     aa <- AW[, "A"]
     ww <- AW[, grep("[^A]", colnames(AW))]
-    mu <- 100 + aa*(0.4-0.2*sin(ww)+0.05*ww) +
+    mu <- 50 + aa*(0.4-0.2*sin(ww)+0.05*ww) +
       (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
     rnorm(length(mu), mu, sd=0.1)}})
 
@@ -105,9 +105,9 @@ test_that("it should estimate the true treatment", {
   # This is a little slow, because 'simulateWAY' is designed to simulate quickly a long time series,
   # as opposed to many short time series.
   psi.approx <- mclapply(seq(B), function(bb) {
-    when <- max(intervention$when)
+    when <- max(interventions$intervention$when)
     data.int <- simulator$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
-                                intervention = intervention, verbose = FALSE)
+                                intervention = interventions$intervention, verbose = FALSE)
     data.int$Y[tau]
   }, mc.cores = cores) %>%
     unlist %>%
@@ -137,34 +137,31 @@ test_that("it should estimate the true treatment", {
                                 pre_processor = pre_processor)
 
 
-  risk <- osl$fit(data.train, randomVariables = randomVariables,
-                        initial_data_size = training_set_size / 2,
-                        max_iterations = max_iterations,
-                        mini_batch_size = (training_set_size / 2) / max_iterations)
+  hide_warning_replace_weights_osl(
+    risk <- osl$fit(data.train, randomVariables = randomVariables,
+                          initial_data_size = training_set_size / 2,
+                          max_iterations = max_iterations,
+                          mini_batch_size = (training_set_size / 2) / max_iterations)
+  )
 
-  summaryMeasureGenerator$reset
-  datas <- summaryMeasureGenerator$getNext(n = B)
 
-  #result <- mclapply(seq(B), function(i) {
-   #osl$sample_iteratively(data = datas[i,],
-                          #randomVariables = randomVariables,
-                          #intervention = intervention,
-                          #variable_of_interest = Y,
-                          #tau = tau)
-  #}, mc.cores=cores)
-  result <- lapply(seq(B), function(i) {
-   osl$sample_iteratively(data = datas[i,],
-                          randomVariables = randomVariables,
-                          intervention = intervention,
-                          tau = tau)
-  })
+  summaryMeasureGenerator$reset()
+  datas <- summaryMeasureGenerator$getNext(n = 1)
+
+  intervention_effect_caluculator = InterventionEffectCalculator$new(bootstrap_iterations = B, 
+                                                                    randomVariables = randomVariables, 
+                                                                    outcome_variable = Y$getY,
+                                                                    verbose = FALSE,
+                                                                    parallel = FALSE)
+
+  result <- intervention_effect_caluculator$perform_initial_estimation(
+    osl = osl,
+    interventions = interventions, 
+    discrete = TRUE, 
+    initial_data = datas[1,],
+    tau = tau
+  )$intervention
   
-  result %<>%
-    lapply(., function(x) { tail(x, 1)$Y }) %>%
-    unlist
-
-  #plot(cumsum(result)/seq(along=result))
-
   psi.estimation <- mean(result)
 
   print(paste('Approximation:', psi.approx, 'estimation:', psi.estimation, 'difference:', abs(psi.approx - psi.estimation)))

@@ -125,7 +125,8 @@ DensityEstimation <- R6Class ("DensityEstimation",
           ## }
 
           ## Predict the instances where A=A (i.e., the outcome is the outcome)
-          ## NOTE! These estimated probabilities contain NAs whenever an estimator was fitted without any data.
+          ## NOTE! These estimated probabilities contain NAs whenever an estimator was fitted without any oata.
+
           estimated_probabilities <- condensier::predict_probability(
             model_fit = conditionalDensity, 
             newdata = datO

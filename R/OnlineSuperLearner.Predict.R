@@ -73,7 +73,7 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
         result
       },
 
-      predict_osl = function(data, osl_weights, current_result, sl_library, randomVariables, weight_threshold = 0.00, sample = FALSE, plot = FALSE) {
+      predict_osl = function(data, osl_weights, current_result, sl_library, randomVariables, weight_threshold = 0, sample = FALSE, plot = FALSE) {
         private$verbose && cat(private$verbose, 'continuous SL')
         # TODO: What if A ends up not being binary?
         # TODO: More important, what if a variable is discrete?
@@ -83,7 +83,6 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
         for (rv in randomVariables) {
           current_rv_name <- rv$getY
           filtered_weights <- subset(osl_weights, osl_weights[,current_rv_name] >= weight_threshold, select = current_rv_name)
-          
           algorithm_names <- rownames(filtered_weights)
 
           ## Create new predictions that are not yet in the data set, but are needed
@@ -95,7 +94,6 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
             algorithm_names = algorithm_names,
             predictions = current_result
           )
-          current_result
 
           outcomes <- lapply(current_result$normalized[algorithm_names], function(x) x[[current_rv_name]])
 

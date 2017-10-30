@@ -42,15 +42,17 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           #algos <- append(algos, list(list(description='ML.H2O.gbm',
                                   #algorithm = 'ML.H2O.gbm')))
-          nbins <- c(40, 50)#, 60, 70)
+          nbins <- c(40, 50, 60, 70)
           algos <- list()
 
 
           alphas <- runif(3,0,1)
           alphas <- c(0, alphas)
+          alphas <- c(0, 0.961941410787404, 0.923852014588192, 0.193227538373321)
+
           #lambdas <- runif(3,0,1)
           algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                                  algorithm_params = list(alpha = 0.3, lambda = 0.5), 
+                                  algorithm_params = list(alpha = alphas), 
                                   params = list(nbins = nbins, online = FALSE))))
 
           #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
@@ -431,6 +433,8 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           result.dosl_control              <- rep(0.5, B)
           result.osl                       <- rep(0.5, B)
           result.osl_control               <- rep(0.5, B)
+          osl_options <- c('nothing')
+          oos_options <- c('nothing')
 
           # Generate a dataset we will use for testing.
           # We add a margin so we don't have to worry about the presence of enough history
@@ -496,13 +500,13 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           OutputPlotGenerator.create_risk_plot(performance=performance, output=key_performance)
 
           key_performance = paste('risk_cv_cfg_', configuration, sep='')
-          OutputPlotGenerator.create_risk_plot(performance=osl$get_cv_risk, output=key_performance)
+          OutputPlotGenerator.create_risk_plot(performance=osl$get_cv_risk(), output=key_performance)
 
           key_performance = paste('performance_summary_cfg_', configuration, sep='')
           OutputPlotGenerator.create_risk_plot(performance=performance, output=key_performance, make_summary=TRUE, label='total.evaluation')
 
           key_performance = paste('risk_cv_summary_cfg_', configuration, sep='')
-          OutputPlotGenerator.create_risk_plot(performance=osl$get_cv_risk, output=key_performance, make_summary=TRUE, label='total.risk')
+          OutputPlotGenerator.create_risk_plot(performance=osl$get_cv_risk(), output=key_performance, make_summary=TRUE, label='total.risk')
 
           OutputPlotGenerator.create_training_curve(osl$get_historical_cv_risk, 
                                                     randomVariables = randomVariables,
@@ -556,7 +560,6 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           osl_options <- c('dosl', 'osl')
           #osl_options <- c('dosl')
           #osl_options <- c('osl')
-          #osl_options <- c('nothing')
 
           if('dosl' %in% osl_options) {
             result.dosl.full <- intervention_effect_caluculator$calculate_intervention_effect(
@@ -619,9 +622,8 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           print(result.osl_control.mean)
 
           private$log && cat(private$log, 'Starting OOS!')
-          oos_options <- c('dosl', 'dosl_control', 'osl', 'osl_control')
+          #oos_options <- c('dosl', 'dosl_control', 'osl', 'osl_control')
           #oos_options <- c('dosl', 'dosl_control')
-          #oos_options <- c('nothing')
           # Now, the final step is to apply the OneStepEstimator
 
           ## DOSL Intervention

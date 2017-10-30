@@ -215,13 +215,13 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           self$update_library(
             randomVariables = randomVariables,
             max_iterations = max_iterations,
-            mini_batch_size = mini_batch_size
+            mini_batch_size = Arguments$getInteger(mini_batch_size, c(1,Inf))
           )
           private$verbose && exit(private$verbose)
 
           toc <- Sys.time()
           private$verbose && cat(private$verbose, 'The whole procedure took ', (toc - tic), ' seconds.')
-          return(self$get_cv_risk)
+          return(self$get_cv_risk())
         },
 
         ## Predict should return a nrow(data) * 1 matrix, where the predictions are multiplied by
@@ -279,10 +279,11 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             data = data.splitted$train,
             sl_library = self$get_estimators
           )
-
           observed.outcome <- data.splitted$train[,outcome.variables, with=FALSE]
+
           private$fit_osl(predicted.outcome = predicted.outcome,
                           observed.outcome = observed.outcome)
+
           private$fitted <- TRUE
 
           ## Make a prediction using the learners on the test data
@@ -301,7 +302,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           ## Update the discrete superlearner (take the first if there are multiple candidates)
           if (self$fits_dosl) {
-            private$fit_dosl()
+            self$fit_dosl()
 
             ## Put the CV risk back to what it was before the update. We can now actually fit it correctly.
             private$cv_risk$dosl.estimator <- pre_dosl_risk
@@ -310,8 +311,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             ## DOSL, we first need to fit the other estimators, and after that
             ## calculate the dosl error separately.
             predicted.outcome <- self$predict(data = data.splitted$test,
-                                            randomVariables = randomVariables,
-                                            discrete = TRUE, continuous = FALSE, all_estimators = FALSE)
+                                              randomVariables = randomVariables,
+                                              discrete = TRUE, continuous = FALSE, all_estimators = FALSE)
 
             ## Note that we are using the cv_risk_calculator here to update the risk, not the wrapper function, hence
             ## not affecting our earlier risk score.
@@ -320,7 +321,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                                                       observed.outcome = observed.outcome,
                                                       randomVariables  = randomVariables,
                                                       current_count    = self$get_cv_risk_count-1,
-                                                      current_risk     = self$get_cv_risk)$dosl.estimator
+                                                      current_risk     = self$get_cv_risk())$dosl.estimator
           }
 
           private$update_historical_cv_risk()
@@ -348,19 +349,20 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           ## TODO: Check wether the stopping criteria are met (e.g., improvement < theta)
           while(t < max_iterations && nrow(data_current) >= 1 && !is.null(data_current)) {
+            risk <- self$get_cv_risk()
 
             ## Only show this log every 5 times
             if(t %% 5 == 0 && private$verbose) {
-              lapply(names(self$get_cv_risk), function(cv_name) {
+              lapply(names(risk), function(cv_name) {
                 cat(private$verbose, paste('Updating OSL at iteration', t,
                                           'error for', cv_name,
-                                          'is', self$get_cv_risk[cv_name]))
+                                          'is', risk[cv_name]))
               })
             }
 
             self$train_library(data_current = data_current, randomVariables = randomVariables)
             output = paste('performance_iteration',t,sep='_')
-            OutputPlotGenerator.create_risk_plot(self$get_cv_risk, output, '/tmp/osl/')
+            OutputPlotGenerator.create_risk_plot(risk, output, '/tmp/osl/')
 
 
             ## Get the new row of data
@@ -368,7 +370,56 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             t <- t + 1
           }
           private$verbose && exit(private$verbose)
+        },
+
+        ## Find the best estimator among the current set, for each of the densities (WAY)
+        fit_dosl = function() {
+          if(!self$fits_dosl) return(FALSE)
+
+          private$verbose && enter(private$verbose, 'Finding best estimators from the candidates')
+          current_risk <- self$get_cv_risk()
+
+          private$dosl.estimators <- rbindlist(current_risk) %>%
+            ## Get the first if there are multiple best ones
+            sapply(., function(algorithm_scores) {
+              ids <- sort(algorithm_scores, index.return=TRUE, na.last = TRUE)$ix
+              ## We do it this way as the OSL might also get selected. This
+              ## might be something we want, but for now the discrete SL can
+              ## only be one of the candidates, and not the OSL.
+              for(name in names(current_risk)[ids]) {
+                if(name %in% names(self$get_estimators)) {
+                  #private$verbose && cat(private$verbose, 'Selecting ', name)
+                  cat(private$verbose, 'Selecting ', name)
+                  return(self$get_estimators[[name]])
+                }
+              }
+            })
+
+          ## DEBUGGING ONLY
+          ## This function checks the fitted DOSL and checks if each of the
+          ## selected estimators indeed has the lowest risk.
+          if(FALSE) {
+            for (i in seq_along(private$dosl.estimators)) {
+              estimator <- private$dosl.estimators[[i]]
+              scores <- current_risk[[i]]
+              best_risk <- current_risk[[estimator$get_name]][[i]]
+              all_risks <- lapply(current_risk, function(x) x[[i]])
+              idx <- names(all_risks) == 'osl.estimator' | names(all_risks)== 'dosl.estimator'
+              min_risks <- all_risks[!(idx)] %>% unlist %>% min
+              assert_that(min_risks == best_risk)
+            }
+          }
+
+          private$verbose && exit(private$verbose)
+          return(TRUE)
+        },
+
+
+        ## Not an active function so it can be mocked!
+        get_cv_risk = function() {
+          return(private$cv_risk)
         }
+
   ),
   active =
     list(
@@ -417,7 +468,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           print('\n-------------------------------------')
           print('The cross validated risk of each estimator is')
           print('-------------------------------------')
-          print(self$get_cv_risk)
+          print(self$get_cv_risk())
           print('=====================================')
         },
 
@@ -440,10 +491,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         get_dosl = function() {
           return(private$dosl.estimators)
-        },
-
-        get_cv_risk = function() {
-          return(private$cv_risk)
         },
 
         get_summary_measure_generator = function() {
@@ -481,8 +528,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## Variables
         ## =========
         ## The R.cv score of the current fit
-        #default_wcc = WCC.NMBFGS,
-        default_wcc = WCC.SGD.Simplex,
+        default_wcc = WCC.NMBFGS,
+        #default_wcc = WCC.SGD.Simplex,
         cv_risk = NULL,
         historical_cv_risk = NULL,
         cv_risk_count = NULL,
@@ -532,7 +579,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                                                                     observed.outcome = observed.outcome,
                                                                     randomVariables = randomVariables,
                                                                     current_count = private$cv_risk_count,
-                                                                    current_risk = self$get_cv_risk)
+                                                                    current_risk = self$get_cv_risk())
           if (update_counter) {
             private$cv_risk_count <- self$get_cv_risk_count + 1
           }
@@ -645,46 +692,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         },
 
-        ## Find the best estimator among the current set, for each of the densities (WAY)
-        fit_dosl = function() {
-          if(!self$fits_dosl) return(FALSE)
-
-          private$verbose && enter(private$verbose, 'Finding best estimators from the candidates')
-          current_risk <- self$get_cv_risk
-          private$dosl.estimators <- rbindlist(current_risk) %>%
-            ## Get the first if there are multiple best ones
-            sapply(., function(algorithm_scores) {
-              ids <- sort(algorithm_scores, index.return=TRUE)$ix
-              ## We do it this way as the OSL might also get selected. This
-              ## might be something we want, but for now the discrete SL can
-              ## only be one of the candidates, and not the OSL.
-              for(name in names(current_risk)[ids]) {
-                if(name %in% names(self$get_estimators)) {
-                  #private$verbose && cat(private$verbose, 'Selecting ', name)
-                  cat(private$verbose, 'Selecting ', name)
-                  return(self$get_estimators[[name]])
-                }
-              }
-            })
-
-          ## DEBUGGING ONLY
-          ## This function checks the fitted DOSL and checks if each of the
-          ## selected estimators indeed has the lowest risk.
-          if(FALSE) {
-            for (i in seq_along(private$dosl.estimators)) {
-              estimator <- private$dosl.estimators[[i]]
-              scores <- current_risk[[i]]
-              best_risk <- current_risk[[estimator$get_name]][[i]]
-              all_risks <- lapply(current_risk, function(x) x[[i]])
-              idx <- names(all_risks) == 'osl.estimator' | names(all_risks)== 'dosl.estimator'
-              min_risks <- all_risks[!(idx)] %>% unlist %>% min
-              assert_that(min_risks == best_risk)
-            }
-          }
-
-          private$verbose && exit(private$verbose)
-          return(TRUE)
-        },
 
         get_looping_function = function() {
           if(private$is_parallel) {

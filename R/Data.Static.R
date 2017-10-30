@@ -91,6 +91,7 @@ Data.Static <-
         },
 
         getNextN = function(n = 1) {
+          #if(round(private$currentrow) != private$currentrow) browser()
           max <- self$get_remaining_length
 
           ## Check if the max value > 0
