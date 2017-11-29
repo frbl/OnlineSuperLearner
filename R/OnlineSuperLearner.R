@@ -289,8 +289,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           ## Make a prediction using the learners on the test data
           observed.outcome <- data.splitted$test[,outcome.variables, with=FALSE]
           predicted.outcome <- self$predict(data = data.splitted$test,
-                                          randomVariables = randomVariables,
-                                          discrete = TRUE, continuous = TRUE, all_estimators = TRUE)
+                                            randomVariables = randomVariables,
+                                            discrete = TRUE, continuous = TRUE, all_estimators = TRUE)
 
           ## We need to store the dosl risk, as we will update it later.
           pre_dosl_risk <- private$cv_risk$dosl.estimator
