@@ -26,41 +26,42 @@
 SMG.Transformation <- R6Class("SMG.Transformation",
   public =
     list(
-        initialize = function(function_to_use = sin, suffix = 'sin', colnames_to_use) {
-          private$function_to_use <- function_to_use
-          private$suffix <- suffix
-          private$exposed_columnames <- paste(colnames_to_use, suffix , sep='_')
-          private$colnames_to_use <- colnames_to_use
-        },
+      initialize = function(function_to_use = sin, suffix = 'sin', colnames_to_use) {
+        private$function_to_use <- function_to_use
+        private$suffix <- suffix
+        private$exposed_columnames <- paste(colnames_to_use, suffix , sep = '_')
+        private$colnames_to_use <- colnames_to_use
+      },
 
-        update = function(data.current) {
-          data <- private$function_to_use(data.current[,private$colnames_to_use, with=FALSE])
-          colnames(data) <- private$exposed_columnames
-          data
-        },
+      update = function(data.current) {
+        result <- self$process(data.current) %>% unlist
+        return(result)
+      },
 
-        process = function(data.current) {
-          if(nrow(data.current) < self$minimalObservations){
-            stop(paste('At least', self$minimalObservations, 'observations required'))
-          } 
-          data <- self$update(data.current)
-          return(data)
-        }
-        ),
+      process = function(data.current) {
+        if(nrow(data.current) < self$minimalObservations){
+          throw('At least', self$minimalObservations, 'observations required')
+        } 
+        data <- private$function_to_use(data.current[,private$colnames_to_use, with=FALSE])
+        colnames(data) <- private$exposed_columnames
+        return(data)
+      }
+    ),
   active =
     list(
-        minimalObservations = function() {
-          1
-        },
-        exposedVariables = function() {
-          private$exposed_columnames
-        }
-        ),
+      minimalObservations = function() {
+        1
+      },
+
+      exposedVariables = function() {
+        private$exposed_columnames
+      }
+    ),
   private =
     list(
-         exposed_columnames = NULL,
-         suffix = NULL,
-         function_to_use = NULL,
-         colnames_to_use = NULL
+      exposed_columnames = NULL,
+      suffix = NULL,
+      function_to_use = NULL,
+      colnames_to_use = NULL
     )
 )

@@ -82,13 +82,13 @@ test_that("it should retrieve the initial formula", {
   expect_equal(result, 'W ~ W_lag_1')
 })
 
-context(" parseFormula")
+context(" parse_formula")
 #==========================================================
 test_that("it should parse the provided formula in the correct (in)dependent variables", {
  formula <- Y ~ A + B + C + D 
  expected <- list(Y=c(Y = 'Y'), X= c(A = 'A', B = 'B', C = 'C', D = 'D'))
  rv <- described.class$new(formula = formula, family = 'binomial')
- result <- rv$parseFormula(formula)
+ result <- rv$parse_formula(formula)
  expect_true(is.a(result, 'list'))
  expect_equal(names(result), c('Y', 'X'))
  expect_equal(result, expected)
@@ -99,10 +99,10 @@ context(" Static functions")
 context("  RandomVariable.get_supported_families")
 #==========================================================
 test_that("it should return the family of the subject", {
-  family <- 'gaussian'
-  families <- RandomVariable.get_supported_families
+  families <- RandomVariable.get_supported_families()
   expect_false(is.null(families))
-  expect_true(length(families) > 0)
+  expect_length(families, 2)
+  expect_equal(families, c('binomial', 'gaussian'))
 })
 
 context("  RandomVariable.find_ordering")

@@ -6,43 +6,41 @@
 RandomVariable <- R6Class("RandomVariable",
   public =
     list(
-        initialize = function(formula, family) {
-          formula <- Arguments$getInstanceOf(formula, 'formula')
-          formula.parsed  <- self$parseFormula(formula)
+      initialize = function(formula, family) {
+        formula <- Arguments$getInstanceOf(formula, 'formula')
+        formula.parsed  <- self$parse_formula(formula)
 
-          private$formula = formula
-          private$formula.X = formula.parsed$X
-          private$formula.Y = formula.parsed$Y
-          private$family = family
-          self$getValidity
-        },
+        private$formula = formula
+        private$formula.X = formula.parsed$X
+        private$formula.Y = formula.parsed$Y
+        private$family = family
+        self$getValidity
+      },
 
-        get_formula_string = function(X = NULL, Y = NULL) {
-          if (is.null(X)) {
-            X <- self$getX 
-          }
-          if (is.null(Y)) {
-            Y <- self$getY 
-          }
-          paste(Y, '~', paste(sort(X), collapse = ' + '))
-        },
+      get_formula_string = function(X = NULL, Y = NULL) {
+        if (is.null(X)) {
+          X <- self$getX 
+        }
+        if (is.null(Y)) {
+          Y <- self$getY 
+        }
+        paste(Y, '~', paste(sort(X), collapse = ' + '))
+      },
 
-        parseFormula = function(formula){
+      parse_formula = function(formula){
+        vars <- all.vars(formula)
+        depvar <- head(vars, 1)
+        names(depvar) <- depvar
 
-          vars <- all.vars(formula)
-          depvar <- head(vars, 1)
-          names(depvar) <- depvar
-
-          indepvar <- tail(vars, -1)
-          if(length(indepvar) == 1 & indepvar[1] == c('.')){
-            indepvar <- c()
-          } else {
-            names(indepvar) <- indepvar
-          }
-
-          list(Y = depvar, X = indepvar)
+        indepvar <- tail(vars, -1)
+        if(length(indepvar) == 1 & indepvar[1] == c('.')){
+          indepvar <- c()
+        } else {
+          names(indepvar) <- indepvar
         }
 
+        list(Y = depvar, X = indepvar)
+      }
     ),
   active =
     list(
