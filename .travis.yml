@@ -19,8 +19,8 @@ os:
   - linux
 r_build_args: "--no-build-vignettes --no-manual"
 
-before_install:
-  - Rscript -e 'update.packages(ask = FALSE)'
+#before_install:
+  #- Rscript -e 'update.packages(ask = FALSE)'
 
 addons:
   apt:
