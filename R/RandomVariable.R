@@ -4,45 +4,6 @@
 #' @importFrom R6 R6Class
 #' @export
 RandomVariable <- R6Class("RandomVariable",
-  private =
-  list(
-        formula = NULL,
-        formula.X = NULL,
-        formula.Y = NULL,
-        family = NULL
-      ),
-  active =
-    list(
-        getFamily = function() {
-          return(private$family)
-        },
-        getX = function() {
-          return(private$formula.X)
-        },
-        getY = function() {
-          return(private$formula.Y)
-        },
-        getValidity = function() {
-          errors <- character()
-          if(!is.a(private$formula, 'formula')){
-            msg <- 'Provided formula should be a formula'
-            errors <- c(errors, msg)
-          }
-          if(!private$family %in% RandomVariable.get_supported_families()){
-            msg <- paste('Provided family', private$family, 'not supported')
-            errors <- c(errors, msg)
-          }
-          if (length(errors) > 0) throw(errors)
-
-          if(length(private$formula.X) > 0) {
-            labels <- unique(attr(terms(private$formula), 'term.labels'))
-            needed <- c(self$getX, self$getY)
-            interactionTerms <- setdiff(labels, needed)
-            if(length(interactionTerms) != 0) warning(paste('Interactions are not yet supported and are ignored',interactionTerms))
-          }
-          return(TRUE) 
-        }
-        ),
   public =
     list(
         initialize = function(formula, family) {
@@ -82,7 +43,46 @@ RandomVariable <- R6Class("RandomVariable",
           list(Y = depvar, X = indepvar)
         }
 
-    )
+    ),
+  active =
+    list(
+        getFamily = function() {
+          return(private$family)
+        },
+        getX = function() {
+          return(private$formula.X)
+        },
+        getY = function() {
+          return(private$formula.Y)
+        },
+        getValidity = function() {
+          errors <- character()
+          if(!is.a(private$formula, 'formula')){
+            msg <- 'Provided formula should be a formula'
+            errors <- c(errors, msg)
+          }
+          if(!private$family %in% RandomVariable.get_supported_families()){
+            msg <- paste('Provided family', private$family, 'not supported')
+            errors <- c(errors, msg)
+          }
+          if (length(errors) > 0) throw(errors)
+
+          if(length(private$formula.X) > 0) {
+            labels <- unique(attr(terms(private$formula), 'term.labels'))
+            needed <- c(self$getX, self$getY)
+            interactionTerms <- setdiff(labels, needed)
+            if(length(interactionTerms) != 0) warning(paste('Interactions are not yet supported and are ignored',interactionTerms))
+          }
+          return(TRUE) 
+        }
+        ),
+  private =
+  list(
+        formula = NULL,
+        formula.X = NULL,
+        formula.Y = NULL,
+        family = NULL
+      )
 )
 # Static functions
 # ================
