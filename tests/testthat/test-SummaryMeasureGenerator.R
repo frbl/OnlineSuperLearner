@@ -137,6 +137,21 @@ test_that("it should normalize the data provided to it, if a pre_processor is av
   expect_true(min(subject$getCache) >= 0)  
 })
 
+test_that("it should reset the cache whenever we notice that there is a new timeseries", {
+  data <- Data.Static$new(dataset = dataset)
+  mylist <- c(SMG.Mock$new(2))
+  ## +10 so its way more than the dataset
+  subject <- described.class$new(SMG.list = mylist, data = data, number_of_observations_per_timeseries = nrow(dataset))
+  expect_true(subject$is_new_timeseries)
+
+  stub(subject$fillCache, 'self$reset', function() {
+    called <<- TRUE
+  })
+  called <<- FALSE
+  subject$fillCache()
+  expect_true(called)
+})
+
 
 context(" getNext")
 #==========================================================

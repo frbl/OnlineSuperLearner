@@ -35,10 +35,10 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
           private$normalized <- TRUE
         }
 
-        # Determine the minimal number of measurements we need in order to be able to
-        # support all our SMGs
-        # TODO: We do the -1 so we can just get new measurements, without caring about the cache getting filled or not.
-        # This could be made more explicit
+        ## Determine the minimal number of measurements we need in order to be able to
+        ## support all our SMGs
+        ## TODO: We do the -1 so we can just get new measurements, without caring about the cache getting filled or not.
+        ## This could be made more explicit
         minimal_measurements_needed <- max(sapply(SMG.list, function(obj) obj$minimalObservations)) - 1
         self$set_minimal_measurements_needed(minimal_measurements_needed = minimal_measurements_needed)
       },
@@ -48,12 +48,12 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
       },
 
       checkEnoughDataAvailable = function(randomVariables) {
-        # Currently we do not support interactions
+        ## Currently we do not support interactions
         needed <- unique(unlist(lapply(randomVariables, function(rv) rv$getX)))
         available <- unlist(lapply(private$SMG.list, function(smg) smg$exposedVariables))
         diff <- setdiff(needed, available)
 
-        # check if our set is empty, in that case we cover them all
+        ## check if our set is empty, in that case we cover them all
         if (length(diff) != 0) { 
           missing <- paste(diff, collapse = ', ', sep = ', ')
           throw('Not all provided variables (', missing, ') are included in the SMGs, include the correct SMGs')
@@ -67,20 +67,20 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
       },
 
 
-      # This function will fill the cache with the first N measurements if the cache is empty
+      ## This function will fill the cache with the first N measurements if the cache is empty
       fillCache = function() {
         private$check_data_available()
 
-        # If no history is needed, we don't have to fill the cache
+        ## If no history is needed, we don't have to fill the cache
         if(self$get_minimal_measurements_needed == 0) return(FALSE)
 
-        # If the timeseries we are requesting is a new one (i.e., the next
-        # person when multiple timeseries are provided) we should reset the
-        # cache, so we don't mixup the summarymeasures.
+        ## If the timeseries we are requesting is a new one (i.e., the next
+        ## person when multiple timeseries are provided) we should reset the
+        ## cache, so we don't mixup the summarymeasures.
         if(self$is_new_timeseries) {
-          print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-          print('New time series:')
-          print(private$ts)
+          private$verbose && cat(private$verbose, '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+          private$verbose && cat(private$verbose, 'New time series:')
+          private$verbose && cat(private$verbose, private$ts)
           private$ts <- private$ts + 1
           self$reset()
         }
@@ -103,7 +103,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
 
       summarizeData = function(data, n = 1){
         if(nrow(data) <= self$get_minimal_measurements_needed){
-          #throw('Not enough data provided to support all summary measures')
+          ## throw('Not enough data provided to support all summary measures')
           return(data)
         }
 
@@ -119,16 +119,15 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
         #if(nrow(private$cache) == 0) browser()
         private$check_data_available()
 
-        # TODO: Make this much more efficient
-        # TODO: This is an exact copy of the Data.Base function
+        ## TODO: Make this much more efficient
+        ## TODO: This is an exact copy of the Data.Base function
         filledCache  <- self$fillCache()
 
-        if(!filledCache) {
-          # Remove the first n measurements from the dataframe
-          private$cache <- tail(private$cache, -n)
-        }
+        ## Remove the first n measurements from the dataframe
+        if(!filledCache) private$cache <- tail(private$cache, -n)
+
+        ## Now, this combined with the cache, should be enough to get the new observations
         current <- private$get_next_normalized(n=n)
-        # Now, this combined with the cache, should be enough to get the new observations
         private$cache <- rbindlist(list(private$cache, current))
 
         self$summarizeData(private$cache, n=n)
@@ -150,7 +149,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
 
       is_new_timeseries = function() {
         ts <- ((self$get_data_object$get_currentrow - 1) %% private$number_of_observations_per_timeseries) + 1
-        # We do the nan check here because x %% Inf is nan...
+        ## We do the nan check here because x %% Inf is nan...
         !is.nan(ts) && ts == 1
       },
 
@@ -185,7 +184,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
       pre_processor = NULL,
 
       get_next_normalized = function(n) {
-        # Get the next N observations, rely on the data source to get this data efficient
+        ## Get the next N observations, rely on the data source to get this data efficient
         current <- private$data$getNextN(n = n)
         if (is.null(current)) return(NULL)
 

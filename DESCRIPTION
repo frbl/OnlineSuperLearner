@@ -106,7 +106,6 @@ Collate:
     'WCC.SGD.R'
 Remotes: 
     github::osofr/condensier@fb-add-update,
-    github::dmlc/xgboost/R-package,
     github::jeroenooms/jsonlite,
     github::jimhester/covr,
     github::n-s-f/mockery@master
