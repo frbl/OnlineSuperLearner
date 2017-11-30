@@ -20,7 +20,6 @@ r_build_args: "--no-build-vignettes --no-manual"
 
 before_install:
   - Rscript -e 'update.packages(ask = FALSE)'
-  - ./inst/bash/install-package-dependencies.sh
 
 addons:
   apt:
