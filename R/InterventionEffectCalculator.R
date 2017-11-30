@@ -1,4 +1,5 @@
 #' InterventionEffectCalculator
+#'
 #' @section Methods:
 #' \describe{
 #'   \item{\code{perform_initial_estimation(data, intervention, tau) }}{ 
@@ -9,9 +10,12 @@
 #'     @param tau the time at which we want to evaluate the intervention
 #'   } 
 #' }
+#'
 #' @docType class
 #' @importFrom R6 R6Class
 #' @import magrittr
+#' @include InterventionParser.R
+#'
 InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
   public =
     list(

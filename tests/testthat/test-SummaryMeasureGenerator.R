@@ -152,6 +152,123 @@ test_that("it should reset the cache whenever we notice that there is a new time
   expect_true(called)
 })
 
+context(" getLatestCovariates")
+#==========================================================
+test_that("it should should throw if the nrow of data is not equal to 1", {
+  data <- Data.Static$new(dataset = dataset)
+  mylist <- c(SMG.Mock$new(2))
+  subject <- described.class$new(SMG.list = mylist, data = data)
+  data <- data.table(a = c(1,2,3,4))
+  expect_error(subject$getLatestCovariates(data), 'Not enough data provided to support all summary measures')
+})
+
+test_that("it should call the update of all SMG", {
+  data_stat <- Data.Static$new(dataset = dataset)
+
+  CALLED1 <<- FALSE
+  CALLED2 <<- FALSE
+  CALLED3 <<- FALSE
+  
+  mylist <- list(
+    list(minimalObservations = 1, update = function(data) { CALLED1 <<- TRUE; return(data) }),
+    list(minimalObservations = 1, update = function(data) { CALLED2 <<- TRUE; return(data) }),
+    list(minimalObservations = 1, update = function(data) { CALLED3 <<- TRUE; return(data) })
+  )
+
+  subject <- described.class$new(SMG.list = mylist, data = data_stat)
+  data <- data.table(a = c(1))
+  subject$getLatestCovariates(data)
+
+  expect_true(CALLED1)
+  expect_true(CALLED2)
+  expect_true(CALLED3)
+})
+
+test_that("it should return the results of all SMGS in a datatable", {
+  data_stat <- Data.Static$new(dataset = dataset)
+  
+  mylist <- list(
+    list(minimalObservations = 1, update = function(data) { return(data + 1) }),
+    list(minimalObservations = 1, update = function(data) { return(data + 2) }),
+    list(minimalObservations = 1, update = function(data) { return(data + 3) })
+  )
+
+  subject <- described.class$new(SMG.list = mylist, data = data_stat)
+  data <- data.table(a = c(1))
+  result <- subject$getLatestCovariates(data)
+  expect_is(result, 'data.table')
+  expect_equal(result, data.table(a=2,a=3,a=4))
+})
+
+context(" summarizeData")
+#==========================================================
+test_that("it should return the provided data if not enough data is available for all summary measures", {
+  data <- Data.Static$new(dataset = data.table(a=2,a=3,a=4))
+  needed <- 3
+  mylist <- c(SMG.Mock$new(needed))
+  subject <- described.class$new(SMG.list = mylist, data = data)
+  result <- subject$summarizeData(dataset[1,])
+  expect_equal(result, dataset[1,])
+})
+
+test_that("it should call the process function for each of the summary measure generators", {
+  data_stat <- Data.Static$new(dataset = dataset)
+
+  CALLED1 <<- FALSE
+  CALLED2 <<- FALSE
+  CALLED3 <<- FALSE
+  
+  mylist <- list(
+    list(minimalObservations = 1, process = function(data) { CALLED1 <<- TRUE; return(data) }),
+    list(minimalObservations = 1, process = function(data) { CALLED2 <<- TRUE; return(data) }),
+    list(minimalObservations = 1, process = function(data) { CALLED3 <<- TRUE; return(data) })
+  )
+
+  subject <- described.class$new(SMG.list = mylist, data = data_stat)
+  data <- data.table(a = c(1))
+  subject$summarizeData(data)
+
+  expect_true(CALLED1)
+  expect_true(CALLED2)
+  expect_true(CALLED3)
+})
+
+test_that("it should return a datatable with all results", {
+  data_stat <- Data.Static$new(dataset = dataset)
+
+  mylist <- list(
+    list(minimalObservations = 1, process = function(data) { return(data + 1) }),
+    list(minimalObservations = 1, process = function(data) { return(data + 2) }),
+    list(minimalObservations = 1, process = function(data) { return(data + 3) })
+  )
+
+  subject <- described.class$new(SMG.list = mylist, data = data_stat)
+  data <- data.table(a = c(1))
+  result <- subject$summarizeData(data)
+  expect_is(result, 'data.table')
+  expect_equal(result, data.table(a=2,a=3,a=4))
+})
+
+test_that("it should return the correct number of entries from the tail of the dataset", {
+  data_stat <- Data.Static$new(dataset = dataset)
+
+  mylist <- list(
+    list(minimalObservations = 1, process = function(data) { return(data + 1) }),
+    list(minimalObservations = 1, process = function(data) { return(data + 2) }),
+    list(minimalObservations = 1, process = function(data) { return(data + 3) })
+  )
+
+  subject <- described.class$new(SMG.list = mylist, data = data_stat)
+  a_data <- c(1, 2, 3, 4, 5, 6, 7)
+  n <- 4
+  data <- data.table(a = a_data)
+  result <- subject$summarizeData(data, n = n)
+  expect_is(result, 'data.table')
+  expect_equal(nrow(result), n)
+  expect_equal(result, data.table(a = (a_data[4:7]+1),
+                                  a = (a_data[4:7]+2),
+                                  a = (a_data[4:7]+3)))
+})
 
 context(" getNext")
 #==========================================================

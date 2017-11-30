@@ -55,6 +55,7 @@
 #' @docType class
 #' @include ConstrainedGlm.R
 #' @include DataCache.R
+#' @include RandomVariable.R
 #' @import methods
 #' @import R.oo
 #' @import R.utils

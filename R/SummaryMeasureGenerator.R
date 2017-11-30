@@ -44,7 +44,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
       },
 
       reset = function() {
-        private$cache = data.table()
+        private$cache = data.table::data.table()
       },
 
       checkEnoughDataAvailable = function(randomVariables) {
@@ -65,7 +65,6 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
         self$reset()
         private$data = data
       },
-
 
       ## This function will fill the cache with the first N measurements if the cache is empty
       fillCache = function() {
@@ -97,19 +96,23 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
         if(nrow(data) != 1){
           throw('Not enough data provided to support all summary measures')
         }
-        datas <- unlist(lapply(private$SMG.list, function(smg) {smg$update(copy(data))}))
-        as.data.table(t(datas))
+
+        datas <- lapply(private$SMG.list, function(smg) {
+          smg$update(copy(data))
+        })
+
+        unlist(datas) %>%
+          t %>%
+          data.table::as.data.table
       },
 
       summarizeData = function(data, n = 1){
-        if(nrow(data) <= self$get_minimal_measurements_needed){
-          ## throw('Not enough data provided to support all summary measures')
-          return(data)
-        }
+        ## If Not enough data provided to support all summary measures
+        if(nrow(data) <= self$get_minimal_measurements_needed) return(data)
 
         datas <- lapply(private$SMG.list, function(smg) {
-            result <- smg$process(copy(data))
-            tail(result, n)
+          result <- smg$process(copy(data))
+          tail(result, n)
         })
 
         Reduce(cbind, datas)
@@ -177,7 +180,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
       ts = NULL,
       data = NULL,
       number_of_observations_per_timeseries = NULL,
-      cache = data.table(),
+      cache = data.table::data.table(),
       SMG.list = NULL,
       verbose = NULL,
       normalized = NULL,

@@ -1,4 +1,23 @@
 setOldClass("h2o")
+#' Function to check whether the h2o cluster is already running
+#' @return boolean TRUE if the cluster is running and FALSE if not.
+H2O.Available <- function() {
+  ## TODO: It is bad practice to use this try-catch construction, but I could not find a method that
+  ## would just return true false instead of throwing an error.
+  result <- tryCatch({
+    status <- h2o.clusterIsUp()
+    if (status == FALSE) {
+      return(FALSE)
+    }
+    return(TRUE) 
+  }, warning = function(e) {
+    warning(e)
+    return(FALSE) 
+  }, error = function(e) {
+    return(FALSE) 
+  })
+  return(result)
+}
 
 #' This function is used to initialize the H2O cluster.  Idealy I'd like to use a singletonpattern for this, but this also works.
 #'
@@ -24,26 +43,6 @@ H2O.Initializer <- function(host = "localhost", port = 54321, runlocal = TRUE, v
   if(!h2o.clusterIsUp()) throw('Connecting to cluster failed, at host ', host)
   verbose && exit(verbose)
   return(TRUE)
-}
-
-#' Function to check whether the h2o cluster is already running
-#' @return boolean TRUE if the cluster is running and FALSE if not.
-H2O.Available <- function() {
-  ## TODO: It is bad practice to use this try-catch construction, but I could not find a method that
-  ## would just return true false instead of throwing an error.
-  result <- tryCatch({
-    status <- h2o.clusterIsUp()
-    if (status == FALSE) {
-      return(FALSE)
-    }
-    return(TRUE) 
-  }, warning = function(e) {
-    warning(e)
-    return(FALSE) 
-  }, error = function(e) {
-    return(FALSE) 
-  })
-  return(result)
 }
 
 ##H2O.Initializer <-
