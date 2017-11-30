@@ -13,11 +13,9 @@ dist: trusty
 sudo: required
 cache: packages
 warnings_are_errors: false
+latex: false
 os:
   - linux
-sudo: false
-cache: packages
-warnings_are_errors: false
 r_build_args: "--no-build-vignettes --no-manual"
 
 before_install:
@@ -33,9 +31,7 @@ r_packages:
   - covr
 
 r:
-  - oldrel
   - release
-  - devel
 
 r_github_packages:
   - jimhester/covr
@@ -51,3 +47,4 @@ notifications:
   email:
     on_success: change
     on_failure: change
+
