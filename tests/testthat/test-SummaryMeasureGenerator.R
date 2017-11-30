@@ -2,6 +2,7 @@ context("SummaryMeasureGenerator.R")
 described.class <- SummaryMeasureGenerator
 
 context(" initialize")
+#==========================================================
 test_that("it should only require SMG.list as a required parameter", {
   mylist <- c(SMG.Mock$new())
   subject <- described.class$new(SMG.list = mylist)
@@ -44,6 +45,7 @@ test_that("it should set normalized to true and the pre_processor whenever a pre
 dataset <- data.table(Y= (seq(1,10)%%2) , A=rep(1,10), W=seq(10,1))
 
 context(" reset")
+#==========================================================
 test_that("it should reset the cache", {
   # Not testable without mocking, or using the fillCache as a proxy for checking
   data <- Data.Static$new(dataset = dataset)
@@ -51,16 +53,27 @@ test_that("it should reset the cache", {
 
   subject <- described.class$new(SMG.list = mylist, data = data)
   expect_true(subject$fillCache())
+  expect_false(equals(nrow(subject$getCache), 0))
   expect_false(subject$fillCache())
 
   # Resetting should clear the cache
   subject$reset()
+  expect_equal(nrow(subject$getCache), 0)
   expect_true(subject$fillCache())
 })
 
 context(" setData")
+#==========================================================
 test_that("it should reset the summarizer", {
-  # Not testable without mocking, or using the fillCache as a proxy for checking
+  mylist <- c(SMG.Mock$new(2))
+
+  subject <- described.class$new(SMG.list = mylist)
+  stub(subject$setData, 'self$reset', function() {
+    called <<- TRUE
+  })
+  called <<- FALSE
+  subject$setData(data.table(a = c(1,2,3,4)))
+  expect_true(called)
 })
 
 test_that("it should should set the correct data", {
@@ -68,16 +81,25 @@ test_that("it should should set the correct data", {
 
   mylist <- c(SMG.Mock$new())
   subject <- described.class$new(SMG.list = mylist)
-  expect_error(subject$getNext(),'Please set the data of the summary measure generator first')
+  expect_null(subject$get_data_object)
   subject$setData(data)
-  expect_error(subject$getNext(),NA)
+  expect_false(is.null(subject$get_data_object))
 })
 
 context(" fillCache")
+#==========================================================
 test_that("it should throw if there is no data set", {
   mylist <- c(SMG.Mock$new())
   subject <- described.class$new(SMG.list = mylist)
   expect_error(subject$fillCache(), 'Please set the data of the summary measure generator first')
+})
+
+test_that("it should return false if no data is needed", {
+  data <- Data.Static$new(dataset = dataset)
+  mylist <- c(SMG.Mock$new())
+  subject <- described.class$new(data = data, SMG.list = mylist)
+  subject$set_minimal_measurements_needed(0)
+  expect_false(subject$fillCache())
 })
 
 test_that("it should fill the cache with the correct number of measurments", {
@@ -115,7 +137,9 @@ test_that("it should normalize the data provided to it, if a pre_processor is av
   expect_true(min(subject$getCache) >= 0)  
 })
 
+
 context(" getNext")
+#==========================================================
 test_that("it should return the measurements requested without params", {
   data <- Data.Static$new(dataset = dataset)
 
@@ -218,6 +242,7 @@ test_that("it should scale the data if scaling is provided", {
 })
 
 context(" checkEnoughDataAvailable")
+#==========================================================
 test_that("it should check if enough data is available for all formulae, and return true if all is available", {
   f1 <- RandomVariable$new(formula = y ~ w + w2 + w3 + a, family='gaussian')
   f2 <- RandomVariable$new(formula = w ~ a + a1 + a2, family='gaussian')
@@ -249,3 +274,65 @@ test_that("it should check if enough data is available for all formulae", {
 })
 
 
+context(" is_new_timeseries")
+#==========================================================
+test_that("it should should return true if the current row belongs to a new timeseries", {
+  data <- Data.Static$new(dataset = dataset)
+  mylist <- c(SMG.Mock$new(2))
+  ## consider each TS to have 2 elements
+  subject <- described.class$new(SMG.list = mylist, data = data, number_of_observations_per_timeseries = 2)
+  result <- lapply(seq(1, nrow(dataset)), function(item) {
+    result <- subject$is_new_timeseries
+    subject$getNext()
+    subject$getNext()
+    result
+  }) %>% unlist 
+
+  ## All elements should be true
+  result <- all(result)
+  expect_true(result)
+  
+})
+
+test_that("it should return true for the first timeseries (if a number_of_observations_per_timeseries is set)", {
+  data <- Data.Static$new(dataset = dataset)
+  mylist <- c(SMG.Mock$new(2))
+  ## +10 so its way more than the dataset
+  subject <- described.class$new(SMG.list = mylist, data = data, number_of_observations_per_timeseries = (nrow(dataset) + 10))
+  result <- subject$is_new_timeseries
+  expect_true(result)
+})
+
+test_that("it should should return false if the current row belongs to the previous timeseries", {
+  data <- Data.Static$new(dataset = dataset)
+  mylist <- c(SMG.Mock$new(2))
+
+  subject <- described.class$new(SMG.list = mylist, data = data, number_of_observations_per_timeseries = (nrow(dataset)))
+  ## Note that we first remove the first entry, as this one technically belongs
+  ## to a new TS
+  subject$getNext()
+  ## -2 because we already popped the first entry, and now we don't want to
+  ## check the last entry.
+  result <- lapply(seq(1, (nrow(dataset) - 2)), function(item) {
+    result <- subject$is_new_timeseries
+    subject$getNext()
+    result
+  }) %>% unlist %>% any
+  result
+  expect_false(result)
+
+  ## The last entry should be part of a new time series
+  expect_true(subject$is_new_timeseries)
+})
+
+test_that("it should return false if the provided number of observations per timeseries is Inf", {
+  data <- Data.Static$new(dataset = dataset)
+  mylist <- c(SMG.Mock$new(2))
+  subject <- described.class$new(SMG.list = mylist, data = data, number_of_observations_per_timeseries = Inf)
+  result <- lapply(seq(1, nrow(dataset)), function(item) {
+    result <- subject$is_new_timeseries
+    subject$getNext()
+    result
+  }) %>% unlist %>% any
+  expect_false(result)
+})
