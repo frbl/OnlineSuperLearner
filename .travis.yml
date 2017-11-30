@@ -9,7 +9,7 @@
 #----------------------------------------------------------------
 
 language: r
-dist: trusty
+#dist: trusty
 # Sudo is disabled for the package cache, see https://docs.travis-ci.com/user/languages/r/
 sudo: false
 cache: packages
