@@ -4,6 +4,7 @@
 #' @importFrom R6 R6Class
 #' @import data.table
 #' @importFrom purrr cross_df
+#' @include ML.H2O.R
 #' @include ML.XGBoost.R
 #' @include ML.NeuralNet.R
 #' @include ML.Local.lm.R

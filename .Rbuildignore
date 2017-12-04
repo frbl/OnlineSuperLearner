@@ -2,6 +2,12 @@
 \.ipynb*
 \.ipynb_checkpoints
 OnlineSuperLearner_example\.ipynb
+application-roadmap.md
+application-roadmap.pdf
+circle.yml
+CONTRIBUTING.md
+OnlineSuperLearner.Rproj
+output
 run.R
 ^README\.md$
 \.gitignore
