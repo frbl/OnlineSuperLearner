@@ -44,7 +44,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
       },
 
       reset = function() {
-        private$cache = data.table::data.table()
+        private$cache = data.table()
       },
 
       checkEnoughDataAvailable = function(randomVariables) {
@@ -103,7 +103,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
 
         unlist(datas) %>%
           t %>%
-          data.table::as.data.table
+          as.data.table
       },
 
       summarizeData = function(data, n = 1){
@@ -180,7 +180,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
       ts = NULL,
       data = NULL,
       number_of_observations_per_timeseries = NULL,
-      cache = data.table::data.table(),
+      cache = data.table(),
       SMG.list = NULL,
       verbose = NULL,
       normalized = NULL,
