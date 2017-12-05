@@ -2,7 +2,6 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
-#' @include ML.H2O.R
 #' @include ML.Base.R
 #' @include H2O.Interactor.R
 ML.H2O <- R6Class("ML.H2O",

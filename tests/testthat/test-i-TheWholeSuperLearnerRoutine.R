@@ -15,7 +15,7 @@ test_that("it should estimate the true treatment", {
   set.seed(12345)
 
   # Number of cores available
-  cores = detectCores()
+  cores = 1 #detectCores()
 
   # Create the simulator
   simulator  <- Simulator.GAD$new()
@@ -53,9 +53,9 @@ test_that("it should estimate the true treatment", {
   #algos <- append(algos, list(list(description='ML.H2O.gbm',
                           #algorithm = 'ML.H2O.gbm')))
 
-  algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                          algorithm_params = list(alpha = 0),
-                          params = list(nbins = c(6,40), online = FALSE))))
+  #algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
+                          #algorithm_params = list(alpha = 0),
+                          #params = list(nbins = c(6,40, 50), online = FALSE))))
 
   #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
                           #algorithm_params = list(ntrees=c(10,20), min_rows=1),
@@ -67,7 +67,7 @@ test_that("it should estimate the true treatment", {
 
   algos <- append(algos, list(list(algorithm = 'condensier::speedglmR6',
                           #algorithm_params = list(),
-                          params = list(nbins = c(3,4, 5), online = FALSE))))
+                          params = list(nbins = c(3,40, 50, 100), online = FALSE))))
 
   #algos <- append(algos, list(list(algorithm = 'condensier::glmR6',
                           ##algorithm_params = list(),
@@ -93,9 +93,8 @@ test_that("it should estimate the true treatment", {
   llY <- list(rgen={function(AW){
     aa <- AW[, "A"]
     ww <- AW[, grep("[^A]", colnames(AW))]
-    mu <- 50 + aa*(0.4-0.2*sin(ww)+0.05*ww) +
-      (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
-    rnorm(length(mu), mu, sd=0.1)}})
+    mu <- 500 + aa * 5 + (1-aa) * 0.2
+    rnorm(length(mu), mu, sd=0.01)}})
 
 
   ##################
@@ -104,26 +103,26 @@ test_that("it should estimate the true treatment", {
   # 'psi.approx' is a Monte-Carlo approximation of the parameter of interest.
   # This is a little slow, because 'simulateWAY' is designed to simulate quickly a long time series,
   # as opposed to many short time series.
-  psi.approx <- mclapply(seq(B), function(bb) {
+  psi <- mclapply(seq(B), function(bb) {
     when <- max(interventions$intervention$when)
     data.int <- simulator$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
                                 intervention = interventions$intervention, verbose = FALSE)
     data.int$Y[tau]
-  }, mc.cores = cores) %>%
-    unlist %>%
-    mean
+  }, mc.cores = cores) %>% unlist
+  
+  psi.approx <- mean(psi)
 
 
   ##############
   # Estimation #
   ##############
-  data <- simulator$simulateWAY(training_set_size + B, qw=llW, ga=llA, Qy=llY, verbose=log)
+  data <- simulator$simulateWAY(training_set_size + B + 1000, qw=llW, ga=llA, Qy=llY, verbose=log)
   data.train <- Data.Static$new(dataset = data)
 
   # We use the following covariates in our estimators
   W <- RandomVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
   A <- RandomVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
-  Y <- RandomVariable$new(formula = Y ~ A + W, family = 'gaussian')
+  Y <- RandomVariable$new(formula = Y ~ A_lag_1 + Y_lag_1 + A + W, family = 'gaussian')
   randomVariables <- c(W, A, Y)
 
   # Generate some bounds to use for the data (scale it between 0 and 1)
@@ -146,7 +145,7 @@ test_that("it should estimate the true treatment", {
 
 
   summaryMeasureGenerator$reset()
-  datas <- summaryMeasureGenerator$getNext(n = 1)
+  datas <- summaryMeasureGenerator$getNext(n = 1000)
 
   intervention_effect_caluculator = InterventionEffectCalculator$new(bootstrap_iterations = B, 
                                                                     randomVariables = randomVariables, 
@@ -154,19 +153,28 @@ test_that("it should estimate the true treatment", {
                                                                     verbose = FALSE,
                                                                     parallel = FALSE)
 
-  result <- intervention_effect_caluculator$perform_initial_estimation(
+  result.all <- intervention_effect_caluculator$calculate_intervention_effect(
     osl = osl,
     interventions = interventions, 
     discrete = TRUE, 
     initial_data = datas[1,],
     tau = tau
   )$intervention
-  
+  result <- result.all %>% unlist %>% mean
+
+  data <- list(truth = psi, dosl = result.all)
+
+  OutputPlotGenerator.create_convergence_plot(
+    data = data,
+    output = paste('test_convergence_configuration',sep='_')
+  )
+
+  #datas$A <- 1
+  #osl$predict(data = copy(datas), randomVariables, plot= TRUE, sample=TRUE)$denormalized$dosl.estimator$Y%>% mean
+  #osl$predict(data = copy(datas), randomVariables, plot= TRUE, sample=FALSE)
   psi.estimation <- mean(result)
-
   print(paste('Approximation:', psi.approx, 'estimation:', psi.estimation, 'difference:', abs(psi.approx - psi.estimation)))
-
-  expect_lt(abs(psi.approx - psi.estimation), 0.1)
+  expect_lt(abs(psi.approx - psi.estimation), 0.2)
 
 })
 

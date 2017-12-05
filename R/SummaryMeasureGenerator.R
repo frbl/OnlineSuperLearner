@@ -97,6 +97,9 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
           throw('Not enough data provided to support all summary measures')
         }
 
+        data
+        private$SMG.list[[1]]$update(data)
+
         datas <- lapply(private$SMG.list, function(smg) {
           smg$update(copy(data))
         })

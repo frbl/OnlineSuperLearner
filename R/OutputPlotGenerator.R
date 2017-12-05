@@ -237,6 +237,7 @@ OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tm
 #' Function to return a list of colors, depending on the number of variables / colors needed, uses hex for colors
 #' @param number_of_variables the number of colors one requires
 #' @return a list of colors
+#' @export
 OutputPlotGenerator.get_colors = function(number_of_variables) {
   if (number_of_variables > 12 || number_of_variables < 1) {
     return(NULL) 
@@ -257,12 +258,12 @@ OutputPlotGenerator.get_colors = function(number_of_variables) {
   )[[number_of_variables]]
 }
 
-
 #' OutputPlotGenerator.get_simple_colors
 #' Function to return a list of colors, depending on the number of variables / colors needed
 #' @importFrom RColorBrewer brewer.pal.info brewer.pal
 #' @param number_of_variables the number of colors one requires
 #' @return a list of colors
+#' @export
 OutputPlotGenerator.get_simple_colors = function(number_of_variables) {
   if (number_of_variables < 1) {
     return(NULL)
@@ -301,6 +302,7 @@ OutputPlotGenerator.export_key_value = function(key, value, output='variables.da
 #' @param output the name of the file to write the output to
 #' @param oos boolean was oos used 
 #' @param configuration (optional) which simulation configuration was used?
+#' @export
 OutputPlotGenerator.store_oos_osl_difference = function(differences, output, oos, configuration = 0) {
   name <- ifelse(oos, 'post-oos', 'pre-oos')
   for (output_name in names(differences)) {

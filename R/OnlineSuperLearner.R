@@ -229,9 +229,16 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         predict = function(data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE) {
 
           ## Pass the function to the separate class so it won't fill up this class
-          self$get_online_super_learner_predict$predict(osl = self, data = data, randomVariables = randomVariables,
-                                               all_estimators = all_estimators, discrete = discrete, continuous = continuous,
-                                               sample = sample, plot = plot)
+          self$get_online_super_learner_predict$predict(
+            osl = self,
+            data = data,
+            randomVariables = randomVariables,
+            all_estimators = all_estimators,
+            discrete = discrete,
+            continuous = continuous,
+            sample = sample,
+            plot = plot
+          )
 
         },
 
@@ -244,7 +251,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             osl = self,
             randomVariables = randomVariables,
             summary_measure_generator = self$get_summary_measure_generator,
-            remove_future_variables = FALSE
+            remove_future_variables = TRUE
           )
 
           osl_sampler$sample_iteratively(
@@ -318,10 +325,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             ## not affecting our earlier risk score.
             private$cv_risk$dosl.estimator <-
               private$cv_risk_calculator$update_risk(predicted.outcome = predicted.outcome,
-                                                      observed.outcome = observed.outcome,
-                                                      randomVariables  = randomVariables,
-                                                      current_count    = self$get_cv_risk_count-1,
-                                                      current_risk     = self$get_cv_risk())$dosl.estimator
+                                                     observed.outcome = observed.outcome,
+                                                     randomVariables  = randomVariables,
+                                                     current_count    = self$get_cv_risk_count-1,
+                                                     current_risk     = self$get_cv_risk())$dosl.estimator
           }
 
           private$update_historical_cv_risk()

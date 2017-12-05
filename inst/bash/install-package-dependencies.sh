@@ -13,7 +13,7 @@ packages <- c(
 "R.methodsS3",
 "R.oo",
 "testthat",
-#"xgboost",
+"xgboost",
 "glmnet",
 "speedglm",
 "randomForest",
@@ -42,8 +42,8 @@ gh_packages <- list(
   list(repo = "jeroenooms/jsonlite", branch = 'master'),
   list(repo = "osofr/condensier", branch = 'fb-add-update'),
   list(repo = "jimhester/covr", branch = 'master'),
-  list(repo = "n-s-f/mockery", branch = 'master'),
-  list(repo = "dmlc/xgboost/R-package", branch = 'master') #,
+  list(repo = "n-s-f/mockery", branch = 'master')
+  #list(repo = "dmlc/xgboost/R-package", branch = 'master') #,
   #list(repo = 'cran/rkafka', branch = 'master')
 )
 

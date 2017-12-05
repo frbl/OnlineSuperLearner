@@ -19,7 +19,7 @@ OnlineSuperLearner.SampleIteratively <- R6Class("OnlineSuperLearner.SampleIterat
 
       validate_parameters = function(start_from_variable, start_from_time, tau, discrete, return_type, intervention) {
         start_from_variable <- Arguments$getInstanceOf(start_from_variable, 'RandomVariable')
-        randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
+        randomVariables <- Arguments$getInstanceOf(self$get_random_variables, 'list')
         tau <- Arguments$getNumerics(tau, c(1,Inf))
         start_from_time <- Arguments$getNumerics(start_from_time, c(1,tau))
         discrete <- Arguments$getLogical(discrete)
@@ -82,7 +82,7 @@ OnlineSuperLearner.SampleIteratively <- R6Class("OnlineSuperLearner.SampleIterat
 
         ## Initialize the tables in which we will store the results
         result <- data.table()
-        result_denormalized_observations <- data.table(matrix(nrow=0, ncol = length(self$get_random_variables)))
+        result_denormalized_observations <- data.table(matrix(nrow = 0, ncol = length(self$get_random_variables)))
         colnames(result_denormalized_observations) <- names(self$get_random_variables)
 
         ## We need to sample sequentially here, just so we can plugin the value everytime in the next evaluation
@@ -143,7 +143,7 @@ OnlineSuperLearner.SampleIteratively <- R6Class("OnlineSuperLearner.SampleIterat
               next
             }
             ## Set the variables we don't need to NA
-            data[current_time, remove_vars] <- NA
+            data[1, remove_vars] <- NA
             started <- TRUE
           }
 
@@ -209,10 +209,10 @@ OnlineSuperLearner.SampleIteratively <- R6Class("OnlineSuperLearner.SampleIterat
           sample = TRUE
         )
         if(discrete) {
-          return(list(normalized = outcome$denormalized$dosl.estimator,
+          return(list(normalized = outcome$normalized$dosl.estimator,
                       denormalized = outcome$denormalized$dosl.estimator))
         } else {
-          return(list(normalized = outcome$denormalized$osl.estimator,
+          return(list(normalized = outcome$normalized$osl.estimator,
                       denormalized = outcome$denormalized$osl.estimator))
         }
       },
