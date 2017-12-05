@@ -1,51 +1,52 @@
-machine:
-  environment:
-    R_LIBS_USER: ~/lib/R/library
-    PACKAGE_NAME: OnlineSuperLearner
-test:
-  override:
-    - ./inst/bash/check_test_available_for_each_file.sh
-    - R CMD INSTALL --no-multiarch --with-keep.source ~/$PACKAGE_NAME
-    - R CMD build ~/$PACKAGE_NAME
-    - R CMD check ~/$PACKAGE_NAME/$PACKAGE_NAME\_0.0.1.tar.gz --no-manual
-    - Rscript -e 'covr::codecov()'
-  post:
-    - mv $PACKAGE_NAME.Rcheck/tests/testthat.Rout* $CIRCLE_ARTIFACTS/.
-    - mv $PACKAGE_NAME.Rcheck/*.log $CIRCLE_ARTIFACTS/.
-dependencies:
-  cache_directories:
-    - "~/lib/R"
-  pre:
-    # Install the latest R and nlopt version
-    - sudo apt-get -y remove --purge r-base
-    - sudo sh -c 'echo "deb http://cran.rstudio.com/bin/linux/ubuntu trusty/" >> /etc/apt/sources.list'
-    #- sudo apt-key adv --keyserver pgp.mit.edu --recv-keys 5072E1F5 # MySql (https://bugs.mysql.com/bug.php?id=85029)
-    - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9 # R
-    - sudo apt-get update
-    - sudo apt-get -y install r-base libnlopt0
-    # Install the R dependencies
-    - mkdir -p ~/lib/R/library
-    - ./inst/bash/install-package-dependencies.sh
-    - echo "options(repos = c(CRAN='http://cran.r-project.org'))" >> ~/.Rprofile
-
-# USING DOCKER:
+# VANILLA:
 #machine:
   #environment:
     #R_LIBS_USER: ~/lib/R/library
-    #_R_CHECK_FORCE_SUGGESTS_: FALSE
-    #_R_CHECK_ASCII_DATA_: FALSE
-  #services:
-    #- docker
-
-#dependencies:
-  #cache_directories:
-    #- "~/docker"
-  #override:
-    #- if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
-    #- docker build -t frbl/onlinesuperlearner-test -f test.Dockerfile .
-    #- mkdir -p ~/docker; docker save frbl/onlinesuperlearner-test > ~/docker/image.tar
-
+    #PACKAGE_NAME: OnlineSuperLearner
 #test:
   #override:
-    #- docker run frbl/onlinesuperlearner-test
+    #- ./inst/bash/check_test_available_for_each_file.sh
+    #- R CMD INSTALL --no-multiarch --with-keep.source ~/$PACKAGE_NAME
+    #- R CMD build ~/$PACKAGE_NAME
+    #- R CMD check ~/$PACKAGE_NAME/$PACKAGE_NAME\_0.0.1.tar.gz --no-manual
+    #- Rscript -e 'covr::codecov()'
+  #post:
+    #- mv $PACKAGE_NAME.Rcheck/tests/testthat.Rout* $CIRCLE_ARTIFACTS/.
+    #- mv $PACKAGE_NAME.Rcheck/*.log $CIRCLE_ARTIFACTS/.
+#dependencies:
+  #cache_directories:
+    #- "~/lib/R"
+  #pre:
+    ## Install the latest R and nlopt version
+    #- sudo apt-get -y remove --purge r-base
+    #- sudo sh -c 'echo "deb http://cran.rstudio.com/bin/linux/ubuntu trusty/" >> /etc/apt/sources.list'
+    ##- sudo apt-key adv --keyserver pgp.mit.edu --recv-keys 5072E1F5 # MySql (https://bugs.mysql.com/bug.php?id=85029)
+    #- sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9 # R
+    #- sudo apt-get update
+    #- sudo apt-get -y install r-base libnlopt0
+    ## Install the R dependencies
+    #- mkdir -p ~/lib/R/library
+    #- ./inst/bash/install-package-dependencies.sh
+    #- echo "options(repos = c(CRAN='http://cran.r-project.org'))" >> ~/.Rprofile
 
+# USING DOCKER:
+machine:
+  environment:
+    R_LIBS_USER: ~/lib/R/library
+    _R_CHECK_FORCE_SUGGESTS_: FALSE
+    _R_CHECK_ASCII_DATA_: FALSE
+  services:
+    - docker
+
+dependencies:
+  cache_directories:
+    - "~/docker"
+  override:
+    - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
+    - docker build -t frbl/onlinesuperlearner-test -f test.Dockerfile .
+    - mkdir -p ~/docker; docker save frbl/onlinesuperlearner-test > ~/docker/image.tar
+
+test:
+  override:
+    - docker run compsy/skating_predictions-test R CMD check /skatingPredictions/skatingPredictions_1.0-0.tar.gz --no-manual --no-build-vignettes
+    - docker run compsy/skating_predictions-test Rscript -e 'covr::package_coverage()'

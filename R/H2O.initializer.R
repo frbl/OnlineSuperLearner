@@ -1,6 +1,8 @@
 setOldClass("h2o")
+
 #' Function to check whether the h2o cluster is already running
 #' @return boolean TRUE if the cluster is running and FALSE if not.
+#' @export
 H2O.Available <- function() {
   ## TODO: It is bad practice to use this try-catch construction, but I could not find a method that
   ## would just return true false instead of throwing an error.
@@ -27,6 +29,7 @@ H2O.Available <- function() {
 #' @param runlocal boolean whether or not we should start an H2O cluster
 #' @param verbose the verbosity to run with
 #' @return boolean whther the cluster was initialized (TRUE) or was already running (FALSE)
+#' @export
 H2O.Initializer <- function(host = "localhost", port = 54321, runlocal = TRUE, verbose = FALSE) {
   h2o.no_progress()
   if(H2O.Available()) {

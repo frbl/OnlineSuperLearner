@@ -6,6 +6,7 @@
 #' @import parallel
 #' @importFrom R.utils Arguments
 #' @importFrom R.methodsS3 throw
+#' @importFrom data.table data.table as.data.table is.data.table rbindlist copy shift setDT
 #' @import magrittr
 #' @import assertthat
 generalImports <- list()

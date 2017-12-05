@@ -7,7 +7,6 @@ application-roadmap.pdf
 circle.yml
 CONTRIBUTING.md
 OnlineSuperLearner.Rproj
-output
 run.R
 ^README\.md$
 \.gitignore

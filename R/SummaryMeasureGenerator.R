@@ -6,7 +6,6 @@
 #' to the super learner machine learning model.
 #' @docType class
 #' @importFrom R6 R6Class
-#' @import data.table
 #' @include SMG.Mock.R
 #'
 #' @section Methods:

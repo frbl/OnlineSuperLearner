@@ -88,9 +88,13 @@ RandomVariable.get_supported_families <- function() {
   return(c('binomial', 'gaussian'))
 }
 
-# Algorithm to find a possible ordering of the functions.
-# The worst case run time of this algorithm is pretty bad, and can it
-# probably done more efficiently
+#' Algorithm to find a possible ordering of the functions.
+#' The worst case run time of this algorithm is pretty bad, and can it
+#' probably done more efficiently
+#' 
+#' @param randomVariables the random variables to sort
+#' @param verbose (default false) whether or not to be verbose when sorting
+#' @export 
 RandomVariable.find_ordering <- function(randomVariables, verbose=FALSE) {
   dependencies <- list()
   order <- c()
