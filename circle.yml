@@ -48,5 +48,5 @@ dependencies:
 
 test:
   override:
-    - docker run compsy/skating_predictions-test R CMD check /skatingPredictions/skatingPredictions_1.0-0.tar.gz --no-manual --no-build-vignettes
-    - docker run compsy/skating_predictions-test Rscript -e 'covr::package_coverage()'
+    - docker run frbl/onlinesuperlearner-test R CMD check /OnlineSuperLearner/OnlineSuperLearner_0.0.1.tar.gz --no-manual --no-build-vignettes
+    - docker run frbl/onlinesuperlearner-test Rscript -e 'covr::package_coverage()'
