@@ -530,6 +530,53 @@ test_that("it should call the osl predict function", {
   expect_true(called)
 })
 
+test_that("it should pass on the correct discrete value, and return the results of the dosl", {
+  mock_normal_outcome <- list(normalized = list(osl.estimator = 123, dosl.estimator = 111), denormalized = list(osl.estimator = 321, dosl.estimator = 333))
+  discrete <- TRUE
+  cur.osl <- list(predict = function(data, randomVariables, discrete, continuous, all_estimators, sample)  {
+    called <<- TRUE
+    mock_normal_outcome
+  })
+  class(cur.osl) <- 'OnlineSuperLearner'
+
+  subject <- described.class$new(osl = cur.osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+
+  called <<- FALSE
+  result <- subject$perform_sample(
+    data = glob_data[1,],
+    current_rv = rv.W,
+    discrete = discrete
+  )
+
+  expect_true(called)
+  expected <- list(normalized = mock_normal_outcome$normalized$dosl.estimator, 
+                   denormalized = mock_normal_outcome$denormalized$dosl.estimator)
+  expect_equal(result, expected)
+})
+
+test_that("it should pass on the correct discrete value, and return the results of the osl", {
+  mock_normal_outcome <- list(normalized = list(osl.estimator = 123, dosl.estimator = 111), denormalized = list(osl.estimator = 321, dosl.estimator = 333))
+  discrete <- FALSE
+  cur.osl <- list(predict = function(data, randomVariables, discrete, continuous, all_estimators, sample)  {
+    called <<- TRUE
+    mock_normal_outcome
+  })
+  class(cur.osl) <- 'OnlineSuperLearner'
+
+  subject <- described.class$new(osl = cur.osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+
+  called <<- FALSE
+  result <- subject$perform_sample(
+    data = glob_data[1,],
+    current_rv = rv.W,
+    discrete = discrete
+  )
+  expect_true(called)
+  expected <- list(normalized = mock_normal_outcome$normalized$osl.estimator,
+                   denormalized = mock_normal_outcome$denormalized$osl.estimator)
+  expect_equal(result, expected)
+})
+
 context(" create_correct_result")
 #==========================================================
 test_that("it should return the denormalized observations if the return type = observations", {
