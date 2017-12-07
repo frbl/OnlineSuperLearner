@@ -30,22 +30,21 @@ ML.XGBoost <- R6Class("ML.XGBoost",
     list(
       fitfunname='xgboost',
       lmclass='xgboostR6',
-      initialize = function(booster = 'gblinear', nthread = 1, alpha = 0, lambda = 0, rounds = 200, gamma = 0, eta = 0.3, objective = 'binary:logistic', verbose = FALSE) {
+      initialize = function(booster = 'gblinear', max_depth = 6, nthread = 1, alpha = 0, lambda = 0, rounds = 200, gamma = 0, eta = 0.3, objective = 'binary:logistic', verbose = FALSE) {
+
+        if (nthread == -1) nthread <- parallel::detectCores()
 
         private$rounds <- Arguments$getInteger(rounds, c(1, Inf))
-        private$verbosity <- Arguments$getVerbose(verbose)
-        if (nthread == -1) { 
-          nthread <- parallel::detectCores()
-        }
-
         private$params <- list(objective = Arguments$getCharacter(objective),
                               booster = Arguments$getCharacter(booster),
                               nthread = nthread,
+                              max_depth =  Arguments$getNumeric(max_depth, c(1, Inf)),
                               alpha   = Arguments$getNumeric(alpha, c(0, 1)),
                               gamma   = Arguments$getNumeric(gamma, c(0, Inf)),
                               eta     = Arguments$getNumeric(eta, c(1e-10, Inf)),
                               lambda  = Arguments$getNumeric(lambda, c(0, 1)))
 
+        private$verbosity <- Arguments$getVerbose(verbose)
         self$get_validity
         super$initialize()
       }
@@ -60,6 +59,14 @@ ML.XGBoost <- R6Class("ML.XGBoost",
         }
         if(length(errors) > 0) throw(errors)
         TRUE
+      },
+
+      get_rounds = function() {
+        return(private$rounds)
+      },
+
+      get_params = function() {
+        return(private$params)
       }
     ),
   private =
@@ -70,24 +77,23 @@ ML.XGBoost <- R6Class("ML.XGBoost",
 
       do.predict = function(X_mat, m.fit) {
 
-        #result <- ifelse(any(is.na(m.fit$coef)),
-                         #super$do.predict(X_mat, m.fit),
-                         #predict(m.fit$coef, X_mat))
-        if(!('Intercept' %in% colnames(X_mat))) browser()
+        #if(!('Intercept' %in% colnames(X_mat))) browser()
         if (any(is.na(m.fit$coef))) {
           result <- super$do.predict(X_mat, m.fit)
         } else {
-          result <- predict(m.fit$coef, X_mat)
+          result <- predict(m.fit$coef, X_mat, type='response')
         }
         if(any(is.na(result))) browser()
         return(result)
       },
 
       do.update = function(X_mat, Y_vals, m.fit, ...) {
-        # By default the xgbtrain function uses the old model as a parameter. Therefore we can just simply call
-        # the fit function
-        private$do.fit(X_mat, Y_vals, m.fit$coef)
-
+        # By default the xgbtrain function uses the old model as a parameter.
+        # Therefore we can just simply call the fit function
+        if (self$get_params$booster != 'gblinear') {
+          private$params <- modifyList(self$get_params, list(process_type = 'update', updater = 'refresh', refresh_leaf = FALSE))
+        }
+        private$do.fit(X_mat = X_mat, Y_vals = Y_vals, coef = m.fit$coef)
       },
 
       do.fit = function (X_mat, Y_vals, coef = NULL) {
@@ -112,12 +118,16 @@ ML.XGBoost <- R6Class("ML.XGBoost",
           coef <- NULL
         }
 
-        estimator <- xgb.train(data = dtrain,
-                  params     = private$params,
-                  nrounds    = private$rounds,
-                  #watchlist = watchlist,
-                  xgb_model  = coef,
-                  verbose    = private$verbosity)
+        estimator <- xgb.train(
+          data = dtrain,
+          params     = self$get_params,
+          nrounds    = self$get_rounds,
+          #watchlist = watchlist,
+          xgb_model  = coef,
+          verbose    = 0
+        ) #private$verbosity)
+
+        coef
         if(any(is.na(estimator))) browser()
 
         return(estimator)

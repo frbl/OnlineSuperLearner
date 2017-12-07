@@ -66,25 +66,48 @@
 #' }  
 DensityEstimation <- R6Class ("DensityEstimation",
   #class = FALSE,
-  #cloneable = FALSE,
-  #portable = FALSE,
-  private =
+  cloneable = FALSE,
+  portable = FALSE,
+  public =
     list(
-        ## Variables
-        # =========
-        conditional_densities = NULL,
-        data = NULL,
-        nbins = NULL,
-        verbose = NULL,
-        randomVariables = NULL,
-        bin_estimator = NULL,
-        is_online_estimator = NULL,
-        name = NULL,
+        initialize = function(nbins = 30, bin_estimator = NULL, online = FALSE, name = 'default', verbose = FALSE) {
+          private$verbose <- Arguments$getVerbose(verbose)
+          private$is_online_estimator <- Arguments$getLogical(online)
+          private$nbins <- Arguments$getIntegers(as.numeric(nbins), c(1, Inf))
 
-        # Functions
-        # =========
-        predict_probability = function(datO, X, Y, plot = FALSE) {
-          if(!(Y %in% names(datO))) throw('In order to predict the probability of an outcome, we also need the outcome')
+          if (is.null(bin_estimator)) { bin_estimator <- condensier::glmR6$new() }
+          private$bin_estimator <- Arguments$getInstanceOf(bin_estimator, 'logisfitR6')
+          private$conditional_densities <- list()
+          self$set_name(name = name)
+        },
+
+        ##TODO: Implement a way to run the prediction on a subset of outcomes
+        predict = function(data, sample = FALSE, subset = NULL, plot = FALSE, check = FALSE) {
+          if (check) {
+            data <- Arguments$getInstanceOf(data, 'data.table')
+            plot <- Arguments$getLogical(plot)
+            if (is.null(self$get_random_variables) || length(self$get_raw_conditional_densities) == 0) {
+              throw('The conditional_densities need to be fit first!')
+            }
+          }
+
+          results <- lapply(self$get_random_variables, function(rv) {
+            current_outcome <- rv$getY
+
+            ## Return NA if we want to skip this iteration (next is not available in lapply)
+            if (!is.null(subset) && !(current_outcome %in% subset)) return(NA)
+
+            if(sample) {
+              self$sample(datO=data, Y = current_outcome, X = rv$getX, plot = plot)
+            } else {
+              self$predict_probability(datO = data, Y = current_outcome, X = rv$getX, plot = plot, check = check)
+            }
+          }) 
+          results[!is.na(results)]
+        },
+
+        predict_probability = function(datO, X, Y, plot = FALSE, check = FALSE) {
+          if(check && !(Y %in% names(datO))) throw('In order to predict the probability of an outcome, we also need the outcome')
           yValues <- datO[[Y]]
           conditionalDensity <- self$getConditionalDensities(Y)
 
@@ -102,22 +125,29 @@ DensityEstimation <- R6Class ("DensityEstimation",
           ## }
 
           ## Predict the instances where A=A (i.e., the outcome is the outcome)
-          ## NOTE! These estimated probabilities contain NAs whenever an estimator was fitted without any data.
-          estimated_probabilities <- condensier::predict_probability(conditionalDensity, datO)
+          ## NOTE! These estimated probabilities contain NAs whenever an estimator was fitted without any oata.
+
+          estimated_probabilities <- condensier::predict_probability(
+            model_fit = conditionalDensity, 
+            newdata = datO
+          )
+
           ## We undo our fix here:
           ## if(fixed) { estimated_probabilities <- estimated_probabilities[[1]] }
 
           if (plot && length(yValues) > 1) {
-            OutputPlotGenerator.create_density_plot(yValues = yValues, 
-                                        estimated_probabilities = estimated_probabilities, 
-                                        output = paste(self$get_name, Y))
+            OutputPlotGenerator.create_density_plot(
+              yValues = yValues, 
+              estimated_probabilities = estimated_probabilities, 
+              output = paste(self$get_name, Y)
+            )
           }
 
           estimated_probabilities
         },
 
         ## Generates a sample given the provided data.
-        sample = function(datO, X, Y, plot = FALSE) {
+        sample = function(datO, X, Y, plot = FALSE, check = FALSE) {
           ## TODO: Implement sampling from a non conditional distribution
           if(length(X) == 0) throw('Sampling from non conditional distribution is not yet supported!')
 
@@ -134,77 +164,67 @@ DensityEstimation <- R6Class ("DensityEstimation",
           ## }
 
           # Outcome (sampled_data) is a vector of samples
-          sampled_data <- condensier::sample_value(conditionalDensity, datO)
+          sampled_data <- condensier::sample_value(
+            model_fit = conditionalDensity,
+            newdata = datO
+          )
 
           if (plot && length(yValues) > 1) {
-            OutputPlotGenerator.create_density_plot(yValues = yValues, 
-                                        estimated_probabilities = density(sampled_data)$y,
-                                        estimated_y_values = density(sampled_data)$x,
-                                        output = paste(self$get_name, Y))
+            density_for_plot <- density(x = sampled_data)
+            OutputPlotGenerator.create_density_plot(
+              yValues = yValues, 
+              estimated_probabilities = density_for_plot$y,
+              estimated_y_values = density_for_plot$x,
+              output = paste('sampled', self$get_name, Y, sep = '-')
+            )
           }
 
           sampled_data
-        }
-      ),
-  active =
-    list(
-        is_online = function() {
-          return(private$is_online_estimator)
         },
 
-        get_bin_estimator = function() {
-          return(private$bin_estimator)
-        },
-
-        get_nbins = function() {
-          return(private$nbins)
-        },
-
-        get_name = function() {
-          return(private$name)
-        },
-
-        get_estimator_type = function() {
-          list(
-            fitfunname = private$bin_estimator$fitfunname,
-            lmclass = private$bin_estimator$lmclass
-          )
-        }
-      ),
-  public =
-    list(
-        initialize = function(nbins = 30, bin_estimator = NULL, online = FALSE, name = 'default', verbose = FALSE) {
-          private$verbose <- Arguments$getVerbose(verbose)
-          private$is_online_estimator <- Arguments$getLogical(online)
-          private$nbins <- Arguments$getIntegers(as.numeric(nbins), c(1, Inf))
-
-          if (is.null(bin_estimator)) { bin_estimator <- condensier::glmR6$new() }
-          private$bin_estimator <- Arguments$getInstanceOf(bin_estimator, 'logisfitR6')
-          private$conditional_densities <- list()
-          self$set_name(name = name)
-        },
-
-        ##TODO: Implement a way to run the prediction on a subset of outcomes
-        predict = function(data, sample = FALSE, subset = NULL, plot = FALSE) {
-          data <- Arguments$getInstanceOf(data, 'data.table')
-          plot <- Arguments$getLogical(plot)
-
-          if (is.null(private$randomVariables) | length(private$conditional_densities) == 0) {
-            throw('The conditional_densities need to be fit first!')
+        fit = function(datO, randomVariables){
+          if(is.null(self$get_random_variables)) {
+            self$set_random_variables(randomVariables = randomVariables)
           }
 
-          results <- lapply(private$randomVariables, function(rv) {
-            current_outcome <- rv$getY
+          ## Fit conditional density for all of the randomVariables
+          for(rv in private$randomVariables) {
+            ## TODO: Currently it is is not yet possible to sample from an non-conditional distribution!
+            ## OS: Maybe the following hack (its probably not a very good one):
+            ## 1) Fit unconditional density using the same method (histogram) with intercept only GLMs
+            ## 2) Sample from that fit just like conditional density
+            X <- rv$getX
+            Y <- rv$getY
+            family <- rv$getFamily
 
-            ## Return NA if we want to skip this iteration (next is not available in lapply)
-            if (!is.null(subset) && !(current_outcome %in% subset)) return(NA)
-            if(sample) {
-              private$sample(datO=data, Y = current_outcome, X = rv$getX, plot = plot)
-            } else {
-              private$predict_probability(datO = data, Y = current_outcome, X = rv$getX, plot = plot)
+            if(length(X) > 0) {
+              dens_fit <- self$fit_single_rv(
+                datO = datO,
+                X = X,
+                Y = Y,
+                family = family
+              )
+              private$store_conditional_density(Y = Y, density = dens_fit)
             }
-          }) 
-          results[!is.na(results)]
+          }
+          TRUE
+        },
+
+        fit_single_rv = function(datO, X, Y, family) {
+            if (family == 'binomial') {
+              bins <- 2
+            } else {
+              bins <- private$nbins
+            }
+            private$verbose && cat(private$verbose, 'Fitting density: ', Y, ' on ', self$get_name)
+            dens_fit <- condensier::fit_density(
+              X = X,
+              Y = Y,
+              input_data = datO,
+              nbins = bins,
+              bin_estimator = private$bin_estimator
+            )
+            return(dens_fit)
         },
 
         set_random_variables = function(randomVariables) {
@@ -225,39 +245,14 @@ DensityEstimation <- R6Class ("DensityEstimation",
             Y <- rv$getY
             if(length(X) > 0) {
               private$verbose && cat(private$verbose, 'Updating density: ', Y)
-              data_obj <- condensier::DataStore$new(input_data = newdata, Y = Y, X = X, auto_typing = FALSE)
+              data_obj <- private$create_data_store(newdata = newdata, Y = Y, X = X)
               dens_fit <- self$getConditionalDensities(Y)
-              dens_fit$update(newdata = data_obj)
 
-              private$conditional_densities[Y] <- list(dens_fit)
+              ## Update the fit with the new data
+              updated_dens_fit <- dens_fit$update(newdata = data_obj)
+              private$store_conditional_density(Y = Y, density = updated_dens_fit)
             }
           }
-          TRUE
-        },
-
-        fit = function(datO, randomVariables){
-          if(is.null(private$randomVariables)) {
-            self$set_random_variables(randomVariables = randomVariables)
-          }
-
-          ## Fit conditional density for all of the randomVariables
-          lapply(private$randomVariables, function(rv) {
-            ## TODO: Currently it is is not yet possible to sample from an non-conditional distribution!
-            ## OS: Maybe the following hack (its probably not a very good one):
-            ## 1) Fit unconditional density using the same method (histogram) with intercept only GLMs
-            ## 2) Sample from that fit just like conditional density
-            X <- rv$getX
-            Y <- rv$getY
-            if(length(X) > 0) {
-              private$verbose && cat(private$verbose, 'Fitting density: ', Y, ' on ', self$get_name)
-              dens_fit <- condensier::fit_density(X = X,
-                                      Y = Y,
-                                      input_data = datO,
-                                      nbins = private$nbins,
-                                      bin_estimator = private$bin_estimator)
-              private$conditional_densities[Y] <- list(dens_fit)
-            }
-          })
           TRUE
         },
 
@@ -270,14 +265,68 @@ DensityEstimation <- R6Class ("DensityEstimation",
 
           if(!(all(outcome %in% names(private$conditional_densities)))) throw(paste(outcome, 'is not a fitted outcome'))
 
-          if (length(outcome) == 1) {
-            return(private$conditional_densities[[outcome]])
-          }
+          if (length(outcome) == 1) return(private$conditional_densities[[outcome]])
           return(private$conditional_densities[outcome])
         },
 
         set_name = function(name) {
           private$name <- Arguments$getCharacters(name)
+        }
+    ),
+  active =
+    list(
+        is_online = function() {
+          return(private$is_online_estimator)
+        },
+
+        get_random_variables = function() {
+          private$randomVariables
+        },
+
+        get_bin_estimator = function() {
+          return(private$bin_estimator)
+        },
+
+        get_nbins = function() {
+          return(private$nbins)
+        },
+
+        get_name = function() {
+          return(private$name)
+        },
+
+        get_raw_conditional_densities = function() {
+          return(private$conditional_densities)
+        },
+
+        get_estimator_type = function() {
+          list(
+            fitfunname = private$bin_estimator$fitfunname,
+            lmclass = private$bin_estimator$lmclass
+          )
+        }
+      ),
+  private =
+    list(
+        ## Variables
+        # =========
+        conditional_densities = NULL,
+        data = NULL,
+        nbins = NULL,
+        verbose = NULL,
+        randomVariables = NULL,
+        bin_estimator = NULL,
+        is_online_estimator = NULL,
+        name = NULL,
+
+        # Functions
+        # =========
+        store_conditional_density = function(Y, density) {
+          private$conditional_densities[Y] <- list(density)
+        },
+
+        create_data_store = function(newdata, Y, X) {
+          condensier::DataStore$new(input_data = newdata, Y = Y, X = X, auto_typing = FALSE)
         }
 
   )

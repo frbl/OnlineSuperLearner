@@ -2,9 +2,10 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
-#' @import data.table
-#' @import purrr
+#' @importFrom purrr cross_df
+#' @include ML.H2O.R
 #' @include ML.XGBoost.R
+#' @include ML.NeuralNet.R
 #' @include ML.Local.lm.R
 #' @include ML.randomForest.R
 #' @include ML.SVM.R
@@ -31,16 +32,56 @@
 #'   }
 #'}
 LibraryFactory <- R6Class("LibraryFactory",
-  private =
+  public =
     list(
-        ML.models.allowed = NULL,
-        verbose = NULL,
-
-        is_valid_ml_model = function(ML.name) {
-          ## TODO: Test if files actually exist.
+        initialize = function(ML.models.allowed = c('condensier::speedglmR6',
+                                                    'condensier::glmR6',
+                                                    'ML.H2O.gbm',
+                                                    'ML.H2O.glm',
+                                                    'ML.GLMnet',
+                                                    'ML.H2O.randomForest',
+                                                    'ML.randomForest',
+                                                    'ML.SVM',
+                                                    'ML.Local.Speedlm',
+                                                    'ML.Local.lm',
+                                                    'ML.NeuralNet',
+                                                    'ML.XGBoost'), verbose = FALSE) {
+          private$allowed_ml_models = ML.models.allowed
+          private$verbose <- Arguments$getVerbose(verbose)
+          self$get_validity
         },
 
-        create_estimator_grid = function(entry) {
+        fabricate = function(SL.library) {
+          ## If we receive a list, assume that we have to create a parameter grid for each model
+          if(is.a(SL.library, 'list')){
+            fabricatedLibrary <- self$fabricate_grid(SL.library)
+          } else {
+            ## if it is not a list, assume it is a vector or string
+            fabricatedLibrary <- self$fabricate_default(SL.library)
+          }
+
+          # Set a name in each of the fabricated estimators.
+          self$inject_names_in_estimators(fabricatedLibrary)
+          return(fabricatedLibrary)
+        },
+
+        fabricate_grid = function(SL.library) {
+          ## We have to fabricate a grid on two levels, 1st for the algorithm, then for the density estimation
+          ## algotithm_params contains the params for the algorithm
+          ## params contains the params for the density estimation
+
+          ## Create objects for each of the objects
+          ##naming:
+          ## algorithmname-paramname-param
+          instances <- lapply(SL.library, function(entry) {
+            self$check_entry_validity(entry)
+            algorithm_instances <- self$fabricate_single_estimator_from_grid(entry)
+            result <- self$fabricate_single_density_estimator_from_grid(entry, algorithm_instances)
+          })
+          unlist(instances)
+        },
+
+        fabricate_single_estimator_from_grid = function(entry) {
             name <- entry$algorithm
 
             ## If no params are provided, treat the list as a vector
@@ -49,7 +90,7 @@ LibraryFactory <- R6Class("LibraryFactory",
               algorithm_instances <- list(create_object_from_string(entry$algorithm, args = list()))
               names(algorithm_instances) <- name
             } else {
-              algorithm_param_list <- entry$algorithm_params %>% purrr::cross_d()
+              algorithm_param_list <- entry$algorithm_params %>% purrr::cross_df()
               data.table::setDT(algorithm_param_list)
 
               ## Initialize the actual algorithms
@@ -71,13 +112,13 @@ LibraryFactory <- R6Class("LibraryFactory",
             algorithm_instances
         },
 
-        create_density_estimator_grid = function(entry, algorithm_instances) {
+        fabricate_single_density_estimator_from_grid = function(entry, algorithm_instances) {
           result <- lapply(algorithm_instances, function(algorithm_instance) {
               ## We shouldn't do gridsearch when no parameters are specified, just use the defaults
               if (!('params' %in% names(entry))){
                 result <- list('vanillaDE' = DensityEstimation$new(bin_estimator = algorithm_instance))
               } else {
-                param_list <- entry$params %>% purrr::cross_d()
+                param_list <- entry$params %>% purrr::cross_df()
                 data.table::setDT(param_list)
 
                 ## We iterate over the numbers, we still keep the correct names when we pass the list
@@ -103,29 +144,12 @@ LibraryFactory <- R6Class("LibraryFactory",
             unlist(result)
         },
 
-        fabricateGrid = function(SL.library) {
-          ##SL.library <- Arguments$getList(SL.library)
-          ## We have to fabricate a grid on two levels, 1st for the algorithm, then for the density estimation
-          ## algotithm_params contains the params for the algorithm
-          ## params contains the params for the density estimation
-
-          ## Create objects for each of the objects
-          ##naming:
-          ## algorithmname-paramname-param
-          instances <- lapply(SL.library, function(entry) {
-            self$check_entry_validity(entry)
-            algorithm_instances <- private$create_estimator_grid(entry)
-            result <- private$create_density_estimator_grid(entry, algorithm_instances)
-          })
-          unlist(instances)
-        },
-
-        fabricateDefault = function(SL.library) {
+        fabricate_default = function(SL.library) {
           SL.library <- Arguments$getCharacters(SL.library)
 
           ## Create objects for each of the objects
           fabricatedLibrary <- lapply(SL.library, function(entry) {
-            self$check_entry_validity(entry)
+            self$check_entry_validity(SL.library.entry = entry)
 
             bin_estimator <- create_object_from_string(entry, args = list())
             result <- create_object_from_string('DensityEstimation',
@@ -135,98 +159,12 @@ LibraryFactory <- R6Class("LibraryFactory",
           return(fabricatedLibrary)
         },
 
-        inject_names_in_estimators = function(fabricatedLibrary) {
-          # Not a very elegant nor efficient solution, but clear and simple
-          for (i in seq_along(fabricatedLibrary)) {
-            fabricatedLibrary[[i]]$set_name(names(fabricatedLibrary)[[i]])
-          }
-        }
-        ),
-  active =
-    list(
-        get_validity = function() {
-          errors <- character()
-          ## Check if all models are actually ml models
-          ##are.ml.models <- sapply(private$ML.models.allowed, startsWith, 'ML')
-          ##if(!all(are.ml.models)){
-            ##msg <- 'Not all provided models are ML models as models should start with ML, please only use ML models.'
-            ##errors <- c(errors, msg)
-          ##}
-          if (length(errors) == 0) return(TRUE) else throw(errors)
-        }
-        ),
-  public =
-    list(
-        initialize = function(ML.models.allowed = c('condensier::speedglmR6',
-                                                    'condensier::glmR6',
-                                                    'ML.H2O.gbm',
-                                                    'ML.H2O.glm',
-                                                    'ML.GLMnet',
-                                                    'ML.H2O.randomForest',
-                                                    'ML.randomForest',
-                                                    'ML.SVM',
-                                                    'ML.Local.Speedlm',
-                                                    'ML.Local.lm',
-                                                    'ML.XGBoost'), verbose = FALSE) {
-          private$ML.models.allowed = ML.models.allowed
-          private$verbose <- verbose
-          self$get_validity
-        },
-
-        fabricate = function(SL.library) {
-          ## If we receive a list, assume that we have to create a parameter grid for each model
-          if(is.a(SL.library, 'list')){
-            fabricatedLibrary <- private$fabricateGrid(SL.library)
-          } else {
-            ## if it is not a list, assume it is a vector or string
-            fabricatedLibrary <- private$fabricateDefault(SL.library)
-          }
-
-          # Set a name in each of the fabricated estimators.
-          private$inject_names_in_estimators(fabricatedLibrary)
-          return(fabricatedLibrary)
-        },
-
         check_entry_validity = function(SL.library.entry) {
           errors = c()
           if (is.a(SL.library.entry, 'list')) {
-            allowed_entries <- c('algorithm', 'params', 'algorithm_params')
-            for(name in names(SL.library.entry)) {
-              if(!(name %in% allowed_entries)) {
-                errors <- c(errors, paste('Entry in SL specification:', name,'not supported!'))
-              }
-            }
-
-            if('algorithm' %in% names(SL.library.entry)) {
-              if (!(SL.library.entry$algorithm %in% private$ML.models.allowed)) {
-                errors <- c(errors, paste('The model', SL.library.entry$algorithm, 'is not a valid ML model algorithm'))
-              }
-            } else {
-              errors <- c(errors, 'Algorithm not specified')
-            }
-
-            check_valid_params <- function(SL.library.entry, entry_name) {
-              errors <- c()
-              if(entry_name %in% names(SL.library.entry)) {
-                if (!is(SL.library.entry[[entry_name]], 'list')){
-                  errors <- c(errors, paste('The', entry_name, 'entry should be a list'))
-                } else if (is.null(SL.library.entry[[entry_name]])){
-                  errors <- c(errors, paste('If you add a',entry_name,'entry, also add params to it.'))
-                } else if (length(SL.library.entry[[entry_name]]) == 0){
-                  errors <- c(errors, paste('If you add a',entry_name,'entry, also add params to it.'))
-                } else if (!all(unlist(lapply(SL.library.entry[[entry_name]], length)) > 0)) {
-                  errors <- c(errors, paste('If you add a',entry_name,'entry, also add params to it.'))
-                }
-              }
-              errors
-            }
-            errors <- c(errors, check_valid_params(SL.library.entry, 'params'))
-            errors <- c(errors, check_valid_params(SL.library.entry, 'algorithm_params'))
-
+            errors <- self$check_entry_validity_of_list(SL.library.entry)
           } else if (is.character(SL.library.entry)) {
-            if (!(SL.library.entry %in% private$ML.models.allowed)) {
-              errors <- c(errors, paste('The model', SL.library.entry, 'is not a valid ML model algorithm'))
-            }
+            errors <- self$check_entry_validity_of_character(SL.library.entry)
           } else {
             errors <- c(errors, 'Entry is not a character nor a list')
           }
@@ -235,6 +173,85 @@ LibraryFactory <- R6Class("LibraryFactory",
             message <- paste('The entry', paste(SL.library.entry, collapse=' '), 'is not specified correctly:', errors)
             throw(message)
           }
+        }, 
+
+        check_entry_validity_of_character = function(SL.library.entry) {
+          errors = c()
+          if (!(SL.library.entry %in% self$get_allowed_ml_models)) {
+            errors <- c(errors, paste('The model', SL.library.entry, 'is not a valid ML model algorithm'))
+          }
+          errors
+        },
+
+        check_entry_validity_of_list = function(SL.library.entry) {
+          errors = c()
+
+          ## Check the arguments in the entry
+          allowed_entries <- c('algorithm', 'params', 'algorithm_params')
+          for(name in names(SL.library.entry)) {
+            if(!(name %in% allowed_entries)) {
+              errors <- c(errors, paste('Entry in SL specification:', name,'not supported!'))
+            }
+          }
+
+          ## Check the algorithm validity
+          if('algorithm' %in% names(SL.library.entry)) {
+            if (!(SL.library.entry$algorithm %in% self$get_allowed_ml_models)) {
+              errors <- c(errors, paste('The model', SL.library.entry$algorithm, 'is not a valid ML model algorithm'))
+            }
+          } else {
+            errors <- c(errors, 'Algorithm not specified')
+          }
+
+          ## Create inner function, as this one is both used for the params and the algorithm params
+          check_valid_params <- function(SL.library.entry, entry_name) {
+            errors <- c()
+            if(entry_name %in% names(SL.library.entry)) {
+              if (!is(SL.library.entry[[entry_name]], 'list')){
+                errors <- c(errors, paste('The', entry_name, 'entry should be a list'))
+              } else if (length(SL.library.entry[[entry_name]]) == 0){
+                errors <- c(errors, paste('If you add a',entry_name,'entry, also add params to it.'))
+              } else if (!all(unlist(lapply(SL.library.entry[[entry_name]], length)) > 0)) {
+                errors <- c(errors, paste('If you add a',entry_name,'entry, also add params to it.'))
+              }
+            }
+            errors
+          }
+          errors <- c(errors, check_valid_params(SL.library.entry, 'params'))
+          errors <- c(errors, check_valid_params(SL.library.entry, 'algorithm_params'))
+        },
+
+        inject_names_in_estimators = function(fabricatedLibrary) {
+          # Not a very elegant nor efficient solution, but clear and simple
+          for (i in seq_along(fabricatedLibrary)) {
+            fabricatedLibrary[[i]]$set_name(names(fabricatedLibrary)[[i]])
+          }
         }
-  )
+  ),
+  active =
+    list(
+        get_validity = function() {
+          errors <- character()
+          ## Check if all models are actually ml models
+          ##are.ml.models <- sapply(private$allowed_ml_models, startsWith, 'ML')
+          ##if(!all(are.ml.models)){
+            ##msg <- 'Not all provided models are ML models as models should start with ML, please only use ML models.'
+            ##errors <- c(errors, msg)
+          ##}
+          if (length(errors) == 0) return(TRUE) else throw(errors)
+        },
+
+        get_allowed_ml_models = function() {
+          return(private$allowed_ml_models)
+        }
+        ),
+  private =
+    list(
+        allowed_ml_models = NULL,
+        verbose = NULL,
+
+        is_valid_ml_model = function(ML.name) {
+          ## TODO: Test if files actually exist.
+        }
+    )
 )

@@ -127,6 +127,34 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
           opt$par <- c(par, 1-sum(par))
         }
         return(opt)
+      }
+    ),
+  public =
+    list(
+      initialize = function(weights.initial, function_to_optimize = NULL, epsilon = 1e-6, verbose = FALSE) {
+        private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
+        super$initialize(weights.initial)
+        if (is.null(function_to_optimize)) {
+          function_to_optimize <- function(alpha, data) {
+            -2 * t(alpha) %*% data$Qa + t(alpha) %*% data$Qb %*% alpha
+          }
+          #function_to_optimize <- function(alpha, data) {
+            #Z <- data$Z %*% alpha
+            #Y <- data$Y
+            ##Z <- sapply(Z, function(x) min(x, 0.9999))
+            ##browser()
+            #browser()
+            #print( Y %*% log((Z)) + (1- Y) %*% log((1 - Z)))
+            #Y %*% log((Z)) + (1- Y) %*% log((1 - Z))
+          #}
+        }
+
+        function_mode <- mode(function_to_optimize)
+        if (function_mode != "function") {
+          throw("Mode of 'fun' should be 'function', not ", function_mode)
+        }
+        private$function_to_optimize <- function_to_optimize 
+        private$epsilon <- Arguments$getNumeric(epsilon, c(0, 0.1/length(private$weights))) ## say
       },
 
       # Z and Y are always matrices
@@ -160,34 +188,6 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
 
         names(private$weights) <- libraryNames
         invisible(self)
-      }
-    ),
-  public =
-    list(
-      initialize = function(weights.initial, function_to_optimize = NULL, epsilon = 1e-3, verbose = FALSE) {
-        private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
-        super$initialize(weights.initial)
-        if (is.null(function_to_optimize)) {
-          function_to_optimize <- function(alpha, data) {
-            -2 * t(alpha) %*% data$Qa + t(alpha) %*% data$Qb %*% alpha
-          }
-          #function_to_optimize <- function(alpha, data) {
-            #Z <- data$Z %*% alpha
-            #Y <- data$Y
-            ##Z <- sapply(Z, function(x) min(x, 0.9999))
-            ##browser()
-            #browser()
-            #print( Y %*% log((Z)) + (1- Y) %*% log((1 - Z)))
-            #Y %*% log((Z)) + (1- Y) %*% log((1 - Z))
-          #}
-        }
-
-        function_mode <- mode(function_to_optimize)
-        if (function_mode != "function") {
-          throw("Mode of 'fun' should be 'function', not ", function_mode)
-        }
-        private$function_to_optimize <- function_to_optimize 
-        private$epsilon <- Arguments$getNumeric(epsilon, c(0, 0.1/length(private$weights))) ## say
       }
     )
 )

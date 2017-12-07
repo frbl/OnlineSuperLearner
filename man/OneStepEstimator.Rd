@@ -14,7 +14,7 @@ them towards this parameter of interest. In order to use the OOS, one has to sol
 equation, which can be done using a Monte-Carlo approximation.  The process of Monte-Carlo approximating the
 efficient influence curve consists of two main steps: (i) compute the so-called `\emph{h}-ratios', and (ii) compute a
 number of conditional expectations. This procedure is implemented in this class and can be started by calling the
-\core{perform} method of an instance of this class.
+\code{perform} method of an instance of this class.
 }
 \section{Methods}{
  
@@ -26,7 +26,7 @@ number of conditional expectations. This procedure is implemented in this class 
     @param randomVariables a list of random variables used for fitting the OSL
     @param N the number of measurements in a timeseries
     @param B the number of iterations we should do while sampling from the conditional expectations
-    @param pre_processor the \core{PreProcessor} object used to normalize the data.
+    @param pre_processor the \code{PreProcessor} object used to normalize the data.
     @param discrete = TRUE whether we should use the discrete (true) or continuous (false) super learner 
   } 
 
@@ -54,14 +54,12 @@ number of conditional expectations. This procedure is implemented in this class 
     list, we have another list for each outcome measure, as indexed using their prediction formulae.
   } 
 
-  \item{\code{evaluation_of_conditional_expectations(h_ratio_predictors, variable_of_interest, data, tau}}{ 
+  \item{\code{evaluation_of_conditional_expectations(data, h_ratio_predictors}}{ 
     In this function one can perform the second step of OOS, calculate the conditional expectations / difference in
     conditional expectations. 
+    @param data the data to seed the sampling procedure and thereby conditional expectation evaluation. 
     @param h_ratio_predictors the list of predictors, in a format returned using the \code{get_h_ratio_estimators}
     format.
-    @param variable_of_interest the variable we are currently interested in (the outcome variable, Y).
-    @param data the data to seed the sampling procedure and thereby conditional expectation evaluation. 
-    @param tau the time till which we have to sample.
   } 
 
 }

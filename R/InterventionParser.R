@@ -9,6 +9,7 @@
 #' @param current_outcome the current random variable
 #' @param check boolean perform checks on the input variables
 #' @return a list with when, what and if an intervention should be given at this time (\code{list(when, what, should_intervene)})
+#' @export
 InterventionParser.parse_intervention <- function(intervention, current_time, current_outcome, check = FALSE) {
   when <- -1
   what <- -1
@@ -39,6 +40,7 @@ InterventionParser.parse_intervention <- function(intervention, current_time, cu
 #' 
 #' @param intervention the intervention to give \code{list(variable, when, what)}
 #' @return the first ever time at which an intervention is given
+#' @export
 InterventionParser.first_intervention <- function(intervention) {
   when = -1
   if (is.null(intervention)) {
@@ -53,6 +55,7 @@ InterventionParser.first_intervention <- function(intervention) {
 #'
 #' @param intervention the intervention to check the validity of
 #' @return boolean true if valid, false if not
+#' @export
 InterventionParser.valid_intervention <- function(intervention) {
   if (!is(intervention, 'list')) return(FALSE) 
   is.numeric(intervention$when) &&
@@ -70,12 +73,17 @@ InterventionParser.valid_intervention <- function(intervention) {
 #' @param variables the variables to create the intervention for (a list of all intervention nodes)
 #' @param variable_intervened the variable to perform the intervention on
 #' @param when integer when the intervention should take place
-#' @param when integer when the intervention should take place
+#' @param what integer hat the intervention should be
 #' @export
 InterventionParser.generate_intervention <- function(variables, variable_intervened, when, what) {
-  what <- lapply(variables, function(a) {
-    ifelse(a == variable_intervened, what, 1 - what) 
-  }) %>% unlist
+  # If no what is given, make them all 0
+  if(is.null(variable_intervened)) {
+    what <- rep(0, length(variables))
+  } else {
+    what <- lapply(variables, function(a) {
+      ifelse(a == variable_intervened, what, 1 - what) 
+    }) %>% unlist
+  }
   list(variable = variables, when = rep(when, length(variables)), what = what)
 }
 
@@ -86,6 +94,7 @@ InterventionParser.generate_intervention <- function(variables, variable_interve
 #' @param intervention the specified intervention
 #' @param current_rv_output the current randomvariable output
 #' @return boolean, whether this is a treatment node
+#' @export
 InterventionParser.is_current_node_treatment = function(current_time, intervention, current_rv_output) {
   if (intervention$variable != current_rv_output) return(FALSE)
   if (!(current_time %in% intervention$when)) return(FALSE)

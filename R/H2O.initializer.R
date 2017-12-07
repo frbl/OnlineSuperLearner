@@ -1,33 +1,8 @@
 setOldClass("h2o")
 
-#' This function is used to initialize the H2O cluster.  Idealy I'd like to use a singletonpattern for this, but this also works.
-#'
-#' @import h2o
-#' @param host the host on which H2O is or should be running
-#' @param port the port for that host
-#' @param runlocal boolean whether or not we should start an H2O cluster
-#' @param verbose the verbosity to run with
-#' @return boolean whther the cluster was initialized (TRUE) or was already running (FALSE)
-H2O.Initializer <- function(host = "localhost", port = 54321, runlocal = TRUE, verbose = FALSE) {
-  h2o.no_progress()
-  if(H2O.Available()) {
-    verbose && cat(verbose, 'Cluster is up, not initializing.')
-    return(FALSE)
-  }
-  verbose && enter(verbose, 'Initializing cluster...')
-  GlobalH2OCluster <- h2o.init(ip = host,
-                               port = port,
-                               startH2O = runlocal)
-
-  if(!h2o.clusterIsUp()) {
-    throw('Connecting to cluster failed, at host', host)
-  }
-  verbose && exit(verbose)
-  return(TRUE)
-}
-
 #' Function to check whether the h2o cluster is already running
 #' @return boolean TRUE if the cluster is running and FALSE if not.
+#' @export
 H2O.Available <- function() {
   ## TODO: It is bad practice to use this try-catch construction, but I could not find a method that
   ## would just return true false instead of throwing an error.
@@ -38,12 +13,39 @@ H2O.Available <- function() {
     }
     return(TRUE) 
   }, warning = function(e) {
-    print('Warning!')
+    warning(e)
     return(FALSE) 
   }, error = function(e) {
     return(FALSE) 
   })
   return(result)
+}
+
+#' This function is used to initialize the H2O cluster.  Idealy I'd like to use a singletonpattern for this, but this also works.
+#'
+#' @import h2o
+#' @param host the host on which H2O is or should be running
+#' @param port the port for that host
+#' @param runlocal boolean whether or not we should start an H2O cluster
+#' @param verbose the verbosity to run with
+#' @return boolean whther the cluster was initialized (TRUE) or was already running (FALSE)
+#' @export
+H2O.Initializer <- function(host = "localhost", port = 54321, runlocal = TRUE, verbose = FALSE) {
+  h2o.no_progress()
+  if(H2O.Available()) {
+    verbose && cat(verbose, 'Cluster is up, not initializing.')
+    return(FALSE)
+  }
+  verbose && enter(verbose, 'Initializing cluster...')
+  h2o.init(
+    ip = host,
+    port = port,
+    startH2O = runlocal
+  )
+
+  if(!h2o.clusterIsUp()) throw('Connecting to cluster failed, at host ', host)
+  verbose && exit(verbose)
+  return(TRUE)
 }
 
 ##H2O.Initializer <-

@@ -7,25 +7,38 @@
 #
 # Validate your .travis.yml file at http://lint.travis-ci.org/
 #----------------------------------------------------------------
+
 language: r
-os:
-  - linux
-
-r_build_args: "--no-build-vignettes --no-manual"
-
-dist: trusty
-sudo: required
+#dist: trusty
+# Sudo is disabled for the package cache, see https://docs.travis-ci.com/user/languages/r/
+sudo: false
 cache: packages
 warnings_are_errors: false
-latex: true
+latex: false
+os:
+  - linux
+r_build_args: "--no-build-vignettes --no-manual"
+
+#before_install:
+  #- Rscript -e 'update.packages(ask = FALSE)'
 
 addons:
   apt:
     packages:
       - libnlopt0
 
+r_packages:
+  - covr
+
+r:
+  - release
+
+r_github_packages:
+  - jimhester/covr
+  - schloerke/travisDrat
+
 after_success:
-  - Rscript -e 'library(covr);coveralls()'
+  - Rscript -e 'covr::codecov()'
 
 on_failure:
   - ./travis-tool.sh dump_logs
@@ -34,3 +47,4 @@ notifications:
   email:
     on_success: change
     on_failure: change
+

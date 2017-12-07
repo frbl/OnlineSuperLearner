@@ -3,15 +3,23 @@
 \name{ConstrainedGlm.fit}
 \alias{ConstrainedGlm.fit}
 \title{Constrained logistic regression
-In this function we create a regression for which the predicted probabilities are contstrained. That is, they can not be
-less than a minimum of delta, or a maxiumum of 1 - delta.}
+In this function we create a regression for which the predicted
+probabilities are contstrained. That is, they can not be less than a minimum
+of delta, or a maxiumum of 1 - delta.}
 \usage{
-ConstrainedGlm.fit(formula, delta, data, fall_back_to_glm = TRUE, ...)
+ConstrainedGlm.fit(formula, delta, data, fall_back_to_glm = TRUE,
+  previous_glm = NULL, ...)
 }
 \arguments{
 \item{formula}{the formula to use for the regression}
 
 \item{delta}{the threshold used for constraining the probabilities}
+
+\item{data}{the data to train the glm on}
+
+\item{fall_back_to_glm}{boolean should we fall back to traditional glm}
+
+\item{previous_glm}{glm object. A previously trained GLM instance, so it can be updated}
 
 \item{...}{the other arguments passed to GLM}
 }
@@ -20,6 +28,7 @@ a fitted glm
 }
 \description{
 Constrained logistic regression
-In this function we create a regression for which the predicted probabilities are contstrained. That is, they can not be
-less than a minimum of delta, or a maxiumum of 1 - delta.
+In this function we create a regression for which the predicted
+probabilities are contstrained. That is, they can not be less than a minimum
+of delta, or a maxiumum of 1 - delta.
 }

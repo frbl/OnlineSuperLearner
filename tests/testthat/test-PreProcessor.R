@@ -15,21 +15,41 @@ test_that("it should initialize", {
 })
 
 context(" normalize")
+#------------------------------------------------------#
+test_that("it should throw if the provided data is not a data.table", {
+  wrong_datas <- list(NULL, list(), 'a')
+  subject <- described.class$new(bounds = list('123'))
+  error_message <- "Argument 'data' is neither of nor inherits class data.table"
+  lapply(wrong_datas, function(data) { 
+    expect_error(subject$normalize(data), error_message) 
+  }) 
+})
 
 test_that("it should normalize data according to the provided bounds", {
   data <- data.table(
                     Y =c(1,2,3,4,1,23,4,2,13,4),
-                    A =c(2,2,3,4,1,23,4,2,13,4)*10,
-                    W =c(3,2,3,4,1,23,4,2,13,4)*100
+                    A =c(1,2,3,4,1,23,4,2,13,4)*10,
+                    W =c(1,2,3,4,1,23,4,2,13,4)*1230
                     )
   bounds <- PreProcessor.generate_bounds(data)
 
   subject <- described.class$new(bounds = bounds)
   res <- subject$normalize(data)
 
+  ## All results should be between 0 and 1.
   for(name in colnames(data)) {
     expect_equal(min(res[, name, with=FALSE]), 0)
     expect_equal(max(res[, name, with=FALSE]), 1)
+  }
+
+  ## Besides being between 0 and 1, they should be equal to each other.
+  for(name1 in colnames(data)) {
+    for(name2 in colnames(data)) {
+      if(name1 == name2) next
+      res1 <- res[, name1, with=FALSE] %>% unlist %>% unname
+      res2 <- res[, name2, with=FALSE] %>% unlist %>% unname
+      expect_equal(res1, res2)
+    }
   }
 })
 
@@ -55,30 +75,31 @@ test_that("it should work with multi dimensional data when bounds are provided f
   expect_equal(res[,not_changed, with=FALSE], expected_not_changed)
 })
 
+context(" denormalize")
+#------------------------------------------------------#
 test_that("it should throw if the provided data is not a data.table", {
   wrong_datas <- list(NULL, list(), 'a')
   subject <- described.class$new(bounds = list('123'))
   error_message <- "Argument 'data' is neither of nor inherits class data.table"
   lapply(wrong_datas, function(data) { 
-    expect_error(subject$normalize(data), error_message) 
+    expect_error(subject$denormalize(data), error_message) 
   }) 
 })
 
-context(" denormalize")
 test_that("it should denormalize data according to the provided bounds", {
-data <- data.table(
-                    Y =c(1,2,3,4,1,23,4,2,13,4),
-                    A =c(2,2,3,4,1,23,4,2,13,4)*10,
-                    W =c(3,2,3,4,1,23,4,2,13,4)*100
-                    )
+  data <- data.table(
+    Y =c(1,2,3,4,1,23,4,2,13,4),
+    A =c(2,2,3,4,1,23,4,2,13,4)*10,
+    W =c(3,2,3,4,1,23,4,2,13,4)*100
+  )
   bounds <- PreProcessor.generate_bounds(data)
   subject <- described.class$new(bounds = bounds)
   res <- subject$normalize(data) %>% subject$denormalize(.)
   expect_equal(res, data)
 })
 
-
 context(" get_bounds")
+#------------------------------------------------------#
 test_that("it should return the bounds provided to it on initialization", {
   bounds <- list(1)
   subject <- described.class$new(bounds)
@@ -86,11 +107,12 @@ test_that("it should return the bounds provided to it on initialization", {
 })
 
 context(" PreProcessor.generate_bounds")
+#------------------------------------------------------#
 data <- data.table(
-                    Y =c(1,2,3,4,1,23,4,2,13,4),
-                    A =c(2,2,3,4,1,23,4,2,13,4)*10,
-                    W =c(3,2,3,4,1,23,4,2,13,4)*100
-                    )
+  Y =c(1,2,3,4,1,23,4,2,13,4),
+  A =c(2,2,3,4,1,23,4,2,13,4)*10,
+  W =c(3,2,3,4,1,23,4,2,13,4)*100
+)
 test_that("it should generate bounds with the correct entries", {
   bounds <- PreProcessor.generate_bounds(data)
   expect_equal(names(bounds), names(data))

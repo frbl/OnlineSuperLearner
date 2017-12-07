@@ -1,5 +1,7 @@
 context("InterventionParser.R")
+
 context(" InterventionParser.parse_intervention")
+#==========================================================
 test_that("it should parse the intervention and return the correct elements in a list", {
   intervention <- list()
   intervention$variable <- c('A','B','C','A')
@@ -111,7 +113,35 @@ test_that("it should return a list and should not intervene if the intervention 
   expect_equal(result$what, -1)
 })
 
+test_that("it should raise if the provided intervention is not a list and check is true", {
+  expect_error(InterventionParser.parse_intervention(
+      intervention = 'not a list!', 
+      current_time= 100,
+      current_outcome = 'A',
+      check = TRUE
+    ), "Argument 'intervention' is neither of nor inherits class list: character",
+    fixed = TRUE)
+})
+
+test_that("it should raise if the provided current_time is not an integer and check is true", {
+  expect_error(InterventionParser.parse_intervention(
+      intervention = list(), 
+      current_time = list(),
+      current_outcome = 'A',
+      check = TRUE
+    ), "Argument 'current_time' should be a single value not 0 values.", fixed = TRUE)
+})
+
+test_that("it should raise if the provided current_outcome is not a character and check is true", {
+  expect_error(InterventionParser.parse_intervention(
+    intervention = list(), 
+    current_time= 100,
+    current_outcome = glm,
+    check = TRUE), "cannot coerce type 'closure' to vector of type 'character'", fixed = TRUE)
+})
+
 context(" InterventionParser.valid_intervention")
+#==========================================================
 test_that("it should return -1 if no intervention is provided", {
   result <- InterventionParser.first_intervention(NULL)
 
@@ -129,6 +159,7 @@ test_that("it should should find the first intervention in the list and return t
 })
 
 context(' InterventionParser.valid_intervention')
+#==========================================================
 test_that("it should return true when an intervention is valid", {
   intervention <- list(variable = 'A',when = c(2), what = c(1))
   expect_true(InterventionParser.valid_intervention(intervention))
@@ -161,6 +192,7 @@ test_that("it should return false if any of the keys is missing", {
 })
 
 context(" InterventionParser.generate_intervention")
+#==========================================================
 test_that("it should generate an intervention based on the provided when and what for one of the variables", {
   variables <- c('A', 'B', 'C')
   variable_intervened <- 'A'
@@ -177,6 +209,7 @@ test_that("it should generate an intervention based on the provided when and wha
 })
 
 context(" InterventionParser.is_current_node_treatment")
+#==========================================================
 test_that("it should return true if the current node is a treatment node", {
   intervention <- list(variable = 'A',when = c(2))
   result <- InterventionParser.is_current_node_treatment(current_time=2, 

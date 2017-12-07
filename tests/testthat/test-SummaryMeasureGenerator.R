@@ -2,6 +2,7 @@ context("SummaryMeasureGenerator.R")
 described.class <- SummaryMeasureGenerator
 
 context(" initialize")
+#==========================================================
 test_that("it should only require SMG.list as a required parameter", {
   mylist <- c(SMG.Mock$new())
   subject <- described.class$new(SMG.list = mylist)
@@ -16,7 +17,7 @@ test_that("it should set the minimal measurements needed correctly", {
     mylist <- append(mylist, SMG.Mock$new(minimalObservations = i))
   }
   subject <- described.class$new(SMG.list = mylist)
-  expect_equal(subject$minimal.measurements.needed, (max - 1))
+  expect_equal(subject$get_minimal_measurements_needed, (max - 1))
 })
 
 test_that("it should throw when pre_processor is set but are not a pre_processor", {
@@ -44,6 +45,7 @@ test_that("it should set normalized to true and the pre_processor whenever a pre
 dataset <- data.table(Y= (seq(1,10)%%2) , A=rep(1,10), W=seq(10,1))
 
 context(" reset")
+#==========================================================
 test_that("it should reset the cache", {
   # Not testable without mocking, or using the fillCache as a proxy for checking
   data <- Data.Static$new(dataset = dataset)
@@ -51,16 +53,27 @@ test_that("it should reset the cache", {
 
   subject <- described.class$new(SMG.list = mylist, data = data)
   expect_true(subject$fillCache())
+  expect_false(equals(nrow(subject$getCache), 0))
   expect_false(subject$fillCache())
 
   # Resetting should clear the cache
   subject$reset()
+  expect_equal(nrow(subject$getCache), 0)
   expect_true(subject$fillCache())
 })
 
 context(" setData")
+#==========================================================
 test_that("it should reset the summarizer", {
-  # Not testable without mocking, or using the fillCache as a proxy for checking
+  mylist <- c(SMG.Mock$new(2))
+
+  subject <- described.class$new(SMG.list = mylist)
+  stub(subject$setData, 'self$reset', function() {
+    called <<- TRUE
+  })
+  called <<- FALSE
+  subject$setData(data.table(a = c(1,2,3,4)))
+  expect_true(called)
 })
 
 test_that("it should should set the correct data", {
@@ -68,16 +81,25 @@ test_that("it should should set the correct data", {
 
   mylist <- c(SMG.Mock$new())
   subject <- described.class$new(SMG.list = mylist)
-  expect_error(subject$getNext(),'Please set the data of the summary measure generator first')
+  expect_null(subject$get_data_object)
   subject$setData(data)
-  expect_error(subject$getNext(),NA)
+  expect_false(is.null(subject$get_data_object))
 })
 
 context(" fillCache")
+#==========================================================
 test_that("it should throw if there is no data set", {
   mylist <- c(SMG.Mock$new())
   subject <- described.class$new(SMG.list = mylist)
   expect_error(subject$fillCache(), 'Please set the data of the summary measure generator first')
+})
+
+test_that("it should return false if no data is needed", {
+  data <- Data.Static$new(dataset = dataset)
+  mylist <- c(SMG.Mock$new())
+  subject <- described.class$new(data = data, SMG.list = mylist)
+  subject$set_minimal_measurements_needed(0)
+  expect_false(subject$fillCache())
 })
 
 test_that("it should fill the cache with the correct number of measurments", {
@@ -115,7 +137,141 @@ test_that("it should normalize the data provided to it, if a pre_processor is av
   expect_true(min(subject$getCache) >= 0)  
 })
 
+test_that("it should reset the cache whenever we notice that there is a new timeseries", {
+  data <- Data.Static$new(dataset = dataset)
+  mylist <- c(SMG.Mock$new(2))
+  ## +10 so its way more than the dataset
+  subject <- described.class$new(SMG.list = mylist, data = data, number_of_observations_per_timeseries = nrow(dataset))
+  expect_true(subject$is_new_timeseries)
+
+  stub(subject$fillCache, 'self$reset', function() {
+    called <<- TRUE
+  })
+  called <<- FALSE
+  subject$fillCache()
+  expect_true(called)
+})
+
+context(" getLatestCovariates")
+#==========================================================
+test_that("it should should throw if the nrow of data is not equal to 1", {
+  data <- Data.Static$new(dataset = dataset)
+  mylist <- c(SMG.Mock$new(2))
+  subject <- described.class$new(SMG.list = mylist, data = data)
+  data <- data.table(a = c(1,2,3,4))
+  expect_error(subject$getLatestCovariates(data), 'Not enough data provided to support all summary measures')
+})
+
+test_that("it should call the update of all SMG", {
+  data_stat <- Data.Static$new(dataset = dataset)
+
+  CALLED1 <<- FALSE
+  CALLED2 <<- FALSE
+  CALLED3 <<- FALSE
+  
+  mylist <- list(
+    list(minimalObservations = 1, update = function(data) { CALLED1 <<- TRUE; return(data) }),
+    list(minimalObservations = 1, update = function(data) { CALLED2 <<- TRUE; return(data) }),
+    list(minimalObservations = 1, update = function(data) { CALLED3 <<- TRUE; return(data) })
+  )
+
+  subject <- described.class$new(SMG.list = mylist, data = data_stat)
+  data <- data.table(a = c(1))
+  subject$getLatestCovariates(data)
+
+  expect_true(CALLED1)
+  expect_true(CALLED2)
+  expect_true(CALLED3)
+})
+
+test_that("it should return the results of all SMGS in a datatable", {
+  data_stat <- Data.Static$new(dataset = dataset)
+  
+  mylist <- list(
+    list(minimalObservations = 1, update = function(data) { return(data + 1) }),
+    list(minimalObservations = 1, update = function(data) { return(data + 2) }),
+    list(minimalObservations = 1, update = function(data) { return(data + 3) })
+  )
+
+  subject <- described.class$new(SMG.list = mylist, data = data_stat)
+  data <- data.table(a = c(1))
+  result <- subject$getLatestCovariates(data)
+  expect_is(result, 'data.table')
+  expect_equal(result, data.table(a=2,a=3,a=4))
+})
+
+context(" summarizeData")
+#==========================================================
+test_that("it should return the provided data if not enough data is available for all summary measures", {
+  data <- Data.Static$new(dataset = data.table(a=2,a=3,a=4))
+  needed <- 3
+  mylist <- c(SMG.Mock$new(needed))
+  subject <- described.class$new(SMG.list = mylist, data = data)
+  result <- subject$summarizeData(dataset[1,])
+  expect_equal(result, dataset[1,])
+})
+
+test_that("it should call the process function for each of the summary measure generators", {
+  data_stat <- Data.Static$new(dataset = dataset)
+
+  CALLED1 <<- FALSE
+  CALLED2 <<- FALSE
+  CALLED3 <<- FALSE
+  
+  mylist <- list(
+    list(minimalObservations = 1, process = function(data) { CALLED1 <<- TRUE; return(data) }),
+    list(minimalObservations = 1, process = function(data) { CALLED2 <<- TRUE; return(data) }),
+    list(minimalObservations = 1, process = function(data) { CALLED3 <<- TRUE; return(data) })
+  )
+
+  subject <- described.class$new(SMG.list = mylist, data = data_stat)
+  data <- data.table(a = c(1))
+  subject$summarizeData(data)
+
+  expect_true(CALLED1)
+  expect_true(CALLED2)
+  expect_true(CALLED3)
+})
+
+test_that("it should return a datatable with all results", {
+  data_stat <- Data.Static$new(dataset = dataset)
+
+  mylist <- list(
+    list(minimalObservations = 1, process = function(data) { return(data + 1) }),
+    list(minimalObservations = 1, process = function(data) { return(data + 2) }),
+    list(minimalObservations = 1, process = function(data) { return(data + 3) })
+  )
+
+  subject <- described.class$new(SMG.list = mylist, data = data_stat)
+  data <- data.table(a = c(1))
+  result <- subject$summarizeData(data)
+  expect_is(result, 'data.table')
+  expect_equal(result, data.table(a=2,a=3,a=4))
+})
+
+test_that("it should return the correct number of entries from the tail of the dataset", {
+  data_stat <- Data.Static$new(dataset = dataset)
+
+  mylist <- list(
+    list(minimalObservations = 1, process = function(data) { return(data + 1) }),
+    list(minimalObservations = 1, process = function(data) { return(data + 2) }),
+    list(minimalObservations = 1, process = function(data) { return(data + 3) })
+  )
+
+  subject <- described.class$new(SMG.list = mylist, data = data_stat)
+  a_data <- c(1, 2, 3, 4, 5, 6, 7)
+  n <- 4
+  data <- data.table(a = a_data)
+  result <- subject$summarizeData(data, n = n)
+  expect_is(result, 'data.table')
+  expect_equal(nrow(result), n)
+  expect_equal(result, data.table(a = (a_data[4:7]+1),
+                                  a = (a_data[4:7]+2),
+                                  a = (a_data[4:7]+3)))
+})
+
 context(" getNext")
+#==========================================================
 test_that("it should return the measurements requested without params", {
   data <- Data.Static$new(dataset = dataset)
 
@@ -218,6 +374,7 @@ test_that("it should scale the data if scaling is provided", {
 })
 
 context(" checkEnoughDataAvailable")
+#==========================================================
 test_that("it should check if enough data is available for all formulae, and return true if all is available", {
   f1 <- RandomVariable$new(formula = y ~ w + w2 + w3 + a, family='gaussian')
   f2 <- RandomVariable$new(formula = w ~ a + a1 + a2, family='gaussian')
@@ -249,3 +406,65 @@ test_that("it should check if enough data is available for all formulae", {
 })
 
 
+context(" is_new_timeseries")
+#==========================================================
+test_that("it should should return true if the current row belongs to a new timeseries", {
+  data <- Data.Static$new(dataset = dataset)
+  mylist <- c(SMG.Mock$new(2))
+  ## consider each TS to have 2 elements
+  subject <- described.class$new(SMG.list = mylist, data = data, number_of_observations_per_timeseries = 2)
+  result <- lapply(seq(1, nrow(dataset)), function(item) {
+    result <- subject$is_new_timeseries
+    subject$getNext()
+    subject$getNext()
+    result
+  }) %>% unlist 
+
+  ## All elements should be true
+  result <- all(result)
+  expect_true(result)
+  
+})
+
+test_that("it should return true for the first timeseries (if a number_of_observations_per_timeseries is set)", {
+  data <- Data.Static$new(dataset = dataset)
+  mylist <- c(SMG.Mock$new(2))
+  ## +10 so its way more than the dataset
+  subject <- described.class$new(SMG.list = mylist, data = data, number_of_observations_per_timeseries = (nrow(dataset) + 10))
+  result <- subject$is_new_timeseries
+  expect_true(result)
+})
+
+test_that("it should should return false if the current row belongs to the previous timeseries", {
+  data <- Data.Static$new(dataset = dataset)
+  mylist <- c(SMG.Mock$new(2))
+
+  subject <- described.class$new(SMG.list = mylist, data = data, number_of_observations_per_timeseries = (nrow(dataset)))
+  ## Note that we first remove the first entry, as this one technically belongs
+  ## to a new TS
+  subject$getNext()
+  ## -2 because we already popped the first entry, and now we don't want to
+  ## check the last entry.
+  result <- lapply(seq(1, (nrow(dataset) - 2)), function(item) {
+    result <- subject$is_new_timeseries
+    subject$getNext()
+    result
+  }) %>% unlist %>% any
+  result
+  expect_false(result)
+
+  ## The last entry should be part of a new time series
+  expect_true(subject$is_new_timeseries)
+})
+
+test_that("it should return false if the provided number of observations per timeseries is Inf", {
+  data <- Data.Static$new(dataset = dataset)
+  mylist <- c(SMG.Mock$new(2))
+  subject <- described.class$new(SMG.list = mylist, data = data, number_of_observations_per_timeseries = Inf)
+  result <- lapply(seq(1, nrow(dataset)), function(item) {
+    result <- subject$is_new_timeseries
+    subject$getNext()
+    result
+  }) %>% unlist %>% any
+  expect_false(result)
+})

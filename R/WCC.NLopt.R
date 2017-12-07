@@ -30,24 +30,8 @@ WCC.NLopt <- R6Class("WCC.NLopt",
     list(
         lossFunction = NULL,
         lossFunctionGradient = NULL,
-        opts = NULL,
+        opts = NULL
 
-        compute = function(Z, Y, libraryNames, opts = NULL ) {
-          # Compute the best convex combination
-          result <- nloptr(x0=self$get_weights,
-                        eval_f=private$lossFunction,
-                        eval_grad_f = private$lossFunctionGradient,
-                        # Lower bound is 0 for all columns
-                        lb=rep(0, ncol(Z)),
-                        # Upper bound is 1 for all columns
-                        ub=rep(1, ncol(Z)),
-                        opts=private$opts,
-                        X = Z,
-                        Y = Y)
-
-          # Normalize the weights
-          private$weights <- (result$solution / sum(result$solution))
-        }
         ),
   active = 
     list(),
@@ -79,6 +63,23 @@ WCC.NLopt <- R6Class("WCC.NLopt",
           private$lossFunction <- lossFunction
           private$lossFunctionGradient <- lossFunctionGradient
           private$opts <- opts
+        },
+
+        compute = function(Z, Y, libraryNames, opts = NULL ) {
+          # Compute the best convex combination
+          result <- nloptr(x0=self$get_weights,
+                        eval_f=private$lossFunction,
+                        eval_grad_f = private$lossFunctionGradient,
+                        # Lower bound is 0 for all columns
+                        lb=rep(0, ncol(Z)),
+                        # Upper bound is 1 for all columns
+                        ub=rep(1, ncol(Z)),
+                        opts=private$opts,
+                        X = Z,
+                        Y = Y)
+
+          # Normalize the weights
+          private$weights <- (result$solution / sum(result$solution))
         }
     )
 )

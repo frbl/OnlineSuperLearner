@@ -1,6 +1,7 @@
 context("Evaluation.R")
 
 context(" Evaluation.get_evaluation_function")
+#==========================================================
 test_that("it should always return the log loss", {
   fn <- Evaluation.get_evaluation_function('gaussian', TRUE)
   expect_false(is.null(fn))
@@ -44,6 +45,7 @@ test_that("it should give a log_loss function whenever a binomial performance me
 #})
 
 context(" Evaluation.log_loss")
+#==========================================================
 test_that("it should return the a correct log loss and not go to infinity", {
   nobs <- 100
   eps = 1e-13
@@ -68,6 +70,7 @@ test_that("it should return the a correct log loss and not go to infinity", {
 })
 
 context(" Evaluation.log_likelihood_loss")
+#==========================================================
 test_that("it should should return the correct log likelihood loss", {
   nobs <- 10
   observed  <- rep(1, nobs)
@@ -112,7 +115,29 @@ test_that("it should also work with non binary values", {
   expect_true(loss != 0)
 })
 
+test_that("it should also wotk with non binary values, and should be minimized when all are one", {
+  set.seed(12345)
+  nobs <- 10
+  observed  <- rep(1, nobs)
+  predicted <- rnorm(nobs, 0, 1)
+  loss <- Evaluation.log_likelihood_loss(data.observed = NULL, data.predicted = predicted)
+  # Initial loss is large (just a sanity check)
+  expect_true(loss > 30)
+  expect_true(loss < Inf)
+  for (i in 1:(nobs)) {
+    # We are switching the elements 1 by one, and it should improve the quality
+    predicted[i] <- observed[i]
+    new_loss <- Evaluation.log_likelihood_loss(data.observed = NULL, data.predicted = predicted)
+    expect_true(new_loss < loss)
+    loss <- new_loss
+  }
+
+  # Loss should go to zero
+  expect_true(loss == 0)
+})
+
 context(" Evaluation.mse_loss")
+#==========================================================
 test_that("it should return the a correct mse loss and not go to infinity", {
   set.seed(12345)
   nobs <- 10
@@ -136,8 +161,16 @@ test_that("it should return the a correct mse loss and not go to infinity", {
   expect_true(loss < 1e-15)
 })
 
+test_that("it should throw when the provided data is not a vector", {
+  nobs <- 10
+  observed  <- rnorm(nobs)
+  
+  expect_error(Evaluation.mse_loss(data.observed = observed, data.predicted = list()),
+               "Argument 'data.predicted' is neither of nor inherits class numeric: list", fixed = TRUE)
+})
 
 context(" Evaluation.accuracy")
+#==========================================================
 test_that("it should calculate the accuracy correctly", {
   true.data <-      c(.1,.1,.6,.4,.6,.4,.1,.1,.4,.9)
   predicted.data <- c(.1,.2,.3,.3,.4,.4,.1,.1,.4,.9)
@@ -163,11 +196,8 @@ test_that("it should set the name correctly", {
   expect_equal(names(accuracy), expected)
 })
 
-test_that("it should predict the accuracy correctly with matrices", {
-  
-})
-
 context(" Evaluation.mean_squared_error")
+#==========================================================
 true.data <-      c(1,1,6,4,6,4,1,1,4,9)
 predicted.data <- c(1,2,3,3,4,4,1,1,4,9)
 mse <- Evaluation.mean_squared_error(predicted.data, true.data)
@@ -185,11 +215,8 @@ test_that("it should set the names of the outcome correctly", {
   expect_equal(names(mse), expected)
 })
 
-test_that("it should predict the mse correctly with matrices", {
-  
-})
-
 context(" Evaluation.root_mean_squared_error")
+#==========================================================
 true.data <-      c(1,1,6,4,6,4,1,1,4,9)
 predicted.data <- c(1,2,3,3,4,4,1,1,4,9)
 
@@ -207,6 +234,3 @@ test_that("it should set the name correctly", {
   expect_equal(names(result), expected_value)
 })
 
-test_that("it should predict the rmse correctly with matrices", {
-  
-})

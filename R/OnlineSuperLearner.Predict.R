@@ -16,9 +16,8 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
 
       predict = function(osl, data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, 
                          sample = FALSE, plot = FALSE) {
-        if (!osl$is_fitted){
-          return(NA)
-        }
+
+        if (!osl$is_fitted) return(NA)
 
         all_estimators <- Arguments$getLogical(all_estimators)
         discrete <- Arguments$getLogical(discrete) && osl$fits_dosl
@@ -33,33 +32,39 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
                                 ifelse(discrete, ', discrete superlearner',''),
                                 ifelse(continuous, ', continuous superlearner','')
                                 )
-        result <- list()
+        result <- list(denormalized = list(), normalized = list())
 
-        if (all_estimators || continuous) {
-          predictions <- self$predict_using_all_estimators(data = data, sl_library = osl$get_estimators,
-                                                           sample = sample, 
-                                                           plot = plot)
+        if (all_estimators) {
+          private$verbose && cat(private$verbose, 'All Estimators')
+          result <- self$predict_using_all_estimators(
+            data = data, 
+            sl_library = osl$get_estimators,
+            sample = sample, 
+            plot = plot
+          )
+        }
 
-          if (all_estimators) {
-            private$verbose && cat(private$verbose, 'All Estimators')
-            result <- predictions
-          }
-
-          if(continuous) {
-            predictions <- self$predict_osl(osl$get_osl_weights, predictions, randomVariables)
-
-            result$normalized$osl.estimator <-  predictions$normalized
-            result$denormalized$osl.estimator <- predictions$denormalized
-          }
+        if(continuous) {
+          result <- self$predict_osl(
+            data = data,
+            osl_weights = osl$get_osl_weights,
+            sl_library = osl$get_estimators,
+            current_result = result,
+            sample = sample, 
+            plot = plot,
+            randomVariables = randomVariables
+          )
         }
 
         if (discrete) {
-          predictions <- self$predict_dosl(osl$get_dosl, data, randomVariables,
-                                                     sample = sample, plot = plot)
-
-          result$normalized$dosl.estimator <-  predictions$normalized
-          result$denormalized$dosl.estimator <- predictions$denormalized
-
+          result <- self$predict_dosl(
+            dosl = osl$get_dosl,
+            data = data, 
+            randomVariables = randomVariables,
+            sample = sample, 
+            plot = plot,
+            current_result = result
+          )
         }
         private$verbose && exit(private$verbose)
 
@@ -68,59 +73,85 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
         result
       },
 
-      predict_osl = function(osl_weights, predictions, randomVariables) {
+      predict_osl = function(data, osl_weights, current_result, sl_library, randomVariables, weight_threshold = 0, sample = FALSE, plot = FALSE) {
         private$verbose && cat(private$verbose, 'continuous SL')
-        if ('normalized' %in% names(predictions)) {
-          predictions <- predictions$normalized 
-        }
-
         # TODO: What if A ends up not being binary?
         # TODO: More important, what if a variable is discrete?
-        normalized_result <- lapply(randomVariables, function(rv) {
-          current_rv_name <- rv$getY
-          result <- do.call(cbind, predictions) %>%
-            subset(., select = grep(paste(current_rv_name,"$",sep=""), names(.))) %>%
-            as.matrix(.) %*% osl_weights[,current_rv_name]
 
-          colnames(result) <- current_rv_name
-          result
-        }) %>%
-          do.call(cbind, .) %>%
-          as.data.table 
-        
+        ## Using a for loop so we can add data to the predictions
+        result <- list()
+        for (rv in randomVariables) {
+          current_rv_name <- rv$getY
+          filtered_weights <- subset(osl_weights, osl_weights[,current_rv_name] >= weight_threshold, select = current_rv_name)
+          algorithm_names <- rownames(filtered_weights)
+
+          ## Create new predictions that are not yet in the data set, but are needed
+          current_result <- private$predict_missing_predictions(
+            sl_library = sl_library,
+            data = data,
+            sample = sample, 
+            plot = plot,
+            algorithm_names = algorithm_names,
+            predictions = current_result
+          )
+
+          outcomes <- lapply(current_result$normalized[algorithm_names], function(x) x[[current_rv_name]])
+
+          ## Convert the outcomes from a list to  a matrix
+          outcomes <- matrix(unlist(outcomes, use.names = FALSE), ncol = length(outcomes), byrow = FALSE)
+
+          ## Store the names
+          colnames(outcomes) <- algorithm_names
+          
+          result <- append(result, list(outcomes %*% filtered_weights))
+        }
+        normalized_result <- as.data.table(do.call(cbind, result))
         denormalized_result <- private$denormalize(copy(normalized_result))
 
-        list(normalized = normalized_result,
-             denormalized = denormalized_result)
+        current_result[['normalized']]$osl.estimator <-  normalized_result
+        current_result[['denormalized']]$osl.estimator <- denormalized_result
+        current_result
       },
 
-      predict_dosl = function(dosl, data, randomVariables, sample = FALSE, plot = FALSE) {
+      predict_dosl = function(dosl, data, randomVariables, current_result, sample = FALSE, plot = FALSE) {
         private$verbose && cat(private$verbose, 'discrete SL')
-        normalized_result <- lapply(randomVariables, function(rv) {
-            outcome_name <- rv$getY
 
-            # This is for the first iteration, we don't have a dosl yet as it get's selected based
-            # on the other estimator's CV score
-            if (outcome_name %in% names(dosl)) {
-              prediction <- dosl[[outcome_name]]$predict(data = data,
-                                                         sample = sample,
-                                                         subset = outcome_name,
-                                                         plot = plot)[[outcome_name]]
+        result <- list()
+        for (rv in randomVariables) {
+          outcome_name <- rv$getY
+
+          prediction <- c(outcome = NA)
+          # This is for the first iteration, we don't have a dosl yet as it get's selected based
+          # on the other estimator's CV score
+          if (outcome_name %in% names(dosl)) {
+            dosl_for_current_rv <- dosl[[outcome_name]]
+            current_algo_name <- dosl_for_current_rv$get_name
+            ## If we already had the outcome, don't predict it again, use the previous prediction (it is the same)
+            if(!is.null(current_result) && current_algo_name %in% names(current_result$normalized)) {
+              prediction <- current_result$normalized[[current_algo_name]]
             } else {
-              prediction <- c(outcome = NA)
+              prediction <- dosl_for_current_rv$predict(
+                data = data,
+                sample = sample,
+                subset = outcome_name,
+                plot = plot
+              ) 
             }
-            prediction %<>% as.matrix(prediction)
-            colnames(prediction) <- outcome_name
-            prediction
-          }) %>%
-          do.call(cbind, .) %>%
-          as.data.table
 
+            ## Only store the present outcome
+            prediction <- prediction[[outcome_name]]
+          }
+          prediction %<>% as.matrix(prediction)
+          colnames(prediction) <- outcome_name
+        
+          result <- append(result, list(prediction))
+        }
+        normalized_result <- as.data.table(do.call(cbind, result))
         denormalized_result <- private$denormalize(copy(normalized_result))
 
-        list(normalized = normalized_result,
-             denormalized = denormalized_result)
-
+        current_result[['normalized']]$dosl.estimator <-  normalized_result
+        current_result[['denormalized']]$dosl.estimator <- denormalized_result
+        current_result
       },
 
       # Predict using all estimators separately.
@@ -138,10 +169,12 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
         for (estimator in sl_library) {
           private$verbose && cat(private$verbose, 'Predicting with ', estimator$get_name)
 
-          result <- private$predict_with_one_estimator(estimator = estimator,
-                                             data = data,
-                                             sample = sample,
-                                             plot = plot)
+          result <- private$predict_with_one_estimator(
+            estimator = estimator,
+            data = data,
+            sample = sample,
+            plot = plot
+          )
           normalized_results <- append(normalized_results, list(result$normalized))
           denormalized_results <- append(denormalized_results, list(result$denormalized))
         }
@@ -163,6 +196,23 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
 
       ## The data processor to convert the results back to their original format
       pre_processor = NULL,
+
+      predict_missing_predictions = function(sl_library, data, sample, plot, algorithm_names, predictions) {
+        for (name in algorithm_names) {
+          ## If the data has not yet been predicted, predict it here
+          if(!(name %in% names(predictions$normalized))) {
+            current_prediction <- private$predict_with_one_estimator(
+              estimator = sl_library[[name]],
+              data = data,
+              sample = sample,
+              plot = plot
+            )
+            predictions$normalized[[name]] <- current_prediction$normalized
+            predictions$denormalized[[name]] <- current_prediction$denormalized
+          }
+        }
+        predictions
+      },
 
       predict_with_one_estimator = function(estimator, data, sample, plot) {
         # TODO: Unity in export formats. Probably the best is to enforce a data.table output

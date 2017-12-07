@@ -32,6 +32,7 @@ Imports:
     xgboost,
     speedglm,
     randomForest,
+    neuralnet,
     e1071,
     glmnet,
     nloptr,
@@ -59,26 +60,30 @@ Collate:
     'Data.Stream.R'
     'Simulator.Simple.R'
     'Data.Stream.Simulator.R'
+    'DataCache.R'
     'DataSplitter.R'
     'DensityEstimation.R'
     'H2O.initializer.R'
     'H2O.Interactor.R'
-    'InterventionEffectCalculator.R'
     'InterventionParser.R'
+    'InterventionEffectCalculator.R'
     'ML.SVM.R'
     'ML.randomForest.R'
     'ML.Local.lm.R'
+    'ML.NeuralNet.R'
     'ML.Base.R'
     'ML.XGBoost.R'
+    'ML.H2O.R'
     'LibraryFactory.R'
     'ML.GLMnet.R'
-    'ML.H2O.R'
     'ML.H2O.gbm.R'
     'ML.H2O.glm.R'
     'ML.H2O.randomForest.R'
     'ML.Local.Speedlm.R'
+    'RandomVariable.R'
     'OneStepEstimator.R'
     'OnlineSuperLearner.Predict.R'
+    'OnlineSuperLearner.SampleIteratively.R'
     'WCC.SGD.Simplex.R'
     'WCC.NMBFGS.R'
     'WeightedCombinationComputer.R'
@@ -91,7 +96,6 @@ Collate:
     'SMG.Latest.Entry.R'
     'SMGFactory.R'
     'OutputPlotGenerator.R'
-    'RandomVariable.R'
     'OnlineSuperLearner.Simulation.R'
     'PreProcessor.R'
     'SMG.Mean.R'
@@ -102,4 +106,6 @@ Collate:
     'WCC.SGD.R'
 Remotes: 
     github::osofr/condensier@fb-add-update,
+    github::jeroenooms/jsonlite,
+    github::jimhester/covr,
     github::n-s-f/mockery@master

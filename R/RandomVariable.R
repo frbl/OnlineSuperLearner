@@ -4,13 +4,44 @@
 #' @importFrom R6 R6Class
 #' @export
 RandomVariable <- R6Class("RandomVariable",
-  private =
-  list(
-        formula = NULL,
-        formula.X = NULL,
-        formula.Y = NULL,
-        family = NULL
-      ),
+  public =
+    list(
+      initialize = function(formula, family) {
+        formula <- Arguments$getInstanceOf(formula, 'formula')
+        formula.parsed  <- self$parse_formula(formula)
+
+        private$formula = formula
+        private$formula.X = formula.parsed$X
+        private$formula.Y = formula.parsed$Y
+        private$family = family
+        self$getValidity
+      },
+
+      get_formula_string = function(X = NULL, Y = NULL) {
+        if (is.null(X)) {
+          X <- self$getX 
+        }
+        if (is.null(Y)) {
+          Y <- self$getY 
+        }
+        paste(Y, '~', paste(sort(X), collapse = ' + '))
+      },
+
+      parse_formula = function(formula){
+        vars <- all.vars(formula)
+        depvar <- head(vars, 1)
+        names(depvar) <- depvar
+
+        indepvar <- tail(vars, -1)
+        if(length(indepvar) == 1 & indepvar[1] == c('.')){
+          indepvar <- c()
+        } else {
+          names(indepvar) <- indepvar
+        }
+
+        list(Y = depvar, X = indepvar)
+      }
+    ),
   active =
     list(
         getFamily = function() {
@@ -43,46 +74,13 @@ RandomVariable <- R6Class("RandomVariable",
           return(TRUE) 
         }
         ),
-  public =
-    list(
-        initialize = function(formula, family) {
-          formula <- Arguments$getInstanceOf(formula, 'formula')
-          formula.parsed  <- self$parseFormula(formula)
-
-          private$formula = formula
-          private$formula.X = formula.parsed$X
-          private$formula.Y = formula.parsed$Y
-          private$family = family
-          self$getValidity
-        },
-
-        get_formula_string = function(X = NULL, Y = NULL) {
-          if (is.null(X)) {
-            X <- self$getX 
-          }
-          if (is.null(Y)) {
-            Y <- self$getY 
-          }
-          paste(Y, '~', paste(sort(X), collapse = ' + '))
-        },
-
-        parseFormula = function(formula){
-
-          vars <- all.vars(formula)
-          depvar <- head(vars, 1)
-          names(depvar) <- depvar
-
-          indepvar <- tail(vars, -1)
-          if(length(indepvar) == 1 & indepvar[1] == c('.')){
-            indepvar <- c()
-          } else {
-            names(indepvar) <- indepvar
-          }
-
-          list(Y = depvar, X = indepvar)
-        }
-
-    )
+  private =
+  list(
+        formula = NULL,
+        formula.X = NULL,
+        formula.Y = NULL,
+        family = NULL
+      )
 )
 # Static functions
 # ================
@@ -90,9 +88,13 @@ RandomVariable.get_supported_families <- function() {
   return(c('binomial', 'gaussian'))
 }
 
-# Algorithm to find a possible ordering of the functions.
-# The worst case run time of this algorithm is pretty bad, and can it
-# probably done more efficiently
+#' Algorithm to find a possible ordering of the functions.
+#' The worst case run time of this algorithm is pretty bad, and can it
+#' probably done more efficiently
+#' 
+#' @param randomVariables the random variables to sort
+#' @param verbose (default false) whether or not to be verbose when sorting
+#' @export 
 RandomVariable.find_ordering <- function(randomVariables, verbose=FALSE) {
   dependencies <- list()
   order <- c()

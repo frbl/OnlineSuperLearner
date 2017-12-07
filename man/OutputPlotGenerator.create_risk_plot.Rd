@@ -16,6 +16,8 @@ OutputPlotGenerator.create_risk_plot(performance, output, dir = "~/tmp/osl",
 \item{dir}{string the directory to write to}
 
 \item{make_summary}{boolean whether or not to sum all error terms to give a summed performance measure}
+
+\item{label}{string the label to use when making a summary plot}
 }
 \description{
 OutputPlotGenerator.create_risk_plot

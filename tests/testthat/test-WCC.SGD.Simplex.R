@@ -1,4 +1,5 @@
 context("WCC.SGD.Simplex.R")
+#================================================
 described.class <- WCC.SGD.Simplex
 set.seed(12345)
 n <- 1e5
@@ -13,6 +14,7 @@ libraryNames <- c('a', 'b', 'c', 'd')
 names(initial_weights) <- libraryNames
 
 context(' initialize')
+#================================================
 test_that("it should initialize with a random set of weights", {
   subject <- described.class$new(weights.initial = initial_weights)
   expect_false(any(is.na(subject$get_weights)))
@@ -33,19 +35,68 @@ test_that("it should give a warning if the provided vector is not NAs", {
   expect_warning(described.class$new(weights.initial = initial_weights), NA)
 })
 
+test_that("it should accept a stepsize variable and store it", {
+  result <- described.class$new(weights.initial = c(NA,NA,NA,NA), auto_update_stepsize = FALSE)
+
+  ## The default stepsize
+  expect_equal(result$get_step_size, 0.0001)
+  result <- described.class$new(weights.initial = c(NA,NA,NA,NA), step_size = 42, auto_update_stepsize = FALSE)
+  expect_equal(result$get_step_size, 42)
+})
+
+test_that("it should be possible to automate stepsize selection", {
+  subject <- described.class$new(weights.initial = c(NA,NA,NA,NA), auto_update_stepsize = TRUE)
+  expect_equal(subject$get_step_size, 1)
+  expect_equal(subject$is_auto_updating_stepsize, TRUE)
+})
+
+test_that("it should initialze the step_count to 0", {
+  subject <- described.class$new(weights.initial = c(NA,NA,NA,NA), auto_update_stepsize = TRUE)
+  ## The default stepsize
+  expect_equal(subject$get_step_count, 0)
+})
+
+test_that("it should store the provided number of iterations", {
+  result <- described.class$new(weights.initial = c(NA,NA,NA,NA))
+
+  ## The default iterations
+  expect_equal(result$get_iterations, 1000)
+  result <- described.class$new(weights.initial = c(NA,NA,NA,NA), iterations = 42)
+  expect_equal(result$get_iterations, 42)
+})
+
 context(' compute')
+#================================================
 test_that("it should compute the correct convex combination", {
   set.seed(12345)
-  subject <- described.class$new(weights.initial = initial_weights, step_size = 0.0000001, iterations = 350)
+  subject <- described.class$new(
+    weights.initial = initial_weights,
+    auto_update_stepsize = FALSE,
+    step_size = 0.0000001,
+    iterations = 350
+  )
 
-  subject$process(pred, Y, libraryNames)
+  subject$compute(Z = pred, Y = Y, libraryNames = libraryNames)
+
+  ## All weights should be 0<= wt <= 1
+  for (wt in subject$get_weights) {
+    expect_lte(wt, 1)
+    expect_gte(wt, 0)
+  }
+
+  ## Their sum should (almost) equal one
+  expect_lt(1 - sum(subject$get_weights), 1e-2)
 
   # Check that we approximate the true parameters
   difference <- subject$get_weights - true_params
-  expect_true(all(abs(difference) < 1e-2))
+
+  for (diff in difference) {
+    expect_lt(abs(diff), 1e-2)
+  }
 })
 
 context(" get_step_size")
+#================================================
 test_that("it should should return the correct stepsize", {
   step_size = 0.123
   subject <- described.class$new(weights.initial = initial_weights, step_size = step_size)

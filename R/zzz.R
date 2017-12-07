@@ -6,6 +6,7 @@
 #' @import parallel
 #' @importFrom R.utils Arguments
 #' @importFrom R.methodsS3 throw
+#' @importFrom data.table data.table as.data.table is.data.table rbindlist copy shift setDT
 #' @import magrittr
 #' @import assertthat
 generalImports <- list()
@@ -60,5 +61,10 @@ hide_warning_high_h_ratio <- function(the_function){
 
 hide_warning_test <- function(the_function){
   h <- function(w) if( any( grepl( "Test function was called!", w) ) ) invokeRestart( "muffleWarning" )
+  withCallingHandlers(the_function, warning = h)
+}
+
+hide_warning_replace_weights_osl <- function(the_function) {
+  h <- function(w) if( any( grepl( "The weights provided will be overridden by a random vector", w) ) ) invokeRestart( "muffleWarning" )
   withCallingHandlers(the_function, warning = h)
 }

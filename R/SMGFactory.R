@@ -3,6 +3,8 @@
 #' Factory for creating a set of SummaryMeasureGenerators, based on the needed variables
 #' @docType class
 #' @importFrom R6 R6Class
+#' @include SMG.Latest.Entry.R
+#' @include SMG.Lag.R
 #'
 #' @section Methods:
 #' \describe{
@@ -50,8 +52,8 @@ SMGFactory <- R6Class("SMGFactory",
           if (variables_found) {
             needed_variables %<>% setdiff(. ,smg_lag_params$covered_variables)
           }
-          c(SMG.list, SMG.Latest.Entry$new(colnames.to.use = needed_variables)) %>%
-            SummaryMeasureGenerator$new(SMG.list = ., ...) 
+          SMG.list <- c(SMG.list, SMG.Latest.Entry$new(colnames.to.use = needed_variables))
+          SummaryMeasureGenerator$new(SMG.list = SMG.list, ...) 
         }
         ),
   active =
