@@ -49,4 +49,4 @@ dependencies:
 test:
   override:
     - docker run frbl/onlinesuperlearner-test R CMD check /OnlineSuperLearner/OnlineSuperLearner_0.0.1.tar.gz --no-manual --no-build-vignettes
-    - docker run frbl/onlinesuperlearner-test Rscript -e 'covr::codecov()'
+    - docker -e CODECOV_TOKEN run frbl/onlinesuperlearner-test Rscript -e 'covr::codecov()'

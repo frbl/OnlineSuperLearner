@@ -2,20 +2,22 @@ FROM r-base:latest
 MAINTAINER Frank Blaauw <f.j.blaauw@rug.nl>
 
 WORKDIR /OnlineSuperLearner
+COPY ./inst/bash/install-package-dependencies.sh /OnlineSuperLearner/inst/bash/install-package-dependencies.sh
 
 # The unstable flag was needed to install the correct curl libraries.
 # See https://github.com/rocker-org/rocker/issues/232.
-RUN apt-get update && apt-get -f install -t unstable -y \
+RUN apt-get update && apt-get -f install -t unstable --no-install-recommends -y \
     libnlopt0 \
     openssl \
     libcurl4-openssl-dev \
     curl \
+    git \
     libxml2-dev \
     libssl-dev \
     libcairo-dev \ 
-    default-jre
+    default-jre && \
+    rm -rf /var/lib/apt/lists/*
  
-COPY ./inst/bash/install-package-dependencies.sh /OnlineSuperLearner/inst/bash/install-package-dependencies.sh
 RUN ./inst/bash/install-package-dependencies.sh
 
 #RUN Rscript -e 'install.packages(c("covr"));if (!all(c("covr") %in% installed.packages())) { q(status = 1, save = "no")}'
