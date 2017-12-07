@@ -1,0 +1,4 @@
+---
+exclude_paths:
+  - inst/bash/run_on_cluster.sh 
+  - test.Dockerfile
