@@ -1,3 +1,5 @@
+library(mockery)
+
 context("SMGFactory.R")
 described.class <- SMGFactory
 #==========================================================
@@ -53,6 +55,27 @@ test_that("it should include the lagged generator when provided", {
   expect_true(result)
 })
 
+test_that("it should include the mean generator when provided", {
+  subject <- described.class$new() 
+  W  <- RandomVariable$new(family = 'gaussian', formula = W  ~ Y_mean)
+  Y  <- RandomVariable$new(family = 'gaussian', formula = Y  ~ W)
+
+  stub(subject$fabricate, 'SummaryMeasureGenerator$new', 
+    function(SMG.list, ...) {
+      called <<- TRUE
+      provided_smgs <- lapply(SMG.list, function(x) class(x)) %>% unlist
+      expect_length(SMG.list, 2)
+      expect_true('SMG.Latest.Entry' %in% provided_smgs)
+      expect_true('SMG.Mean' %in% provided_smgs)
+      return(TRUE)
+    }
+  )
+  called <<- FALSE
+  result <- subject$fabricate(c(W,Y))
+  expect_true(called)
+  expect_true(result)
+})
+
 test_that("it should return a SummaryMeasureGenerator", {
   subject <- described.class$new() 
   W  <- RandomVariable$new(family = 'gaussian', formula = W  ~ Y_lag_2)
@@ -63,14 +86,14 @@ test_that("it should return a SummaryMeasureGenerator", {
 
 test_that("it should create the all SMGs", {
   subject <- described.class$new() 
-  W  <- RandomVariable$new(family = 'gaussian', formula = W  ~ Y_lag_2)
+  W  <- RandomVariable$new(family = 'gaussian', formula = W  ~ Y_lag_2 + Y_mean)
   Y  <- RandomVariable$new(family = 'gaussian', formula = Y  ~ W)
   result <- subject$fabricate(c(W,Y))$get_smg_list
-  expect_equal(length(result), 2)
+  expect_equal(length(result), 3)
   vars <- lapply(result, function(smg) smg$exposedVariables) %>%
     unlist
 
-  expect_true(all(c('W', 'Y_lag_2') %in% vars))
+  expect_true(all(c('W', 'Y_lag_2', 'Y_mean') %in% vars))
 })
 
 test_that("it should create only the necessary SMGs", {

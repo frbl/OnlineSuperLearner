@@ -5,6 +5,7 @@
 #' @importFrom R6 R6Class
 #' @include SMG.Latest.Entry.R
 #' @include SMG.Lag.R
+#' @include SMG.Mean.R
 #'
 #' @section Methods:
 #' \describe{
@@ -46,14 +47,19 @@ SMGFactory <- R6Class("SMGFactory",
             SMG.list <- c(SMG.list, SMG.Lag$new(lags = smg_lag_params$lags,
                                                 colnames.to.lag = smg_lag_params$colnames.to.lag))
           }
+
           # Process other stuff
+          mean_params <- private$get_smg_mean_params(needed_variables)
+          if (is.a(mean_params, 'list')) {
+            SMG.list <- c(SMG.list, SMG.Mean$new(colnames.to.mean = mean_params$colnames.to.mean))
+          }
 
           # Contemporaneos variables
           if (variables_found) {
             needed_variables %<>% setdiff(. ,smg_lag_params$covered_variables)
           }
           SMG.list <- c(SMG.list, SMG.Latest.Entry$new(colnames.to.use = needed_variables))
-          SummaryMeasureGenerator$new(SMG.list = SMG.list, ...) 
+          SummaryMeasureGenerator$new(SMG.list = SMG.list, ...)
         }
         ),
   active =
@@ -61,10 +67,22 @@ SMGFactory <- R6Class("SMGFactory",
         ),
   private =
     list(
+      get_smg_mean_params = function(needed_variables) {
+        my_variables <-  grep('_mean', needed_variables) %>%
+            needed_variables[.]
+
+        if (length(my_variables) == 0) { return(FALSE) }
+
+        variables <- my_variables %>%
+          gsub("_mean", "",  .) %>%
+          unique
+
+        list(colnames.to.mean = variables)
+      },
       get_smg_lag_params = function(needed_variables) {
         my_variables <-  grep('_lag_', needed_variables) %>%
-            needed_variables[.] 
-          
+            needed_variables[.]
+
         if (length(my_variables) == 0) { return(FALSE) }
 
         lags <- my_variables %>%

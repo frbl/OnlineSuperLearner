@@ -616,7 +616,9 @@ test_that("it should return the initial estimate if the oos estimate is NA or na
 
 context(" calculate_oos_variance")
 #==========================================================
-test_that("it should be implemented", {
+test_that("it returns the correct variance", {
+  result <- subject$calculate_oos_variance()
+  expect_equal(result, 0)
   skip('Not yet implemented') 
 })
 

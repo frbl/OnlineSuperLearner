@@ -25,11 +25,11 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           options(warn=1)
           private$sim  <- Simulator.GAD$new()
-          private$training_set_size <- 1e3
+          private$training_set_size <- 1e4
 
           OutputPlotGenerator.export_key_value('training-set-size', private$training_set_size)
           private$cv_risk_calculator <- CrossValidationRiskCalculator$new()
-          private$test_set_size <- 100
+          private$test_set_size <- 1000
           private$log <- Arguments$getVerbose(-1, timestamp=TRUE)
           #private$log <- FALSE
           #algos <- list(list(description='ML.H2O.randomForest-1tree',
@@ -42,13 +42,13 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           #algos <- append(algos, list(list(description='ML.H2O.gbm',
                                   #algorithm = 'ML.H2O.gbm')))
-          nbins <- c(40, 50, 60, 70)
+          nbins <- c(40, 100, 1000)
           algos <- list()
 
 
           alphas <- runif(3,0,1)
           alphas <- c(0, alphas)
-          alphas <- c(0, 0.961941410787404, 0.923852014588192, 0.193227538373321)
+          alphas <- c(0, 0.961941410787404, 0.523852014588192, 0.193227538373321)
 
           #lambdas <- runif(3,0,1)
           algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
@@ -250,7 +250,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                         control = control,
                         randomVariables, 
                         Y,
-                        max_iterations = 100, llW, llA, llY,
+                        max_iterations = 10, llW, llA, llY,
                         configuration = id)
         },
 
@@ -487,6 +487,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           # Calculate prediction quality
           observed.outcome <- data.test[, outcome.variables, with=FALSE]
           predicted.outcome <- osl$predict(data = copy(data.test), randomVariables, plot= TRUE, sample=FALSE)$normalized
+          sampled.outcome <- osl$predict(data = copy(data.test), randomVariables, plot= TRUE, sample=TRUE)$normalized
 
           Evaluation.log_loss(data.predicted = predicted.outcome$osl.estimator$Y, data.observed = observed.outcome$A)
           Evaluation.log_loss(data.predicted = predicted.outcome$dosl.estimator$Y, data.observed = observed.outcome$A)
@@ -557,8 +558,8 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           interventions <- list(intervention = intervention,
                                 control = control)
 
-          osl_options <- c('dosl', 'osl')
-          #osl_options <- c('dosl')
+          #osl_options <- c('dosl', 'osl')
+          osl_options <- c('dosl')
           #osl_options <- c('osl')
 
           if('dosl' %in% osl_options) {
