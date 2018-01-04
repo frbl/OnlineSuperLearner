@@ -3,15 +3,12 @@
 \docType{class}
 \name{Data.Base}
 \alias{Data.Base}
-\title{Data.Base
-Base class for any data providing service class. Extend this class if you want to create a new method
-to read data from}
+\title{Data.Base}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 Data.Base
 }
 \description{
-Data.Base
 Base class for any data providing service class. Extend this class if you want to create a new method
 to read data from
 }

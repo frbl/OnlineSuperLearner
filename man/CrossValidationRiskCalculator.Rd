@@ -3,15 +3,12 @@
 \docType{class}
 \name{CrossValidationRiskCalculator}
 \alias{CrossValidationRiskCalculator}
-\title{CrossValidationRiskCalculator
-Class that contains various methods for calculating the crossvalidated risk
-of an estimator.}
+\title{CrossValidationRiskCalculator}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 CrossValidationRiskCalculator
 }
 \description{
-CrossValidationRiskCalculator
 Class that contains various methods for calculating the crossvalidated risk
 of an estimator.
 }

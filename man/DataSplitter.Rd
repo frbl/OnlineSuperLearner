@@ -3,14 +3,12 @@
 \docType{class}
 \name{DataSplitter}
 \alias{DataSplitter}
-\title{DataSplitter
-Splits a dataset into a train and test set.}
+\title{DataSplitter}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 DataSplitter
 }
 \description{
-DataSplitter
 Splits a dataset into a train and test set.
 }
 \section{Methods}{

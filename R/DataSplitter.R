@@ -1,4 +1,5 @@
 #' DataSplitter
+#'
 #' Splits a dataset into a train and test set.
 #'
 #' @section Methods: 

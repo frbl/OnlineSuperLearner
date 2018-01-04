@@ -3,15 +3,12 @@
 \docType{class}
 \name{DensityEstimation}
 \alias{DensityEstimation}
-\title{DensityEstimation
-This class performs the actual density estimation for each of the random
-variables provided to it.}
+\title{DensityEstimation}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 DensityEstimation
 }
 \description{
-DensityEstimation
 This class performs the actual density estimation for each of the random
 variables provided to it.
 }
@@ -60,6 +57,30 @@ variables provided to it.
     @param plot (default = FALSE) boolean plot the predicted outcomes to a
      file in /tmp/osl. This can be used for debugging (i.e., it shows the
      sampled distribution over the actual distribution.
+    @return list a list containing the predictions, where each entry is one
+     of the randomvariables for which a conditional distribution was fit.
+  } 
+
+  \item{\code{predict_probability(datO, X, Y, plot = FALSE, check = FALSE) }}{ 
+    Internal method used by the \code{predict} function. This function
+    predicts a $P(Y\mid X)$. These arguments are therefore instances of the
+    RandomVariable class. The data of these random variables needs to be
+    included in the \code{datO} argument.
+
+    @param datO the data from which to predict the probability.
+     As we want to predict the probability of Y given a set of X, ($P(Y |
+     X_1, X2_)$), the random variable column in \code{datO} cannot be empty. 
+
+    @param sample (default = FALSE) boolean would we like to sample a value
+     (true) or a probability (false) from the conditional density
+
+    @param subset (default = NULL) stringarray do we want to perform predictions for all
+     variables? (NULL), or just a subset thereof?
+
+    @param plot (default = FALSE) boolean plot the predicted outcomes to a
+     file in /tmp/osl. This can be used for debugging (i.e., it shows the
+     sampled distribution over the actual distribution.
+
     @return list a list containing the predictions, where each entry is one
      of the randomvariables for which a conditional distribution was fit.
   } 

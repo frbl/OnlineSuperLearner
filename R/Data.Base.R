@@ -1,4 +1,5 @@
 #' Data.Base
+#'
 #' Base class for any data providing service class. Extend this class if you want to create a new method
 #' to read data from
 #'

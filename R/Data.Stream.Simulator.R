@@ -1,4 +1,5 @@
 #' Data.Stream.Simulator
+#'
 #' Class that serves as a very basic simulator to fill a kafka stream with data.
 #'
 #' @docType class

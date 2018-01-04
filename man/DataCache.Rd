@@ -3,14 +3,12 @@
 \docType{class}
 \name{DataCache}
 \alias{DataCache}
-\title{DataCache
-Class that is used internally to manage datacaching}
+\title{DataCache}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 DataCache
 }
 \description{
-DataCache
 Class that is used internally to manage datacaching
 }
 \keyword{datasets}

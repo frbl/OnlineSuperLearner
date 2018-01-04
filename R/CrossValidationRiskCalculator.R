@@ -1,4 +1,5 @@
 #' CrossValidationRiskCalculator
+#'
 #' Class that contains various methods for calculating the crossvalidated risk
 #' of an estimator.
 #'

@@ -3,14 +3,12 @@
 \docType{class}
 \name{Data.Static}
 \alias{Data.Static}
-\title{Data.Static
-Class to provide the functionality of treating a static, finite datatable as a stream of incomming data.}
+\title{Data.Static}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 Data.Static
 }
 \description{
-Data.Static
 Class to provide the functionality of treating a static, finite datatable as a stream of incomming data.
 }
 \section{Methods}{

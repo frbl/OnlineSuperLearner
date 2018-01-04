@@ -3,14 +3,12 @@
 \docType{class}
 \name{Data.Stream}
 \alias{Data.Stream}
-\title{Data.Stream
-Class to provide the functionality to read data from an input stream.}
+\title{Data.Stream}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 Data.Stream
 }
 \description{
-Data.Stream
 Class to provide the functionality to read data from an input stream.
 }
 \section{Methods}{

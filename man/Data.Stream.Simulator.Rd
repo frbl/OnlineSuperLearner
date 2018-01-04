@@ -3,14 +3,12 @@
 \docType{class}
 \name{Data.Stream.Simulator}
 \alias{Data.Stream.Simulator}
-\title{Data.Stream.Simulator
-Class that serves as a very basic simulator to fill a kafka stream with data.}
+\title{Data.Stream.Simulator}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 Data.Stream.Simulator
 }
 \description{
-Data.Stream.Simulator
 Class that serves as a very basic simulator to fill a kafka stream with data.
 }
 \section{Methods}{

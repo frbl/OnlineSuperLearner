@@ -1,4 +1,5 @@
 #' DataCache
+#'
 #' Class that is used internally to manage datacaching
 #'
 #' @docType class

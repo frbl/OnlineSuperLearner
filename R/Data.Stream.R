@@ -1,4 +1,5 @@
 #' Data.Stream
+#'
 #' Class to provide the functionality to read data from an input stream.
 #'
 #' @docType class
