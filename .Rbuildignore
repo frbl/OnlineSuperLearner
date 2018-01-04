@@ -16,7 +16,6 @@ Makefile
 test.Dockerfile
 #----------------------------
 # Git and SVN related
-#----------------------------
 #^.svn
 #^.git
 #^.make
@@ -25,9 +24,7 @@ test.Dockerfile
 #INSTALL[.]md
 #OVERVIEW[.]md
 #README[.]md
-#----------------------------
 # Travis-CI et al.
-#----------------------------
 ^[.]travis[.]yml$
 #^travis-tool[.]sh$
 #^pkg-build[.]sh$
@@ -37,7 +34,6 @@ test.Dockerfile
 #^[.]covr[.]rds$
 ##----------------------------
 ## R related
-##----------------------------
 #Rplots.pdf$
 #^cran-comments[.].*$
 #^vignettes/.*[.](pdf|PDF)$
@@ -53,3 +49,4 @@ test.Dockerfile
 #^.*[.]tar[.]gz$
 #^.*\.Rproj$
 #^\.Rproj\.user$
+^docs$

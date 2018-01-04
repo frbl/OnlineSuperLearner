@@ -3,38 +3,65 @@
 \docType{class}
 \name{DensityEstimation}
 \alias{DensityEstimation}
-\title{Density.Estimation
-This class performs the actual density estimation for each of the random variables provided to it.}
+\title{DensityEstimation
+This class performs the actual density estimation for each of the random
+variables provided to it.}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 DensityEstimation
 }
 \description{
-Density.Estimation
-This class performs the actual density estimation for each of the random variables provided to it.
+DensityEstimation
+This class performs the actual density estimation for each of the random
+variables provided to it.
 }
 \section{Methods}{
  
 \describe{  
-  \item{\code{initialize(nbins = 30, bin_estimator = NULL, online = FALSE, verbose = FALSE) }}{ 
-    Creates a new density estimator. One can provide various hyper parameters. First of all the number of bins the
-    estimator uses can be configured, by default this is 30. Then one can define the actual estimator the density
-    estimator uses for estimating the conditional densities. By default it uses speedglm. Finally, one can select
-    whether to treat the algorithm as an online or batch algorithm. If online is set to false, we will keep a record
-    of the data that has been used to train an estimator. Note that this is currently very inefficient.
-    @param nbins integer the number of bins to use for the estimator
-    @param bin_estimator ML.Base the actual estimator used for fitting the conditional density
-    @param online boolean does the algorithm have an updating possibility? And should we treat it as online?
-    @param verbose the verbosity
+  \item{\code{initialize(nbins = 30, bin_estimator = NULL, online = FALSE, name = 'default', verbose = FALSE) }}{ 
+    Creates a new density estimator. One can provide various hyper
+    parameters. First of all the number of bins the estimator uses can be
+    configured, by default this is 30. Then one can define the actual
+    estimator the density estimator uses for estimating the conditional
+    densities. By default it uses speedglm. Finally, one can select whether
+    to treat the algorithm as an online or batch algorithm. If online is set
+    to false, we will keep a record of the data that has been used to train
+    an estimator. Note that this is currently very inefficient.
+    @param nbins (default = 30) integer the number of bins to use for the
+     estimator.
+    @param bin_estimator (default = NULL) ML.Base the actual estimator used
+     for fitting the conditional density
+    @param online (default = FALSE) boolean does the algorithm have an
+     updating possibility? And if so, should we treat it as an online
+     algorithm?
+    @param name (default = 'default') the name to use for the density
+    estimator.
+    @param verbose (default = FALSE) the verbosity (log level) to use while running.
   } 
 
-  \item{\code{predict(data, sample = FALSE, subset = NULL, plot = FALSE) }}{ 
-    Method to perform the prediction on all (or a subset of) the random variables / conditional densities.
-    @param data the data from which to predict the outcome.
-    @param sample boolean would we like to sample a value (true) or a probability (false) from the conditional
-    density
-    @param subset stringarray do we want to perform predictions for all variables? (NULL), or just a subset thereof?
-    @param plot boolean plot the predicted outcomes to a file in /tmp/osl
+  \item{\code{predict(data, sample = FALSE, subset = NULL, plot = FALSE, check = FALSE) }}{ 
+    Method to perform the prediction on all (or a subset of) the random
+    variables / conditional densities. One can provide the option to
+    \code{sample}, which means that if this is set, the predict function
+    will sample new values from the underlying distributions. If this
+    argument is set to false, this function will return predicted
+    probabilities.
+    @param data the data from which to predict the outcome. It depends on
+     the goal of the prediction what this needs to be. If the goal is to
+     sample a new random variable, the value for the random variables to
+     sample does not need to be set in the data table (they can be NA).
+     However, if one wants to know the probability of an instance of a random
+     variable given the other variables, ($P(Y | X_1, X2_)$), then the random
+     variable cannot be empty. 
+    @param sample (default = FALSE) boolean would we like to sample a value
+     (true) or a probability (false) from the conditional density
+    @param subset (default = NULL) stringarray do we want to perform predictions for all
+     variables? (NULL), or just a subset thereof?
+    @param plot (default = FALSE) boolean plot the predicted outcomes to a
+     file in /tmp/osl. This can be used for debugging (i.e., it shows the
+     sampled distribution over the actual distribution.
+    @return list a list containing the predictions, where each entry is one
+     of the randomvariables for which a conditional distribution was fit.
   } 
 
   \item{\code{process(data, randomVariables, update = FALSE) }}{ 

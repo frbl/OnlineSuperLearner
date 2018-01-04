@@ -23,7 +23,7 @@
 #'     \code{add_evaluation_measure_name} to true.
 #'
 #'     The input data should look looks as followos:
-#'     \code{
+#'     \dontrun{
 #'       normalized
 #'       normalized`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
 #'               W         A         Y
@@ -44,13 +44,13 @@
 #'     }
 #'
 #'     The output data then looks as follows:
-#'     \code{
+#'     \dontrun{
 #'      `ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
-#'             #.W        .W2        .W3       .A        .Y
+#'             .W        .W2        .W3       .A        .Y
 #'      1: 34.53878 0.02225018 -0.0507633 0.545403 -5.335295
 #'
 #'      `ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`
-#'             #.W          .W2         .W3       .A        .Y
+#'             .W          .W2         .W3       .A        .Y
 #'      1: 34.53878 -0.005705135 -0.03595754 0.545403 -4.499685
 #'     }
 #'     @param predicted.outcome the outcome predicted by the various algorithms
@@ -64,7 +64,9 @@
 #'      of the evaluation metric to the output?
 #'     @return a list with the evalutation of each of the algorithms.
 #'     @examples
-#'     \dontrun{ }
+#'     \dontrun{
+#'       calculate_evaluation
+#'     }
 #'   }
 #'
 #'   \item{\code{evaluate_single_outcome(observed.outcome, predicted.outcome, ra ndomVariables}}{
@@ -82,7 +84,9 @@
 #'     @param randomVariables the randomvariables that are included in the prediction.
 #'     @return a list with the evalutation of the algorithm.
 #'     @examples
-#'     \dontrun{ }
+#'     \dontrun{
+#'       evaluate_single_outcome
+#'     }
 #'   }
 #'
 #'   \item{\code{calculate_risk(predicted.outcome, observed.outcome, randomVariables}}{
@@ -101,7 +105,9 @@
 #'     @return a list of lists, in which each element is the risk for one estimator. In each list per estimator, each
 #'     element corresponds to one of the random variables.
 #'     @examples
-#'     \dontrun{ }
+#'     \dontrun{
+#'       calculate_risk
+#'     }
 #'   }
 #'
 #'   \item{\code{update_risk(predicted.outcome, observed.outcome, randomVariables, current_count, current_risk) }}{
@@ -126,7 +132,9 @@
 #'     @return a list of lists with the updated risk for each estimator, and for each estimator an estimate of the risk
 #'     for each random variable.
 #'     @examples
-#'     \dontrun{ }
+#'     \dontrun{ 
+#'       update_risk 
+#'     }
 #'   }
 #'
 #'   \item{\code{update_single_risk(old_risk, new_risks, current_count, randomVariables) }}{
@@ -149,7 +157,9 @@
 #'     @param randomVariables the random variables for which the predictions have been created.
 #'     @return the updated risk as a data.table. 
 #'     @examples
-#'     \dontrun{ }
+#'     \dontrun{ 
+#'       update_single_risk 
+#'     }
 #'   }
 #' }
 #' @export
