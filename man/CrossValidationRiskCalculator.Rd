@@ -23,8 +23,15 @@ of an estimator.
   }
 
   \item{\code{calculate_evaluation(predicted.outcome, observed.outcome, randomVariables, add_evaluation_measure_name=TRUE)}}{
-    <<description>>
-    The input data looks as followos:
+    Calculates an evaluation using the provided predicted and observed
+    outcomes. It uses a list of \code{RandomVariable} objects to loop
+    through all data provided to it. If the \code{predicted.outcome} list is
+    provided with both a normalized and denormalized entry, it will use the
+    normalized entry as the default. One can choose to add the evaluation
+    metric that was used to the names of the output. This is done by setting
+    \code{add_evaluation_measure_name} to true.
+
+    The input data should look looks as followos:
     \code{
       normalized
       normalized`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
@@ -45,7 +52,7 @@ of an estimator.
       1: 9.889878 0.5234383 0.3501003
     }
 
-    The output data looks as follows:
+    The output data then looks as follows:
     \code{
      `ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
             #.W        .W2        .W3       .A        .Y
@@ -55,10 +62,34 @@ of an estimator.
             #.W          .W2         .W3       .A        .Y
      1: 34.53878 -0.005705135 -0.03595754 0.545403 -4.499685
     }
-    @param predicted.outcome
-    @param observed.outcome
-    @param randomVariables
-    @param add_evaluation_measure_name
+    @param predicted.outcome the outcome predicted by the various algorithms
+     in the super learner. This is a list which either has two entries
+     (normalized and denormalized), and in which both those entries have a
+     list of ML outputs, or it is a list of the outputs of each of the
+     algorithms (e.g., the normalized output directly).
+    @param observed.outcome the actual data that was observed in the study.
+    @param randomVariables the randomvariables that are included in the prediction
+    @param add_evaluation_measure_name (default TRUE) should we add the name
+     of the evaluation metric to the output?
+    @return a list with the evalutation of each of the algorithms.
+    @examples
+    \dontrun{ }
+  }
+
+  \item{\code{evaluate_single_outcome(observed.outcome, predicted.outcome, ra ndomVariables}}{
+    Perform the evaluation of a single estimator. In this case the data of
+    just one estimator can be provided, such as:
+    \code{
+      `ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
+              W         A         Y
+      1: 1.94863 0.5234383 0.3501003
+    }
+    the function will then use the default evaluation metric to determine
+    the performance of the estimator.
+    @param predicted.outcome the outcome predicted by a single algorithms in the super learner. 
+    @param observed.outcome the actual data that was observed in the study.
+    @param randomVariables the randomvariables that are included in the prediction.
+    @return a list with the evalutation of the algorithm.
   }
 
   \item{\code{calculate_risk(predicted.outcome, observed.outcome, randomVariables}}{
