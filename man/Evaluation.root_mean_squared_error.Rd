@@ -2,7 +2,7 @@
 % Please edit documentation in R/Evaluation.R
 \name{Evaluation.root_mean_squared_error}
 \alias{Evaluation.root_mean_squared_error}
-\title{RMSE caluclator}
+\title{Evaluation.root_mean_squared_error}
 \usage{
 Evaluation.root_mean_squared_error(data.observed, data.predicted)
 }
@@ -11,6 +11,9 @@ Evaluation.root_mean_squared_error(data.observed, data.predicted)
 
 \item{data.predicted}{the Y outcome from the estimator}
 }
+\value{
+double the root of the mean squared error.
+}
 \description{
-RMSE caluclator
+Function to calculate the root of the mean squared error.
 }

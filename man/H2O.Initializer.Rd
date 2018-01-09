@@ -2,7 +2,7 @@
 % Please edit documentation in R/H2O.initializer.R
 \name{H2O.Initializer}
 \alias{H2O.Initializer}
-\title{This function is used to initialize the H2O cluster.  Idealy I'd like to use a singletonpattern for this, but this also works.}
+\title{H2O.Initializer}
 \usage{
 H2O.Initializer(host = "localhost", port = 54321, runlocal = TRUE,
   verbose = FALSE)
@@ -20,5 +20,6 @@ H2O.Initializer(host = "localhost", port = 54321, runlocal = TRUE,
 boolean whther the cluster was initialized (TRUE) or was already running (FALSE)
 }
 \description{
-This function is used to initialize the H2O cluster.  Idealy I'd like to use a singletonpattern for this, but this also works.
+This function is used to initialize the H2O cluster. Idealy I'd like to use
+a singletonpattern for this, but this also seems to work.
 }

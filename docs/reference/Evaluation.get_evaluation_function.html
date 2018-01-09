@@ -6,8 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Returns the correct evaluation function given the family of the data
-# @import Metrics — Evaluation.get_evaluation_function • OnlineSuperLearner</title>
+<title>Evaluation — Evaluation.get_evaluation_function • OnlineSuperLearner</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -76,13 +75,14 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Returns the correct evaluation function given the family of the data
-# @import Metrics</h1>
+    <h1>Evaluation</h1>
     </div>
 
     
-    <p>Returns the correct evaluation function given the family of the data
-# @import Metrics</p>
+    <p>Static class with multiple, different evaluation functions. These functions
+can be used to either deterimine the loss of an estimator, or to determine
+its performance.
+Evaluation.get_evaluation_function</p>
     
 
     <pre class="usage"><span class='fu'>Evaluation.get_evaluation_function</span>(<span class='no'>family</span>, <span class='kw'>useAsLoss</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
@@ -92,7 +92,7 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>family</th>
-      <td><p>the family of the data (binomial for binary, gaussian for cts)</p></td>
+      <td><p>the family of the data (binomial for binary, gaussian for cts).</p></td>
     </tr>
     <tr>
       <th>useAsLoss</th>
@@ -100,13 +100,26 @@
     </tr>
     </table>
     
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>function the log likelihoodloss function if <code>useAsLoss = TRUE</code>, and the log loss function otherwise.</p>
+    
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>Returns the correct evaluation function given the family of the data.
+# @import Metrics</p>
+    
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
-                </ul>
+      
+      <li><a href="#value">Value</a></li>
+
+      <li><a href="#details">Details</a></li>
+          </ul>
 
   </div>
 </div>

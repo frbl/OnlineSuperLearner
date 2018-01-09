@@ -2,7 +2,7 @@
 % Please edit documentation in R/Evaluation.R
 \name{Evaluation.mean_squared_error}
 \alias{Evaluation.mean_squared_error}
-\title{MSE caluclator}
+\title{Evaluation.mean_squared_error}
 \usage{
 Evaluation.mean_squared_error(data.observed, data.predicted)
 }
@@ -11,6 +11,9 @@ Evaluation.mean_squared_error(data.observed, data.predicted)
 
 \item{data.predicted}{the Y outcome from the estimator}
 }
+\value{
+double the calculated MSE.
+}
 \description{
-MSE caluclator
+Function to calculate the mean squared error (uses the mse loss function internally).
 }

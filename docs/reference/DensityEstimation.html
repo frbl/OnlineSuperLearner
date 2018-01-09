@@ -123,7 +123,7 @@ variables provided to it.</p>
      sample does not need to be set in the data table (they can be NA).
      However, if one wants to know the probability of an instance of a random
      variable given the other variables, ($P(Y | X_1, X2_)$), then the random
-     variable cannot be empty. 
+     variable cannot be empty.
     @param sample (default = FALSE) boolean would we like to sample a value
      (true) or a probability (false) from the conditional density
     @param subset (default = NULL) stringarray do we want to perform predictions for all
@@ -149,25 +149,37 @@ variables provided to it.</p>
      sampled distribution over the actual distribution.
     @return list a list containing the predictions, where each entry is one
      of the randomvariables for which a conditional distribution was fit.</p></dd>
-    <dt><code>process(data, randomVariables, update = FALSE) </code></dt><dd><p>Either fits or updates the conditional densities for each of the variables. 
-    @param data the data to fit or update the bin estimation algorithm on.
-    @param randomVariables list of RandomVariable objects. The randomvariables for which a density should be fit.
-    @param update boolean is the current call an update or a fit? False = fit.</p></dd>
-    <dt><code>getConditionalDensities(outcome = NULL) </code></dt><dd><p>Method to get all fitted conditional densities. By default it will return the full list of conditional densities
-    (<code>outcome = NULL</code>), but if an outcome is provided a subset is returned a subset is returned. Note that if
-    only a single variable is returned (e.g. <code>outcome = 'Y'</code>), it will return a single conditional density. If
-    a vector of outcomes is provided it will return a list.
-    @param outcome the outcome for which a conditional density needs to be returned.
-    @return either all conditional densities, or a subset, or a single density.</p></dd>
-    <dt><code>is_online()</code></dt><dd><p>Active method, returns whether the estimator is online or not
-    @return boolean true if the estimator is fitted as an online estimator</p></dd>
-    <dt><code>get_bin_estimator()</code></dt><dd><p>Active method, Returns the algorithm that is used fot the bins. 
-    @return ML.base the actual algorithm used to fit the density</p></dd>
-    <dt><code>get_nbins()</code></dt><dd><p>Active method, the number of bins used to split the continuous density distribution 
-    @return integer the number of bins</p></dd>
-    <dt><code>get_estimator_type()</code></dt><dd><p>Active method, returns a list with two elements. First <code>fitfunname</code> the name of the function used to fit the
-    density, and <code>lmclass</code> the lmclass for each of the algorithms.
-    @return the list with the <code>fitfunname</code> and the <code>lmclass</code></p></dd>
+    <dt><code>getConditionalDensities(outcome = NULL) </code></dt><dd><p>Function to get all fitted conditional densities. By default it will
+    return the full list of conditional densities (when <code>outcome =
+    NULL</code>).  One could also provide a subset of random variables to the
+    function.  Note that if only a single variable is returned (e.g.
+    <code>outcome = 'Y'</code>), it will return a single conditional density
+    (i.e., this outcome is not encapsulated in a list). If a vector of
+    outcomes is provided it will return a list.
+    @param outcome (default = NULL) the subset of outcomes for which a
+     conditional density needs to be returned. When <code>NULL</code> it will
+     return all outcomes.
+    @return either all conditional densities in a list, a subset (in a
+     list), or a single density.</p></dd>
+    <dt><code>is_online()</code></dt><dd><p>Active method. returns whether the estimator is initialized to be online
+    or not.
+    @return boolean true if the estimator is fitted as an online estimator.</p></dd>
+    <dt><code>get_bin_estimator()</code></dt><dd><p>Active method. Returns the algorithm that is used for fitting the bins
+    (i.e., the machine learning algorithm).
+    @return ML.base the actual algorithm used to fit the density.</p></dd>
+    <dt><code>get_nbins()</code></dt><dd><p>Active method. the number of bins used to split the continuous density
+    distribution.
+    @return integer the number of bins.</p></dd>
+    <dt><code>get_name()</code></dt><dd><p>Active method. Returns the set name for the current estimator.
+    @return string the name of the estimator.</p></dd>
+    <dt><code>get_raw_conditional_densities()</code></dt><dd><p>Active method. Returns the conditional densities. Note that this method
+    should preferably not be used. Using the
+    <code>getConditionalDensities()</code> method is prefered.
+    @return list the conditional densities</p></dd>
+    <dt><code>get_estimator_type()</code></dt><dd><p>Active method. returns a list with two elements. First <code>fitfunname</code>
+    the name of the function used to fit the density, and <code>lmclass</code> the
+    lmclass for each of the algorithms.
+    @return list with the <code>fitfunname</code> and the <code>lmclass</code></p></dd>
 </dl>
     
 

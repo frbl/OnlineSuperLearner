@@ -17,15 +17,20 @@
 #'     to treat the algorithm as an online or batch algorithm. If online is set
 #'     to false, we will keep a record of the data that has been used to train
 #'     an estimator. Note that this is currently very inefficient.
+#'
 #'     @param nbins (default = 30) integer the number of bins to use for the
 #'      estimator.
+#'
 #'     @param bin_estimator (default = NULL) ML.Base the actual estimator used
 #'      for fitting the conditional density
+#'
 #'     @param online (default = FALSE) boolean does the algorithm have an
 #'      updating possibility? And if so, should we treat it as an online
 #'      algorithm?
+#'
 #'     @param name (default = 'default') the name to use for the density
 #'     estimator.
+#'
 #'     @param verbose (default = FALSE) the verbosity (log level) to use while running.
 #'   } 
 #' 
@@ -36,6 +41,7 @@
 #'     will sample new values from the underlying distributions. If this
 #'     argument is set to false, this function will return predicted
 #'     probabilities.
+#'
 #'     @param data the data from which to predict the outcome. It depends on
 #'      the goal of the prediction what this needs to be. If the goal is to
 #'      sample a new random variable, the value for the random variables to
@@ -43,13 +49,17 @@
 #'      However, if one wants to know the probability of an instance of a random
 #'      variable given the other variables, ($P(Y | X_1, X2_)$), then the random
 #'      variable cannot be empty. 
+#'
 #'     @param sample (default = FALSE) boolean would we like to sample a value
 #'      (true) or a probability (false) from the conditional density
+#'
 #'     @param subset (default = NULL) stringarray do we want to perform predictions for all
 #'      variables? (NULL), or just a subset thereof?
+#'
 #'     @param plot (default = FALSE) boolean plot the predicted outcomes to a
 #'      file in /tmp/osl. This can be used for debugging (i.e., it shows the
 #'      sampled distribution over the actual distribution.
+#'
 #'     @return list a list containing the predictions, where each entry is one
 #'      of the randomvariables for which a conditional distribution was fit.
 #'   } 
@@ -78,41 +88,64 @@
 #'      of the randomvariables for which a conditional distribution was fit.
 #'   } 
 #' 
-#'   \item{\code{process(data, randomVariables, update = FALSE) }}{ 
-#'     Either fits or updates the conditional densities for each of the variables. 
-#'     @param data the data to fit or update the bin estimation algorithm on.
-#'     @param randomVariables list of RandomVariable objects. The randomvariables for which a density should be fit.
-#'     @param update boolean is the current call an update or a fit? False = fit.
-#'   } 
-#' 
 #'   \item{\code{getConditionalDensities(outcome = NULL) }}{ 
-#'     Method to get all fitted conditional densities. By default it will return the full list of conditional densities
-#'     (\code{outcome = NULL}), but if an outcome is provided a subset is returned a subset is returned. Note that if
-#'     only a single variable is returned (e.g. \code{outcome = 'Y'}), it will return a single conditional density. If
-#'     a vector of outcomes is provided it will return a list.
-#'     @param outcome the outcome for which a conditional density needs to be returned.
-#'     @return either all conditional densities, or a subset, or a single density.
+#'     Function to get all fitted conditional densities. By default it will
+#'     return the full list of conditional densities (when \code{outcome =
+#'     NULL}).  One could also provide a subset of random variables to the
+#'     function.  Note that if only a single variable is returned (e.g.
+#'     \code{outcome = 'Y'}), it will return a single conditional density
+#'     (i.e., this outcome is not encapsulated in a list). If a vector of
+#'     outcomes is provided it will return a list.
+#'
+#'     @param outcome (default = NULL) the subset of outcomes for which a
+#'      conditional density needs to be returned. When \code{NULL} it will
+#'      return all outcomes.
+#'
+#'     @return either all conditional densities in a list, a subset (in a
+#'      list), or a single density.
 #'   } 
 #'
 #'   \item{\code{is_online()}}{
-#'     Active method, returns whether the estimator is online or not
-#'     @return boolean true if the estimator is fitted as an online estimator
+#'     Active method. returns whether the estimator is initialized to be online
+#'     or not.
+#'
+#'     @return boolean true if the estimator is fitted as an online estimator.
 #'   }
 #' 
 #'   \item{\code{get_bin_estimator()}}{
-#'     Active method, Returns the algorithm that is used fot the bins. 
-#'     @return ML.base the actual algorithm used to fit the density
+#'     Active method. Returns the algorithm that is used for fitting the bins
+#'     (i.e., the machine learning algorithm). 
+#'
+#'     @return ML.base the actual algorithm used to fit the density.
 #'   } 
 #'
 #'   \item{\code{get_nbins()}}{
-#'     Active method, the number of bins used to split the continuous density distribution 
-#'     @return integer the number of bins
+#'     Active method. the number of bins used to split the continuous density
+#'     distribution.
+#'
+#'     @return integer the number of bins.
+#'   }
+#'
+#'   \item{\code{get_name()}}{
+#'     Active method. Returns the set name for the current estimator.
+#'
+#'     @return string the name of the estimator.
+#'   }
+#'
+#'   \item{\code{get_raw_conditional_densities()}}{
+#'     Active method. Returns the conditional densities. Note that this method
+#'     should preferably not be used. Using the
+#'     \code{getConditionalDensities()} method is prefered. 
+#'
+#'     @return list the conditional densities
 #'   }
 #'
 #'   \item{\code{get_estimator_type()}}{
-#'     Active method, returns a list with two elements. First \code{fitfunname} the name of the function used to fit the
-#'     density, and \code{lmclass} the lmclass for each of the algorithms.
-#'     @return the list with the \code{fitfunname} and the \code{lmclass}
+#'     Active method. returns a list with two elements. First \code{fitfunname}
+#'     the name of the function used to fit the density, and \code{lmclass} the
+#'     lmclass for each of the algorithms.
+#' 
+#'     @return list with the \code{fitfunname} and the \code{lmclass}
 #'   }
 #' }  
 DensityEstimation <- R6Class ("DensityEstimation",

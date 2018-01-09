@@ -2,15 +2,19 @@
 % Please edit documentation in R/Evaluation.R
 \name{Evaluation.accuracy}
 \alias{Evaluation.accuracy}
-\title{Accuracy caluclator}
+\title{Evaluation.Accuracy}
 \usage{
 Evaluation.accuracy(data.observed, data.predicted)
 }
 \arguments{
-\item{data.observed}{the true data (Y)}
+\item{data.observed}{the true data (Y).}
 
-\item{data.predicted}{the Y outcome from the estimator}
+\item{data.predicted}{the Y outcome from the estimator .}
+}
+\value{
+double the calculated accuracy.
 }
 \description{
-Accuracy caluclator
+Function to calculate the accuract of an estimator, given its estimates and
+the observed outcomes.
 }

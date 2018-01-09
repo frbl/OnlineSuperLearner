@@ -79,7 +79,9 @@
     </div>
 
     
-    <p>InterventionEffectCalculator</p>
+    <p>Class that can be used to calculate the effect of a specific intervention.
+For the specification of how to define interventions, look at the
+<code>InterventionParser</code> class.</p>
     
 
     <pre class="usage"><span class='no'>InterventionEffectCalculator</span></pre>
@@ -92,11 +94,85 @@
 
     
     <dl class='dl-horizontal'>
-  <dt><code>perform_initial_estimation(data, intervention, tau) </code></dt><dd><p>This function can be used to generate an initial estimation, calculated using the plain OSL. This method then
-    returns a value given the provided data, tau, and intervention.
-    @param data the data to seed the sampling procedure.
-    @param intervention the intervention itself, see <code>InterventionParser</code> for more details
-    @param tau the time at which we want to evaluate the intervention</p></dd> 
+  <dt><code>initialize(bootstrap_iterations, randomVariables, outcome_variable</code></dt><dd><p>Creates a new InterventionEffectCalculator.
+    @param bootstrap_iterations integer the number of bootstrap iterations
+     to use when calculating the effect of an intervention. If there are
+     more iterations, the result will be more reliable, but calculating will
+     take significantly longer.
+    @param randomVariables list of randomvariable objects. The
+     randomvariables used to create / fit the densities. Usualy a list of W,
+     A, and Y.
+    @param outcome_variable string the name of the variable for which the
+     outcome should be measured. This is usualy Y (depending on you setup).
+    @param parallel (default = TRUE) should the effect calculator run in a
+     multithreaded / multicore way?
+    @param verbose (default = FALSE) the verbosity to use when running the
+     intervention calculation</p></dd>
+    <dt><code>calculate_intervention_effect(osl, interventions, discrete, initial_data, tau, check = FALSE) </code></dt><dd><p>Calculates the actual effect of a set of interventions. This function
+    will call the <code>evaluate_single_intervention</code> for each of the
+    interventions in the list of interventions passed to this functions.
+    When calling this function one can specify whether to use the discrete
+    OSL (<code>discrete = TRUE</code>) or whether to uyse the contionous OSL
+    (<code>discrete = FALSE</code>).
+    @param osl OnlineSuperLearner object the fitted
+     <code>OnlineSuperLearner</code> instance. This instance is used to perform
+     the predictions with.
+    @param interventions list a list of interventions to use when
+     calculating the effect of the interventions. Each of these interventions
+     is processed in sequence and the result is stored in a list.
+    @param discrete boolean should the discrete superlearner (or the cts
+     superlearner) be used?
+    @param initial_data data.table the first row / set of blocks needed to
+     initialize the intervention estimation algorithm. This block needs to
+     be large enough to provide enough historical data for all summary
+     measures.
+    @param tau integer the time t at which we'd like to measure the effect
+     of the intervention
+    @param check (default = FALSE) boolean, should the input parameters be
+     checked for correctness? This might make the process slighly slower.
+    @return a list with intervention effects for each of the specified
+     interventions. Each intervention entry then contains a vector of
+     intervention effects.</p></dd>
+    <dt><code>evaluate_single_intervention(osl, initial_data, intervention, tau, discrete) </code></dt><dd><p>Calculates the effect of a single intervention. The specification of the
+    intervention needs to comply with the definition in the
+    <code>InterventionParser</code> class. One can specify whether or not to use
+    the discrete super learner by toggling the <code>discrete</code> argument.
+    @param osl OnlineSuperLearner object the fitted
+     <code>OnlineSuperLearner</code> instance. This instance is used to perform
+     the predictions with.
+    @param initial_data data.table the first row / set of blocks needed to
+     initialize the intervention estimation algorithm. This block needs to
+     be large enough to provide enough historical data for all summary
+     measures.
+    @param intervention an intervention to run on the data.
+    @param tau integer the time t at which we'd like to measure the effect
+     of the intervention
+    @param discrete boolean should the discrete superlearner (or the cts
+     superlearner) be used?
+    @return a vector of intervention effects for each iteration of
+     intervention.</p></dd>
+    <dt><code>perform_initial_estimation(data, intervention, tau) </code></dt><dd><p>This function can be used to generate an initial estimation, calculated
+    using the plain OSL. This method then returns a value given the provided
+    data, tau, and intervention. Essentially, this does the same as the
+    <code>calculate_intervention_effect</code> function, but returns the mean of
+    all intervention bootstraps.
+    @param data.table the data to seed the sampling procedure.
+    @param intervention the intervention itself, see
+     <code>InterventionParser</code> for more details
+    @param tau integer the time at which we want to evaluate the intervention
+    @return double the estimated mean over all bootstrap iterations</p></dd>
+    <dt><code>is_parallel() </code></dt><dd><p>Active method. Function to check whether the current object runs in
+    parallel or not.
+    @return boolean <code>TRUE</code> if parallel.</p></dd>
+    <dt><code>get_bootstrap_iterations() </code></dt><dd><p>Active method. Returns the number of bootstrap iterations specified.
+    @return integer the number of bootstrap iterations.</p></dd>
+    <dt><code>get_random_variables) </code></dt><dd><p>Active method. The random variables specified when intializing the
+    object.
+    @return list of <code>RandomVariable</code> objects.</p></dd>
+    <dt><code>get_outcome_variable() </code></dt><dd><p>Active method. Returns the outcome variable specified on initialization
+    (string).
+    @return string the string representation of the name of the outcome
+     variable.</p></dd> 
 </dl>
     
 
