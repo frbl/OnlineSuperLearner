@@ -6,11 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>InterventionParser.parse_intervention
-Function to select the current intervention from an intervention list. It
-will check whether the current timestamp is an intervention timestamp with
-respect to the current outcome. If it is, it will return the actual
-intervention. — InterventionParser.parse_intervention • OnlineSuperLearner</title>
+<title>InterventionParser.parse_intervention — InterventionParser.parse_intervention • OnlineSuperLearner</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -79,19 +75,24 @@ intervention. — InterventionParser.parse_intervention • OnlineSuperLearner</
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>InterventionParser.parse_intervention
-Function to select the current intervention from an intervention list. It
-will check whether the current timestamp is an intervention timestamp with
-respect to the current outcome. If it is, it will return the actual
-intervention.</h1>
+    <h1>InterventionParser.parse_intervention</h1>
     </div>
 
     
-    <p>InterventionParser.parse_intervention
-Function to select the current intervention from an intervention list. It
+    <p>Function to select the current intervention from an intervention list. It
 will check whether the current timestamp is an intervention timestamp with
 respect to the current outcome. If it is, it will return the actual
-intervention.</p>
+intervention. The intervention needs to be specified as follows. Each
+intervention is a list consisting of three attributes: <code>variable</code>,
+<code>when</code>, and <code>what</code>. The <code>variable</code> entry denotes the name of
+the variable on which the intervention is done. Usually this is the 'A'
+variable, but this could be tweaked. Secondly one has to specify the
+<code>when</code> variable. This variable denotes when the intervention should be
+performed. Lastly the <code>what</code> variable. This denotes the actual
+intervention to be performed. E.g., one could denote treatment as 1 and
+control as 0. Then an intervention could be to give everybody a treatment,
+forcing everyone to have a 1 as treatment variable. This would then boil
+down to a <code>what</code> of 1.</p>
     
 
     <pre class="usage"><span class='fu'>InterventionParser.parse_intervention</span>(<span class='no'>intervention</span>, <span class='no'>current_time</span>,
@@ -110,7 +111,7 @@ intervention.</p>
     </tr>
     <tr>
       <th>current_outcome</th>
-      <td><p>the current random variable</p></td>
+      <td><p>string the name of the current random variable</p></td>
     </tr>
     <tr>
       <th>check</th>
@@ -120,7 +121,9 @@ intervention.</p>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>a list with when, what and if an intervention should be given at this time (<code>list(when, what, should_intervene)</code>)</p>
+    <p>a list with when, what and if an intervention should be given at
+ this time (<code>list(when, what, should_intervene)</code>). If one whould not
+ intervene, the when and what are -1.</p>
     
 
   </div>
