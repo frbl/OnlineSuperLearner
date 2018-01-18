@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Base class for any machine learning model. Extend this class if you want to create a new machine learning model. — ML.Base • OnlineSuperLearner</title>
+<title>ML.Base — ML.Base • OnlineSuperLearner</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -75,11 +75,12 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Base class for any machine learning model. Extend this class if you want to create a new machine learning model.</h1>
+    <h1>ML.Base</h1>
     </div>
 
     
-    <p>Base class for any machine learning model. Extend this class if you want to create a new machine learning model.</p>
+    <p>Base class for any machine learning model. Extend this class if you want to
+create a new machine learning model.</p>
     
 
     <pre class="usage"><span class='no'>ML.Base</span></pre>
@@ -88,23 +89,52 @@
 
     <p>An object of class <code>R6ClassGenerator</code> of length 24.</p>
     
-    <h2 class="hasAnchor" id="fields"><a class="anchor" href="#fields"></a>Fields</h2>
-
-    
-    <dl class='dl-horizontal'>
-<dt><code>model</code></dt><dd><p>the most recent / best model fitted.</p></dd>
-    <dt><code>iteration</code></dt><dd><p>the iteration we are currently on. This is needed for calculating the average cv risk score</p></dd>
-    <dt><code>CV.risk</code></dt><dd><p>the calculated crossvalidated risk of the estimator</p></dd>
-</dl>
-    
     <h2 class="hasAnchor" id="methods"><a class="anchor" href="#methods"></a>Methods</h2>
 
     
     <dl class='dl-horizontal'>
-  <dt><code>new()</code></dt><dd><p>This method is used to create object of this class.</p></dd>
-    <dt><code>fit(data, X, Y)</code></dt><dd><p>Method to fit the current machine learning model. Should be overridden in the subclass.</p></dd>
-  <dt><code>predict(data, X)</code></dt><dd><p>Method to predict using the current model.</p></dd>
-  <dt><code>getModel()</code></dt><dd><p>Getter for the latest model.</p></dd>
+  <dt><code>initialize() </code></dt><dd><p>Method used to create object of this class.</p></dd>
+    <dt><code>process(X_mat, Y_vals, X_mat_test, Y_vals_test) </code></dt><dd><p>&lt;&lt;description&gt;&gt; 
+    @param X_mat 
+    @param Y_vals 
+    @param X_mat_test 
+    @param Y_vals_test</p></dd>
+    <dt><code>perform_prediction(...) </code></dt><dd><p>Method to perform a prediction using the current machine learning model.
+    Note that this function is for testing purposes only. This function
+    calls the private <code>do.predict</code> function. Each ML.Base model should
+    have a private <code>do.predict</code> function, which is called by the
+    condensier package. The params for this private function are described
+    below.
+    @param X_mat matrix a matrix of X variables / independent variables to
+     do the prediction with.
+    @param m.fit fitted machine learning model. The actual model (NOT A
+     ML.BASE MODEL) to run the prediction from.
+    @return vector the predicted probabilities from the provided m.fit model.</p></dd>
+    <dt><code>perform_fit(...) </code></dt><dd><p>Method to fit the current machine learning model. Note that this
+    function is for testing purposes only. This function calls the private
+    <code>do.fit</code> function. Each ML.Base model should have a private
+    <code>do.fit</code> function, which is called by the condensier package. The
+    params for this private function are described below.
+    @param X_mat matrix a matrix of X values / independent variables
+    @param Y_vals vector a vector with the dependent variable
+    @return a fitted instance of the actual machine learning model</p></dd>
+    <dt><code>perform_update(...) </code></dt><dd><p>Method to perform an update of the provided machine learning model.
+    Note that this function is for testing purposes only. This function
+    calls the private <code>do.update</code> function. Each online ML.Base model
+    should have a private <code>do.update</code> function, which is called by the
+    condensier package. The params for this private function are described
+    below.
+    @param X_mat matrix a matrix of X variables / independent variables to
+     do the prediction with.
+    @param Y_vals vector a vector with the dependent variable
+    @param m.fit fitted machine learning model. The actual model (NOT A
+     ML.BASE MODEL) to perform the update on.
+    @return an updated instance of the actual machine learning model</p></dd>
+    <dt><code>create_formula(X, Y='Y') </code></dt><dd><p>Small helper function to create a formula notation of a dependent
+    variable ~ independent variables. Useful when the submodel accepts
+    this format for specifying a model and the outcome Y.
+    @param X vector a vector of X variables / independent variable names
+    @param Y string (default = "Y") the name of the dependent variable</p></dd> 
 </dl>
     
 
@@ -114,8 +144,6 @@
     <ul class="nav nav-pills nav-stacked">
       
       <li><a href="#format">Format</a></li>
-
-      <li><a href="#fields">Fields</a></li>
 
       <li><a href="#methods">Methods</a></li>
           </ul>

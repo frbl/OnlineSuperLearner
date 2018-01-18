@@ -112,12 +112,3 @@ context(" fit")
   #expect_true(abs(coeff.org[2] - intercept) >= abs(coeff.new[2] - intercept))
 #})
 
-context(" create_formula")
-test_that("it should create the correct formula based on the provided Y A and W", {
-  subject <- described.class$new()
-  Y <- 'outcome'
-  W <- c('input1', 'input2')
-  result <- subject$create_formula(Y,W)
-  expect_equal(result, 'outcome ~ input1 + input2' )
-})
-

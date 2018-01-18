@@ -3,14 +3,12 @@
 \docType{class}
 \name{ML.SVM}
 \alias{ML.SVM}
-\title{ML.SVM
-Class to create support vector machine models}
+\title{ML.SVM}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 ML.SVM
 }
 \description{
-ML.SVM
 Class to create support vector machine models
 }
 \section{Methods}{

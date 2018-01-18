@@ -6,8 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>ML.NeuralNet
-Class to create neuralnetworks — ML.NeuralNet • OnlineSuperLearner</title>
+<title>ML.NeuralNet — ML.NeuralNet • OnlineSuperLearner</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -76,13 +75,18 @@ Class to create neuralnetworks — ML.NeuralNet • OnlineSuperLearner</title>
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>ML.NeuralNet
-Class to create neuralnetworks</h1>
+    <h1>ML.NeuralNet</h1>
     </div>
 
     
-    <p>ML.NeuralNet
-Class to create neuralnetworks</p>
+    <p>Class to create neuralnetwork machine learning models. Information from the
+package:
+Training of neural networks using backpropagation, resilient backpropagation
+with (Riedmiller, 1994) or without weight backtracking (Riedmiller and
+Braun, 1993) or the modified globally convergent version by Anastasiadis et
+al.  (2005). The package allows flexible settings through custom-choice of
+error and activation function. Furthermore, the calculation of generalized
+weights (Intrator O &amp; Intrator N, 1993) is implemented.</p>
     
 
     <pre class="usage"><span class='no'>ML.NeuralNet</span></pre>
@@ -95,7 +99,10 @@ Class to create neuralnetworks</p>
 
     
     <dl class='dl-horizontal'>
-  <dt><code>initialize(hidden)</code></dt><dd><p>Initializes a new neuralnet estimator with the provided hidden layers.</p></dd>
+  <dt><code>initialize(hidden = c(1, 3)) </code></dt><dd><p>Initializes a new neuralnet estimator with the provided hidden layers.
+    @param hidden vector (default = c(1,3)) a vector specifying the hidden
+     layers in the neural network. See the documentation of the neural
+     network package for more details.</p></dd> 
 </dl>
     
 

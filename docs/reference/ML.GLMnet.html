@@ -79,7 +79,13 @@
     </div>
 
     
-    <p>ML.GLMnet</p>
+    <p>Wrapper for a glmnet estimator. From their discription:
+Extremely efficient procedures for fitting the entire lasso or elastic-net
+regularization path for linear regression, logistic and multinomial
+regression models, Poisson regression and the Cox model. Two recent
+additions are the multiple-response Gaussian, and the grouped multinomial
+regression. The algorithm uses cyclical coordinate descent in a path-wise
+fashion, as described in <a href='http://www.jstatsoft.org/v33/i01'>http://www.jstatsoft.org/v33/i01</a>.</p>
     
 
     <pre class="usage"><span class='no'>ML.GLMnet</span></pre>
@@ -88,6 +94,24 @@
 
     <p>An object of class <code>R6ClassGenerator</code> of length 24.</p>
     
+    <h2 class="hasAnchor" id="methods"><a class="anchor" href="#methods"></a>Methods</h2>
+
+    
+    <dl class='dl-horizontal'>
+  <dt><code>initialize(family = "binomial", alpha = 0.5, nlambda = 100, verbose = FALSE) </code></dt><dd><p>Creates a new GLMnet model
+    @param family string (default = "binomial") the family to use for the
+     estimator. Generally this should be binomial (since we are running
+     various logistic regressions). However, if you have a good reason to
+     use a different specification, change it here.
+    @param alpha double (default = 0.5) the elasticnet mixing parameter, with $0  
+      1$. $=1$ is the lasso penalty, and $=0$ the ridge
+     penalty.
+    @param nlambda integer (default = 100) the number of lambda values.
+    @param verbose (default = FALSE) the verbosity of the fitting procedure</p></dd>
+    <dt><code>get_validity </code></dt><dd><p>Active method. Checks whether the specified configuration is valid.
+    @return boolean, true if it is a valid configuration.</p></dd> 
+</dl>
+    
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -95,6 +119,8 @@
     <ul class="nav nav-pills nav-stacked">
       
       <li><a href="#format">Format</a></li>
+
+      <li><a href="#methods">Methods</a></li>
           </ul>
 
   </div>

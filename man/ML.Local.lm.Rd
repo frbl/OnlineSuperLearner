@@ -9,6 +9,36 @@
 ML.Local.lm
 }
 \description{
-ML.Local.lm
+Initializes a linear model (glm) for locally training an estimator. This
+uses the normal GLM implementation as provided by the R stats package.
 }
+\section{Methods}{
+ 
+\describe{  
+  \item{\code{initialize(learning.rate = 0.1, family = "binomial", initialization.random = FALSE) }}{ 
+    Initializes a new generalized linear model to use in the online super learner.
+
+    @param learning.rate double (default = 0.1) the learning rate to use
+     when training the model.
+
+    @param family string (default = "binomial") the family to use for the
+     estimator. Generally this should be binomial (since we are running
+     various logistic regressions). However, if you have a good reason to
+     use a different specification, change it here.
+
+    @param initialization.random (default = FALSE) each of the parameters
+     needs to have an intial state. If this argument is true, all parameters
+     will be randomly initialized.
+
+    @param verbose (default = FALSE) the verbosity of the fitting procedure
+  } 
+
+ \item{\code{get_validity}}{ 
+    Active Method. Determines whether the current specification is valid or
+    not. Note that this function does not return anything, instead it throws
+    whenever something is incorrect.
+  } 
+}
+}
+
 \keyword{datasets}

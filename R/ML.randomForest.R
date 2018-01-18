@@ -1,12 +1,15 @@
 #' ML.randomForest
+#'
 #' Class to create randomForest models
 #'
 #' @docType class
 #' @importFrom randomForest randomForest
 #' @section Methods:
 #' \describe{
-#'   \item{\code{initialize()}}{
+#'   \item{\code{initialize(ntrees = 500)}}{
 #'     Initializes a new randomforest estimator. 
+#'     @param ntrees integer (default = 500) the number of trees to use in the
+#'      randomforest.
 #'   }
 #' }
 #' @export

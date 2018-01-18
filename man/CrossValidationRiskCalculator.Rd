@@ -29,36 +29,24 @@ of an estimator.
     \code{add_evaluation_measure_name} to true.
 
     The input data should look looks as followos:
-    \dontrun{
-      normalized
-      normalized`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
-              W         A         Y
-      1: 1.94863 0.5234383 0.3501003
-
-      normalized`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`
-                W         A         Y
-      1: 1.818194 0.5234383 0.3501003
-
-      denormalized
-      denormalized`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
-              W         A         Y
-      1: 10.8308 0.5234383 0.3501003
-
-      denormalized`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`
-                W         A         Y
-      1: 9.889878 0.5234383 0.3501003
-    }
+      list >
+        normalized > 
+          AlgorithmName1 >
+           data.table with a W, A, Y entry.
+          AlgorithmName2 >
+           data.table with a W, A, Y entry.
+        denormalized > 
+          AlgorithmName1 >
+           data.table with a W, A, Y entry.
+          AlgorithmName2 >
+           data.table with a W, A, Y entry.
 
     The output data then looks as follows:
-    \dontrun{
-     `ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
-            .W        .W2        .W3       .A        .Y
-     1: 34.53878 0.02225018 -0.0507633 0.545403 -5.335295
-
-     `ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`
-            .W          .W2         .W3       .A        .Y
-     1: 34.53878 -0.005705135 -0.03595754 0.545403 -4.499685
-    }
+      list >
+        AlgorithmName1 >
+         data.table with a W, A, Y entry.
+        AlgorithmName2 >
+         data.table with a W, A, Y entry.
     @param predicted.outcome the outcome predicted by the various algorithms
      in the super learner. This is a list which either has two entries
      (normalized and denormalized), and in which both those entries have a
@@ -78,11 +66,8 @@ of an estimator.
   \item{\code{evaluate_single_outcome(observed.outcome, predicted.outcome, ra ndomVariables}}{
     Perform the evaluation of a single estimator. In this case the data of
     just one estimator can be provided, such as:
-    \code{
-      `ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
-              W         A         Y
-      1: 1.94863 0.5234383 0.3501003
-    }
+      AlgorithmName1 >
+       data.table with a W, A, Y entry.
     the function will then use the default evaluation metric to determine
     the performance of the estimator.
     @param predicted.outcome the outcome predicted by a single algorithms in the super learner. 

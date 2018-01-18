@@ -79,7 +79,8 @@
     </div>
 
     
-    <p>ML.H2O</p>
+    <p>Base class for any h2o machine learning model. Extend this class if you want
+to create a new machine learning model.</p>
     
 
     <pre class="usage"><span class='no'>ML.H2O</span></pre>
@@ -88,6 +89,21 @@
 
     <p>An object of class <code>R6ClassGenerator</code> of length 24.</p>
     
+    <h2 class="hasAnchor" id="methods"><a class="anchor" href="#methods"></a>Methods</h2>
+
+    
+    <dl class='dl-horizontal'>
+  <dt><code>initialize() </code></dt><dd><p>Creates a new ML.H2o base model. Note that this also initializes a new
+    H2O interactor for storing and retrieving data.</p></dd>
+    <dt><code>get_checkpoint(m.fit) </code></dt><dd><p>In order to perform an update on an existing H2O model, H2O uses
+    checkpoints. In order to use this system together with our other
+    implementations, we have this function to retrieve a checkpoint if one
+    is available. The function returns <code>NULL</code> if no checkpoint is
+    available, and it returns the model ID if there is a checkpoint.
+    @param m.fit h2o model (not an h2o base model class, but a plain h2o
+     model) a fitted h2o model from which one wants to retrieve a checkpoint.</p></dd> 
+</dl>
+    
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -95,6 +111,8 @@
     <ul class="nav nav-pills nav-stacked">
       
       <li><a href="#format">Format</a></li>
+
+      <li><a href="#methods">Methods</a></li>
           </ul>
 
   </div>

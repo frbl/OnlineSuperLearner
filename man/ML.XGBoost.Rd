@@ -3,7 +3,7 @@
 \docType{class}
 \name{ML.XGBoost}
 \alias{ML.XGBoost}
-\title{Base class for any XGBoost machine learning model.}
+\title{ML.XGBoost}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 ML.XGBoost
@@ -14,22 +14,45 @@ Base class for any XGBoost machine learning model.
 \section{Methods}{
 
 \describe{
-  \item{\code{initialize(booster = "gblinear", alpha = 0, lambda = 0, rounds = 200)}}{
-    Initializes a new XGBoosted estimator. See the underlying xgboost packages for more details. This estimator
-    allows to tweak several hyperparameters (see params). By default XGBoost uses elasticnet for penalizing the
-    fitted model, the amount of penalization can be tweaked using the alpha (L1 regularization) and lambda (L2
-    regularization). See https://github.com/dmlc/xgboost/blob/master/doc/parameter.md
-    @param booster = the booster to use for fitting the booster. Can be either of \code{gbtree},
-                     \code{gblinear} or \code{dart}.
-    @param eta = the stepsize used
-    @param alpha = L1 regularization parameter
-    @param lambda = L2 regularization parameter
-    @param gamma = minimum loss reduction required to make a further partition on a leaf node of the tree.
-                   The larger, the more conservative the algorithm will be.
+  \item{\code{initialize(booster = 'gblinear', max_depth = 6, nthread = 1, alpha = 0, lambda = 0, rounds = 200, gamma = 0, eta = 0.3, objective = 'binary:logistic', verbose = FALSE)}}{
+    Initializes a new XGBoosted estimator. See the underlying xgboost
+    packages for more details. This estimator allows to tweak several
+    hyperparameters (see params). By default XGBoost uses elasticnet for
+    penalizing the fitted model, the amount of penalization can be tweaked
+    using the alpha (L1 regularization) and lambda (L2 regularization). See
+    https://github.com/dmlc/xgboost/blob/master/doc/parameter.md
+
+    @param booster string (default = 'gblinear') the booster to use for
+     fitting the booster. Can be either of \code{gbtree}, \code{gblinear} or
+     \code{dart}.
+
+    @param max_depth integer (default = 6) the max depth of the GBM.
+
+    @param nthread integer (default = 1) the number of threads to run the
+     XBoost algortihm on. Note!! Setting this to a different setting might
+     cause unwanted behavior! If set to -1, it will use all cores available.
+
+    @param alpha double L1 regularization parameter
+
+    @param lambda double L2 regularization parameter
+
     @param rounds = The number of rounds for boosting
+
+    @param gamma minimum loss reduction required to make a further partition
+     on a leaf node of the tree. The larger, the more conservative the algorithm will be.
+
+    @param eta double (default = 0.3) the stepsize used
+
+    @param objective string (default = 'binary:logistic') the objective to
+     optimize.
+
   }
   \item{\code{get_validity}}{
-    Function that shows wheter the current configuration of the booster is valid
+    Active method. Function that shows wheter the current configuration of
+    the booster is valid. The function returns \code{TRUE} if everything is
+    specified correctly. It will throw an error (with the error messages)
+    when something is misspecified. This function is automatically called
+    after initialization.
   }
 }
 }

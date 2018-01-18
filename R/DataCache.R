@@ -23,13 +23,13 @@
 #'      (FALSE if the cache is online).
 #'   }
 #'
-#'   \item{\code{is_online}{
+#'   \item{\code{is_online}}{
 #'     Active method. Function to check whether the cache is an online cache or
 #'     offline cache.
 #'     @return boolean whether the cache is online (TRUE) or offline (FALSE).
 #'   }
 #'
-#'   \item{\code{get_data_cache}{
+#'   \item{\code{get_data_cache}}{
 #'     Active method. Function that returns the complete cache that is being
 #'     tracked in the object.
 #'     @return boolean whether the cache is online (TRUE) or offline (FALSE).

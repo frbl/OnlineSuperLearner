@@ -77,13 +77,14 @@ create a new machine learning model.
     @return an updated instance of the actual machine learning model
   } 
 
-  \item{\code{create_formula(X_mat) }}{ 
+  \item{\code{create_formula(X, Y='Y') }}{ 
     Small helper function to create a formula notation of a dependent
     variable ~ independent variables. Useful when the submodel accepts
-    this format for specifying a model and the outcome is a plain Y.
+    this format for specifying a model and the outcome Y.
 
-    @param X_mat matrix a matrix of X variables / independent variables to
-     do the prediction with.
+    @param X vector a vector of X variables / independent variable names
+
+    @param Y string (default = "Y") the name of the dependent variable
   } 
 }
 }
