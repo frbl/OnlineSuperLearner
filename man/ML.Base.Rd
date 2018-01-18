@@ -3,32 +3,88 @@
 \docType{class}
 \name{ML.Base}
 \alias{ML.Base}
-\title{Base class for any machine learning model. Extend this class if you want to create a new machine learning model.}
+\title{ML.Base}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 ML.Base
 }
 \description{
-Base class for any machine learning model. Extend this class if you want to create a new machine learning model.
+Base class for any machine learning model. Extend this class if you want to
+create a new machine learning model.
 }
-\section{Fields}{
-
-\describe{
-\item{\code{model}}{the most recent / best model fitted.}
-
-\item{\code{iteration}}{the iteration we are currently on. This is needed for calculating the average cv risk score}
-
-\item{\code{CV.risk}}{the calculated crossvalidated risk of the estimator}
-}}
-
 \section{Methods}{
+ 
+\describe{  
+  \item{\code{initialize() }}{ 
+    Method used to create object of this class. 
+  } 
 
-\describe{
-  \item{\code{new()}}{This method is used to create object of this class. }
+  \item{\code{process(X_mat, Y_vals, X_mat_test, Y_vals_test) }}{ 
+    <<description>> 
+    @param X_mat 
+    @param Y_vals 
+    @param X_mat_test 
+    @param Y_vals_test  
+  } 
 
-  \item{\code{fit(data, X, Y)}}{Method to fit the current machine learning model. Should be overridden in the subclass.}
-  \item{\code{predict(data, X)}}{Method to predict using the current model.}
-  \item{\code{getModel()}}{Getter for the latest model.}
+  \item{\code{perform_prediction(...) }}{ 
+    Method to perform a prediction using the current machine learning model.
+    Note that this function is for testing purposes only. This function
+    calls the private \code{do.predict} function. Each ML.Base model should
+    have a private \code{do.predict} function, which is called by the
+    condensier package. The params for this private function are described
+    below.
+
+    @param X_mat matrix a matrix of X variables / independent variables to
+     do the prediction with.
+
+    @param m.fit fitted machine learning model. The actual model (NOT A
+     ML.BASE MODEL) to run the prediction from.
+
+    @return vector the predicted probabilities from the provided m.fit model.
+  } 
+
+  \item{\code{perform_fit(...) }}{ 
+    Method to fit the current machine learning model. Note that this
+    function is for testing purposes only. This function calls the private
+    \code{do.fit} function. Each ML.Base model should have a private
+    \code{do.fit} function, which is called by the condensier package. The
+    params for this private function are described below.
+
+    @param X_mat matrix a matrix of X values / independent variables
+
+    @param Y_vals vector a vector with the dependent variable
+
+    @return a fitted instance of the actual machine learning model
+  } 
+
+  \item{\code{perform_update(...) }}{ 
+    Method to perform an update of the provided machine learning model.
+    Note that this function is for testing purposes only. This function
+    calls the private \code{do.update} function. Each online ML.Base model
+    should have a private \code{do.update} function, which is called by the
+    condensier package. The params for this private function are described
+    below.
+
+    @param X_mat matrix a matrix of X variables / independent variables to
+     do the prediction with.
+
+    @param Y_vals vector a vector with the dependent variable
+
+    @param m.fit fitted machine learning model. The actual model (NOT A
+     ML.BASE MODEL) to perform the update on.
+
+    @return an updated instance of the actual machine learning model
+  } 
+
+  \item{\code{create_formula(X_mat) }}{ 
+    Small helper function to create a formula notation of a dependent
+    variable ~ independent variables. Useful when the submodel accepts
+    this format for specifying a model and the outcome is a plain Y.
+
+    @param X_mat matrix a matrix of X variables / independent variables to
+     do the prediction with.
+  } 
 }
 }
 
