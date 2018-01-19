@@ -42,20 +42,22 @@
 #'          data.table with a W, A, Y entry.
 #'         AlgorithmName2 >
 #'          data.table with a W, A, Y entry.
+#'
 #'     @param predicted.outcome the outcome predicted by the various algorithms
 #'      in the super learner. This is a list which either has two entries
 #'      (normalized and denormalized), and in which both those entries have a
 #'      list of ML outputs, or it is a list of the outputs of each of the
 #'      algorithms (e.g., the normalized output directly).
+#'
 #'     @param observed.outcome the actual data that was observed in the study.
-#'     @param randomVariables the randomvariables that are included in the prediction
+#'
+#'     @param randomVariables the randomvariables that are included in the
+#'      prediction
+#'
 #'     @param add_evaluation_measure_name (default TRUE) should we add the name
 #'      of the evaluation metric to the output?
+#'
 #'     @return a list with the evalutation of each of the algorithms.
-#'     @examples
-#'     \dontrun{
-#'       calculate_evaluation
-#'     }
 #'   }
 #'
 #'   \item{\code{evaluate_single_outcome(observed.outcome, predicted.outcome, ra ndomVariables}}{
@@ -65,35 +67,41 @@
 #'        data.table with a W, A, Y entry.
 #'     the function will then use the default evaluation metric to determine
 #'     the performance of the estimator.
-#'     @param predicted.outcome the outcome predicted by a single algorithms in the super learner. 
+#'
+#'     @param predicted.outcome the outcome predicted by a single algorithms in
+#'      the super learner. 
+#'
 #'     @param observed.outcome the actual data that was observed in the study.
-#'     @param randomVariables the randomvariables that are included in the prediction.
+#'
+#'     @param randomVariables the randomvariables that are included in the
+#'      prediction.
+#'
 #'     @return a list with the evalutation of the algorithm.
-#'     @examples
-#'     \dontrun{
-#'       evaluate_single_outcome
-#'     }
 #'   }
 #'
 #'   \item{\code{calculate_risk(predicted.outcome, observed.outcome, randomVariables}}{
 #'     Calculate the CV risk for each of the random variables provided based on
 #'     the predicted and observed outcomes. This function also expects a list
 #'     of predictions in a similar way as \code{calculate_evaluation} does. 
+#'
 #'     @param predicted.outcome the outcome predicted by the various algorithms
 #'      in the super learner. This is a list which either has two entries
 #'      (normalized and denormalized), and in which both those entries have a
 #'      list of ML outputs, or it is a list of the outputs of each of the
 #'      algorithms (e.g., the normalized output directly).
-#'     @param observed.outcome the actual data that was observed in the study (emperically, or from a simulation).
-#'     @param randomVariables the randomvariables that are included in the prediction
+#'
+#'     @param observed.outcome the actual data that was observed in the study
+#'      (emperically, or from a simulation).
+#'
+#'     @param randomVariables the randomvariables that are included in the
+#'      prediction
+#'
 #'     @param add_evaluation_measure_name (default TRUE) should we add the name
 #'      of the evaluation metric to the output?
-#'     @return a list of lists, in which each element is the risk for one estimator. In each list per estimator, each
-#'     element corresponds to one of the random variables.
-#'     @examples
-#'     \dontrun{
-#'       calculate_risk
-#'     }
+#'
+#'     @return a list of lists, in which each element is the risk for one
+#'      estimator. In each list per estimator, each element corresponds to one
+#'      of the random variables.
 #'   }
 #'
 #'   \item{\code{update_risk(predicted.outcome, observed.outcome, randomVariables, current_count, current_risk) }}{
@@ -110,17 +118,22 @@
 #'      (normalized and denormalized), and in which both those entries have a
 #'      list of ML outputs, or it is a list of the outputs of each of the
 #'      algorithms (e.g., the normalized output directly).
-#'     @param observed.outcome the actual data that was observed in the study (emperically, or from a simulation).
-#'     @param randomVariables the randomvariables for which the distributions have been calculated
-#'     @param current_count the current number of evaluations performed for calculating the \code{current_risk}.
-#'     @param current_risk the previously calculated risk of each of the estimators (calculated over
-#'      \code{current_count} number of evaluations).
-#'     @return a list of lists with the updated risk for each estimator, and for each estimator an estimate of the risk
-#'     for each random variable.
-#'     @examples
-#'     \dontrun{ 
-#'       update_risk 
-#'     }
+#'
+#'     @param observed.outcome the actual data that was observed in the study
+#'      (emperically, or from a simulation).
+#'
+#'     @param randomVariables the randomvariables for which the distributions
+#'      have been calculated
+#'
+#'     @param current_count the current number of evaluations performed for
+#'      calculating the \code{current_risk}.
+#'
+#'     @param current_risk the previously calculated risk of each of the
+#'      estimators (calculated over \code{current_count} number of
+#'      evaluations).
+#'
+#'     @return a list of lists with the updated risk for each estimator, and
+#'      for each estimator an estimate of the risk for each random variable.
 #'   }
 #'
 #'   \item{\code{update_single_risk(old_risk, new_risks, current_count, randomVariables) }}{

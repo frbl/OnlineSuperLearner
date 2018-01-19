@@ -79,7 +79,12 @@
     </div>
 
     
-    <p>OnlineSuperLearner.Predict</p>
+    <p>Class to perform any kind of prediction on the super learner objects. These
+methods were first included in the onlinesuperlearner class itself, but to
+improve clarity we moved them here. Most of the functions created in this
+file are exposed through the OnlineSuperLearner class. As such, it is not
+neccessary to create a sepearate instance of this class in order to get
+predictions.</p>
     
 
     <pre class="usage"><span class='no'>OnlineSuperLearner.Predict</span></pre>
@@ -88,6 +93,93 @@
 
     <p>An object of class <code>R6ClassGenerator</code> of length 24.</p>
     
+    <h2 class="hasAnchor" id="methods"><a class="anchor" href="#methods"></a>Methods</h2>
+
+    
+    <dl class='dl-horizontal'>
+  <dt><code>initialize(pre_processor = NULL, verbose = FALSE) </code></dt><dd><p>Initializes a new OnlineSuperLearner.Predict. This instance is then used
+    by the OSL to perform predictions with.
+    @param pre_processor PreProcessor (default = NULL) an instance of the
+     <code>PreProcessor</code> which was used to normalize the in and output values
+     for the OSL.
+    @param verbose (default = FALSE) the verbosity of the prediction class.</p></dd>
+    <dt><code>predict(osl, data, randomVariables, all_estimators = TRUE</code></dt><dd><p>Runs a prediction on the various estimators of the OSL. This means it
+    runs the Discrete OSL, the cts OSL, and if specified, all separate
+    learners.
+    @param osl OnlineSuperLearner a trained instance of the
+     OnlineSuperLearner class.
+    @param data data.table the initial data to perform the prediction with.
+     Note that this should be enough to provide values for all covariates.
+    @param randomVariables list a list of <code>RandomVariable</code> objects, the
+     ones used in the training process.
+    @param all_estimators boolean (default = TRUE) whether or not to include
+     the output of all candidate estimators in the output
+    @param discrete boolean (default = TRUE) = whether or not to include the
+     output of the discrete super learner in the output
+    @param continuous boolean (default = TRUE) whether or not to include the
+     output of the continuous super learner in the output
+    @param sample boolean (default = FALSE) is the goal to sample from the
+     underlying densities, or should we predict a probability of an outcome?
+    @param plot (default = FALSE) if set to true, the algorithm will plot
+     the outcomes to a file for further inspection. This is useful when
+     inspecting the performance of the estimators.
+    @return list a list with two entries; normalized and denormalized. The
+     normalized outcomes are the values scaled between 0-1 (using the
+     <code>PreProcessor</code>), the denormalized outcomes are the values
+     transformed back to their original range.</p></dd>
+    <dt><code>predict_osl(data, osl_weights, current_result, sl_library, randomVariables</code></dt><dd><p>Performs a prediction using the continuous OSL. It does so using a set
+    of <code>osl_weights</code> that represent the alphas for each of the
+    algorithms.
+    @param data data.table the initial data to perform the prediction with.
+     Note that this should be enough to provide values for all covariates.
+    @param osl_weights vector a vector containing all weights for the osl.
+    @param current_result an earlier prediction of outcomes. We use the
+     <code>current_result</code> outcome table to reduce the number of predictions
+     we have to make. It is essentially a form of dynamic programming, if we
+     have already calculated it, we hit the cache and use the cached
+     prediction.
+    @param sl_library list a list of all machine learning estimators
+    @param randomVariables list a list of <code>RandomVariable</code> objects, the
+     ones used in the training process.
+    @return list a list with two entries; normalized and denormalized. The
+     normalized outcomes are the values scaled between 0-1 (using the
+     <code>PreProcessor</code>), the denormalized outcomes are the values
+     transformed back to their original range.</p></dd>
+    <dt><code>predict_dosl(dosl, data, randomVariables, current_result, sample = FALSE</code></dt><dd><p>Performs a prediction using the discrete OSL. It does so using the DOSL
+    instance which can be retrieved from an OSL instance.
+    @param dosl the actual discrete superlearner as retrieved from /
+     provided by a trained online super learner instance.
+    @param data data.table the initial data to perform the prediction with.
+     Note that this should be enough to provide values for all covariates.
+    @param randomVariables list a list of <code>RandomVariable</code> objects, the
+     ones used in the training process.
+    @param current_result an earlier prediction of outcomes. We use the
+     <code>current_result</code> outcome table to reduce the number of predictions
+     we have to make. It is essentially a form of dynamic programming, if we
+     have already calculated it, we hit the cache and use the cached
+     prediction.
+    @param sample boolean (default = FALSE) is the goal to sample from the
+     underlying densities, or should we predict a probability of an outcome?
+    @return list a list with two entries; normalized and denormalized. The
+     normalized outcomes are the values scaled between 0-1 (using the
+     <code>PreProcessor</code>), the denormalized outcomes are the values
+     transformed back to their original range.</p></dd>
+    <dt><code>predict_using_all_estimators(data, sl_library, sample = FALSE, plot = FALSE) </code></dt><dd><p>Perfomrs a prediction based on all estimators / candidate estimators
+    trained by the online superlearner.
+    @param data data.table the initial data to perform the prediction with.
+     Note that this should be enough to provide values for all covariates.
+    @param sl_library list a list of all machine learning estimators
+    @param sample boolean (default = FALSE) is the goal to sample from the
+     underlying densities, or should we predict a probability of an outcome?
+    @param plot (default = FALSE) if set to true, the algorithm will plot
+     the outcomes to a file for further inspection. This is useful when
+     inspecting the performance of the estimators.
+    @return list a list with two entries; normalized and denormalized. The
+     normalized outcomes are the values scaled between 0-1 (using the
+     <code>PreProcessor</code>), the denormalized outcomes are the values
+     transformed back to their original range.</p></dd> 
+</dl>
+    
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -95,6 +187,8 @@
     <ul class="nav nav-pills nav-stacked">
       
       <li><a href="#format">Format</a></li>
+
+      <li><a href="#methods">Methods</a></li>
           </ul>
 
   </div>

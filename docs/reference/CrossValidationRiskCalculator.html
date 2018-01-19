@@ -125,40 +125,40 @@ of an estimator.</p>
      list of ML outputs, or it is a list of the outputs of each of the
      algorithms (e.g., the normalized output directly).
     @param observed.outcome the actual data that was observed in the study.
-    @param randomVariables the randomvariables that are included in the prediction
+    @param randomVariables the randomvariables that are included in the
+     prediction
     @param add_evaluation_measure_name (default TRUE) should we add the name
      of the evaluation metric to the output?
-    @return a list with the evalutation of each of the algorithms.
-    @examples
-          calculate_evaluation</p></dd>
+    @return a list with the evalutation of each of the algorithms.</p></dd>
     <dt><code>evaluate_single_outcome(observed.outcome, predicted.outcome, ra ndomVariables</code></dt><dd><p>Perform the evaluation of a single estimator. In this case the data of
     just one estimator can be provided, such as:
       AlgorithmName1 &gt;
        data.table with a W, A, Y entry.
     the function will then use the default evaluation metric to determine
     the performance of the estimator.
-    @param predicted.outcome the outcome predicted by a single algorithms in the super learner. 
+    @param predicted.outcome the outcome predicted by a single algorithms in
+     the super learner.
     @param observed.outcome the actual data that was observed in the study.
-    @param randomVariables the randomvariables that are included in the prediction.
-    @return a list with the evalutation of the algorithm.
-    @examples
-          evaluate_single_outcome</p></dd>
+    @param randomVariables the randomvariables that are included in the
+     prediction.
+    @return a list with the evalutation of the algorithm.</p></dd>
     <dt><code>calculate_risk(predicted.outcome, observed.outcome, randomVariables</code></dt><dd><p>Calculate the CV risk for each of the random variables provided based on
     the predicted and observed outcomes. This function also expects a list
-    of predictions in a similar way as <code>calculate_evaluation</code> does. 
+    of predictions in a similar way as <code>calculate_evaluation</code> does.
     @param predicted.outcome the outcome predicted by the various algorithms
      in the super learner. This is a list which either has two entries
      (normalized and denormalized), and in which both those entries have a
      list of ML outputs, or it is a list of the outputs of each of the
      algorithms (e.g., the normalized output directly).
-    @param observed.outcome the actual data that was observed in the study (emperically, or from a simulation).
-    @param randomVariables the randomvariables that are included in the prediction
+    @param observed.outcome the actual data that was observed in the study
+     (emperically, or from a simulation).
+    @param randomVariables the randomvariables that are included in the
+     prediction
     @param add_evaluation_measure_name (default TRUE) should we add the name
      of the evaluation metric to the output?
-    @return a list of lists, in which each element is the risk for one estimator. In each list per estimator, each
-    element corresponds to one of the random variables.
-    @examples
-          calculate_risk</p></dd>
+    @return a list of lists, in which each element is the risk for one
+     estimator. In each list per estimator, each element corresponds to one
+     of the random variables.</p></dd>
     <dt><code>update_risk(predicted.outcome, observed.outcome, randomVariables, current_count, current_risk) </code></dt><dd><p>Function used by the OSL to update a previous risk. This function uses
     the equation by Benkeser et al. (2017) to update a previous risk. What
     it does is multiply a previous risk (<code>current_risk</code>) by the
@@ -171,15 +171,17 @@ of an estimator.</p>
      (normalized and denormalized), and in which both those entries have a
      list of ML outputs, or it is a list of the outputs of each of the
      algorithms (e.g., the normalized output directly).
-    @param observed.outcome the actual data that was observed in the study (emperically, or from a simulation).
-    @param randomVariables the randomvariables for which the distributions have been calculated
-    @param current_count the current number of evaluations performed for calculating the <code>current_risk</code>.
-    @param current_risk the previously calculated risk of each of the estimators (calculated over
-     <code>current_count</code> number of evaluations).
-    @return a list of lists with the updated risk for each estimator, and for each estimator an estimate of the risk
-    for each random variable.
-    @examples
-          update_risk</p></dd>
+    @param observed.outcome the actual data that was observed in the study
+     (emperically, or from a simulation).
+    @param randomVariables the randomvariables for which the distributions
+     have been calculated
+    @param current_count the current number of evaluations performed for
+     calculating the <code>current_risk</code>.
+    @param current_risk the previously calculated risk of each of the
+     estimators (calculated over <code>current_count</code> number of
+     evaluations).
+    @return a list of lists with the updated risk for each estimator, and
+     for each estimator an estimate of the risk for each random variable.</p></dd>
     <dt><code>update_single_risk(old_risk, new_risks, current_count, randomVariables) </code></dt><dd><p>Instaed of updating the risk for each of estimators, one can also update
     a single risk. In this case the risks are updated using the
     <code>old_risk</code> and <code>new_risks</code> variable. Essentially, this
