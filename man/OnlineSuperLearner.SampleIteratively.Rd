@@ -187,10 +187,18 @@ the \code{sampleIteratively} function on that class.
   } 
 
   \item{\code{perform_sample(data, current_rv, discrete) }}{ 
-    <<description>> 
-    @param data 
-    @param current_rv 
-    @param discrete  
+    Actually runs the prediction and performs the sample from the OSL.
+
+    @param data data.table the current data needed to initialize the
+     sampling of the randomvariable.
+
+    @param current_rv RandomVariable the \code{RandomVariable} we are
+     currently working with.
+
+    @param discrete boolean (default = TRUE) should we run the discrete (=
+     \code{TRUE}) or the cts superlearner (= \code{FALSE}).
+
+    @return list the normalized and denormalized outcome.
   } 
 
   \item{\code{create_correct_result(result, result_denormalized_observations, return_type) }}{ 

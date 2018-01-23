@@ -214,10 +214,14 @@ the <code>sampleIteratively</code> function on that class.</p>
     intervention.
     @param parsed_intervention list (intervention instance) the intervention
      to perform on the data.</p></dd>
-    <dt><code>perform_sample(data, current_rv, discrete) </code></dt><dd><p>&lt;&lt;description&gt;&gt; 
-    @param data 
-    @param current_rv 
-    @param discrete</p></dd>
+    <dt><code>perform_sample(data, current_rv, discrete) </code></dt><dd><p>Actually runs the prediction and performs the sample from the OSL.
+    @param data data.table the current data needed to initialize the
+     sampling of the randomvariable.
+    @param current_rv RandomVariable the <code>RandomVariable</code> we are
+     currently working with.
+    @param discrete boolean (default = TRUE) should we run the discrete (=
+     <code>TRUE</code>) or the cts superlearner (= <code>FALSE</code>).
+    @return list the normalized and denormalized outcome.</p></dd>
     <dt><code>create_correct_result(result, result_denormalized_observations, return_type) </code></dt><dd><p>As described in the <code>sample_iteratively</code> function, we provide a
     result based on a return type. This function actually takes care of
     transforming the full result in this specified return type result.
