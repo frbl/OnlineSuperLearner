@@ -1,4 +1,5 @@
 #' ML.SVM
+#'
 #' Class to create support vector machine models
 #'
 #' @docType class

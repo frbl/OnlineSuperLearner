@@ -3,15 +3,13 @@
 \docType{class}
 \name{DataSplitter}
 \alias{DataSplitter}
-\title{DataSplitter
-Splits data into train and test set.}
+\title{DataSplitter}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 DataSplitter
 }
 \description{
-DataSplitter
-Splits data into train and test set.
+Splits a dataset into a train and test set.
 }
 \section{Methods}{
  
@@ -21,9 +19,16 @@ Splits data into train and test set.
   } 
 
   \item{\code{split(data)}}{ 
-    Splits the data in a train and test set. It will always use the last observation as the test set observation.
-    @param data the data to spit 
-    @return list with two entries: \code{train} and \code{test}. Each containing the correct dataframe.
+    Splits the data in a train and test set. A block that was used as a test
+    set previously is automatically appended to the traininset (so all data
+    gets used for training that has been used for testing before).
+
+    In the current implementation it will always use the last observation as
+    the test set observation.  Eventually this should be configurable, and
+    \code{n} number of observations should be includable.
+    @param data data.table the data to spit into a train and test set.
+    @return list with two entries: \code{train} and \code{test}. Each
+     containing the respective dataframe.
   } 
 }
 }

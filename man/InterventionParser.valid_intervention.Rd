@@ -2,8 +2,7 @@
 % Please edit documentation in R/InterventionParser.R
 \name{InterventionParser.valid_intervention}
 \alias{InterventionParser.valid_intervention}
-\title{InterventionParser.valid_intervention
-Checks whether the provided intervention is valid}
+\title{InterventionParser.valid_intervention}
 \usage{
 InterventionParser.valid_intervention(intervention)
 }
@@ -11,9 +10,8 @@ InterventionParser.valid_intervention(intervention)
 \item{intervention}{the intervention to check the validity of}
 }
 \value{
-boolean true if valid, false if not
+boolean \code{TRUE} if valid, \code{FALSE} if not
 }
 \description{
-InterventionParser.valid_intervention
-Checks whether the provided intervention is valid
+Checks whether the provided intervention is valid.
 }

@@ -2,8 +2,7 @@
 % Please edit documentation in R/InterventionParser.R
 \name{InterventionParser.is_current_node_treatment}
 \alias{InterventionParser.is_current_node_treatment}
-\title{InterventionParser.is_current_node_treatment
-Returns whether the current nodie is a treatment node}
+\title{InterventionParser.is_current_node_treatment}
 \usage{
 InterventionParser.is_current_node_treatment(current_time, intervention,
   current_rv_output)
@@ -19,6 +18,5 @@ InterventionParser.is_current_node_treatment(current_time, intervention,
 boolean, whether this is a treatment node
 }
 \description{
-InterventionParser.is_current_node_treatment
-Returns whether the current nodie is a treatment node
+Returns whether the current nodie is a treatment node.
 }

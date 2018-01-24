@@ -15,78 +15,213 @@ to the super learner machine learning model.
 \section{Methods}{
 
 \describe{
-  \item{\code{initialize(SL.library.definition = c("ML.Local.lm", "ML.H2O.glm", summaryMeasureGenerator, verbose = FALSE)}}{
-    starts a new OnlineSuperLearner. The provided \code{SL.library.definition} contains the machine learning models to use
-    @param SL.library.definition = a list of machine learning algorithms. This could be either a vector with with the
-    name of each estimator or a list according to the libraryFactroy.  Look in the LibraryFactory class for the
-    specification of this list.
-    @param summaryMeasureGenerator = an object of the type SummaryMeasureGenerator. This generator is used to get new
-    observations with the correct aggregated columns.
-    @param verbose = the verbosity (how much logging). Note that this might be propagated to other classes.
+  \item{\code{initialize(SL.library.definition = c("ML.Local.lm", "ML.H2O.glm"), summaryMeasureGenerator, verbose = FALSE)}}{
+    starts a new OnlineSuperLearner. The provided
+    \code{SL.library.definition} contains the machine learning models to use.
+
+    @param SL.library.definition list a list of machine learning algorithms.
+     This could be either a vector with with the name of each estimator or a
+     list according to the libraryFactroy.  Look in the LibraryFactory class
+     for the specification of this list.
+
+    @param summaryMeasureGenerator SummaryMeasureGenerator an object of the type
+     SummaryMeasureGenerator. This generator is used to get new observations
+     with the correct aggregated columns.
+
+    @param should_fit_osl boolean (default = TRUE) should an instance of the
+     OSL fit the online version of the osl?
+
+    @param should_fit_dosl boolean (default = TRUE) should an instance of the
+     OSL fit the discrete online version of the osl?
+
+    @param pre_processor PreProcessor (default = NULL) an instance of the
+     \code{PreProcessor} which is used to normalize the in and output values
+     for the OSL.
+
+    @param verbose (default = FALSE) the verbosity (how much logging). Note that this might
+     be propagated to other classes.
   }
 
-  \item{\code{evaluateModels(data, randomVariables) }}{
-    Performs a basic evaluation on the data, given a list of random variables
-    @param data = the data to use for performing the evaluation
-    @param randomVariables = the randomVariables for which one wants to see the evaluation. Note that this needs to
-    be equal to, or a subset of, the random variables used to train the estimators.
+  \item{\code{set_verbosity(verbosity) }}{
+    Method that can change the verbosity of a superlearner instance
+
+    @param verbose the new verbosity (how much logging) to use.
+  }
+
+  \item{\code{fit(data, randomVariables, initial_data_size = 5, max_iterations = 20}}{ 
+    Fits an instance of the OnlineSuperLearner class. This is the main
+    method used for training the online SuperLearner (and this will actually
+    trigger the training process). This will fit the provided
+    \code{SL.library.definition} estimators as well as the
+    OnlineSuperLearner and the DiscreteOnlineSuperLearner.
+
+    @param data Data.Base the data to use to train the instance on. Note
+     that this can be any instance of a \code{Data.Base} superclass, as long
+     as it extends the correct functions.
+
+    @param randomVariables list a list of \code{RandomVariable} objects.
+     These are the randomVariables we will fit a conditional density for.
+     These variables need to be in the data as well, but can be a subset of
+     all `columns' of the data.
+
+    @param initial_data_size integer (default = 5) when training an online
+     algoritm, one first needs to specify a small number of rows of data that
+     can be used for calculating the initial versions of the estimators
+     (these are essentially trained as batch algorithms). How much blocks are
+     used for training this initial set can be specified here.
+
+    @param max_iterations integer (default = 20) the maximum number of
+     iterations the algorithm can use to train the algorithm. If this is more
+     than the number of blocks in the data, the OSL will stop gracefully.
+     This is useful when there is a stream of data which would provide data
+     indefinitely.
+
+    @param mini_batch_size integer (default = 20) the size of the mini batch
+     to use for each update.
+
+    @return data.table a data.table with the risks of each estimator.
+  } 
+
+  \item{\code{predict(data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE)}}{
+    Method to perform a prediction on the estimators. It can run in
+    different configurations. It can be configured to predict the outcome
+    using all estimators (the \code{all_estimators} flag), using the
+    discrete superlearner (the \code{discrete} flag), or using the
+    continuous online superlearner (the \code{continous} flag). At least one
+    of these three flags must be true.
+
+    @param data Data.Base the data to use to train the instance on. Note
+     that this can be any instance of a \code{Data.Base} superclass, as long
+     as it extends the correct functions.
+
+    @param randomVariables list the random variables used for doing the
+     predictions (these should be the same as the ones used for fitting).
+
+    @param all_estimators boolean (default = TRUE) whether or not to include
+     the output of all candidate estimators in the output 
+
+    @param discrete boolean (default = TRUE) = whether or not to include the
+     output of the discrete super learner in the output
+
+    @param continuous boolean (default = TRUE) whether or not to include the
+     output of the continuous super learner in the output
+
+    @param sample boolean (default = FALSE) is the goal to sample from the
+     underlying densities, or should we predict a probability of an outcome?
+
+    @param plot (default = FALSE) if set to true, the algorithm will plot
+     the outcomes to a file for further inspection. This is useful when
+     inspecting the performance of the estimators.
+
+    @return list a list with two entries; normalized and denormalized. The
+     normalized outcomes are the values scaled between 0-1 (using the
+     \code{PreProcessor}), the denormalized outcomes are the values
+     transformed back to their original range.
   }
 
   \item{\code{sample_iteratively(data, randomVariables, tau = 10, intervention = NULL)}}{
-    Method to sample iteratively from the densities. It works by providing an initial observation (\code{data}), from which
-    iteretitatively the next measurement is estimated. This is done until \code{tau} steps in the future. Furthermore,
-    this sampling step can be augmented with an intervention. That is, we could set a given time step (or all)
-    to a certain value. The \code{intervention} provided should be a list containing a \code{when} and \code{what} entry.
-    the \code{when} entry should show when the intervention is performed, the \code{what} entry shows what should be done.
+    Method to sample iteratively from the densities. It works by providing
+    an initial observation (\code{data}), from which iteretitatively the
+    next measurement is estimated. This is done until \code{tau} steps in
+    the future. Furthermore, this sampling step can be augmented with an
+    intervention. That is, we could set a given time step (or all) to a
+    certain value. The \code{intervention} provided should be a list
+    containing a \code{when} and \code{what} entry.  the \code{when} entry
+    should show when the intervention is performed, the \code{what} entry
+    shows what should be done.
+
     @param data = the initial data to start the sampling from. At most 1 row of data.
-    @param randomVariables = the ordered set of randomvariables used when fitting the data
-    @param tau = the timestep at which you want to evaluate the output
-    @param intervention = the intervention, e.g.: \code{list(when = c(1,2), what = c(1,0))}
+
+    @param randomVariables list the random variables used for doing the
+     predictions (these should be the same as the ones used for fitting).
+
+    @param tau integer (default = 10) the timestep at which you want to evaluate the output
+
+    @param intervention list/intervention (default = NULL) the intervention,
+    e.g.: \code{list(when = c(1,2), what = c(1,0), variable = 'A')}. See the
+    \code{InterventionParser} for more details.
+
+    @param return_type string (default = 'observations') the
+     \code{OnlineSuperlearner.SampleIteratively} can return data in different
+     configurations. It can return all data, only a subset, or denormalized
+     outcomes. Check the \code{OnlineSuperlearner.SampleIteratively} class for more
+     details.
+
+    @param start_from_variable RandomVariable (default = NULL) if we don't
+     start with sampling from the first argument in the sequence of
+     variables, specify which one to start from.
+
+    @param start_from_time integer (default = 1) generally the sampling
+    procedure starts from $t = 1$, but sometimes one might want to sample
+    from a different point in time. This can be specified here.
+
+    @param check boolean (default = FALSE) should we perform a check on the
+     provided arguments?
+
+    @return list/dataframe of sampled values.
   }
 
-  \item{\code{fit(data, randomVariables, initial_data_size = 5, max_iterations = 20, mini_batch_size = 20)}}{
-    The actual method to fit the OnlineSuperLearner. This will fit the provided \code{SL.library.definition}
-    estimators as well as the OnlineSuperLearner and the DiscreteOnlineSuperLearner.
-    @param data = the data to fit the estimator on. Should be a \code{Data.Base} subclass.
-    @param randomVariables = the random variables to fit the densities / estmators for (W,A,Y)
-    @param initial_data_size = the size of the dataset to use for the initial fit (pre-update)
-    @param max_iterations = the number of iterations to run for updating the data
-    @param mini_batch_size = the size of the mini batch to use for each update.
+  \item{\code{train_library(data_current, randomVariables)}}{
+    Function to train the initial set of models
+
+    @param data_current data.table the dataset to train the estimators on.
+
+    @param randomVariables list the random variables used for doing the
+     predictions (these should be the same as the ones used for fitting).
+
   }
 
-  \item{\code{predict(data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE)}}{
-    Method to perform a prediction on the estimators. It can run in different configurations. It can be configured
-    to predict the outcome using all estimators (the \code{all_estimators} flag), using the discrete superlearner
-    (the \code{discrete} flag), or using the continuous online superlearner (the \code{continous} flag). At least
-    one of these three flags must be true.
-    @param data = the data to use for doing the predictions
-    @param randomVariables = the random variables used for doing the predictions (these should be the same as the
-    ones used for fitting).
-    @param all_estimators = whether or not to include the output of all candidate estimators in the output
-    @param discrete = whether or not to include the output of the discrete super learner in the output
-    @param continuous = whether or not to include the output of the continuous super learner in the output
+  \item{\code{update_library(randomVariables, max_iterations, mini_batch_size)}}{
+    Updates the initial / trained estimators with the available data. This
+    data does not need to be provided as it is already part of the Data.Base
+    provided on initialization / fitting.
+
+    @param randomVariables list the random variables used for doing the
+     predictions (these should be the same as the ones used for fitting).
+
+    @param max_iterations integer the maximal number of iterations of online
+    learning to do.
+
+    @param mini_batch_size integer (default = 20) the size of the mini batch
+     to use for each update.
+  }
+
+  \item{\code{fit_dosl()}}{
+    Finds the best estimator among the current set, for each of the
+    densities (WAY)
+  }
+
+  \item{\code{get_cv_risk()}}{
+    Method to retrieve the current \code{cv_risk} (note that this is not an active
+    method, so it can easiliy be stubbed).
+
+    @return an overview of the CV risk of the different estimators
   }
 
   \item{\code{is_fitted}}{
-    Active method to return whether the OSL has been fitted or not
+    Active method. Returns whether the OSL has been fitted or not
+
     @return boolean true if it has been fitted, false if not
   }
 
   \item{\code{is_online}}{
     Active method to deterimine whether the actual algorithm is fitted in an online way. That is to say, that all of
     the estimators are in fact online.
+
     @return boolean true if it all algorithms are online, false if not
   }
 
   \item{\code{fits_osl}}{
     Active method to know whether the current OSL fits an online super learner (that is, the weighted combination).
     This setting comes from the initialization step of OSL.
+
     @return boolean true if it fits an osl (false if not)
   }
 
   \item{\code{fits_dosl}}{
     Active method to know whether the current OSL fits a discrete online super learner.  This setting comes from the
     initialization step of OSL.
+
     @return boolean true if it fits a discrete osl (false if not)
   }
 
@@ -97,21 +232,25 @@ to the super learner machine learning model.
   \item{\code{get_estimators}}{
     Active method to retrieve a list of estimators. These can be the fitted versions (if the osl is fitted), or the
     plain unfitted versions. Check the is_online version for that.
+
     @return list a list object containing all estimators.
   }
 
   \item{\code{get_osl_weights}}{
     Active method to retrieve a vector of weights that the OSL has found for its continuous online super learner fit.
+
     @return vector a vector containing the estimates of the OSL weights
   }
 
   \item{\code{get_dosl}}{
     Active method to retrieve the actual DOSL fit. this could be nil if no dosl has been fit yet.
+
     @return list a list containing the best estimator for each of the random variables.
   }
 
   \item{\code{get_cv_risk}}{
     Active method to retrieve the crossvalidated risk of each of the estimators
+
     @return list a list containing the risk estimates for each of hte estimators.
   }
 

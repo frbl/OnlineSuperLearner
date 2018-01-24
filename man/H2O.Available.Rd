@@ -2,7 +2,7 @@
 % Please edit documentation in R/H2O.initializer.R
 \name{H2O.Available}
 \alias{H2O.Available}
-\title{Function to check whether the h2o cluster is already running}
+\title{H2O.Available}
 \usage{
 H2O.Available()
 }

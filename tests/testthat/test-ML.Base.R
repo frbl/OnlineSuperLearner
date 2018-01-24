@@ -47,3 +47,12 @@ test_that("it should call the private do.update function", {
   stub(subject$perform_update, 'private$do.update', function(...) expected)
   expect_equal(subject$perform_update(123), expected)
 })
+
+context(" create_formula")
+test_that("it should create the correct formula based on the provided Y A and W", {
+  subject <- described.class$new()
+  Y <- 'outcome'
+  W <- c('input1', 'input2')
+  result <- subject$create_formula(W, Y)
+  expect_equal(result, outcome ~ input1 + input2)
+})

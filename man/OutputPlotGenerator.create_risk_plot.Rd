@@ -2,24 +2,26 @@
 % Please edit documentation in R/OutputPlotGenerator.R
 \name{OutputPlotGenerator.create_risk_plot}
 \alias{OutputPlotGenerator.create_risk_plot}
-\title{OutputPlotGenerator.create_risk_plot
-Function to create plots similar to the ones in the OSL papers}
+\title{OutputPlotGenerator.create_risk_plot}
 \usage{
 OutputPlotGenerator.create_risk_plot(performance, output, dir = "~/tmp/osl",
   make_summary = FALSE, label = "total.risk")
 }
 \arguments{
-\item{performance}{a list of list with performances: list 1 the estimators used, list 2 the random variables predicted.}
+\item{performance}{a list of list with performances: list 1 the estimators
+used, list 2 the random variables predicted.}
 
-\item{output}{string the filename to use for the plot (without .pdf)}
+\item{output}{string the filename to use for the plot (without .pdf).}
 
-\item{dir}{string the directory to write to}
+\item{dir}{string (default = '~/tmp/osl') the directory to store the results
+in.}
 
-\item{make_summary}{boolean whether or not to sum all error terms to give a summed performance measure}
+\item{make_summary}{boolean (default = FALSE) whether or not to sum all error terms to give a
+summed performance measure.}
 
-\item{label}{string the label to use when making a summary plot}
+\item{label}{string (default = 'total.risk') the label to use when making a
+summary plot}
 }
 \description{
-OutputPlotGenerator.create_risk_plot
 Function to create plots similar to the ones in the OSL papers
 }

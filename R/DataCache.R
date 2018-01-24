@@ -1,4 +1,7 @@
 #' DataCache
+#'
+#' Class that is used internally to manage datacaching
+#'
 #' @docType class
 #' @importFrom R6 R6Class
 #'
@@ -7,14 +10,29 @@
 #'   \item{\code{initialize(online = TRUE)}}{
 #'     Creates a new data cache. Can be online (so new data gets overwritten),
 #'     or offline (so new data gets appended).
-#'     @param online boolean whether the data cache is online or offline (default TRUE)
+#'     @param online (default = TRUE) boolean whether the data cache is online or offline.
 #'   }
+#'
 #'   \item{\code{update_cache(newdata}}{
-#'     Updates the data cache with the new observations. This function only
+#'     Updates the data cache with the new blocks This function only
 #'     updates the cache if not all estimators are online. It tells the user
 #'     if it has updated by the boolean it returns.
-#'     @param newdata data.table the new data to add to the cache (or to replace the cache with)
-#'     @return boolean whether or not it actually needed to update the cache.
+#'     @param newdata data.table the new data to add to the cache (or to
+#'      replace the cache with)
+#'     @return boolean whether or not it actually needed to update the cache
+#'      (FALSE if the cache is online).
+#'   }
+#'
+#'   \item{\code{is_online}}{
+#'     Active method. Function to check whether the cache is an online cache or
+#'     offline cache.
+#'     @return boolean whether the cache is online (TRUE) or offline (FALSE).
+#'   }
+#'
+#'   \item{\code{get_data_cache}}{
+#'     Active method. Function that returns the complete cache that is being
+#'     tracked in the object.
+#'     @return boolean whether the cache is online (TRUE) or offline (FALSE).
 #'   }
 #' }
 DataCache <- R6Class("DataCache",

@@ -2,12 +2,7 @@
 % Please edit documentation in R/InterventionParser.R
 \name{InterventionParser.generate_intervention}
 \alias{InterventionParser.generate_intervention}
-\title{InterventionParser.generate_intervention
-Function that can generate interventions, especially when performing an
-intervention on multiple nodes. What the function is do is set one of the
-nodes to intervened (variable_intervened), and the other nodes to control. 
-If what is 1, the intervened variable will be 1 and the rest 0, if what is
-0, the intervened variable will be 0 and the rest will be one.}
+\title{InterventionParser.generate_intervention}
 \usage{
 InterventionParser.generate_intervention(variables, variable_intervened, when,
   what)
@@ -21,8 +16,10 @@ InterventionParser.generate_intervention(variables, variable_intervened, when,
 
 \item{what}{integer hat the intervention should be}
 }
+\value{
+an intervention 'object' (i.e., a list following the intervention specification.
+}
 \description{
-InterventionParser.generate_intervention
 Function that can generate interventions, especially when performing an
 intervention on multiple nodes. What the function is do is set one of the
 nodes to intervened (variable_intervened), and the other nodes to control. 

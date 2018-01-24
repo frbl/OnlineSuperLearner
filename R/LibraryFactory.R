@@ -1,4 +1,8 @@
-#' The libraryFactory can instantiate a set of models given to it.
+#' LibraryFactory
+#'
+#' The goal of the LibraryFactory is to instantiate a set of models given to
+#' it. This factory will automatically expand any gridsearch-like grid passed
+#' to it.
 #'
 #' @docType class
 #' @importFrom R6 R6Class
@@ -11,26 +15,131 @@
 #' @include ML.SVM.R
 #' @section Methods:
 #' \describe{
-#'   \item{\code{new(ML.models.allowed = c('ML.H2O.glm', 'ML.Local.lm', 'ML.XGBoost.glm'))}}{
-#'     This method is used to create object of this class. It expects a \code{ML.models.allowed} as a list which describes all of the models that are allowed for fabrication. 
-#'     @param ML.models.allowed = the list of ML models allowed to create objects for. The default is a list of all models in the OSL package
-#'     @return a new instance of the library factory
-#'   }
+#'   \item{\code{initialize(ML.models.allowed = c('condensier::speedglmR6', 'condensier::glmR6', 'ML.H2O.gbm', 'ML.H2O.glm', 'ML.GLMnet', 'ML.H2O.randomForest', 'ML.randomForest', 'ML.SVM', 'ML.Local.Speedlm', 'ML.Local.lm', 'ML.NeuralNet', 'ML.XGBoost', verbose = FALSE)}}{
+#'     This method is used to create object of this class. It expects a
+#'     \code{ML.models.allowed} as a list which describes all of the models
+#'     that are allowed for fabrication.
 #'
-#'   \item{\code{get_validity}}{
-#'     Method to determine if the object is in a valid state. The method will throw whenever the state is not valid
+#'     @param ML.models.allowed (default = c('condensier::speedglmR6',
+#'     'condensier::glmR6', 'ML.H2O.gbm', 'ML.H2O.glm', 'ML.GLMnet',
+#'     'ML.H2O.randomForest', 'ML.randomForest', 'ML.SVM', 'ML.Local.Speedlm',
+#'     'ML.Local.lm', 'ML.NeuralNet', 'ML.XGBoost', verbose = FALSE)) the list
+#'     of ML models allowed to create objects for. The default is a list of all
+#'     models in the OSL package.
+#'
+#'     @return a new instance of the library factory.
 #'   }
 #'
 #'   \item{\code{fabricate(SL.library)}}{
 #'     Method that fabricates the models in the provided \code{SL.library}.
-#'     @param SL.library can be either a list of ML models, for which we will then choose the default hyper parameters,
-#'     or a more specific specification of the models. This is in the form of a list and should be specified as follows:
-#'     \code{list(list(algorithm = 'the class of the algorithm',
-#'                     algorithm_params = list(hyper_parameter1=c(1,2,3)),
-#'                     params = list(nbins = c(39, 40), online = FALSE))))} in which \code{algorithm_params} are the
-#'                     hyperparameters for the learner, and params are the hyper parameters for the density estimator.
+#'
+#'     @param SL.library can be either a list of ML models, for which we will
+#'      then choose the default hyper parameters, or a more specific
+#'      specification of the models. This is in the form of a list and should be
+#'      specified as follows: \code{list(list(algorithm = 'the class of the
+#'      algorithm', algorithm_params = list(hyper_parameter1=c(1,2,3)), params =
+#'      list(nbins = c(39, 40), online = FALSE))))} in which
+#'      \code{algorithm_params} are the hyperparameters for the learner, and
+#'      params are the hyper parameters for the density estimator.
+#'
+#'     @return list a list of fabricated ML models encapsulated in \code{DensityEstimator} objects.
 #'   }
-#'}
+#'
+#'   \item{\code{fabricate_grid(SL.library) }}{
+#'     Function that will fabiricate a grid of SL estimators. See the
+#'     specification of how to define an SL grid in the documentation for the
+#'     \code{fabricate} function. Note that this function is usually not
+#'     called from the outside, and merely used by the fabricate function
+#'
+#'     @param SL.library list the grid of SL estimators to use.
+#'
+#'     @return a list of fabricated SL models encapsulated in \code{DensityEstimator} objects.
+#'   }
+#'
+#'   \item{\code{fabricate_single_estimator_from_grid(entry) }}{
+#'     Function to fabricate a set of estimator instances based on a single
+#'     grid entry. These are all the instances of a specific type of ML
+#'     algorithm. The result of thie function is a list of instances of ML.base objects.
+#'
+#'     @param entry list the entry of the grid for which an ML object needs to be created.
+#'
+#'     @return list of objects of the actual machine learning algorithm (ML.Base objects).
+#'   }
+#'
+#'   \item{\code{fabricate_single_density_estimator_from_grid(entry, algorithm_instances) }}{
+#'     Function to initialize a density estimator objects based on the list of
+#'     algorithms created in for example the
+#'     \code{fabricate_single_estimator_from_grid}. Note the difference between
+#'     an algrithm and a \code{DensityEstimator}. The density estimator object
+#'     encapsulates an ML algorithm. These density estimators can also have
+#'     parameters (e.g., the number of bins). These are specified in the
+#'     \code{entry} argument.
+#'
+#'     @param entry list of details (name and number of bins, for example) used
+#'     for initializing the algorithm.
+#'
+#'     @param entry list of hyperparameters used to generate the density algorithm.
+#'
+#'     @param algorithm_instances list of \code{ML.Base} objects which need to
+#'      be injected in \code{DensityEstimator} objects.
+#'   }
+#'
+#'   \item{\code{fabricate_default(SL.library) }}{
+#'     Function used to generate a list of densityestimator objects from a
+#'     simple list of estimators. This will use the default settings and not
+#'     apply gridsearch in any way.
+#'
+#'     @param SL.library  a vector of strings with the names of the ML algorithms to use.
+#'
+#'     @return list of \code{DensityEstimator} objects
+#'   }
+#'
+#'   \item{\code{check_entry_validity(SL.library.entry) }}{
+#'     Checks the validity of an entry when specified as part of a gridsearch
+#'     initialization. It throws an error if the entry is not valid.
+#'
+#'     @param SL.library.entry the entry to check for validity.
+#'   }
+#'
+#'   \item{\code{check_entry_validity_of_character(SL.library.entry) }}{
+#'     Checks the validity of an entry when specified as part of a list of ML
+#'     estimators (no grid). Returns a list of errors if not valid.
+#'
+#'     @param SL.library.entry the entry to check for validity.
+#'
+#'     @return vector containing the errors detected (if any)
+#'   }
+#'
+#'   \item{\code{check_entry_validity_of_list(SL.library.entry) }}{
+#'     Checks the validity of a list entry in a SL.library. This checks whether
+#'     the arguments are correct and whether the provided values are in an
+#'     excepted range. Returns a string of errors if not valid.
+#'
+#'     @param SL.library.entry the entry to check
+#'
+#'     @return vector containing the errors detected (if any)
+#'   }
+#'
+#'   \item{\code{inject_names_in_estimators(fabricatedLibrary) }}{
+#'     Injects the names of each estimator in to a Density estimator object.
+#'
+#'     @param fabricatedLibrary the list of fabricated elements.
+#'
+#'     @return list of fabricated elements, now with their names injeced.
+#'   }
+#'
+#'   \item{\code{get_validity}}{
+#'     Active method. Method to determine if the object is in a valid state.
+#'     The method will throw whenever the state is not valid
+#'   }
+#'
+#'   \item{\code{get_allowed_ml_models}}{
+#'     Active method. Returns a list of valid ML models.
+#'
+#'     @return list of names of ML models which are deemed valid.
+#'   }
+#' }
+#' @export
 LibraryFactory <- R6Class("LibraryFactory",
   public =
     list(
@@ -173,7 +282,7 @@ LibraryFactory <- R6Class("LibraryFactory",
             message <- paste('The entry', paste(SL.library.entry, collapse=' '), 'is not specified correctly:', errors)
             throw(message)
           }
-        }, 
+        },
 
         check_entry_validity_of_character = function(SL.library.entry) {
           errors = c()
@@ -230,21 +339,21 @@ LibraryFactory <- R6Class("LibraryFactory",
   ),
   active =
     list(
-        get_validity = function() {
-          errors <- character()
-          ## Check if all models are actually ml models
-          ##are.ml.models <- sapply(private$allowed_ml_models, startsWith, 'ML')
-          ##if(!all(are.ml.models)){
-            ##msg <- 'Not all provided models are ML models as models should start with ML, please only use ML models.'
-            ##errors <- c(errors, msg)
-          ##}
-          if (length(errors) == 0) return(TRUE) else throw(errors)
-        },
+      get_validity = function() {
+        errors <- character()
+        ## Check if all models are actually ml models
+        ##are.ml.models <- sapply(private$allowed_ml_models, startsWith, 'ML')
+        ##if(!all(are.ml.models)){
+          ##msg <- 'Not all provided models are ML models as models should start with ML, please only use ML models.'
+          ##errors <- c(errors, msg)
+        ##}
+        if (length(errors) == 0) return(TRUE) else throw(errors)
+      },
 
-        get_allowed_ml_models = function() {
-          return(private$allowed_ml_models)
-        }
-        ),
+      get_allowed_ml_models = function() {
+        return(private$allowed_ml_models)
+      }
+    ),
   private =
     list(
         allowed_ml_models = NULL,

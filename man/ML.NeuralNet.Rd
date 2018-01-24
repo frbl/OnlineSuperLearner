@@ -3,22 +3,31 @@
 \docType{class}
 \name{ML.NeuralNet}
 \alias{ML.NeuralNet}
-\title{ML.NeuralNet
-Class to create neuralnetworks}
+\title{ML.NeuralNet}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 ML.NeuralNet
 }
 \description{
-ML.NeuralNet
-Class to create neuralnetworks
+Class to create neuralnetwork machine learning models. Information from the
+package:
+Training of neural networks using backpropagation, resilient backpropagation
+with (Riedmiller, 1994) or without weight backtracking (Riedmiller and
+Braun, 1993) or the modified globally convergent version by Anastasiadis et
+al.  (2005). The package allows flexible settings through custom-choice of
+error and activation function. Furthermore, the calculation of generalized
+weights (Intrator O & Intrator N, 1993) is implemented.
 }
 \section{Methods}{
-
-\describe{
-  \item{\code{initialize(hidden)}}{
+ 
+\describe{  
+  \item{\code{initialize(hidden = c(1, 3)) }}{ 
     Initializes a new neuralnet estimator with the provided hidden layers. 
-  }
+
+    @param hidden vector (default = c(1,3)) a vector specifying the hidden
+     layers in the neural network. See the documentation of the neural
+     network package for more details.
+  } 
 }
 }
 

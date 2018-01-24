@@ -2,18 +2,16 @@
 % Please edit documentation in R/InterventionParser.R
 \name{InterventionParser.first_intervention}
 \alias{InterventionParser.first_intervention}
-\title{InterventionParser.first_intervention
-Returns the time at which the first ever intervention should be given.}
+\title{InterventionParser.first_intervention}
 \usage{
 InterventionParser.first_intervention(intervention)
 }
 \arguments{
-\item{intervention}{the intervention to give \code{list(variable, when, what)}}
+\item{intervention}{the intervention to give \code{list(variable, when, what)}.}
 }
 \value{
-the first ever time at which an intervention is given
+the first ever time at which an intervention is given.
 }
 \description{
-InterventionParser.first_intervention
 Returns the time at which the first ever intervention should be given.
 }

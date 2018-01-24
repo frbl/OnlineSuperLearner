@@ -1,4 +1,5 @@
 #' SMG.Mock
+#'
 #' Mock summary generator. For testing purposes only.
 #'
 #' @docType class

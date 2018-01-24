@@ -1,8 +1,14 @@
 #' ML.Local.Speedlm
-#' Class to create speedlm linear models. Uses the speed glm package and can be updated online.
+#'
+#' Class to create speedlm linear models. Uses the speed glm package and can be
+#' updated online in the case of the gaussian family. Note that the actual
+#' online function is not yet implemented correctly. This requires us to use
+#' the speedlm function, instead of the speed glm, wich does not support a
+#' family for now.
 #'
 #' @docType class
 #' @importFrom speedglm speedlm updateWithMoreData
+#' @importFrom R6 R6Class
 #' @section Methods:
 #' \describe{
 #'   \item{\code{initialize()}}{
@@ -14,10 +20,10 @@ ML.Local.Speedlm <- R6Class("ML.Local.Speedlm",
   inherit = ML.Base,
   public =
     list(
-        fitfunname='speedglm-local',
-        lmclass='speedglm',
-        initialize = function() { }
-        ),
+      fitfunname='speedglm-local',
+      lmclass='speedglm',
+      initialize = function() { }
+    ),
   active =
     list(
         ),

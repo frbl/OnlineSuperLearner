@@ -2,17 +2,20 @@
 % Please edit documentation in R/Evaluation.R
 \name{Evaluation.log_loss}
 \alias{Evaluation.log_loss}
-\title{Log loss evaluation metric}
+\title{Evaluation.log_loss}
 \usage{
 Evaluation.log_loss(data.observed, data.predicted, eps = 0.001)
 }
 \arguments{
-\item{data.observed}{the true data (Y)}
+\item{data.observed}{the true data (Y).}
 
-\item{data.predicted}{the Y outcome from the estimator}
+\item{data.predicted}{the Y outcome from the estimator.}
 
-\item{eps}{is a small offset to let the log not go to Inf}
+\item{eps}{is a small offset to let the log not go to Inf.}
+}
+\value{
+double the calculated log loss.
 }
 \description{
-Log loss evaluation metric
+Function to calculate the log loss evaluation metric.
 }

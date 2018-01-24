@@ -3,14 +3,12 @@
 \docType{class}
 \name{SMG.Mock}
 \alias{SMG.Mock}
-\title{SMG.Mock
-Mock summary generator. For testing purposes only.}
+\title{SMG.Mock}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 SMG.Mock
 }
 \description{
-SMG.Mock
 Mock summary generator. For testing purposes only.
 }
 \keyword{datasets}

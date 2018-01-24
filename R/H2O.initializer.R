@@ -1,6 +1,9 @@
 setOldClass("h2o")
 
+#' H2O.Available
+#'
 #' Function to check whether the h2o cluster is already running
+#' @import h2o
 #' @return boolean TRUE if the cluster is running and FALSE if not.
 #' @export
 H2O.Available <- function() {
@@ -21,7 +24,10 @@ H2O.Available <- function() {
   return(result)
 }
 
-#' This function is used to initialize the H2O cluster.  Idealy I'd like to use a singletonpattern for this, but this also works.
+#' H2O.Initializer
+#'
+#' This function is used to initialize the H2O cluster. Idealy I'd like to use
+#' a singletonpattern for this, but this also seems to work.
 #'
 #' @import h2o
 #' @param host the host on which H2O is or should be running

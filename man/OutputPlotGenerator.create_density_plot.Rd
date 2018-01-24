@@ -2,24 +2,24 @@
 % Please edit documentation in R/OutputPlotGenerator.R
 \name{OutputPlotGenerator.create_density_plot}
 \alias{OutputPlotGenerator.create_density_plot}
-\title{OutputPlotGenerator.create_density_plot
-Function to plot the true and predicted densities in one plot.}
+\title{OutputPlotGenerator.create_density_plot}
 \usage{
 OutputPlotGenerator.create_density_plot(yValues, estimated_probabilities,
   estimated_y_values = NULL, output, dir = "~/tmp/osl/")
 }
 \arguments{
-\item{yValues}{vector of the true outcome values}
+\item{yValues}{vector a vector of the true outcome values.}
 
-\item{estimated_probabilities}{vector of the estimated probabilities}
+\item{estimated_probabilities}{vector a vector of the estimated
+probabilities.}
 
-\item{estimated_y_values}{vector of the estimated y_values (i.e., sampled values)}
+\item{estimated_y_values}{vector (default = NULL) vector of the estimated
+y_values (i.e., sampled values).}
 
-\item{output}{string with the filename}
+\item{output}{string the filename to use.}
 
-\item{dir}{the directory to plot to}
+\item{dir}{string (default = '~/tmp/osl/')the directory to plot to.}
 }
 \description{
-OutputPlotGenerator.create_density_plot
 Function to plot the true and predicted densities in one plot.
 }

@@ -3,15 +3,17 @@
 \docType{class}
 \name{ML.Local.Speedlm}
 \alias{ML.Local.Speedlm}
-\title{ML.Local.Speedlm
-Class to create speedlm linear models. Uses the speed glm package and can be updated online.}
+\title{ML.Local.Speedlm}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 ML.Local.Speedlm
 }
 \description{
-ML.Local.Speedlm
-Class to create speedlm linear models. Uses the speed glm package and can be updated online.
+Class to create speedlm linear models. Uses the speed glm package and can be
+updated online in the case of the gaussian family. Note that the actual
+online function is not yet implemented correctly. This requires us to use
+the speedlm function, instead of the speed glm, wich does not support a
+family for now.
 }
 \section{Methods}{
 

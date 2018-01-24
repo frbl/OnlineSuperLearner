@@ -3,15 +3,12 @@
 \docType{class}
 \name{CrossValidationRiskCalculator}
 \alias{CrossValidationRiskCalculator}
-\title{CrossValidationRiskCalculator
-Class that contains various methods for calculating the crossvalidated risk
-of an estimator.}
+\title{CrossValidationRiskCalculator}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 CrossValidationRiskCalculator
 }
 \description{
-CrossValidationRiskCalculator
 Class that contains various methods for calculating the crossvalidated risk
 of an estimator.
 }
@@ -23,64 +20,150 @@ of an estimator.
   }
 
   \item{\code{calculate_evaluation(predicted.outcome, observed.outcome, randomVariables, add_evaluation_measure_name=TRUE)}}{
-    <<description>>
-    The input data looks as followos:
-    \code{
-      normalized
-      normalized`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
-              W         A         Y
-      1: 1.94863 0.5234383 0.3501003
+    Calculates an evaluation using the provided predicted and observed
+    outcomes. It uses a list of \code{RandomVariable} objects to loop
+    through all data provided to it. If the \code{predicted.outcome} list is
+    provided with both a normalized and denormalized entry, it will use the
+    normalized entry as the default. One can choose to add the evaluation
+    metric that was used to the names of the output. This is done by setting
+    \code{add_evaluation_measure_name} to true.
 
-      normalized`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`
-                W         A         Y
-      1: 1.818194 0.5234383 0.3501003
+    The input data should look looks as followos:
+      list >
+        normalized > 
+          AlgorithmName1 >
+           data.table with a W, A, Y entry.
+          AlgorithmName2 >
+           data.table with a W, A, Y entry.
+        denormalized > 
+          AlgorithmName1 >
+           data.table with a W, A, Y entry.
+          AlgorithmName2 >
+           data.table with a W, A, Y entry.
 
-      denormalized
-      denormalized`ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
-              W         A         Y
-      1: 10.8308 0.5234383 0.3501003
+    The output data then looks as follows:
+      list >
+        AlgorithmName1 >
+         data.table with a W, A, Y entry.
+        AlgorithmName2 >
+         data.table with a W, A, Y entry.
 
-      denormalized`ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`
-                W         A         Y
-      1: 9.889878 0.5234383 0.3501003
-    }
+    @param predicted.outcome the outcome predicted by the various algorithms
+     in the super learner. This is a list which either has two entries
+     (normalized and denormalized), and in which both those entries have a
+     list of ML outputs, or it is a list of the outputs of each of the
+     algorithms (e.g., the normalized output directly).
 
-    The output data looks as follows:
-    \code{
-     `ML.Local.Speedlm-vanilla.nbins-10_online-FALSE`
-            #.W        .W2        .W3       .A        .Y
-     1: 34.53878 0.02225018 -0.0507633 0.545403 -5.335295
+    @param observed.outcome the actual data that was observed in the study.
 
-     `ML.Local.Speedlm-vanilla.nbins-40_online-FALSE`
-            #.W          .W2         .W3       .A        .Y
-     1: 34.53878 -0.005705135 -0.03595754 0.545403 -4.499685
-    }
-    @param predicted.outcome
-    @param observed.outcome
-    @param randomVariables
-    @param add_evaluation_measure_name
+    @param randomVariables the randomvariables that are included in the
+     prediction
+
+    @param add_evaluation_measure_name (default TRUE) should we add the name
+     of the evaluation metric to the output?
+
+    @return a list with the evalutation of each of the algorithms.
+  }
+
+  \item{\code{evaluate_single_outcome(observed.outcome, predicted.outcome, ra ndomVariables}}{
+    Perform the evaluation of a single estimator. In this case the data of
+    just one estimator can be provided, such as:
+      AlgorithmName1 >
+       data.table with a W, A, Y entry.
+    the function will then use the default evaluation metric to determine
+    the performance of the estimator.
+
+    @param predicted.outcome the outcome predicted by a single algorithms in
+     the super learner. 
+
+    @param observed.outcome the actual data that was observed in the study.
+
+    @param randomVariables the randomvariables that are included in the
+     prediction.
+
+    @return a list with the evalutation of the algorithm.
   }
 
   \item{\code{calculate_risk(predicted.outcome, observed.outcome, randomVariables}}{
     Calculate the CV risk for each of the random variables provided based on
-    the predicted and observed outcomes.
-    @param predicted.outcome the outcomes predicted by the algorithms
-    @param observed.outcome the true outcomes, as empiricaly observed
-    @param randomVariables the randomvariables for which the distributions have been calculated
-    @return a list of lists, in which each element is the risk for one estimator. In each list per estimator, each
-    element corresponds to one of the random variables.
+    the predicted and observed outcomes. This function also expects a list
+    of predictions in a similar way as \code{calculate_evaluation} does. 
+
+    @param predicted.outcome the outcome predicted by the various algorithms
+     in the super learner. This is a list which either has two entries
+     (normalized and denormalized), and in which both those entries have a
+     list of ML outputs, or it is a list of the outputs of each of the
+     algorithms (e.g., the normalized output directly).
+
+    @param observed.outcome the actual data that was observed in the study
+     (emperically, or from a simulation).
+
+    @param randomVariables the randomvariables that are included in the
+     prediction
+
+    @param add_evaluation_measure_name (default TRUE) should we add the name
+     of the evaluation metric to the output?
+
+    @return a list of lists, in which each element is the risk for one
+     estimator. In each list per estimator, each element corresponds to one
+     of the random variables.
   }
 
   \item{\code{update_risk(predicted.outcome, observed.outcome, randomVariables, current_count, current_risk) }}{
+    Function used by the OSL to update a previous risk. This function uses
+    the equation by Benkeser et al. (2017) to update a previous risk. What
+    it does is multiply a previous risk (\code{current_risk}) by the
+    \code{current_count} and add the new risk to this multiplied risk. Then
+    it divides this risk by \code{current_count + 1} to come to the current
+    risk estimate. This way we don't have to recalculate the whole risk when
+    only one update is required.
     
-    @param predicted.outcome the outcomes predicted by the algorithms
-    @param observed.outcome the true outcomes, as empiricaly observed
-    @param randomVariables the randomvariables for which the distributions have been calculated
-    @param current_count the current number of evaluations performed for calculating the \code{current_risk}.
-    @param current_risk the previously calculated risk of each of the estimators (calculated over
-    \code{current_count} number of evaluations).
-    @return a list of lists with the updated risk for each estimator, and for each estimator an estimate of the risk
-    for each random variable.
+    @param predicted.outcome the outcome predicted by the various algorithms
+     in the super learner. This is a list which either has two entries
+     (normalized and denormalized), and in which both those entries have a
+     list of ML outputs, or it is a list of the outputs of each of the
+     algorithms (e.g., the normalized output directly).
+
+    @param observed.outcome the actual data that was observed in the study
+     (emperically, or from a simulation).
+
+    @param randomVariables the randomvariables for which the distributions
+     have been calculated
+
+    @param current_count the current number of evaluations performed for
+     calculating the \code{current_risk}.
+
+    @param current_risk the previously calculated risk of each of the
+     estimators (calculated over \code{current_count} number of
+     evaluations).
+
+    @return a list of lists with the updated risk for each estimator, and
+     for each estimator an estimate of the risk for each random variable.
+  }
+
+  \item{\code{update_single_risk(old_risk, new_risks, current_count, randomVariables) }}{
+    Instaed of updating the risk for each of estimators, one can also update
+    a single risk. In this case the risks are updated using the
+    \code{old_risk} and \code{new_risks} variable. Essentially, this
+    function performs the internals of the \code{update_risk} function,
+    however, here it expects risks to be calculated beforehand instead of
+    mere predictions and observed outcomes. This function uses
+    the equation by Benkeser et al. (2017) to update a previous risk. What
+    it does is multiply a previous risk (\code{current_risk}) by the
+    \code{current_count} and add the new risk to this multiplied risk. Then
+    it divides this risk by \code{current_count + 1} to come to the current
+    risk estimate. This way we don't have to recalculate the whole risk when
+    only one update is required.
+
+    @param old_risk the old risks, calculated in a previous iteration.
+    @param new_risks the new risks, calculated using the current machine learning estimators.
+    @param current_count the number of iterations used to calculate the old risk.
+    @param randomVariables the random variables for which the predictions have been created.
+    @return the updated risk as a data.table. 
+    @examples
+    \dontrun{ 
+      update_single_risk 
+    }
   }
 }
 }

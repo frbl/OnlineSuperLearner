@@ -1,10 +1,60 @@
 #' ML.Local.lm
 #'
+#' Initializes a linear model (glm) for locally training an estimator. This
+#' uses the normal GLM implementation as provided by the R stats package.
+#'
 #' @docType class
 #' @importFrom R6 R6Class
 #' @importFrom stats lm
+#' @section Methods: 
+#' \describe{  
+#'   \item{\code{initialize(learning.rate = 0.1, family = "binomial", initialization.random = FALSE) }}{ 
+#'     Initializes a new generalized linear model to use in the online super learner.
+#'
+#'     @param learning.rate double (default = 0.1) the learning rate to use
+#'      when training the model.
+#'
+#'     @param family string (default = "binomial") the family to use for the
+#'      estimator. Generally this should be binomial (since we are running
+#'      various logistic regressions). However, if you have a good reason to
+#'      use a different specification, change it here.
+#'
+#'     @param initialization.random (default = FALSE) each of the parameters
+#'      needs to have an intial state. If this argument is true, all parameters
+#'      will be randomly initialized.
+#'
+#'     @param verbose (default = FALSE) the verbosity of the fitting procedure
+#'   } 
+#' 
+#'  \item{\code{get_validity}}{ 
+#'     Active Method. Determines whether the current specification is valid or
+#'     not. Note that this function does not return anything, instead it throws
+#'     whenever something is incorrect.
+#'   } 
+#' }  
+
 ML.Local.lm <- R6Class("ML.Local.lm",
   inherit = ML.Base,
+  public =
+    list(
+      initialize = function(learning.rate = 0.1, family='binomial', initialization.random=FALSE, verbose = FALSE) {
+        private$learning.rate <- learning.rate
+        private$family <- family
+        private$initialization.random <- initialization.random
+        self$getValidity
+      }
+    ),
+  active =
+    list(
+      getValidity = function() {
+        if (!(private$family %in% c('binomial', 'gaussian'))) {
+          throw('Family not supported', private$family)
+        }
+        if (private$learning.rate <= 0) {
+          throw('The learning rate should be greater than 0')
+        }
+      }
+    ),
   private =
     list(
       learning.rate = NULL,
@@ -26,7 +76,7 @@ ML.Local.lm <- R6Class("ML.Local.lm",
       do.update = function(X_mat, Y_vals, m.fit, ...) {
         Y <- 'Y_vals'
         X <- colnames(X_mat)
-        formula <- as.formula(self$create_formula(Y = Y, X = X))
+        formula <- as.formula(self$create_formula(X = X, Y = Y))
         # If we already have a model, we update the old one, given the new measurement
         # Add the intercept to the matrix
         X_mat <- model.matrix(formula, X_mat)
@@ -41,7 +91,7 @@ ML.Local.lm <- R6Class("ML.Local.lm",
       do.fit = function (X_mat, Y_vals) {
         Y <- 'Y_vals'
         X <- colnames(X_mat)
-        formula <- as.formula(self$create_formula(Y = Y, X = X))
+        formula <- as.formula(self$create_formula(X = X, Y = Y))
         # If there is no model, we need to fit a model based on Nl observations.
 
         # Instead of using a GLM for initialization, we can also do a random initialization
@@ -57,32 +107,6 @@ ML.Local.lm <- R6Class("ML.Local.lm",
         if(length(nas) > 0) { model.fitted[nas] <- runif(length(nas) - 1) }
 
         model.fitted
-      }
-
-      ),
-  active =
-    list(
-        getValidity = function() {
-          if (!(private$family %in% c('binomial', 'gaussian'))) {
-            throw('Family not supported', private$family)
-          }
-          if (private$learning.rate <= 0) {
-            throw('The learning rate should be greater than 0')
-          }
-        }
-        ),
-  public =
-    list(
-      initialize = function(learning.rate = 0.1, family='gaussian', initialization.random=FALSE) {
-        private$learning.rate = learning.rate
-        private$family = family
-        private$initialization.random = initialization.random
-        self$getValidity
-      },
-
-      create_formula = function(Y, X) {
-        X <- paste(X, collapse = ' + ')
-        paste(Y, '~', X)
       }
     )
 )

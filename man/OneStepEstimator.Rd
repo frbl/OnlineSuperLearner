@@ -9,58 +9,190 @@
 OneStepEstimator
 }
 \description{
-The one step estimator (OOS) is a technique that improves our initial estimates of the parameter of interest and targets
-them towards this parameter of interest. In order to use the OOS, one has to solve the Efficient Influence Curve
-equation, which can be done using a Monte-Carlo approximation.  The process of Monte-Carlo approximating the
-efficient influence curve consists of two main steps: (i) compute the so-called `\emph{h}-ratios', and (ii) compute a
-number of conditional expectations. This procedure is implemented in this class and can be started by calling the
-\code{perform} method of an instance of this class.
+The one step estimator (OOS) is a technique that improves our initial
+estimates of the parameter of interest and targets them towards this
+parameter of interest. In order to use the OOS, one has to solve the
+Efficient Influence Curve equation, which can be done using a Monte-Carlo
+approximation.  The process of Monte-Carlo approximating the efficient
+influence curve consists of two main steps: (i) compute the so-called
+`\emph{h}-ratios', and (ii) compute a number of conditional expectations.
+This procedure is implemented in this class and can be started by calling
+the \code{perform} method of an instance of this class.
 }
 \section{Methods}{
  
 \describe{  
-  \item{\code{initialize(osl, randomVariables, N, B, pre_processor, discrete = TRUE) }}{ 
-    Initializes the online one step estimator. It uses an earlier fitted online super learner to sample from the
-    conditional densities.
+  \item{\code{initialize(osl, randomVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE, parallel= TRUE, online = FALSE, verbose = FALSE, minimal_measurements_needed = 1) }}{ 
+    Initializes the online one step estimator. It uses an earlier fitted
+    online super learner to sample from the conditional densities.
+
     @param osl the online superlearner, which was fitted earlier on the data
+
     @param randomVariables a list of random variables used for fitting the OSL
+
     @param N the number of measurements in a timeseries
-    @param B the number of iterations we should do while sampling from the conditional expectations
-    @param pre_processor the \code{PreProcessor} object used to normalize the data.
-    @param discrete = TRUE whether we should use the discrete (true) or continuous (false) super learner 
+
+    @param B the number of iterations we should do while sampling from the
+     conditional expectations
+
+    @param pre_processor the \code{PreProcessor} object used to normalize
+     the data.
+
+    @param tau the time at which we want to measure the effect of an
+     intervention.
+
+    @param intervention the intervention we want to perform. See
+     \code{InterventionParser} for more details
+
+    @param variable_of_interest the variable we are interested in (e.g., the
+     Y random variable)
+
+    @param discrete (default = TRUE) whether we should use the discrete (true) or
+     continuous (false) super learner 
+
+    @param parallel (default = TRUE) should the estimation run in parallel?
+
+    @param online (default = TRUE) should the estimation run online?
+
+    @param verbose (default = FALSE) the verbosity of the etimation process
+
+    @param minimal_measurements_needed (default = 1) the minimal number of
+     measurements needed to sample a completely new block. I.e., that all
+     lags are renewed.
   } 
 
-  \item{\code{perform(initial_estimate, data, variable_of_interest, intervention}}{ 
-    This method actually runs the oos. Based on an initial estimate, it calculates an update term to add to this
-    estimate. This will make the estimator well behaved (i.e., normally distributed). The function will add this
-    correction term to the initial estimate and return the estimated variance of the estimator.
-    @param initial_estimate the initial estimate of the target parameter, as calculated using OSL
+  \item{\code{perform(initial_estimate, data, truth = NULL}}{ 
+    This method actually runs the oos. Based on an initial estimate, it
+    calculates an update term to add to this estimate. This will make the
+    estimator well behaved (i.e., normally distributed). The function will
+    add this correction term to the initial estimate and return the
+    estimated variance of the estimator.
+
+    @param initial_estimate the initial estimate of the target parameter, as
+     calculated using OSL
+
     @param data the data to seed the sampling procedure
-    @param variable_of_interest the variable we are interested in (e.g., the Y random variable)
-    @param intervention the intervention we want to perform. See \code{InterventionParser} for more details
-    @return a list containing two elements: \code{oos_estimate} and \code{oos_variance}. This first element (\code{oos_estimate})
-    contains the updated estimate of the target parameter. The second element (\code{oos_variance}), contains the
-    variance of this estimator, which can be used to derive confidence intervals.
+
+    @param truth double (default = NULL) the true value of the parameter of
+     interest. This can only be specified when running a simulation study
+     and can be useful for logging purposes.
+
+    @return a list containing two elements: \code{oos_estimate} and
+     \code{oos_variance}. This first element (\code{oos_estimate}) contains
+     the updated estimate of the target parameter. The second element
+     (\code{oos_variance}), contains the variance of this estimator, which
+     can be used to derive confidence intervals.
   } 
 
-  \item{\code{get_h_ratio_estimators(tau, intervention, data) }}{ 
-    This method can be used to perform the first step of OOS. It can be used to retrieve a list of h-ratio
-    estimators. This method returns an estimator for each random variable (W, A, and Y), and for each time s from 1
-    to tau. This method uses the more efficient way, as described in Van der Laan 2017.
-    @param tau the time at which we want to measure the effect of an intervention.
-    @param intervention the intervention itself, see \code{InterventionParser} for more details
-    @param data the data to seed the sampling procedure and thereby h-ratio predictor fitting
-    @return a list of lists of estimators. The outer list has a list for each s 1 to tau. For each entry in this
-    list, we have another list for each outcome measure, as indexed using their prediction formulae.
-  } 
+  \item{\code{calculate_full_oos(initial_estimate, data, truth = NULL) }}{
+    Calculates the one step estimation based on the data and the initial
+    estimate. This is the function called by the perform method, see that
+    function for more details. 
+
+    @param initial_estimate double the initial estimate that should be
+     improved.
+
+    @param data the data to seed the sampling procedure
+
+    @param truth double (default = NULL) the true value of the parameter of
+     interest. This can only be specified when running a simulation study
+     and can be useful for logging purposes.
+  }
+
+  \item{\code{calculate_oos_variance() }}{
+    NOTE! NOT YET IMPLEMENTED
+    Calculates the variance of the estimator. This can be used to determine
+    the confidence bands of an estimand. 
+  }
+
+  \item{\code{get_h_ratio_estimators(data, last_h_ratio_estimators = NULL) } }{
+    Calculates a list of h-ratio estimators, one for each randomvariable.
+    This function calls the \code{calculate_h_ratio_predictors}  and returns
+    the result (== actual estimators) in a list.
+
+    @param data the data used to seed the sampling procedure.
+
+    @param last_h_ratio_estimators = NULL currently unused, could be used
+     the reuse (and update) the previous set of h-ratio estimators.
+
+    @return a list of H-ratio estimators. This list is 2 dimentional. THe
+     outer list is a list per time s. The inner list is a list with an
+     estimator for each randomVariable.
+  }
 
   \item{\code{evaluation_of_conditional_expectations(data, h_ratio_predictors}}{ 
-    In this function one can perform the second step of OOS, calculate the conditional expectations / difference in
-    conditional expectations. 
-    @param data the data to seed the sampling procedure and thereby conditional expectation evaluation. 
-    @param h_ratio_predictors the list of predictors, in a format returned using the \code{get_h_ratio_estimators}
-    format.
+    In this function one can perform the second step of OOS, calculate the
+    conditional expectations / difference in conditional expectations. 
+
+    @param data the data to seed the sampling procedure and thereby
+     conditional expectation evaluation. 
+
+    @param h_ratio_predictors the list of predictors, in a format returned
+     using the \code{get_h_ratio_estimators} format.
   } 
+
+
+  \item{\code{calculate_h_ratio_predictors(Osample_p, Osample_p_star) }}{ 
+    This method can be used to perform the first step of OOS. It can be used
+    to retrieve a list of h-ratio estimators. This method returns an
+    estimator for each W,A,Y, and for each time s from 1 to tau. This method
+    uses the more efficient way, as described in Van der Laan 2017.
+
+    @param  Osample_p the observations sampled from the normal (not
+     intervened) distribution.
+
+    @param  Osample_p the observations sampled from the intervened
+    distribution.
+
+    @return a list of H-ratio estimators. This list is 2 dimentional. THe
+     outer list is a list per time s. The inner list is a list with an
+     estimator for each randomVariable.
+  } 
+
+  \item{\code{calculate_h_ratio(h_ratio_predictors, s, formula, data) }}{
+    Calculates a specific h-ratio for a specific formula (== the
+    variable of interest and the needed covariates) and a specific time s.
+    The result of this function is an estimated h-ratio
+
+    @param h_ratio_predictors list a list of h-ratio predictors (this should
+     be the same format as the one exported by the get_h_ratio_estimators).
+
+    @param s the time at which one wants to calculate the h-ratio
+
+    @param formula the formula of the h-ratio estimator to use for
+     calculating the estimate.
+
+    @param data the data to do the prediction with
+
+    @return the actual estimated h-ratio value.
+  }
+
+  \item{\code{calculate_difference_in_expectations(s, dat, formula, current_rvs) }}{
+    The efficient influence curve equation consists of two equations. One is
+    the h-ratio calculation, the other is the difference between two
+    expectations. In this function we calculate the difference in
+    expectations for a specified random variable.
+
+    @param s the time at which the difference in expectations needs to be
+     calculated.
+
+    @param dat data.table the initial data to use for estimating the
+     difference in expectations
+
+    @param current_rvs the current list of random variables
+
+    @return the difference in expectations
+  }
+
+  \item{\code{get_next_and_current_rv(current_rv_index) }}{
+    <<description>>
+    @param current_rv_index
+  }
+
+  \item{\code{get_data_cache(star = FALSE) }}{
+    <<description>>
+    @param star = FALSE
+  }
 
 }
 }

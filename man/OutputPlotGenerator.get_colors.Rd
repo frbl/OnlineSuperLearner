@@ -2,18 +2,17 @@
 % Please edit documentation in R/OutputPlotGenerator.R
 \name{OutputPlotGenerator.get_colors}
 \alias{OutputPlotGenerator.get_colors}
-\title{OutputPlotGenerator.get_colors
-Function to return a list of colors, depending on the number of variables / colors needed, uses hex for colors}
+\title{OutputPlotGenerator.get_colors}
 \usage{
 OutputPlotGenerator.get_colors(number_of_variables)
 }
 \arguments{
-\item{number_of_variables}{the number of colors one requires}
+\item{number_of_variables}{integer the number of colors one requires.}
 }
 \value{
-a list of colors
+a list \code{number_of_variables} of colors
 }
 \description{
-OutputPlotGenerator.get_colors
-Function to return a list of colors, depending on the number of variables / colors needed, uses hex for colors
+Function to return a list of colors, depending on the number of variables /
+colors needed, uses hex for colors
 }

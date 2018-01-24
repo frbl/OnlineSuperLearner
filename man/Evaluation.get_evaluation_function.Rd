@@ -2,17 +2,25 @@
 % Please edit documentation in R/Evaluation.R
 \name{Evaluation.get_evaluation_function}
 \alias{Evaluation.get_evaluation_function}
-\title{Returns the correct evaluation function given the family of the data
-# @import Metrics}
+\title{Evaluation}
 \usage{
 Evaluation.get_evaluation_function(family, useAsLoss = TRUE)
 }
 \arguments{
-\item{family}{the family of the data (binomial for binary, gaussian for cts)}
+\item{family}{the family of the data (binomial for binary, gaussian for cts).}
 
 \item{useAsLoss}{should we use the loss function or the performance function?}
 }
+\value{
+function the log likelihoodloss function if \code{useAsLoss = TRUE}, and the log loss function otherwise.
+}
 \description{
-Returns the correct evaluation function given the family of the data
+Static class with multiple, different evaluation functions. These functions
+can be used to either deterimine the loss of an estimator, or to determine
+its performance.
+Evaluation.get_evaluation_function
+}
+\details{
+Returns the correct evaluation function given the family of the data.
 # @import Metrics
 }

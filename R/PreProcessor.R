@@ -1,7 +1,42 @@
 #' PreProcessor
 #'
+#' In order to be able to use the binary / logistic loss functions, we convert
+#' every value to a value between 0 and 1. This preprocessor class takes care
+#' of this conversion by using a set of bounds (the min and max or expected min
+#' and max of the data).
+#'
 #' @docType class
 #' @importFrom R6 R6Class
+#' @section Methods: 
+#' \describe{  
+#'   \item{\code{initialize(bounds) }}{ 
+#'     Initializes a new \code{PreProcessor} class.
+#'
+#'     @param bounds list the bounds that should be used when normalizing the
+#'     data. This list should contain an entry for each random variable that
+#'     should be scaled. Each of those entries should then contain a \code{min}
+#'     and \code{max} entry.
+#'   } 
+#' 
+#'   \item{\code{normalize(data) }}{ 
+#'     Runs the actual normalization procedure. The data passed in is
+#'     normalized according to the bounds specified on initialization.
+#'
+#'     @param data data.table the non-normalized data.
+#'
+#'     @return data.table containing the normalized data.
+#'   } 
+#' 
+#'   \item{\code{denormalize(data) }}{ 
+#'     Runs the actual normalization procedure. The data passed in is
+#'     normalized according to the bounds specified on initialization.
+#'
+#'     @param data data.table the non-normalized data.
+#'
+#'     @return data.table containing the normalized data.
+#'   } 
+#' 
+#' }  
 #' @export
 PreProcessor <- R6Class("PreProcessor",
   public =

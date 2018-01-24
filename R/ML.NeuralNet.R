@@ -1,15 +1,27 @@
 #' ML.NeuralNet
-#' Class to create neuralnetworks
+#'
+#' Class to create neuralnetwork machine learning models. Information from the
+#' package:
+#' Training of neural networks using backpropagation, resilient backpropagation
+#' with (Riedmiller, 1994) or without weight backtracking (Riedmiller and
+#' Braun, 1993) or the modified globally convergent version by Anastasiadis et
+#' al.  (2005). The package allows flexible settings through custom-choice of
+#' error and activation function. Furthermore, the calculation of generalized
+#' weights (Intrator O & Intrator N, 1993) is implemented.
 #'
 #' @docType class
+#' @importFrom R6 R6Class
 #' @importFrom neuralnet neuralnet
-#'
-#' @section Methods:
-#' \describe{
-#'   \item{\code{initialize(hidden)}}{
+#' @section Methods: 
+#' \describe{  
+#'   \item{\code{initialize(hidden = c(1, 3)) }}{ 
 #'     Initializes a new neuralnet estimator with the provided hidden layers. 
-#'   }
-#' }
+#'
+#'     @param hidden vector (default = c(1,3)) a vector specifying the hidden
+#'      layers in the neural network. See the documentation of the neural
+#'      network package for more details.
+#'   } 
+#' }  
 #' @export
 ML.NeuralNet <- R6Class("ML.NeuralNet",
   inherit = ML.Base,
@@ -28,7 +40,7 @@ ML.NeuralNet <- R6Class("ML.NeuralNet",
     list(
       hidden = NULL,
       do.fit = function(X_mat, Y_vals, coef = NULL) {
-        formula <- self$create_formula(X_mat)
+        formula <- self$create_formula(colnames(X_mat))
         data = cbind(X_mat, Y = Y_vals) 
         neuralnet(formula, data = data, hidden = private$hidden, linear.output=FALSE, startweights = coef)
       },
