@@ -1,5 +1,7 @@
-#' OnlineSuperLearner.Simulation runs different simulations on the superlearner object.
-#' You can run an example using:
+#' OnlineSuperLearner.Simulation
+#' 
+#' Class that can be used to run different simulations on the superlearner
+#' object.  You can run an example using:
 #' suppressWarnings(devtools::load_all()); OnlineSuperLearner.Simulation$new()
 #'
 #' @docType class
@@ -14,11 +16,65 @@
 #' @include SMG.Lag.R
 #' @include SMG.Transformation.R
 #' @include InterventionEffectCalculator.R
+#' @section Methods: 
+#' \describe{  
+#'   \item{\code{initialize(configuration = NULL) }}{ 
+#'     Initializes a new \code{OnlineSuperLearner.Simulation} object. By
+#'     default it runs the \code{configuration2} function.
+#'
+#'     @param configuration integer (default = 2) the configuration we'd like
+#'      to run on the OSL. By default the second configuration is used.
+#'   } 
+#' 
+#'   \item{\code{configuration1(id) }}{ 
+#'     Configuration 1 is the most simple configuration. It will generate
+#'     simulated data from a simple W,A,Y structure. In this stucture, no time
+#'     dependencies are included, it will only consist of contemporaneous
+#'     effects.
+#'
+#'     @param id integer (default = 1) the id of the configuration. Used for
+#'      printing / debugging information.
+#'   } 
+#' 
+#'   \item{\code{configuration2(id) }}{ 
+#'     Configuration 2 is slightly more complex than the first configuration.
+#'     In this configuration, we include more random variables (W2 and W3). We
+#'     still don't have a time dependency in the system.
+#'
+#'     @param id integer (default = 2) the id of the configuration. Used for
+#'      printing / debugging information.
+#'   } 
+#' 
+#'   \item{\code{configuration3(id) }}{ 
+#'     Configuration 3 is the same configuration as configuration 1, in terms
+#'     of random variables. However, this implementation does include a time
+#'     dependency. 
+#'
+#'     @param id integer (default = 3) the id of the configuration. Used for
+#'      printing / debugging information.
+#'   } 
+#' 
+#'   \item{\code{configuration4(id) }}{ 
+#'     Configuration 4 is the similar configuration to configuration 2, in terms
+#'     of random variables. However, this implementation does include a time
+#'     dependency. 
+#'
+#'     @param id integer (default = 4) the id of the configuration. Used for
+#'      printing / debugging information.
+#'   } 
+#' 
+#'   \item{\code{configuration5() }}{ 
+#'     Not yet implemented / empty.
+#'
+#'     @param id integer (default = 5) the id of the configuration. Used for
+#'      printing / debugging information.
+#'   } 
+#' }  
 #' @export
 OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
   public =
     list(
-        initialize = function(configuration = NULL) {
+        initialize = function(configuration = 2) {
           tic <- Sys.time()
           cat('Starting calculation with ', parallel::detectCores(),' cores\n')
           doParallel::registerDoParallel(cores = parallel::detectCores())
@@ -91,20 +147,16 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
 
           # Run the simulations
-          if(is.null(configuration)) {
-            self$configuration2(2)
+          id = configuration
+          configuration = (as.numeric(configuration) - 1) %% 4 + 1 
+          if (configuration == 1) {
+            self$configuration1(id)
+          } else if (configuration == 2) {
+            self$configuration2(id)
+          } else if (configuration == 3) {
+            self$configuration3(id)
           } else {
-            id = configuration
-            configuration = (as.numeric(configuration) - 1) %% 4 + 1 
-            if (configuration == 1) {
-              self$configuration1(id)
-            } else if (configuration == 2) {
-              self$configuration2(id)
-            } else if (configuration == 3) {
-              self$configuration3(id)
-            } else {
-              self$configuration4(id)
-            }
+            self$configuration4(id)
           }
 
           toc <- Sys.time()
@@ -112,7 +164,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           print(time.taken)
         },
 
-        configuration1 = function(id) {
+        configuration1 = function(id = 1) {
           set.seed(12345)
 
           # Generate the true data generating distributions
@@ -171,7 +223,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                         configuration = id)
         },
 
-        configuration2 = function(id) {
+        configuration2 = function(id = 2) {
           set.seed(12345)
 
           ######################################
@@ -254,7 +306,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                         configuration = id)
         },
 
-        configuration3 = function(id) {
+        configuration3 = function(id = 3) {
           set.seed(12345)
 
           # Generate the true data generating distributions
@@ -313,7 +365,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                         configuration = id)
         },
 
-        configuration4 = function(id) {
+        configuration4 = function(id = 4) {
           set.seed(12345)
 
           ######################################
@@ -396,7 +448,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                         configuration = id)
         },
 
-        configuration5 = function() {
+        configuration5 = function(id = 5) {
         }
   ),
   private =

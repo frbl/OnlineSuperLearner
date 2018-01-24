@@ -3,16 +3,71 @@
 \docType{class}
 \name{OnlineSuperLearner.Simulation}
 \alias{OnlineSuperLearner.Simulation}
-\title{OnlineSuperLearner.Simulation runs different simulations on the superlearner object.
-You can run an example using:
-suppressWarnings(devtools::load_all()); OnlineSuperLearner.Simulation$new()}
+\title{OnlineSuperLearner.Simulation}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 OnlineSuperLearner.Simulation
 }
 \description{
-OnlineSuperLearner.Simulation runs different simulations on the superlearner object.
-You can run an example using:
+Class that can be used to run different simulations on the superlearner
+object.  You can run an example using:
 suppressWarnings(devtools::load_all()); OnlineSuperLearner.Simulation$new()
 }
+\section{Methods}{
+ 
+\describe{  
+  \item{\code{initialize(configuration = NULL) }}{ 
+    Initializes a new \code{OnlineSuperLearner.Simulation} object. By
+    default it runs the \code{configuration2} function.
+
+    @param configuration integer (default = 2) the configuration we'd like
+     to run on the OSL. By default the second configuration is used.
+  } 
+
+  \item{\code{configuration1(id) }}{ 
+    Configuration 1 is the most simple configuration. It will generate
+    simulated data from a simple W,A,Y structure. In this stucture, no time
+    dependencies are included, it will only consist of contemporaneous
+    effects.
+
+    @param id integer (default = 1) the id of the configuration. Used for
+     printing / debugging information.
+  } 
+
+  \item{\code{configuration2(id) }}{ 
+    Configuration 2 is slightly more complex than the first configuration.
+    In this configuration, we include more random variables (W2 and W3). We
+    still don't have a time dependency in the system.
+
+    @param id integer (default = 2) the id of the configuration. Used for
+     printing / debugging information.
+  } 
+
+  \item{\code{configuration3(id) }}{ 
+    Configuration 3 is the same configuration as configuration 1, in terms
+    of random variables. However, this implementation does include a time
+    dependency. 
+
+    @param id integer (default = 3) the id of the configuration. Used for
+     printing / debugging information.
+  } 
+
+  \item{\code{configuration4(id) }}{ 
+    Configuration 4 is the similar configuration to configuration 2, in terms
+    of random variables. However, this implementation does include a time
+    dependency. 
+
+    @param id integer (default = 4) the id of the configuration. Used for
+     printing / debugging information.
+  } 
+
+  \item{\code{configuration5() }}{ 
+    Not yet implemented / empty.
+
+    @param id integer (default = 5) the id of the configuration. Used for
+     printing / debugging information.
+  } 
+}
+}
+
 \keyword{datasets}

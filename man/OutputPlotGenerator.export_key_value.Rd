@@ -2,22 +2,23 @@
 % Please edit documentation in R/OutputPlotGenerator.R
 \name{OutputPlotGenerator.export_key_value}
 \alias{OutputPlotGenerator.export_key_value}
-\title{OutputPlotGenerator.export_key_value 
-Function to export a key value pair to a file}
+\title{OutputPlotGenerator.export_key_value}
 \usage{
 OutputPlotGenerator.export_key_value(key, value, output = "variables.dat",
   dir = "~/tmp/osl")
 }
 \arguments{
-\item{key}{the key to store the value under}
+\item{key}{the key to store the value under. That is, the data is stored as
+a key value pair. This is the key in that pair.}
 
-\item{value}{the value to store}
+\item{value}{the value to store. That is, the data is stored as
+a key value pair. This is the value in that pair.}
 
-\item{output}{string the file}
+\item{output}{string (default = 'variables.dat') the filename to store the
+data in.}
 
-\item{dir}{string the dir to write the file to}
+\item{dir}{string (default = '~/tmp/osl') the dir to write the file to.}
 }
 \description{
-OutputPlotGenerator.export_key_value 
 Function to export a key value pair to a file
 }

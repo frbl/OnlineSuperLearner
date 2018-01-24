@@ -6,9 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>OnlineSuperLearner.Simulation runs different simulations on the superlearner object.
-You can run an example using:
-suppressWarnings(devtools::load_all()); OnlineSuperLearner.Simulation$new() — OnlineSuperLearner.Simulation • OnlineSuperLearner</title>
+<title>OnlineSuperLearner.Simulation — OnlineSuperLearner.Simulation • OnlineSuperLearner</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -77,14 +75,12 @@ suppressWarnings(devtools::load_all()); OnlineSuperLearner.Simulation$new() — 
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>OnlineSuperLearner.Simulation runs different simulations on the superlearner object.
-You can run an example using:
-suppressWarnings(devtools::load_all()); OnlineSuperLearner.Simulation$new()</h1>
+    <h1>OnlineSuperLearner.Simulation</h1>
     </div>
 
     
-    <p>OnlineSuperLearner.Simulation runs different simulations on the superlearner object.
-You can run an example using:
+    <p>Class that can be used to run different simulations on the superlearner
+object.  You can run an example using:
 suppressWarnings(devtools::load_all()); OnlineSuperLearner.Simulation$new()</p>
     
 
@@ -94,6 +90,40 @@ suppressWarnings(devtools::load_all()); OnlineSuperLearner.Simulation$new()</p>
 
     <p>An object of class <code>R6ClassGenerator</code> of length 24.</p>
     
+    <h2 class="hasAnchor" id="methods"><a class="anchor" href="#methods"></a>Methods</h2>
+
+    
+    <dl class='dl-horizontal'>
+  <dt><code>initialize(configuration = NULL) </code></dt><dd><p>Initializes a new <code>OnlineSuperLearner.Simulation</code> object. By
+    default it runs the <code>configuration2</code> function.
+    @param configuration integer (default = 2) the configuration we'd like
+     to run on the OSL. By default the second configuration is used.</p></dd>
+    <dt><code>configuration1(id) </code></dt><dd><p>Configuration 1 is the most simple configuration. It will generate
+    simulated data from a simple W,A,Y structure. In this stucture, no time
+    dependencies are included, it will only consist of contemporaneous
+    effects.
+    @param id integer (default = 1) the id of the configuration. Used for
+     printing / debugging information.</p></dd>
+    <dt><code>configuration2(id) </code></dt><dd><p>Configuration 2 is slightly more complex than the first configuration.
+    In this configuration, we include more random variables (W2 and W3). We
+    still don't have a time dependency in the system.
+    @param id integer (default = 2) the id of the configuration. Used for
+     printing / debugging information.</p></dd>
+    <dt><code>configuration3(id) </code></dt><dd><p>Configuration 3 is the same configuration as configuration 1, in terms
+    of random variables. However, this implementation does include a time
+    dependency.
+    @param id integer (default = 3) the id of the configuration. Used for
+     printing / debugging information.</p></dd>
+    <dt><code>configuration4(id) </code></dt><dd><p>Configuration 4 is the similar configuration to configuration 2, in terms
+    of random variables. However, this implementation does include a time
+    dependency.
+    @param id integer (default = 4) the id of the configuration. Used for
+     printing / debugging information.</p></dd>
+    <dt><code>configuration5() </code></dt><dd><p>Not yet implemented / empty.
+    @param id integer (default = 5) the id of the configuration. Used for
+     printing / debugging information.</p></dd> 
+</dl>
+    
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -101,6 +131,8 @@ suppressWarnings(devtools::load_all()); OnlineSuperLearner.Simulation$new()</p>
     <ul class="nav nav-pills nav-stacked">
       
       <li><a href="#format">Format</a></li>
+
+      <li><a href="#methods">Methods</a></li>
           </ul>
 
   </div>

@@ -9,6 +9,78 @@
 RandomVariable
 }
 \description{
-RandomVariable
+This class represents the structure we see as a random variable. A random
+variable in our case is a variable for which we want to estimate its
+conditional distribution. This class helps organizing / creating its formula
+(the parametric form of the covariates that could predict this random
+variable).
 }
+\section{Methods}{
+ 
+\describe{  
+  \item{\code{initialize(formula, family) }}{ 
+    Creates a new \code{RandomVariable} object. It creates this object
+    according to a formula (the y ~ x1 + x2 representation we expect to
+    predict this random variable) and the family (gaussian if it is a double
+    / integer value, and binomial if it is a binary variable)
+
+    @param formula formula the formula to use for predicting this random
+     variable.
+    @param family string a string representing the type of random variable
+     this is.
+  } 
+
+  \item{\code{get_formula_string(X = NULL, Y = NULL) }}{ 
+    Returns a string representation as a formula of the current random
+    variable and its predictors.
+
+    @param X string (default = NULL) the variables to use as the predicting
+     variables in this formula. If \code{NULL}, it will use the X of the
+     current random variable.
+
+    @param Y string (default = NULL) the variables to use as the outcome
+     variable in this formula. If \code{NULL}, it will use the X of the
+     current random variable.
+  } 
+
+  \item{\code{parse_formula(formula) }}{ 
+    Converts a formula to its separate X and Y components.
+
+    @param formula formula the formula to convert.
+
+    @return list a list with two attributes: the \code{Y} which is the
+     output of the formula and the \code{X} the independent variables in
+     this formula.
+  } 
+
+  \item{\code{getFamilty}}{ 
+    Active method. Returns the family provided on initialization.
+
+    @return string the family.
+  } 
+
+  \item{\code{getX}}{ 
+    Active method. Returns the X component of the formula provided on
+    initialization.
+
+    @return list the X component of the formula
+  } 
+
+  \item{\code{getY}}{ 
+    Active method. Returns the Y component of the formula provided on
+    initialization.
+
+    @return string the outcome variable name
+  } 
+
+  \item{\code{getValidity}}{ 
+    Active method. Checks the validity of the \code{RandomVariable}
+    instance. This method is called automatically on initialization.
+
+    @return boolean true if everything is valid, or it throws if not valid.
+  } 
+
+}
+}
+
 \keyword{datasets}

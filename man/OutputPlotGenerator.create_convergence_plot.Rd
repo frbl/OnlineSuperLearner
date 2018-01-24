@@ -2,20 +2,20 @@
 % Please edit documentation in R/OutputPlotGenerator.R
 \name{OutputPlotGenerator.create_convergence_plot}
 \alias{OutputPlotGenerator.create_convergence_plot}
-\title{OutputPlotGenerator.create_convergence_plot
-Function to plot the convergence to the parameter of interest of both the truth and the estimation.}
+\title{OutputPlotGenerator.create_convergence_plot}
 \usage{
 OutputPlotGenerator.create_convergence_plot(data, output,
   dir = "~/tmp/osl/convergence")
 }
 \arguments{
-\item{data}{the truth  and apporoximations to plot}
+\item{data}{the truth and apporoximations to plot.}
 
-\item{output}{the filename of the output}
+\item{output}{string the filename of the output.}
 
-\item{dir}{the directory name of the output}
+\item{dir}{string (default = '~/tmp/osl/convergence') the directory name to
+store the output in.}
 }
 \description{
-OutputPlotGenerator.create_convergence_plot
-Function to plot the convergence to the parameter of interest of both the truth and the estimation.
+Function to plot the convergence to the parameter of interest of both the
+truth and the estimation.
 }

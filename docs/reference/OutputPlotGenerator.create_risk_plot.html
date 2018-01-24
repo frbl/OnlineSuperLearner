@@ -6,8 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>OutputPlotGenerator.create_risk_plot
-Function to create plots similar to the ones in the OSL papers — OutputPlotGenerator.create_risk_plot • OnlineSuperLearner</title>
+<title>OutputPlotGenerator.create_risk_plot — OutputPlotGenerator.create_risk_plot • OnlineSuperLearner</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -76,13 +75,11 @@ Function to create plots similar to the ones in the OSL papers — OutputPlotGen
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>OutputPlotGenerator.create_risk_plot
-Function to create plots similar to the ones in the OSL papers</h1>
+    <h1>OutputPlotGenerator.create_risk_plot</h1>
     </div>
 
     
-    <p>OutputPlotGenerator.create_risk_plot
-Function to create plots similar to the ones in the OSL papers</p>
+    <p>Function to create plots similar to the ones in the OSL papers</p>
     
 
     <pre class="usage"><span class='fu'>OutputPlotGenerator.create_risk_plot</span>(<span class='no'>performance</span>, <span class='no'>output</span>, <span class='kw'>dir</span> <span class='kw'>=</span> <span class='st'>"~/tmp/osl"</span>,
@@ -93,23 +90,27 @@ Function to create plots similar to the ones in the OSL papers</p>
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>performance</th>
-      <td><p>a list of list with performances: list 1 the estimators used, list 2 the random variables predicted.</p></td>
+      <td><p>a list of list with performances: list 1 the estimators
+used, list 2 the random variables predicted.</p></td>
     </tr>
     <tr>
       <th>output</th>
-      <td><p>string the filename to use for the plot (without .pdf)</p></td>
+      <td><p>string the filename to use for the plot (without .pdf).</p></td>
     </tr>
     <tr>
       <th>dir</th>
-      <td><p>string the directory to write to</p></td>
+      <td><p>string (default = '~/tmp/osl') the directory to store the results
+in.</p></td>
     </tr>
     <tr>
       <th>make_summary</th>
-      <td><p>boolean whether or not to sum all error terms to give a summed performance measure</p></td>
+      <td><p>boolean (default = FALSE) whether or not to sum all error terms to give a
+summed performance measure.</p></td>
     </tr>
     <tr>
       <th>label</th>
-      <td><p>string the label to use when making a summary plot</p></td>
+      <td><p>string (default = 'total.risk') the label to use when making a
+summary plot</p></td>
     </tr>
     </table>
     

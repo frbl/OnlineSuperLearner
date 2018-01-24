@@ -2,22 +2,20 @@
 % Please edit documentation in R/OutputPlotGenerator.R
 \name{OutputPlotGenerator.store_oos_osl_difference}
 \alias{OutputPlotGenerator.store_oos_osl_difference}
-\title{OutputPlotGenerator.store_oos_osl_difference
-Function to store the differences between the truth and osl in a file.}
+\title{OutputPlotGenerator.store_oos_osl_difference}
 \usage{
 OutputPlotGenerator.store_oos_osl_difference(differences, output, oos,
   configuration = 0)
 }
 \arguments{
-\item{differences}{a list of differences with a key for each option}
+\item{differences}{list a list of differences with a key for each option.}
 
-\item{output}{the name of the file to write the output to}
+\item{output}{string the name of the file to write the output to.}
 
-\item{oos}{boolean was oos used}
+\item{oos}{boolean was the \code{OneStepEstimator} used to generate the specified data?}
 
-\item{configuration}{(optional) which simulation configuration was used?}
+\item{configuration}{integer (default = 0) which simulation configuration was used?}
 }
 \description{
-OutputPlotGenerator.store_oos_osl_difference
 Function to store the differences between the truth and osl in a file.
 }

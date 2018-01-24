@@ -1,14 +1,22 @@
 #' OutputPlotGenerator.create_density_plot
+#'
 #' Function to plot the true and predicted densities in one plot.
 #'
-#' @param yValues vector of the true outcome values 
-#' @param estimated_probabilities vector of the estimated probabilities
-#' @param estimated_y_values vector of the estimated y_values (i.e., sampled values)
-#' @param output string with the filename
-#' @param dir the directory to plot to
 #' @importFrom stats density
 #' @importFrom grDevices dev.off pdf
 #' @importFrom graphics lines plot
+#'
+#' @param yValues vector a vector of the true outcome values.
+#'
+#' @param estimated_probabilities vector a vector of the estimated
+#'  probabilities.
+#'
+#' @param estimated_y_values vector (default = NULL) vector of the estimated
+#'  y_values (i.e., sampled values).
+#'
+#' @param output string the filename to use.
+#'
+#' @param dir string (default = '~/tmp/osl/')the directory to plot to.
 #' @export
 OutputPlotGenerator.create_density_plot = function(yValues, estimated_probabilities, estimated_y_values = NULL, output, dir = '~/tmp/osl/') {
   ## plot densitity first:
@@ -50,15 +58,21 @@ OutputPlotGenerator.create_density_plot = function(yValues, estimated_probabilit
 }
 
 #' OutputPlotGenerator.create_convergence_plot
-#' Function to plot the convergence to the parameter of interest of both the truth and the estimation.
+#'
+#' Function to plot the convergence to the parameter of interest of both the
+#' truth and the estimation.
 #'
 #' @import ggplot2
 #' @import reshape2
 #' @importFrom graphics lines plot
 #' @importFrom grDevices dev.off pdf
-#' @param data the truth  and apporoximations to plot
-#' @param output the filename of the output
-#' @param dir the directory name of the output
+#'
+#' @param data the truth and apporoximations to plot.
+#'
+#' @param output string the filename of the output.
+#'
+#' @param dir string (default = '~/tmp/osl/convergence') the directory name to
+#'  store the output in.
 #' @export
 OutputPlotGenerator.create_convergence_plot = function(data, output, dir = '~/tmp/osl/convergence') {
   labels = names(data)
@@ -92,18 +106,25 @@ OutputPlotGenerator.create_convergence_plot = function(data, output, dir = '~/tm
 
 
 #' OutputPlotGenerator.create_training_curve
+#'
 #' Function to plot the training curve given the number of iterations used
 #'
 #' @import ggplot2
 #' @import reshape2
 #' @importFrom grDevices dev.off pdf
 #' @importFrom graphics plot
+#'
 #' @param historical_cvs the historical CV risks. List of lists of datatables.
-#' First list is for each iteration, second for each learner, and the datatable
-#' has columns for each random variable.
+#'  First list is for each iteration, second for each learner, and the datatable
+#'  has columns for each random variable.
+#'
 #' @param randomVariables list of randomvariables to use in the output
-#' @param output string the filename to write the pdf to (without .pdf)
-#' @param dir string the directory to write the file to
+#'
+#' @param output string (default = 'historical_cvs') the filename to write the
+#'  pdf to (without .pdf).
+#'
+#' @param dir string (default = '~/tmp/osl/') the directory to write the file
+#'  to.
 #' @export
 OutputPlotGenerator.create_training_curve = function(historical_cvs, randomVariables, output = 'historical_cvs', dir = '~/tmp/osl/') {
   # historical_cvs is a list of lists of datatables
@@ -175,16 +196,27 @@ OutputPlotGenerator.create_training_curve = function(historical_cvs, randomVaria
 
 
 #' OutputPlotGenerator.create_risk_plot
+#'
 #' Function to create plots similar to the ones in the OSL papers
+#'
 #' @importFrom stats binomial density terms
 #' @importFrom grDevices dev.off pdf
 #' @importFrom graphics lines plot
 #' @importFrom utils head
-#' @param performance a list of list with performances: list 1 the estimators used, list 2 the random variables predicted.
-#' @param output string the filename to use for the plot (without .pdf)
-#' @param label string the label to use when making a summary plot
-#' @param dir string the directory to write to
-#' @param make_summary boolean whether or not to sum all error terms to give a summed performance measure
+#'
+#' @param performance a list of list with performances: list 1 the estimators
+#'  used, list 2 the random variables predicted.
+#'
+#' @param output string the filename to use for the plot (without .pdf).
+#'
+#' @param dir string (default = '~/tmp/osl') the directory to store the results
+#'  in.
+#'
+#' @param make_summary boolean (default = FALSE) whether or not to sum all error terms to give a
+#'  summed performance measure.
+#'
+#' @param label string (default = 'total.risk') the label to use when making a
+#'  summary plot
 #'
 #' @export
 OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tmp/osl', make_summary=FALSE, label='total.risk') {
@@ -234,9 +266,13 @@ OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tm
 }
 
 #' OutputPlotGenerator.get_colors
-#' Function to return a list of colors, depending on the number of variables / colors needed, uses hex for colors
-#' @param number_of_variables the number of colors one requires
-#' @return a list of colors
+#' 
+#' Function to return a list of colors, depending on the number of variables /
+#' colors needed, uses hex for colors
+#'
+#' @param number_of_variables integer the number of colors one requires.
+#'
+#' @return a list \code{number_of_variables} of colors
 #' @export
 OutputPlotGenerator.get_colors = function(number_of_variables) {
   if (number_of_variables > 12 || number_of_variables < 1) {
@@ -259,10 +295,14 @@ OutputPlotGenerator.get_colors = function(number_of_variables) {
 }
 
 #' OutputPlotGenerator.get_simple_colors
+#'
 #' Function to return a list of colors, depending on the number of variables / colors needed
+#'
 #' @importFrom RColorBrewer brewer.pal.info brewer.pal
-#' @param number_of_variables the number of colors one requires
-#' @return a list of colors
+#'
+#' @param number_of_variables integer the number of colors one requires.
+#'
+#' @return a list of \code{number_of_variables} colors
 #' @export
 OutputPlotGenerator.get_simple_colors = function(number_of_variables) {
   if (number_of_variables < 1) {
@@ -275,12 +315,19 @@ OutputPlotGenerator.get_simple_colors = function(number_of_variables) {
 }
 
 #' OutputPlotGenerator.export_key_value 
+#'
 #' Function to export a key value pair to a file
 #'
-#' @param key the key to store the value under
-#' @param value the value to store
-#' @param output string the file
-#' @param dir string the dir to write the file to
+#' @param key the key to store the value under. That is, the data is stored as
+#'  a key value pair. This is the key in that pair. 
+#'
+#' @param value the value to store. That is, the data is stored as
+#'  a key value pair. This is the value in that pair.
+#'
+#' @param output string (default = 'variables.dat') the filename to store the
+#'  data in.
+#'
+#' @param dir string (default = '~/tmp/osl') the dir to write the file to.
 #' @export
 OutputPlotGenerator.export_key_value = function(key, value, output='variables.dat', dir = '~/tmp/osl') {
   if (is.numeric(value)) {
@@ -297,11 +344,16 @@ OutputPlotGenerator.export_key_value = function(key, value, output='variables.da
 }
 
 #' OutputPlotGenerator.store_oos_osl_difference
+#'
 #' Function to store the differences between the truth and osl in a file.
-#' @param differences a list of differences with a key for each option
-#' @param output the name of the file to write the output to
-#' @param oos boolean was oos used 
-#' @param configuration (optional) which simulation configuration was used?
+#'
+#' @param differences list a list of differences with a key for each option.
+#'
+#' @param output string the name of the file to write the output to.
+#'
+#' @param oos boolean was the \code{OneStepEstimator} used to generate the specified data?
+#'
+#' @param configuration integer (default = 0) which simulation configuration was used?
 #' @export
 OutputPlotGenerator.store_oos_osl_difference = function(differences, output, oos, configuration = 0) {
   name <- ifelse(oos, 'post-oos', 'pre-oos')

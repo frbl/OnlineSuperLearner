@@ -2,8 +2,7 @@
 % Please edit documentation in R/OutputPlotGenerator.R
 \name{OutputPlotGenerator.create_training_curve}
 \alias{OutputPlotGenerator.create_training_curve}
-\title{OutputPlotGenerator.create_training_curve
-Function to plot the training curve given the number of iterations used}
+\title{OutputPlotGenerator.create_training_curve}
 \usage{
 OutputPlotGenerator.create_training_curve(historical_cvs, randomVariables,
   output = "historical_cvs", dir = "~/tmp/osl/")
@@ -15,11 +14,12 @@ has columns for each random variable.}
 
 \item{randomVariables}{list of randomvariables to use in the output}
 
-\item{output}{string the filename to write the pdf to (without .pdf)}
+\item{output}{string (default = 'historical_cvs') the filename to write the
+pdf to (without .pdf).}
 
-\item{dir}{string the directory to write the file to}
+\item{dir}{string (default = '~/tmp/osl/') the directory to write the file
+to.}
 }
 \description{
-OutputPlotGenerator.create_training_curve
 Function to plot the training curve given the number of iterations used
 }
