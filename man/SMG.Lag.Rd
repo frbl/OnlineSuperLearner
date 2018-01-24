@@ -9,6 +9,73 @@
 SMG.Lag
 }
 \description{
-SMG.Lag
+The OnlineSuperLearner uses various \code{SummaryMeasureGenerator} instances
+to generate new variables that can be used to represent the relevant history
+of a variable. The \code{SMG.Lag} class allows a user to specify lagged
+variables. That is, in the prediction of a variable at time $t$, one can
+include variables from past measurements, if there is an lagged or cross
+lagged effect.
 }
+\section{Methods}{
+ 
+\describe{  
+  \item{\code{initialize(lags, colnames.to.lag) }}{ 
+    Initializes a new \code{SMG.Lag} object.
+
+    @param lags integer the number of lags the \code{SMG.Lag} object should
+     create (if there is a lag_1 variable, this number should be 1).
+
+    @param colnames.to.lag vector a vector containg the names of the
+     variables to lag. 
+  } 
+
+  \item{\code{lagged_colnames(colnames = NULL) }}{ 
+    This function returns a list of names that represent the lagged names of
+    the \code{colnames} provided to it. It uses the \code{lags} variable as
+    specified in the initialization step. One can choose to provide colnames
+    to this function to get the result for a specific set of colnames. If no
+    colnames are provided, the function uses the \code{colnames.to.lag}
+    names as specified on initialization.
+
+    @param colnames vector (default = NULL) the vector of names for which to
+     genearte a lagged version.
+
+    @return vector a vector of colnames with appended '_lag_x' names.
+  } 
+
+  \item{\code{update(data.current) }}{ 
+    For online learning we need to be able to create new data blocks on the
+    fly (as not all data is available beforehand. This function updates a
+    set of variables to contain the lagged variables for the next block.
+
+    @param data.current data.table the current data / the last data used for
+     training, from which a new summary measure needs to be generated.
+
+    @return data.table a new block for the next training iteration.
+  } 
+
+  \item{\code{process(data.current) }}{ 
+    Converts lagged columns for all provided data. It goes through the data
+    and generates the lagged variables accordingly.
+
+    @param data.current data.table the currently available data.
+
+    @return data.table with the new summary measure columns.
+  } 
+
+  \item{\code{minimalObservations}}{ 
+    Active method. The minimal number of measurements needed for this SMG to
+    be able to generate a new block. This is the number of lags + 1.
+
+    @return integer the number of lags + 1
+  } 
+
+  \item{\code{exposedVariables}}{ 
+    Active method. Returns a list of variables returned by this SMG.
+
+    @return vector a vector of strings conaining all lagged columnames.
+  } 
+}
+}
+
 \keyword{datasets}

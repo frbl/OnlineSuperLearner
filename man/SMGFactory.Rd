@@ -9,20 +9,62 @@
 SMGFactory
 }
 \description{
-Factory for creating a set of SummaryMeasureGenerators, based on the needed variables
+The \code{SMGFactory} applies the Factory pattern for creating a set of
+SummaryMeasureGenerators, based on the needed variables. This eases the
+creation of summary measures as the user of this package only needs to
+specify the correct column names. The factory parses the formulas used and
+generates summary measures accordingly.
+}
+\details{
+TODO: In its current form the SMG Factory is a rather static class. It is
+currently hard to extend this function with more SMGS without changing the
+actual package code. This should be improved.
 }
 \section{Methods}{
 
 \describe{
-  \item{\code{initialize() }}{
+  \item{\code{initialize(candidate_smgs) }}{
     Creates a new SMG factory
+
+    @param candidate_smgs list UNUSED. This argument should be used to
+     specify a list of possible SMGs.
   }
 
-  \item{\code{fabricate(randomVariables, verbose = FALSE) }}{
-    Fabricates the actual SMG's. Given a list of \code{RandomVariable}s all covariates are selected and merged.
-    These are used as a basis for selecting the needed variables in the dataframe.
-    @param randomVariables = a list of \code{RandomVariable} objects, from which the X variables are selected
+  \item{\code{fabricate(randomVariables, ...) }}{
+    Fabricates the actual SMG's. Given a list of \code{RandomVariable}s all
+    covariates are selected and merged.  These are used as a basis for
+    selecting the needed variables in the dataframe. The column names need to be specified as follows:
+    \begin{itemize}
+      \item{just the variable name}: uses the \code{SMG.Latest.Entry} class
+       to include the contemporaneous variables.
+      \item{the variable name\_lag\_the lag}: uses the \code{SMG.Lag} class
+       to include the lagged variables.
+      \item{the variable name\_mean}: uses the \code{SMG.Mean} class to
+       include the running mean for this variable.
+    \end{itemize}
+
+    @param randomVariables = a list of \code{RandomVariable} objects, from
+     which the X variables are selected.
+
     @param ... = data to get passed to the SMG
+  }
+
+  \item{\code{fabricate(randomVariables, ...) }}{
+    Fabricates the actual SMG's. Given a list of \code{RandomVariable}s all
+    covariates are selected and merged.  These are used as a basis for
+    selecting the needed variables in the dataframe.
+
+    @param randomVariables list a list of \code{RandomVariable} objects, from which the X variables are selected.
+
+    @param ... the data to get passed to the SMG.
+
+    @return SummaryMeasureGenerator with the correct SMGs.
+  }
+
+  \item{\code{get_candidate_smgs}}{
+    Active method. Returns the candidate \code{SummaryMeasureGenerator}s provided on initialization.
+
+    @return list the list of \code{candidate_smgs}.
   }
 }
 }

@@ -6,8 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>SMG.Transformation
-Transforms the current value of a variable using the given function — SMG.Transformation • OnlineSuperLearner</title>
+<title>SMG.Transformation — SMG.Transformation • OnlineSuperLearner</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -76,13 +75,15 @@ Transforms the current value of a variable using the given function — SMG.Tran
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>SMG.Transformation
-Transforms the current value of a variable using the given function</h1>
+    <h1>SMG.Transformation</h1>
     </div>
 
     
-    <p>SMG.Transformation
-Transforms the current value of a variable using the given function</p>
+    <p>The OnlineSuperLearner uses various <code>SummaryMeasureGenerator</code> instances
+to generate new variables that can be used to represent the relevant history
+of a variable. The <code>SMG.Transformation</code> class allows a user to
+transform the current value of a variable using a given function (like a
+<code>sin</code> or <code>cos</code>).</p>
     
 
     <pre class="usage"><span class='no'>SMG.Transformation</span></pre>
@@ -95,14 +96,30 @@ Transforms the current value of a variable using the given function</p>
 
     
     <dl class='dl-horizontal'>
-  <dt><code>initialize(function_to_use = sin, suffix = "sin", colnames_to_use) </code></dt><dd><p>&lt;&lt;description&gt;&gt; 
-    @param function_to_use = sin 
-    @param suffix = "sin" 
-    @param colnames_to_use</p></dd>
-    <dt><code>update(data.current) </code></dt><dd><p>&lt;&lt;description&gt;&gt; 
-    @param data.current</p></dd>
-    <dt><code>process(data.current) </code></dt><dd><p>&lt;&lt;description&gt;&gt; 
-    @param data.current</p></dd> 
+  <dt><code>initialize(function_to_use = sin, suffix = "sin", colnames_to_use) </code></dt><dd><p>Initializes a new <code>SMG.Transformation</code> object.
+    @param function_to_use function (default = sin) the function to use for
+     transforming a value.
+    @param suffix string (default = "sin") the string to use as suffix for
+     the generated column names.
+    @param colnames_to_use vector a vector of string containing all
+     variables for which a transformation needs to be created.</p></dd>
+    <dt><code>update(data.current) </code></dt><dd><p>For online learning we need to be able to create new data blocks on the
+    fly (as not all data is available beforehand. This function updates a
+    set of variables with the function specified on initialization.
+    @param data.current data.table the current data / the last data used for
+     training, from which a new summary measure needs to be generated.
+    @return data.table a new block for the next training iteration.</p></dd>
+    <dt><code>process(data.current) </code></dt><dd><p>Adds the transformed columns for each of the specified colnames.  It
+    goes through the data and selects the variables specified on
+    initialization.
+    @param data.current data.table the currently available data.
+    @return data.table with the new summary measure columns.</p></dd>
+    <dt><code>exposedVariables</code></dt><dd><p>Active method. Returns a list of variables returned by this SMG.
+    @return vector a vector of strings conaining all specified (used)
+     contemporaneous colnames.</p></dd>
+    <dt><code>minimalObservations</code></dt><dd><p>Active method. The minimal number of measurements needed for this SMG to
+    be able to generate a new block. This is 1.
+    @return integer the minimal number of measurements needed.</p></dd> 
 </dl>
     
 
