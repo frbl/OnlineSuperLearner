@@ -53,6 +53,6 @@ test_that("it should create the correct formula based on the provided Y A and W"
   subject <- described.class$new()
   Y <- 'outcome'
   W <- c('input1', 'input2')
-  result <- subject$create_formula(Y,W)
-  expect_equal(result, 'outcome ~ input1 + input2' )
+  result <- subject$create_formula(W, Y)
+  expect_equal(result, outcome ~ input1 + input2)
 })
