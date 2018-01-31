@@ -113,13 +113,13 @@ test_that("it should estimate the true treatment", {
   summaryMeasureGenerator <- smg_factory$fabricate(randomVariables, pre_processor = pre_processor)
 
   osl <- OnlineSuperLearner$new(algos, summaryMeasureGenerator = summaryMeasureGenerator,
+                                random_variables = randomVariables,
                                 verbose = log, 
                                 should_fit_osl = TRUE,
                                 should_fit_dosl = FALSE,
                                 pre_processor = pre_processor)
   hide_warning_replace_weights_osl(
-    risk <- osl$fit(data.train, randomVariables = randomVariables,
-                          initial_data_size = training_set_size / 2,
+    risk <- osl$fit(data.train, initial_data_size = training_set_size / 2,
                           max_iterations = max_iterations,
                           mini_batch_size = (training_set_size / 2) / max_iterations)
   )
@@ -129,13 +129,11 @@ test_that("it should estimate the true treatment", {
 
   #result <- mclapply(seq(B), function(i) {
    #osl$sample_iteratively(data = datas[i,],
-                          #randomVariables = randomVariables,
                           #intervention = intervention,
                           #variable_of_interest = Y,
                           #tau = tau)
   #}, mc.cores=cores)
   intervention_effect_caluculator = InterventionEffectCalculator$new(bootstrap_iterations = B, 
-                                                                    randomVariables = randomVariables, 
                                                                     outcome_variable = Y$getY,
                                                                     verbose = FALSE,
                                                                     parallel = FALSE)

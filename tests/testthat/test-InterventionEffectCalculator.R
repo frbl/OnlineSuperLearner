@@ -5,7 +5,6 @@ rv.W <- RandomVariable$new(formula = W ~ D, family = 'binomial')
 rv.Y <- RandomVariable$new(formula = Y ~ W, family = 'gaussian')
 
 glob_bootstrap_iterations <- 5
-glob_randomVariables <- c(rv.W, rv.Y)
 glob_outcome_variable <- rv.Y$getY
 glob_parallel <- TRUE
 glob_osl = list('x')
@@ -14,7 +13,6 @@ class(glob_osl) <- 'OnlineSuperLearner'
 context(" initialize")
 #==========================================================
 test_that("it should initialize and store the variables", {
-  cur.randomVariables <- c(rv.W, rv.Y)
   cur.bootstrap_iterations <- 500
   cur.parallel <- TRUE
   cur.outcome_variable <- rv.Y$getY
@@ -22,27 +20,23 @@ test_that("it should initialize and store the variables", {
   expect_error(
     subject <- described.class$new(
       bootstrap_iterations = cur.bootstrap_iterations,
-      randomVariables = cur.randomVariables,
       outcome_variable = cur.outcome_variable,
       parallel = cur.parallel
     ), NA
   )
 
   expect_equal(subject$get_bootstrap_iterations, cur.bootstrap_iterations)
-  expect_equal(subject$get_random_variables, cur.randomVariables)
   expect_equal(subject$get_outcome_variable, cur.outcome_variable)
   expect_equal(subject$is_parallel, cur.parallel)
 })
 
 test_that("it should throw whenever bootstrap_iterations are not int", {
-  cur.randomVariables <- c(rv.W, rv.Y)
   cur.parallel <- TRUE
   cur.outcome_variable <- rv.Y$getY
   for (cur.bootstrap_iterations in list(0, -1, NULL, NA)) {
     expect_error(
       subject <- described.class$new(
         bootstrap_iterations = cur.bootstrap_iterations,
-        randomVariables = cur.randomVariables,
         outcome_variable = cur.outcome_variable,
         parallel = cur.parallel
       ), "Argument 'bootstrap_iterations' "
@@ -50,31 +44,13 @@ test_that("it should throw whenever bootstrap_iterations are not int", {
   }
 })
 
-test_that("it should throw whenever randomVariables are not a list", {
-  cur.parallel <- TRUE
-  cur.outcome_variable <- rv.Y$getY
-  cur.bootstrap_iterations <- 500
-  for (cur.randomVariables in list(0, -1, NULL, NA, rv.Y)) {
-    expect_error(
-      subject <- described.class$new(
-        bootstrap_iterations = cur.bootstrap_iterations,
-        randomVariables = cur.randomVariables,
-        outcome_variable = cur.outcome_variable,
-        parallel = cur.parallel
-      ), "Argument 'randomVariables' "
-    )
-  }
-})
-
 test_that("it should throw whenever outcomevariable is not a string", {
   cur.parallel <- TRUE
   cur.bootstrap_iterations <- 500
-  cur.randomVariables <- c(rv.W, rv.Y)
   for (cur.outcome_variable  in list(rv.Y)) {
     expect_error(
       subject <- described.class$new(
         bootstrap_iterations = cur.bootstrap_iterations,
-        randomVariables = cur.randomVariables,
         outcome_variable = cur.outcome_variable,
         parallel = cur.parallel
       ), "cannot coerce type 'environment' to vector of type 'character'"
@@ -84,13 +60,11 @@ test_that("it should throw whenever outcomevariable is not a string", {
 
 test_that("it should not throw whenever parallel is a boolean", {
   cur.bootstrap_iterations <- 500
-  cur.randomVariables <- c(rv.W, rv.Y)
   cur.outcome_variable <- rv.Y$getY
   for (cur.parallel in list(TRUE,FALSE)) {
     expect_error(
       subject <- described.class$new(
         bootstrap_iterations = cur.bootstrap_iterations,
-        randomVariables = cur.randomVariables,
         outcome_variable = cur.outcome_variable,
         parallel = cur.parallel
       ), NA
@@ -103,7 +77,6 @@ context(" calculate_intervention_effect")
 test_that("it should test whether all interventions are valid if the check flag is set", {
   subject <- described.class$new(
     bootstrap_iterations = glob_bootstrap_iterations,
-    randomVariables = glob_randomVariables,
     outcome_variable = glob_outcome_variable,
     parallel = glob_parallel
   )
@@ -144,7 +117,6 @@ test_that("it should test whether all interventions are valid if the check flag 
 test_that("it should throw when the provided osl is not an osl if the check flag is set", {
   subject <- described.class$new(
     bootstrap_iterations = glob_bootstrap_iterations,
-    randomVariables = glob_randomVariables,
     outcome_variable = glob_outcome_variable,
     parallel = glob_parallel
   )
@@ -171,7 +143,6 @@ test_that("it should throw when the provided osl is not an osl if the check flag
 test_that("it should give a warning if the names of the interventions are nil", {
   subject <- described.class$new(
     bootstrap_iterations = glob_bootstrap_iterations,
-    randomVariables = glob_randomVariables,
     outcome_variable = glob_outcome_variable,
     parallel = glob_parallel
   )
@@ -201,7 +172,6 @@ test_that("it should give a warning if the names of the interventions are nil", 
 test_that("it should call the evaluate single intervention function with the correct parameters", {
   subject <- described.class$new(
     bootstrap_iterations = glob_bootstrap_iterations,
-    randomVariables = glob_randomVariables,
     outcome_variable = glob_outcome_variable,
     parallel = glob_parallel
   )
@@ -239,7 +209,6 @@ test_that("it should call the evaluate single intervention function with the cor
 test_that("it should return the result of each of the interventions", {
   subject <- described.class$new(
     bootstrap_iterations = glob_bootstrap_iterations,
-    randomVariables = glob_randomVariables,
     outcome_variable = glob_outcome_variable,
     parallel = glob_parallel
   )
@@ -281,7 +250,6 @@ context(" evaluate_single_intervention")
 test_that("it should call the sample_iteratively function bootstrap_iterations number of times with the correct arguments", {
   subject <- described.class$new(
     bootstrap_iterations = glob_bootstrap_iterations,
-    randomVariables = glob_randomVariables,
     outcome_variable = glob_outcome_variable,
     parallel = FALSE
   )
@@ -295,9 +263,8 @@ test_that("it should call the sample_iteratively function bootstrap_iterations n
   mock_result <- data.table(W = c(1,2,3,4), Y = c(4,3,2,1))
 
   stub(subject$evaluate_single_intervention, 'osl$sample_iteratively', 
-    function(data, randomVariables, intervention, discrete, tau) {
+    function(data, intervention, discrete, tau) {
       expect_equal(data, cur.initial_data)
-      expect_equal(randomVariables, glob_randomVariables)
       expect_equal(tau, cur.tau)
       expect_equal(intervention, cur.intervention)
       expect_equal(discrete, cur.discrete)
@@ -320,7 +287,6 @@ test_that("it should call the sample_iteratively function bootstrap_iterations n
 test_that("it should return the tau'th block and the outcome_variable variable for each of the bootstrap iterations", {
   subject <- described.class$new(
     bootstrap_iterations = glob_bootstrap_iterations,
-    randomVariables = glob_randomVariables,
     outcome_variable = glob_outcome_variable,
     parallel = FALSE
   )
@@ -334,7 +300,7 @@ test_that("it should return the tau'th block and the outcome_variable variable f
   mock_result <- data.table(W = c(1,2,3,4), Y = c(4,3,2,1))
 
   stub(subject$evaluate_single_intervention, 'osl$sample_iteratively', 
-    function(data, randomVariables, intervention, discrete, tau) {
+    function(data, intervention, discrete, tau) {
       return(mock_result)
     }
   )
@@ -357,7 +323,6 @@ context(" perform_initial_estimation")
 test_that("it should call the intervention effect calculator with the correct parameters", {
   subject <- described.class$new(
     bootstrap_iterations = glob_bootstrap_iterations,
-    randomVariables = glob_randomVariables,
     outcome_variable = glob_outcome_variable,
     parallel = FALSE
   )
@@ -396,7 +361,6 @@ test_that("it should call the intervention effect calculator with the correct pa
 test_that("it should return the mean of all outcomes with their correct names", {
   subject <- described.class$new(
     bootstrap_iterations = glob_bootstrap_iterations,
-    randomVariables = glob_randomVariables,
     outcome_variable = glob_outcome_variable,
     parallel = FALSE
   )

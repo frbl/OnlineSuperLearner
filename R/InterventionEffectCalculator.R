@@ -10,17 +10,13 @@
 #' @include InterventionParser.R
 #' @section Methods: 
 #' \describe{  
-#'   \item{\code{initialize(bootstrap_iterations, randomVariables, outcome_variable}}{ 
+#'   \item{\code{initialize(bootstrap_iterations,  outcome_variable}}{ 
 #'     Creates a new InterventionEffectCalculator.
 #'     
 #'     @param bootstrap_iterations integer the number of bootstrap iterations
 #'      to use when calculating the effect of an intervention. If there are
 #'      more iterations, the result will be more reliable, but calculating will
 #'      take significantly longer.
-#' 
-#'     @param randomVariables list of randomvariable objects. The
-#'      randomvariables used to create / fit the densities. Usualy a list of W,
-#'      A, and Y.
 #' 
 #'     @param outcome_variable string the name of the variable for which the
 #'      outcome should be measured. This is usualy Y (depending on you setup).
@@ -143,9 +139,8 @@
 InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
   public =
     list(
-      initialize = function(bootstrap_iterations, randomVariables, outcome_variable, parallel = TRUE, verbose = FALSE) {
+      initialize = function(bootstrap_iterations,  outcome_variable, parallel = TRUE, verbose = FALSE) {
         private$bootstrap_iterations <- Arguments$getInteger(bootstrap_iterations, c(1, Inf))
-        private$randomVariables <- Arguments$getInstanceOf(randomVariables,'list')
         private$outcome_variable <- Arguments$getCharacters(outcome_variable)
         private$parallel <- Arguments$getLogical(parallel)
         private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
@@ -194,7 +189,6 @@ InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
           private$verbose && cat(private$verbose, 'Approximation iteration for:', i)
           sample <- osl$sample_iteratively(
             data = initial_data,
-            randomVariables = self$get_random_variables,
             intervention = intervention,
             discrete = discrete,
             tau = tau
@@ -229,9 +223,6 @@ InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
       get_bootstrap_iterations = function() {
         private$bootstrap_iterations
       },
-      get_random_variables = function() {
-        private$randomVariables
-      },
       get_outcome_variable = function() {
         private$outcome_variable
       }
@@ -240,7 +231,6 @@ InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
     list(
       parallel = NULL,
       bootstrap_iterations = NULL,
-      randomVariables = NULL,
       outcome_variable = NULL,
       verbose = NULL,
 

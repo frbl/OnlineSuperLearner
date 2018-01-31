@@ -510,6 +510,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           private$log && cat(private$log, 'Initializing OSL')
           osl <- OnlineSuperLearner$new(private$SL.library.definition,
+                                        random_variables = randomVariables,
                                         summaryMeasureGenerator = summaryMeasureGenerator,
                                         pre_processor = pre_processor,
                                         verbose = private$log)
@@ -528,8 +529,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           OutputPlotGenerator.export_key_value('total-iterations', max_iterations+1, output=key_output)
 
           # Divide by two here just so the initial size is a lot larger then each iteration, not really important
-          risk <- osl$fit(data.train, randomVariables = randomVariables,
-                                initial_data_size = initial_training_set_size,
+          risk <- osl$fit(data.train, initial_data_size = initial_training_set_size,
                                 max_iterations = max_iterations,
                                 mini_batch_size = mini_batch_size) %T>% print
 
@@ -538,8 +538,8 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           # Calculate prediction quality
           observed.outcome <- data.test[, outcome.variables, with=FALSE]
-          predicted.outcome <- osl$predict(data = copy(data.test), randomVariables, plot= TRUE, sample=FALSE)$normalized
-          sampled.outcome <- osl$predict(data = copy(data.test), randomVariables, plot= TRUE, sample=TRUE)$normalized
+          predicted.outcome <- osl$predict(data = copy(data.test), plot= TRUE, sample=FALSE)$normalized
+          sampled.outcome <- osl$predict(data = copy(data.test), plot= TRUE, sample=TRUE)$normalized
 
           Evaluation.log_loss(data.predicted = predicted.outcome$osl.estimator$Y, data.observed = observed.outcome$A)
           Evaluation.log_loss(data.predicted = predicted.outcome$dosl.estimator$Y, data.observed = observed.outcome$A)

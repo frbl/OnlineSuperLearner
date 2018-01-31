@@ -132,12 +132,14 @@ test_that("it should estimate the true treatment", {
   smg_factory <- SMGFactory$new()
   summaryMeasureGenerator <- smg_factory$fabricate(randomVariables, pre_processor = pre_processor)
 
-  osl <- OnlineSuperLearner$new(algos, summaryMeasureGenerator = summaryMeasureGenerator, verbose = log, 
+  osl <- OnlineSuperLearner$new(algos, summaryMeasureGenerator = summaryMeasureGenerator,
+                                random_variables = randomVariables,
+                                verbose = log, 
                                 pre_processor = pre_processor)
 
 
   hide_warning_replace_weights_osl(
-    risk <- osl$fit(data.train, randomVariables = randomVariables,
+    risk <- osl$fit(data.train, 
                           initial_data_size = training_set_size / 2,
                           max_iterations = max_iterations,
                           mini_batch_size = (training_set_size / 2) / max_iterations)
@@ -148,7 +150,6 @@ test_that("it should estimate the true treatment", {
   datas <- summaryMeasureGenerator$getNext(n = 1000)
 
   intervention_effect_caluculator = InterventionEffectCalculator$new(bootstrap_iterations = B, 
-                                                                    randomVariables = randomVariables, 
                                                                     outcome_variable = Y$getY,
                                                                     verbose = FALSE,
                                                                     parallel = FALSE)
@@ -170,8 +171,8 @@ test_that("it should estimate the true treatment", {
   )
 
   #datas$A <- 1
-  #osl$predict(data = copy(datas), randomVariables, plot= TRUE, sample=TRUE)$denormalized$dosl.estimator$Y%>% mean
-  #osl$predict(data = copy(datas), randomVariables, plot= TRUE, sample=FALSE)
+  #osl$predict(data = copy(datas), plot= TRUE, sample=TRUE)$denormalized$dosl.estimator$Y%>% mean
+  #osl$predict(data = copy(datas), plot= TRUE, sample=FALSE)
   psi.estimation <- mean(result)
   print(paste('Approximation:', psi.approx, 'estimation:', psi.estimation, 'difference:', abs(psi.approx - psi.estimation)))
   expect_lt(abs(psi.approx - psi.estimation), 0.1)
