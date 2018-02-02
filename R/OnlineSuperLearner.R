@@ -561,9 +561,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         },
 
         set_random_variables = function(random_variables) {
+          variable_names <- sapply(random_variables, function(rv) rv$getY)
+          names(random_variables) <- variable_names
           private$random_variables <- random_variables
         }
-
   ),
   active =
     list(
@@ -850,3 +851,16 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         }
     )
 )
+
+# Create general R3 methods
+predict.OnlineSuperLearner <- function(object, newdata, Y, ...) {
+  # Convert newdata to data.static
+  # Convert Y to random variable
+  Y <- object$get_random_variables[Y]
+  object$predict(...)
+}
+
+summary.OnlineSuperLearner <- function(object, ...) {
+  object$info
+}
+

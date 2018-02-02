@@ -214,6 +214,7 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
           observed.outcome <- Arguments$getInstanceOf(observed.outcome, 'data.table')
         }
 
+        predicted.outcome
         cv_risk <- lapply(predicted.outcome, function(algorithm_outcome) {
           self$risk_single_outcome(
             observed.outcome = observed.outcome,
@@ -231,9 +232,15 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
           lossFn <- Evaluation.get_evaluation_function(family = rv$getFamily, useAsLoss = TRUE)
           risk <- lossFn(data.observed = observed.outcome[[current_outcome]],
                           data.predicted = predicted.outcome[[current_outcome]])
+          current_outcome
           names(risk) <- current_outcome
           risk
         }) 
+
+        ## Unname the results, just so we can be sure the lapply did not add
+        ## any names. If it does add names, the datatable function will
+        ## concatenate the names.
+        result %<>% unname
 
         ## The unlist t is a hack to flatten the result, but to keep the correct names
         ## that the entries got in the loop.
@@ -280,7 +287,7 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
       },
 
       update_single_risk = function(old_risk, new_risks, current_count, randomVariables) {
-        lapply(randomVariables, function(rv) {
+        result <- lapply(randomVariables, function(rv) {
           current <- rv$getY
 
           ## The score up to now needs to be calculated current_count times, the other score 1 time.
@@ -298,10 +305,16 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
           if(!is.null(old_risk)) {
             new_risk <- (new_risk + (current_count * old_risk[[current]])) / (current_count + 1)
           }
-
           names(new_risk) <- current
           new_risk
-        }) %>% unlist %>% t %>% as.data.table
+        })
+        
+        ## Unname the results, just so we can be sure the lapply did not add
+        ## any names. If it does add names, the datatable function will
+        ## concatenate the names.
+        result %<>% unname
+
+        result %>% unname %>% unlist %>% t %>% as.data.table
       }
     ),
   active =

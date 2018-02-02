@@ -226,6 +226,20 @@ test_that("it should return an empty list after initialization", {
   expect_false(is.null(result))
   expect_equal(result, list())
 })
+
+context(" set_random_variables")
+#==========================================================
+test_that("it should store the random variables", {
+  subject <- described.class$new(summaryMeasureGenerator = SMG, random_variables = random_variables)
+  expect_false(is.null(subject$get_random_variables))
+  expect_length(subject$get_random_variables, length(random_variables))
+})
+
+test_that("it should name each of the random variables", {
+  subject <- described.class$new(summaryMeasureGenerator = SMG, random_variables = random_variables)
+  variable_names <- sapply(random_variables, function(rv) rv$getY)
+  expect_named(subject$get_random_variables, variable_names)
+})
  
 context(' get_validity') 
 #==========================================================
