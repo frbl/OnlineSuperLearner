@@ -46,6 +46,7 @@ test_that("it should return the outcome", {
   expect_equal(rv$getY, c(W='W'))
 })
 
+
 context(" getValidity")
 #==========================================================
 test_that("it should throw if the provided formula is not a formula", {

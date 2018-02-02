@@ -6,29 +6,31 @@ context(" initialize")
 #==========================================================
 mylist <- c(SMG.Mock$new())
 SMG <- SummaryMeasureGenerator$new(SMG.list = mylist)
-subject <- described.class$new(summaryMeasureGenerator = SMG)
+
+random_variables <- list(list(getY='W'), list(getY='A'), list(getY='Y'))
+subject <- described.class$new(summaryMeasureGenerator = SMG, random_variables = random_variables)
 
 test_that("it should initialize", {
-  expect_error(described.class$new(summaryMeasureGenerator = SMG), NA)
+  expect_error(described.class$new(summaryMeasureGenerator = SMG, random_variables = random_variables), NA)
 })
 
 test_that("it should throw if the provided verbosity is incorrect", {
-  expect_error(described.class$new(summaryMeasureGenerator = SMG, verbose = '123'), 
+  expect_error(described.class$new(summaryMeasureGenerator = SMG, random_variables = random_variables, verbose = '123'), 
                "Argument 'verbose' is non-logical: character", fixed = TRUE) 
 })
 
 test_that("it should throw if the provided SMG is not an SMG", {
-  expect_error(described.class$new(summaryMeasureGenerator = '123'), 
+  expect_error(described.class$new(summaryMeasureGenerator = '123', random_variables = random_variables), 
                "Argument 'summaryMeasureGenerator' is neither of nor inherits class SummaryMeasureGenerator: character", fixed = TRUE) 
 })
 
 test_that("it should throw if the provided should_fit_osl is not a boolean", {
-  expect_error(described.class$new(summaryMeasureGenerator = SMG, should_fit_osl = glm), 
+  expect_error(described.class$new(summaryMeasureGenerator = SMG, random_variables = random_variables, should_fit_osl = glm), 
                "Argument 'should_fit_osl' is not a vector: function", fixed = TRUE) 
 })
 
 test_that("it should throw if the provided should_fit_dosl is not a boolean", {
-  expect_error(described.class$new(summaryMeasureGenerator = SMG, should_fit_dosl = glm), 
+  expect_error(described.class$new(summaryMeasureGenerator = SMG, random_variables = random_variables, should_fit_dosl = glm), 
                "Argument 'should_fit_dosl' is not a vector: function", fixed = TRUE) 
 })
 
@@ -99,29 +101,26 @@ context(" fit")
 #==========================================================
 test_that("it should throw if the provided datasize is not an int", {
   data <- mock('data')
-  randomVariables <- mock('randomvariables')
-  expect_error(subject$fit(data, randomVariables, initial_data_size = 'a', max_iterations = 20, mini_batch_size = 20), "Argument 'initial_data_size' contains")
+  expect_error(subject$fit(data, initial_data_size = 'a', max_iterations = 20, mini_batch_size = 20), "Argument 'initial_data_size' contains")
   expect_error(
-    subject$fit(data, randomVariables, initial_data_size = -1, max_iterations = 20, mini_batch_size = 20),
+    subject$fit(data, initial_data_size = -1, max_iterations = 20, mini_batch_size = 20),
     "Argument 'initial_data_size' is out of range [1,Inf]: -1", fixed= TRUE)
 })
 
 test_that("it should throw if the provided iterations are note ints", {
   data <- mock('data')
-  randomVariables <- mock('randomvariables')
   expect_error(
-    subject$fit(data, randomVariables, initial_data_size = 1, max_iterations = 'a', mini_batch_size = 20),
+    subject$fit(data, initial_data_size = 1, max_iterations = 'a', mini_batch_size = 20),
     "Argument 'max_iterations' contains")
   expect_error(
-    subject$fit(data, randomVariables, initial_data_size = 1, max_iterations = -20, mini_batch_size = 20),
+    subject$fit(data, initial_data_size = 1, max_iterations = -20, mini_batch_size = 20),
     "Argument 'max_iterations' is out of range [0,Inf]: -20", fixed= TRUE)
 })
 
 test_that("it should throw if the provided data is not a data object", {
   data <- mock('data')
-  randomVariables <- mock('randomvariables')
   expect_error(
-    subject$fit(data, randomVariables, initial_data_size = 1, max_iterations = 1, mini_batch_size = 20),
+    subject$fit(data, initial_data_size = 1, max_iterations = 1, mini_batch_size = 20),
     "Argument 'data' is neither of nor inherits class Data.Base: mock")
 })
 
@@ -152,7 +151,7 @@ test_that("it should return true if all estimators are online", {
   SL.Library <- append(SL.Library, list(list(algorithm = 'condensier::speedglmR6',
                           params = list(online = TRUE))))
 
-  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG)
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, random_variables = random_variables)
   expect_true(subject$is_online)
 })
 
@@ -164,7 +163,7 @@ test_that("it should return false if any estimators is not online", {
   SL.Library <- append(SL.Library, list(list(algorithm = 'condensier::speedglmR6',
                           params = list(online = TRUE))))
 
-  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG)
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, random_variables = random_variables)
   expect_false(subject$is_online)
 })
 
@@ -172,7 +171,7 @@ context(' is_fitted')
 #==========================================================
 test_that("it should return the fitted status of the osl", {
   SL.Library <- 'ML.Local.lm'
-  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG)
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, random_variables = random_variables)
   expect_false(subject$is_fitted)
 })
 
@@ -180,15 +179,15 @@ context(' fits_osl')
 #==========================================================
 test_that("it should return true if the object will fit the osl (also the default)", {
   SL.Library <- 'ML.Local.lm'
-  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG)
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, random_variables = random_variables)
   expect_true(subject$fits_osl)
-  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, should_fit_osl = TRUE)
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, should_fit_osl = TRUE, random_variables = random_variables)
   expect_true(subject$fits_osl)
 })
 
 test_that("it should return false if the object will fit the osl", {
   SL.Library <- 'ML.Local.lm'
-  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, should_fit_osl = FALSE)
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, should_fit_osl = FALSE, random_variables = random_variables)
   expect_false(subject$fits_osl)
 })
 
@@ -196,15 +195,15 @@ context(' fits_dosl')
 #==========================================================
 test_that("it should return true if the object will fit the dosl (also the default)", {
   SL.Library <- 'ML.Local.lm'
-  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG)
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, random_variables = random_variables)
   expect_true(subject$fits_dosl)
-  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, should_fit_dosl = TRUE)
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, should_fit_dosl = TRUE, random_variables = random_variables)
   expect_true(subject$fits_dosl)
 })
 
 test_that("it should return false if the object will fit the dosl", {
   SL.Library <- 'ML.Local.lm'
-  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, should_fit_dosl = FALSE)
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, should_fit_dosl = FALSE, random_variables = random_variables)
   expect_false(subject$fits_dosl)
 })
 
@@ -212,7 +211,7 @@ context(' get_estimators')
 #==========================================================
 test_that("it should return a list of density estimation objects, fabricated", {
   SL.Library <- c('ML.Local.lm', 'ML.XGBoost')
-  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, should_fit_dosl = FALSE)
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, should_fit_dosl = FALSE, random_variables = random_variables)
   result <- subject$get_estimators
   expect_equal(length(result), length(SL.Library))
   expect_true(all(sapply(result, function(x) is.a(x, 'DensityEstimation'))))
@@ -222,10 +221,24 @@ context(' get_cv_risk')
 #==========================================================
 test_that("it should return an empty list after initialization", {
   SL.Library <- c('ML.Local.lm', 'ML.XGBoost')
-  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG)
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, random_variables = random_variables)
   result <- subject$get_cv_risk()
   expect_false(is.null(result))
   expect_equal(result, list())
+})
+
+context(" set_random_variables")
+#==========================================================
+test_that("it should store the random variables", {
+  subject <- described.class$new(summaryMeasureGenerator = SMG, random_variables = random_variables)
+  expect_false(is.null(subject$get_random_variables))
+  expect_length(subject$get_random_variables, length(random_variables))
+})
+
+test_that("it should name each of the random variables", {
+  subject <- described.class$new(summaryMeasureGenerator = SMG, random_variables = random_variables)
+  variable_names <- sapply(random_variables, function(rv) rv$getY)
+  expect_named(subject$get_random_variables, variable_names)
 })
  
 context(' get_validity') 
@@ -236,13 +249,13 @@ context(" fit_dosl")
 #==========================================================
 test_that("it should return false if the current osl does not fit a dosl", {
   SL.Library <- c('ML.Local.lm', 'ML.XGBoost', 'ML.SVM', 'ML.NeuralNet', 'ML.randomForest')
-  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, should_fit_dosl = FALSE)
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, should_fit_dosl = FALSE, random_variables = random_variables)
   expect_false(subject$fit_dosl())
 })
 
 test_that("it should return the correct estimators", {
   SL.Library <- c('ML.Local.lm', 'ML.XGBoost', 'ML.SVM', 'ML.NeuralNet', 'ML.randomForest')
-  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG)
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, random_variables = random_variables)
 
   cv_risk <- list(
     ML.Local.lm = data.table(W = 0.3, A = 0.3, Y = 0.3),
@@ -264,7 +277,7 @@ test_that("it should return the correct estimators", {
 
 test_that("it should not pick itself", {
   SL.Library <- c('ML.Local.lm', 'ML.XGBoost', 'ML.SVM', 'ML.NeuralNet', 'ML.randomForest')
-  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG)
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, random_variables = random_variables)
 
   cv_risk <- list(
     ML.Local.lm = data.table(W = 0.3, A = 0.3, Y = 0.3),
@@ -285,7 +298,7 @@ test_that("it should not pick itself", {
 
 test_that("it should not pick the osl", {
   SL.Library <- c('ML.Local.lm', 'ML.XGBoost', 'ML.SVM', 'ML.NeuralNet', 'ML.randomForest')
-  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG)
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, random_variables = random_variables)
 
   cv_risk <- list(
     ML.XGBoost = data.table(W = 0.1, A = 0.9, Y = 0.3),
@@ -305,7 +318,7 @@ test_that("it should not pick the osl", {
 
 test_that("it should work with an NA dosl.estimator", {
   SL.Library <- c('ML.Local.lm', 'ML.XGBoost', 'ML.SVM', 'ML.NeuralNet', 'ML.randomForest')
-  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG)
+  subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, random_variables = random_variables)
 
   cv_risk <- list(
     dosl.estimator = data.table(W = NA, A = NA, Y = NA),

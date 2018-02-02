@@ -123,7 +123,7 @@ RandomVariable <- R6Class("RandomVariable",
           return(private$formula.X)
         },
         getY = function() {
-          return(private$formula.Y)
+          private$formula.Y 
         },
         getValidity = function() {
           errors <- character()
