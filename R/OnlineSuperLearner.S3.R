@@ -2,15 +2,27 @@
 #'
 #' Fits an online superlearner using a similar notation as a GLM.
 #' @param formulae list a list of all randomVariable objects that need to be fitted
+#'
 #' @param data data.frame the data set to use for fitting the OSL
+#'
 #' @param algorithms list of algorithms to use in the online superlearner 
+#'
 #' @param normalize boolean (default = FALSE) we provide the option to
 #'  normalize the data in the OSL procedure. This entails that the package will
 #'  automatically select a set of bounds (min and max) based on the data set
 #'  provided. After that it will only use the normalized features (all scaled
 #'  between 0-1).
+#'
 #' @param measurements_per_obs integer (default = Inf) the number of
 #'  measurments in a single observation. 
+#'
+#' @param ... other parameters directly passed to the OSL and fit function.
+#'  There are several named variables to provide here:
+#'  - initial_data_size 
+#'  - max_iterations
+#'  - mini_batch_size
+#'  See for a full list the documentation of the \code{OnlineSuperLearner}
+#'  \code{fit} and \code{initialize} functions.
 #' @return a fitted version of an \code{OnlineSuperLearner} class
 #' @export
 fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, normalize = FALSE, measurements_per_obs = Inf, ...) {
@@ -40,7 +52,6 @@ fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, normalize 
                                  summaryMeasureGenerator = smg,
                                  pre_processor = pre_processor,
                                  ...)
-
   osl$fit(data, ...)
   return(osl)
 }

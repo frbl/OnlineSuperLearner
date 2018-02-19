@@ -279,6 +279,11 @@
 #'     Active method that throws an error if the current state of the OSL is not valid (i.e., that it has invalid
 #'     parameters in it).
 #'   }
+#'
+#'   \item{\code{get_osl_sampler}}{
+#'     Active method. Returns the OSL sampler (which is an instance of the
+#'     \code{OnlineSuperLearner.SampleIteratively} object.
+#'   }
 #' }
 #' @export
 OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
@@ -330,6 +335,14 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$initialize_weighted_combination_calculators()
 
           private$is_parallel = FALSE
+
+          private$osl_sampler <- OnlineSuperLearner.SampleIteratively$new(
+            osl = self,
+            randomVariables = self$get_random_variables,
+            summary_measure_generator = self$get_summary_measure_generator,
+            remove_future_variables = TRUE
+          )
+
           self$get_validity
         },
 
@@ -339,7 +352,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         ## Data = the data object from which the data can be retrieved
         ## initial_data_size = the number of observations needed to fit the initial estimator
-        fit = function(data, initial_data_size = 5, max_iterations = 20,
+        fit = function(data, initial_data_size = 5,
+                       max_iterations = 20,
                        mini_batch_size = 20, ...) {
           tic <- Sys.time()
           initial_data_size <- Arguments$getInteger(initial_data_size, c(1,Inf))
@@ -405,16 +419,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         sample_iteratively = function(data, tau = 10, intervention = NULL, discrete = TRUE, 
                                       return_type = 'observations', start_from_variable = NULL, 
                                       start_from_time = 1, check = FALSE) {
-          
-          # TODO: Store this object, and reuse it
-          osl_sampler <- OnlineSuperLearner.SampleIteratively$new(
-            osl = self,
-            randomVariables = self$get_random_variables,
-            summary_measure_generator = self$get_summary_measure_generator,
-            remove_future_variables = TRUE
-          )
 
-          osl_sampler$sample_iteratively(
+          self$get_osl_sampler$sample_iteratively(
             data = data,
             tau = tau,
             intervention = intervention,
@@ -712,6 +718,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         get_random_variables = function() {
           return(private$random_variables)
+        },
+
+        get_osl_sampler = function() {
+          return(private$osl_sampler)
         }
 
         ),
@@ -765,6 +775,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         ## Train / update CV in parallel?
         is_parallel = NULL,
+
+        ## The sampler
+        osl_sampler = NULL,
 
         ## Functions
         ## =========

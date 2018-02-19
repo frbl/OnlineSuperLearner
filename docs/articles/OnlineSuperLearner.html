@@ -54,7 +54,7 @@
   <div class="col-md-9">
     <div class="page-header toc-ignore">
       <h1>Introduction to the Online SuperLearner</h1>
-                        <h4 class="author">Frank Blaauw and Antoine Chambaz</h4>
+                        <h4 class="author">Antoine Chambaz and Frank Blaauw</h4>
             
           </div>
 
@@ -62,10 +62,9 @@
     
 <div class="contents">
 <p><span style="color:red">Note: this guide is out of date and will be updated in the future.</span></p>
-<p>In this guide we present a very basic example of how the OnlineSuperLearner (OSL) can be used. The goal of OSL is to be able to make predictions and do inference on time series data. In order to do so it estimates a density function for each of the covariates, the treatment variables, and the outcome. After these densities are fitted, OSL can simulate interventions and determine the outcome given such an intervention.</p>
-<section id="this-guide" class="level2"><h2>This guide</h2>
+<p>In this guide we present a basic example of how the OnlineSuperLearner (OSL) can be used. The goal of OSL is to be able to make predictions and do inference on time series data in an (in machine learning terms) online fashion. In order to do so, it estimates a density function for each of the covariates, the treatment variables, and the outcome. After these densities are fitted, OSL can simulate interventions and determine the outcome given such an intervention. This package relies heavily on the <a href="https://github.com/osofr/condensier">condensier</a> package.</p>
 <p>In this guide we will present the steps needed to perform a basic simulation. We will start by installing and configuring the package. Then we approximate our true parameter of interest given the simulation data. This approximated truth is used as ground truth for the rest of the algorithm. In the next step we estimate the densities and run an iteritative sampling method, in which we apply the same treatment as in the approximation step. If everything goes well, both parameters should be approximately the same. Note that this guide does not apply any TMLE.</p>
-</section><section id="quick-start" class="level2"><h2>Quick start</h2>
+<section id="quick-start" class="level2"><h2>Quick start</h2>
 </section><section id="install-dependencies" class="level2"><h2>Install dependencies</h2>
 <p>Before anything else we need to install several dependencies. Most dependencies are used by OSL and some are used by Condense. First define the dependencies we need.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb1-1" data-line-number="1">  <span class="ex">./inst/bash/install-package-dependencies.sh</span></a></code></pre></div>
@@ -315,8 +314,7 @@
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-<li><a href="#this-guide">This guide</a></li>
-      <li><a href="#quick-start">Quick start</a></li>
+<li><a href="#quick-start">Quick start</a></li>
       <li><a href="#install-dependencies">Install dependencies</a></li>
       <li><a href="#configuration">Configuration</a></li>
       <li><a href="#simulation">Simulation</a></li>

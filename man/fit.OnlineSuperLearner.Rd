@@ -22,6 +22,14 @@ between 0-1).}
 
 \item{measurements_per_obs}{integer (default = Inf) the number of
 measurments in a single observation.}
+
+\item{...}{other parameters directly passed to the OSL and fit function.
+There are several named variables to provide here:
+- initial_data_size 
+- max_iterations
+- mini_batch_size
+See for a full list the documentation of the \code{OnlineSuperLearner}
+\code{fit} and \code{initialize} functions.}
 }
 \value{
 a fitted version of an \code{OnlineSuperLearner} class

@@ -270,6 +270,11 @@ to the super learner machine learning model.
     Active method that throws an error if the current state of the OSL is not valid (i.e., that it has invalid
     parameters in it).
   }
+
+  \item{\code{get_osl_sampler}}{
+    Active method. Returns the OSL sampler (which is an instance of the
+    \code{OnlineSuperLearner.SampleIteratively} object.
+  }
 }
 }
 

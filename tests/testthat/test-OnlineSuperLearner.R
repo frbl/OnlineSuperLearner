@@ -289,6 +289,13 @@ context(' get_validity')
 #==========================================================
 # Hard to test explicitly, it is called by the initialize function
  
+context(' get_osl_sampler') 
+#==========================================================
+test_that("It should return an instance of the OnlineSuperLearner.SampleIteratively class", {
+  result <- subject$get_osl_sampler
+  expect_is(result, 'OnlineSuperLearner.SampleIteratively')
+})
+
 context(" fit_dosl")
 #==========================================================
 test_that("it should return false if the current osl does not fit a dosl", {

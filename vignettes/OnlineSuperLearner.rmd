@@ -1,5 +1,5 @@
 ---
-author: "Frank Blaauw and Antoine Chambaz"
+author: "Antoine Chambaz and Frank Blaauw"
 title: "Introduction to the Online SuperLearner"
 output: rmarkdown::html_vignette
 vignette: >
@@ -10,15 +10,12 @@ vignette: >
 
 <span style="color:red">Note: this guide is out of date and will be updated in the future.</span>
 
-In this guide we present a very basic example of how the OnlineSuperLearner (OSL) can be used. The goal of OSL is to be able to make predictions and do inference on time series data. In order to do so it estimates a density function for each of the covariates, the treatment variables, and the outcome. After these densities are fitted, OSL can simulate interventions and determine the outcome given such an intervention.
+In this guide we present a basic example of how the OnlineSuperLearner (OSL) can be used. The goal of OSL is to be able to make predictions and do inference on time series data in an (in machine learning terms) online fashion. In order to do so, it estimates a density function for each of the covariates, the treatment variables, and the outcome. After these densities are fitted, OSL can simulate interventions and determine the outcome given such an intervention. This package relies heavily on the [condensier](https://github.com/osofr/condensier) package.
 
-## This guide
-In this guide we will present the steps needed to perform a basic simulation. We will start by installing and configuring the package. Then we approximate our true parameter of interest given the simulation data. This approximated truth is used as ground truth for the rest of the algorithm. In the next step we estimate the densities and run an iteritative sampling method, in which we apply the same treatment as in the approximation step. If everything goes well, both parameters should be approximately the same. Note that this guide does not apply any TMLE.
-
-## Quick start
+In this guide we will present the steps needed to perform a basic simulation or to use the OSL with your own data set. We will start by installing and configuring the package. Then we approximate our true parameter of interest given the simulation data. This approximated truth is used as ground truth for the rest of the algorithm. In the next step we estimate the densities and run an iteritative sampling method, in which we apply the same treatment as in the approximation step. If everything goes well, both parameters should be approximately the same. Note that this guide does not apply any TMLE. In this tutorial / guide we assume that the user's working directory is the root folder of the _OnlineSuperLearner_ repository.
 
 ## Install dependencies
-Before anything else we need to install several dependencies. Most dependencies are used by OSL and some are used by Condense. First define the dependencies we need.
+Before anything else we need to install several dependencies. Most dependencies are used by OSL and some are used by Condensier. First define the dependencies we need.
 
 ``` bash
   ./inst/bash/install-package-dependencies.sh
@@ -26,20 +23,11 @@ Before anything else we need to install several dependencies. Most dependencies 
 
 After installing the packages we then need to load them. We will use the local version from source for the OSL package.
 
+
 ``` R
-  set.seed(12345)
-  expit = plogis
-  logit = qlogis
-
-  packages <- c('condensier', 'OnlineSuperLearner', packages)
-
   if ("package:OnlineSuperLearner" %in% search()) { detach("package:OnlineSuperLearner", unload=TRUE) }
   if ("OnlineSuperLearner" %in% rownames(installed.packages())) { remove.packages("OnlineSuperLearner") }
   install.packages('.', repos = NULL, type="source")
-
-  suppressWarnings(
-      invisible(lapply(packages, require, character.only = TRUE))
-  )
 ```
 
 Check if the correct functions are exported.
@@ -60,6 +48,11 @@ The next step is to configure several parameters for the estimation procedure it
 ``` R
   # Set the seed
   set.seed(12345)
+
+  # Set some functions, for readability
+  expit = plogis
+  logit = qlogis
+
 
   # Do logging?
   log <- FALSE

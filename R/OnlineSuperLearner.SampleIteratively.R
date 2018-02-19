@@ -5,6 +5,7 @@
 #' the \code{sampleIteratively} function on that class. 
 #'
 #' @docType class
+#' @importFrom R.oo equals
 #' @importFrom R6 R6Class
 #' @section Methods: 
 #' \describe{  

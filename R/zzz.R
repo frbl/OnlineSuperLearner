@@ -3,6 +3,7 @@
 #' @import foreach
 #' @import parallel
 #' @import R.utils
+#' @importFrom R.oo equals
 #' @importFrom R.utils Verbose Arguments
 #' @importFrom R.methodsS3 throw
 #' @importFrom data.table data.table as.data.table is.data.table rbindlist copy shift setDT
