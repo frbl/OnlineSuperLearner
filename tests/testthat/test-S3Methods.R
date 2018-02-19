@@ -21,7 +21,7 @@ test_that("it should throw if the list of formulae does not contain randomvariab
 })
 
 test_that("it should not throw if all arguments are correct", {
-  data <- data.frame(X = seq(10), Y = seq(10))
+  data <- data.frame(W = seq(10), A=rbinom(10,1,0.5), Y = seq(10))
   algorithms <- list()
   algorithms <- append(algorithms, list(list(algorithm = 'ML.Local.Speedlm',
                        params = list(nbins = c(10, 20) , online = FALSE))))
@@ -30,9 +30,19 @@ test_that("it should not throw if all arguments are correct", {
   A <- RandomVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
   Y <- RandomVariable$new(formula = Y ~ A + W, family = 'binomial')
   formulae <- c(W, A, Y)
-  expect_error(result <- fit.OnlineSuperLearner(formulae = formulae, data = data, algorithms = algorithms), NA)
-  expect_is(result, 'OnlineSuperLearner')
 
+  ## Mock the fit function to spare us some time
+  stub(fit.OnlineSuperLearner, 'osl$fit', 
+    function(data, ...) {
+      expect_is(data, 'Data.Static')
+      called <<- TRUE
+    }
+  )
+
+  called <<- FALSE
+  expect_error(result <- fit.OnlineSuperLearner(formulae = formulae, data = data, algorithms = algorithms), NA)
+  expect_true(called)
+  expect_is(result, 'OnlineSuperLearner')
 })
 
 
@@ -95,7 +105,6 @@ test_that("it should work with a list of randomVariables as outcome", {
     RandomVariable$new(formula = Y ~ A + W, family = 'binomial')
   )
 
-  ## We stub the loss function to return the data it gets, so we can check that it received the correct data
   stub(predict.OnlineSuperLearner, 'object$predict', 
     function(data, randomVariables, ...) {
       expect_is(randomVariables, 'list')
@@ -106,7 +115,6 @@ test_that("it should work with a list of randomVariables as outcome", {
     }
   )
 
-  ## Stub the getrv function
   called <<- FALSE
   predict(subject, newdata = data, Y = Y)
   expect_true(called)
@@ -115,7 +123,6 @@ test_that("it should work with a list of randomVariables as outcome", {
 test_that("it should work with a list of randomVariable strings as outcome", {
   Y <- list('X', 'Y')
 
-  ## We stub the loss function to return the data it gets, so we can check that it received the correct data
   stub(predict.OnlineSuperLearner, 'object$predict', 
     function(data, randomVariables, ...) {
       expect_is(randomVariables, 'list')
@@ -125,7 +132,6 @@ test_that("it should work with a list of randomVariable strings as outcome", {
     }
   )
 
-  ## Stub the getrv function
   called <<- FALSE
   predict(subject, newdata = data, Y = Y)
   expect_true(called)
@@ -133,4 +139,24 @@ test_that("it should work with a list of randomVariable strings as outcome", {
 
 test_that("it should work without a randomVariable", {
 
+})
+
+context(" summary.OnlineSuperLearner")
+#==========================================================
+test_that("it should call the info function of the OSL object", {
+  expected = 'thisistheexpectedvalueoftheinfofunction'
+  subject <- list(info = {
+    expected
+  })
+
+  class(subject) <- 'OnlineSuperLearner'
+  result <- summary(subject)
+  expect_equal(result, expected)
+})
+
+test_that("it should throw if the provided object is not an OnlineSuperLearner instance", {
+  subject <- list(info = { 'result' })
+  class(subject) <- 'NotAnOsl'
+  expect_error(summary.OnlineSuperLearner(subject), 
+               'The provided object is not an online superlearner instance')
 })

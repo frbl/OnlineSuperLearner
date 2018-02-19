@@ -899,8 +899,6 @@ fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, normalize 
   return(osl)
 }
 
-
-
 #' predict.OnlineSuperLearner
 #' 
 #' S3 prediction function for the online superlearner package. Can be used to
