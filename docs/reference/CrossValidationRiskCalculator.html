@@ -135,7 +135,7 @@ of an estimator.</p>
     @return a list with the evalutation of each of the algorithms.</p></dd>
     <dt><code>evaluate_single_outcome(observed.outcome, predicted.outcome, ra ndomVariables</code></dt><dd><p>Perform the evaluation of a single estimator. In this case the data of
     just one estimator can be provided, such as:
-      AlgorithmName1 &gt;
+      AlgorithmName1
        data.table with a W, A, Y entry.
     the function will then use the default evaluation metric to determine
     the performance of the estimator.
@@ -201,9 +201,7 @@ of an estimator.</p>
     @param new_risks the new risks, calculated using the current machine learning estimators.
     @param current_count the number of iterations used to calculate the old risk.
     @param randomVariables the random variables for which the predictions have been created.
-    @return the updated risk as a data.table. 
-    @examples
-          update_single_risk</p></dd>
+    @return the updated risk as a data.table.</p></dd>
 </dl>
     
 

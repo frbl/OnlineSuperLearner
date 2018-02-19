@@ -68,7 +68,7 @@ of an estimator.
   \item{\code{evaluate_single_outcome(observed.outcome, predicted.outcome, ra ndomVariables}}{
     Perform the evaluation of a single estimator. In this case the data of
     just one estimator can be provided, such as:
-      AlgorithmName1 >
+      AlgorithmName1
        data.table with a W, A, Y entry.
     the function will then use the default evaluation metric to determine
     the performance of the estimator.
@@ -160,10 +160,6 @@ of an estimator.
     @param current_count the number of iterations used to calculate the old risk.
     @param randomVariables the random variables for which the predictions have been created.
     @return the updated risk as a data.table. 
-    @examples
-    \dontrun{ 
-      update_single_risk 
-    }
   }
 }
 }
