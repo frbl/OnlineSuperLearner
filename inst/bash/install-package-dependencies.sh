@@ -35,7 +35,11 @@ packages <- c(
 "matrixStats",
 "digest",
 "future",
-"roxygen2"
+"roxygen2",
+
+"memoise",
+"withr",
+"httr"
 )
 
 gh_packages <- list(

@@ -53,12 +53,8 @@ The next step is to configure several parameters for the estimation procedure it
   expit = plogis
   logit = qlogis
 
-
   # Do logging?
   log <- FALSE
-
-  # Should condensier fit our estimators in parallel?
-  condensier_options(parfit=FALSE)
 
   # How many cores would we like to use?
   cores = parallel::detectCores()
@@ -79,6 +75,8 @@ Now the basic configuration for the OSL is done, we can go ahead and specify whi
  - `what`: What should be the intervention we are doing? (e.g., set treatment to $x \in \{0,1\}$)
  - `variable`: Which variable do we consider the intervention variable? ($A$ in the TL literature)
 
+We could also specify a list of interventions, but for now this will do. Specify the intervention as follows:
+
 ``` R
   # Number of iterations for approximation of the true parameter of interest
   B <- 1e2
@@ -91,7 +89,7 @@ Now the basic configuration for the OSL is done, we can go ahead and specify whi
 ```
 
 ## Simulation
-In order to have some data to use for testing, we have to create a simulator. This simulator uses the simulation scheme as defined in Blaauw, Chambaz and van der Laan, in prep.. For this scheme we can define various things for each of the data generating systems:
+In order to have some data to use for testing, we have to create a simulator. This simulator uses the simulation scheme as defined in Blaauw, Chambaz and van der Laan, in prep. For this scheme we can define various things for each of the data generating systems:
 
   - `stochMech`: the mechanism we use to generate the observations
   - `param`: the number of steps $t$ the mechanism is connected to the past
@@ -146,7 +144,6 @@ Now, using these mechanisms we need to setup our simulator. First we define the 
   # Create the simulator
   simulator  <- OnlineSuperLearner::Simulator.GAD$new()
 
-
   # Approximate the truth under the treatment
   result.approx <- mclapply(seq(B), function(bb) {
     when <- max(intervention$when)
@@ -156,16 +153,16 @@ Now, using these mechanisms we need to setup our simulator. First we define the 
   }, mc.cores = cores) %>%
     unlist
 
+  # Calculate the approximation of the true parameter of interest
   psi.approx <- mean(result.approx)
 
   print(psi.approx)
 ```
 
-The next step is to use the mechanisms to create a test set of data. Note that we are wrapping our data in a Data.Static object. By doing so, we can easily swap this static dataframe out for a stream of incoming data.
+The next step is to use the mechanisms to create a test set of data. Store the result so we can use it later
 
 ``` R
   data.train <- simulator$simulateWAY(training_set_size + B + 100, qw=llW, ga=llA, Qy=llY, verbose=log)
-  data.train.static <- OnlineSuperLearner::Data.Static$new(dataset = data.train)
 ```
 
 ## The OnlineSuperLearner initialization
@@ -205,13 +202,6 @@ Now everything is set-up, we can start our super learner procedure. First let's 
                         #params = list(nbins = c(16, 20, 24, 30, 34, 40), online = FALSE))))
 ```
 
-We use the loglikelihood loss function as general loss function. In order to do so, we should make sure that we bound all variables between $0$ and $1$. We create bounds for all variables in order to do so.
-
-``` R
-  bounds <- OnlineSuperLearner::PreProcessor.generate_bounds(data.train)
-  pre_processor <- PreProcessor$new(bounds = bounds)
-```
-
 The next step is to define our random variables. In this example we only consider the default variables $W$, $A$, and $Y$. Each of them is univariate, and the $A$ variable is a binary variable. Currently we only support the variable at time $t$ ($W$, $A$, or $Y$) and a lagged version therof ($*\_lag\_*$, e.g., $A\_lag\_1$):
 
 ``` R
@@ -223,52 +213,56 @@ The next step is to define our random variables. In this example we only conside
   randomVariables <- c(W, A, Y)
 ```
 
-Then we need to create a system that will define our summary measure generator. This step is a bit cumbersome and will be removed in later versions. The idea is that given the definition provided in the previous code block, we have to generate several variables (e.g. the lags). In order to do so, we use a SummaryMeasureGenerator, which will parse these formulae and create the necessary summary measures.
+Note the special notation for the lagged variables and the running mean variables. In the background we use the so-called `SummaryMeasureGenerator`, a class that automatically parses these formulae and generates the data accordingly. The idea is that given the definition provided in the previous code block, we have to generate several variables (e.g. the lags). Currently several options are provided:
+- `*A*_lag_*B*`: The lag operator. This will generate a lagged version of random variable `*A*` (replace with your own variable name), of lag `*B*` (replace with an integer, specifying the lag to use).
+- `*A*_mean`: The running mean operator. This will generate a running mean version of random variable `*A*` (replace with your own variable name).
+
+The last step is to actually run and fit our SuperLearner and calculate its CV risk. We use the loglikelihood loss function as general loss function. Note that for this to work properly, we have to normalize our data. This is done by providing the `normalize = TRUE` argument to the `fit` function. 
 
 ``` R
-  smg_factory <- OnlineSuperLearner::SMGFactory$new()
-  summaryMeasureGenerator <- smg_factory$fabricate(randomVariables, pre_processor = pre_processor)
-```
+osl  <- OnlineSuperLearner::fit.OnlineSuperLearner(
+  formulae = randomVariables,
+  data = data.train,
+  algorithms = algos, 
+  verbose = log,
 
-The last step is to actually run and fit our SuperLearner and calculate its CV risk:
-
-``` R
-osl  <- OnlineSuperLearner::OnlineSuperLearner$new(algos, summaryMeasureGenerator = summaryMeasureGenerator,
-                                                   verbose = log, pre_processor = pre_processor)
-risk <- osl$fit(data.train.static, randomVariables = randomVariables,
-                initial_data_size = training_set_size / 2,
-                max_iterations = max_iterations,
-                mini_batch_size = (training_set_size / 2) / max_iterations)
+  initial_data_size = training_set_size / 2,
+  max_iterations = max_iterations,
+  mini_batch_size = (training_set_size / 2) / max_iterations
+)
 ```
 
 In order to see how well it can estimate we first generate our data set we want to use for testing as follows:
 
-- Draw B observations from our simulator
-- Input one of these observations in our algorithm
-- Sample iteratively, and set a treatment using a prespecified when and then
-- Record the outcome of our variable of interest ($Y$) at time tau and we denormalize it (converting it back to the original data format)
-- Repeat this procedure a large number of B times
-- Finally we take the average over all B observations, giving us our estimation of the parameter of interest.
+1. Draw B observations from our `simulator` object.
+1. Input one of these observations in our algorithm.
+1. Sample iteratively, and set a treatment using a prespecified `variable`, `when`, and `then`.
+1. Record the outcome of our variable of interest ($Y$) at time tau and we denormalize it (converting it back to the original data format).
+1. Repeat this procedure a large number of B times
+1. Finally we take the average over all B observations, giving us our estimation of the parameter of interest.
 
 ``` R
   datas <- summaryMeasureGenerator$getNext(n = B)
 
+  # Should we run in parallel?
   do_parallel <- FALSE
-  if (do_parallel) {
-      result <- mclapply(seq(B), function(i) {
-          osl$sample_iteratively(data = datas[i,],
-                            randomVariables = randomVariables,
-                            intervention = intervention,
-                            tau = tau)[tau, 'Y']
-      }, mc.cores= cores)
-  } else {
-      result <- foreach(i=seq(B), .combine=rbind) %do% {
-          osl$sample_iteratively(data = datas[i,],
-                            randomVariables = randomVariables,
-                            intervention = intervention,
-                            tau = tau)[tau, 'Y']
-      }
-  }
+
+  # Would we like to have the results of the discrete (TRUE) or continuous (FALSE) osl?
+  discrete = TRUE
+
+  interventionEffectCalculator <- InterventionEffectCalculator$new(
+    bootstrap_iterations = B,
+    outcome_variable = 'Y',
+    parallel = do_parallel
+  )
+
+  interventionEffectCalculator$evaluate_single_intervention(
+    osl = osl,
+    initial_data = DDDDDDDDDAAAAAAAAAAAATTTTTTTTTTTAAAAAAAAAAAA,
+    intervention = intervention,
+    tau = tau,
+    discrete = discrete
+  )
 
   result %<>% unlist
 ```
@@ -288,9 +282,12 @@ Finally, we can see how well the algorithms converge and estimate the approximat
   plot(y2, ylim=range(c(y1,y2)), col="red", axes = FALSE, xlab = "", ylab = "")
 
   # Print the outcome
-  print(paste('We have approximated psi as', psi.approx, 
-              'our estimate is', psi.estimation, 
-              'which is a difference of:', abs(psi.approx - psi.estimation)))
+  outcome <- paste(
+    'We have approximated psi as', psi.approx, 
+    'our estimate is', psi.estimation, 
+    'which is a difference of:', abs(psi.approx - psi.estimation)
+  )
+  print(outcome)
 ```
 
 The result should be something like:
@@ -299,3 +296,20 @@ The result should be something like:
 [1] "We have approximated psi as 19.9016316150146 our estimate is 19.9018591048906 which is a difference of: 0.000227489875989306"
 ```
 
+## Prediction and sampling
+Apart from calculating a variable of interest, the online superlearner package also offers the functionality to predict the probability of a given outcome (conditionally on other variables), and to sample conditionally on a set of variables. The package offers two S3 methods to do so: `predict` and `sample`. 
+
+Examples of both methods are listed below
+``` R
+  # Predict some variables for our Y outcome variable. The newdata can be a data.table:
+  newdata <- simulator$simulateWAY(100, qw=llW, ga=llA, Qy=llY, verbose=log)
+  predict(osl, newdata, Y = Y)
+
+  # Apart from predicting, we can also sample new values
+  initial_data <- simulator$simulateWAY(100, qw=llW, ga=llA, Qy=llY, verbose=log)
+  sample(osl, initial_data, Y = Y)
+```
+
+The result of these methods is a list with two entries: `normalized` and `denormalized`. The `normalized` entry contains the result normalized according to the preprocessor that had been defined based on the initial data frame. The `denormalized` entry contains the data in its original form (i.e., the normalization has been undone). Generally only the latter is of interest. These entries (the `normalized` and `denormalized` entry) again contain a number of lists, each with an outcome for each of the candidate estimators.
+
+## Working with streaming data
