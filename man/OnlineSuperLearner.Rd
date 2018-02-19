@@ -48,7 +48,7 @@ to the super learner machine learning model.
     @param verbose the new verbosity (how much logging) to use.
   }
 
-  \item{\code{fit(data, randomVariables, initial_data_size = 5, max_iterations = 20}}{ 
+  \item{\code{fit(data, initial_data_size = 5, max_iterations = 20}}{ 
     Fits an instance of the OnlineSuperLearner class. This is the main
     method used for training the online SuperLearner (and this will actually
     trigger the training process). This will fit the provided
@@ -58,11 +58,6 @@ to the super learner machine learning model.
     @param data Data.Base the data to use to train the instance on. Note
      that this can be any instance of a \code{Data.Base} superclass, as long
      as it extends the correct functions.
-
-    @param randomVariables list a list of \code{RandomVariable} objects.
-     These are the randomVariables we will fit a conditional density for.
-     These variables need to be in the data as well, but can be a subset of
-     all `columns' of the data.
 
     @param initial_data_size integer (default = 5) when training an online
      algoritm, one first needs to specify a small number of rows of data that
@@ -82,7 +77,7 @@ to the super learner machine learning model.
     @return data.table a data.table with the risks of each estimator.
   } 
 
-  \item{\code{predict(data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE)}}{
+  \item{\code{predict(data, randomVariables = NULL, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE)}}{
     Method to perform a prediction on the estimators. It can run in
     different configurations. It can be configured to predict the outcome
     using all estimators (the \code{all_estimators} flag), using the
@@ -94,8 +89,10 @@ to the super learner machine learning model.
      that this can be any instance of a \code{Data.Base} superclass, as long
      as it extends the correct functions.
 
-    @param randomVariables list the random variables used for doing the
-     predictions (these should be the same as the ones used for fitting).
+    @param randomVariables list (default = NULL) the random variables used
+    for doing the predictions (these should be the same as the ones used for
+    fitting). If \code{NULL}, we will use the list provided on
+    initialization.
 
     @param all_estimators boolean (default = TRUE) whether or not to include
      the output of all candidate estimators in the output 
@@ -119,7 +116,7 @@ to the super learner machine learning model.
      transformed back to their original range.
   }
 
-  \item{\code{sample_iteratively(data, randomVariables, tau = 10, intervention = NULL)}}{
+  \item{\code{sample_iteratively(data, tau = 10, intervention = NULL)}}{
     Method to sample iteratively from the densities. It works by providing
     an initial observation (\code{data}), from which iteretitatively the
     next measurement is estimated. This is done until \code{tau} steps in
@@ -131,9 +128,6 @@ to the super learner machine learning model.
     shows what should be done.
 
     @param data = the initial data to start the sampling from. At most 1 row of data.
-
-    @param randomVariables list the random variables used for doing the
-     predictions (these should be the same as the ones used for fitting).
 
     @param tau integer (default = 10) the timestep at which you want to evaluate the output
 
@@ -161,23 +155,16 @@ to the super learner machine learning model.
     @return list/dataframe of sampled values.
   }
 
-  \item{\code{train_library(data_current, randomVariables)}}{
+  \item{\code{train_library(data_current)}}{
     Function to train the initial set of models
 
     @param data_current data.table the dataset to train the estimators on.
-
-    @param randomVariables list the random variables used for doing the
-     predictions (these should be the same as the ones used for fitting).
-
   }
 
-  \item{\code{update_library(randomVariables, max_iterations, mini_batch_size)}}{
+  \item{\code{update_library(max_iterations, mini_batch_size)}}{
     Updates the initial / trained estimators with the available data. This
     data does not need to be provided as it is already part of the Data.Base
     provided on initialization / fitting.
-
-    @param randomVariables list the random variables used for doing the
-     predictions (these should be the same as the ones used for fitting).
 
     @param max_iterations integer the maximal number of iterations of online
     learning to do.
@@ -196,6 +183,10 @@ to the super learner machine learning model.
     method, so it can easiliy be stubbed).
 
     @return an overview of the CV risk of the different estimators
+  }
+
+  \item{\code{set_random_variables(random_variables)}}{
+    Method to set the random_variables in the osl class. Generally not needed (apart from initialization).
   }
 
   \item{\code{is_fitted}}{
@@ -252,6 +243,12 @@ to the super learner machine learning model.
     Active method to retrieve the crossvalidated risk of each of the estimators
 
     @return list a list containing the risk estimates for each of hte estimators.
+  }
+
+  \item{\code{get_random_variables}}{
+    Active method. Returns all \code{RandomVariables} in the OSL object.
+
+    @return list a list containing all \code{RandomVariable}s
   }
 
   \item{\code{get_valididy}}{

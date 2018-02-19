@@ -842,7 +842,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         },
 
-
         get_looping_function = function() {
           if(private$is_parallel) {
             return(`%dopar%`)
@@ -852,15 +851,39 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
     )
 )
 
-# Create general R3 methods
+
+#' predict.OnlineSuperLearner
+#' 
+#' S3 prediction function for the online superlearner package. Can be used to
+#' perform a prediction on the trained online superlearner object.
+#'
+#' @param object OnlineSuperLearner trained instance of an online superlearner class.
+#' @param newdata data.base instance of an data.base class with new data to
+#'  perform the prediction with.
+#' @param Y string the name of the Y variable to use as output of the prediction
+#' @param sample boolean would we like to sample an output or predict a probability
+#' @param ... other parameters directly passed to the predict function
+#' @return data.table the predicted outcomes / probabilities
+#' @export
 predict.OnlineSuperLearner <- function(object, newdata, Y, ...) {
   # Convert newdata to data.static
   # Convert Y to random variable
-  Y <- object$get_random_variables[Y]
-  object$predict(...)
+  if (!is(Y, 'RandomVariable')) {
+    Y <- object$get_random_variables[Y]
+  }
+  object$predict(data = newdata, ...)
 }
 
+#' summary.OnlineSuperLearner
+#'
+#' S3 method to provide a summary about the online superlearner object. Prints
+#' a description about the current fit of the OSL.
+#' @param object onlinesuperlearner the trained OSL instance
+#' @export
 summary.OnlineSuperLearner <- function(object, ...) {
+  if (!is(object, 'OnlineSuperLearner')) {
+    throw('The provided object is not an online superlearner instance') 
+  }
   object$info
 }
 
