@@ -50,7 +50,7 @@
 #'      \code{RandomVariable} class.
 #'
 #'     @param start_from_time integer should be an integer value $x$ where
-#'      $1\ge x < \tau$.
+#'      $1 <= x < tau$.
 #'
 #'     @param tau integer a value when the intervention is measured. Should be
 #'      greater or equal to 1.
@@ -77,7 +77,7 @@
 #'     \code{start_from_variable}) at time 1 (or time \code{start_from_time})
 #'     and samples the next variable, and the next, until it reaches the last
 #'     variable in the series. It will then overflow to the next unit of time,
-#'     until it reaches $\tau$, the time at which the intervention should be
+#'     until it reaches $tau$, the time at which the intervention should be
 #'     recorded.  Note that some preliminary  analysis showed that for this
 #'     function approx 94% - 99% of time is  spent in the predict function.
 #'

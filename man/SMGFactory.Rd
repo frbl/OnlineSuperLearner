@@ -34,14 +34,12 @@ actual package code. This should be improved.
     Fabricates the actual SMG's. Given a list of \code{RandomVariable}s all
     covariates are selected and merged.  These are used as a basis for
     selecting the needed variables in the dataframe. The column names need to be specified as follows:
-    \begin{itemize}
-      \item{just the variable name}: uses the \code{SMG.Latest.Entry} class
-       to include the contemporaneous variables.
-      \item{the variable name\_lag\_the lag}: uses the \code{SMG.Lag} class
-       to include the lagged variables.
-      \item{the variable name\_mean}: uses the \code{SMG.Mean} class to
-       include the running mean for this variable.
-    \end{itemize}
+    - just the variable name: uses the \code{SMG.Latest.Entry} class
+      to include the contemporaneous variables.
+    - the variable name\_lag\_the lag: uses the \code{SMG.Lag} class
+      to include the lagged variables.
+    - the variable name\_mean: uses the \code{SMG.Mean} class to
+      include the running mean for this variable.
 
     @param randomVariables = a list of \code{RandomVariable} objects, from
      which the X variables are selected.

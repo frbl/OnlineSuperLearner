@@ -111,14 +111,12 @@ actual package code. This should be improved.</p>
     <dt><code>fabricate(randomVariables, ...) </code></dt><dd><p>Fabricates the actual SMG's. Given a list of <code>RandomVariable</code>s all
     covariates are selected and merged.  These are used as a basis for
     selecting the needed variables in the dataframe. The column names need to be specified as follows:
-    itemize
-      just the variable name: uses the <code>SMG.Latest.Entry</code> class
-       to include the contemporaneous variables.
-      the variable name\_lag\_the lag: uses the <code>SMG.Lag</code> class
-       to include the lagged variables.
-      the variable name\_mean: uses the <code>SMG.Mean</code> class to
-       include the running mean for this variable.
-    itemize
+    - just the variable name: uses the <code>SMG.Latest.Entry</code> class
+      to include the contemporaneous variables.
+    - the variable name\_lag\_the lag: uses the <code>SMG.Lag</code> class
+      to include the lagged variables.
+    - the variable name\_mean: uses the <code>SMG.Mean</code> class to
+      include the running mean for this variable.
     @param randomVariables = a list of <code>RandomVariable</code> objects, from
      which the X variables are selected.
     @param ... = data to get passed to the SMG</p></dd>

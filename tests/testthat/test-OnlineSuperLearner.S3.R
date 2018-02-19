@@ -95,7 +95,7 @@ test_that("it should work without a randomVariable", {
   expect_true(called)
 })
 
-context(" sample.OnlineSuperLearner")
+context(" sampledata.OnlineSuperLearner")
 
 #==========================================================
 expected_Y = 'therv_for_Y'
@@ -109,7 +109,7 @@ test_that("it should work with a single randomVariable string as outcome and cal
   Y = 'Y'
 
   ## We stub the loss function to return the data it gets, so we can check that it received the correct data
-  stub(sample.OnlineSuperLearner, 'object$predict', 
+  stub(sampledata.OnlineSuperLearner, 'object$predict', 
     function(data, randomVariables, sample, ...) {
       expect_equal(randomVariables, expected_Y)
       expect_true(sample)
@@ -117,7 +117,7 @@ test_that("it should work with a single randomVariable string as outcome and cal
     }
   )
 
-  stub(sample.OnlineSuperLearner, 'object$retrieve_list_of_random_variables', 
+  stub(sampledata.OnlineSuperLearner, 'object$retrieve_list_of_random_variables', 
     function(random_variables) {
       expect_equal(random_variables, Y)
       called2 <<- TRUE
@@ -128,20 +128,20 @@ test_that("it should work with a single randomVariable string as outcome and cal
   ## Stub the getrv function
   called <<- FALSE
   called2 <<- FALSE
-  sample(subject, newdata = data, Y = Y)
+  sampledata(subject, newdata = data, Y = Y)
   expect_true(called)
   expect_true(called2)
 })
 
 test_that("it should work without a randomVariable", {
-  stub(sample.OnlineSuperLearner, 'object$predict', 
+  stub(sampledata.OnlineSuperLearner, 'object$predict', 
     function(data, randomVariables, sample, ...) {
       called <<- TRUE
     }
   )
 
   called <<- FALSE
-  sample(subject, newdata = data)
+  sampledata(subject, newdata = data)
   expect_true(called)
 })
 

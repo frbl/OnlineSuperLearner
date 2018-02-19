@@ -105,22 +105,22 @@ of an estimator.</p>
     metric that was used to the names of the output. This is done by setting
     <code>add_evaluation_measure_name</code> to true.
     The input data should look looks as followos:
-      list &gt;
-        normalized &gt; 
-          AlgorithmName1 &gt;
+      list
+        normalized 
+          AlgorithmName1
            data.table with a W, A, Y entry.
-          AlgorithmName2 &gt;
+          AlgorithmName2
            data.table with a W, A, Y entry.
-        denormalized &gt; 
-          AlgorithmName1 &gt;
+        denormalized
+          AlgorithmName1
            data.table with a W, A, Y entry.
-          AlgorithmName2 &gt;
+          AlgorithmName2
            data.table with a W, A, Y entry.
     The output data then looks as follows:
-      list &gt;
-        AlgorithmName1 &gt;
+      list
+        AlgorithmName1
          data.table with a W, A, Y entry.
-        AlgorithmName2 &gt;
+        AlgorithmName2
          data.table with a W, A, Y entry.
     @param predicted.outcome the outcome predicted by the various algorithms
      in the super learner. This is a list which either has two entries

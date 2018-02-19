@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>predict.OnlineSuperLearner — predict.OnlineSuperLearner • OnlineSuperLearner</title>
+<title>SMG.Base — SMG.Base • OnlineSuperLearner</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -78,59 +78,38 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>predict.OnlineSuperLearner</h1>
+    <h1>SMG.Base</h1>
     </div>
 
     
-    <p>S3 prediction function for the online superlearner package. Can be used to
-perform a prediction on the trained online superlearner object.</p>
+    <p>Base class for any summary measure generator instance. These are used by the
+<code>SummaryMeasureGenerator</code> to create summary measures.</p>
     
 
-    <pre class="usage"><span class='co'># S3 method for OnlineSuperLearner</span>
-<span class='fu'>predict</span>(<span class='no'>object</span>, <span class='no'>newdata</span>, <span class='kw'>Y</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>...</span>)</pre>
-    
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>object</th>
-      <td><p>OnlineSuperLearner trained instance of an online superlearner class.</p></td>
-    </tr>
-    <tr>
-      <th>newdata</th>
-      <td><p>the new data to perform the prediction with. Note that this
-can be a data.frame, after which we will generate blocks based on the
-measurements in the data, or a <code>Data.Base</code>, which _should_ already
-include all necessary variables.</p></td>
-    </tr>
-    <tr>
-      <th>Y</th>
-      <td><p>the dependent variables for which we want to predict the outcome.
-The parameter is allowed to take several forms:
- - List of <code>RandomVariable</code> objects to predict
- - Single <code>RandomVariable</code> object to predict
- - List of strings with the names of the outputs (<code>list('X','Y')</code>)
- - Single string with the name of the output (<code>'Y'</code>)</p></td>
-    </tr>
-    <tr>
-      <th>...</th>
-      <td><p>other parameters directly passed to the predict function</p></td>
-    </tr>
-    </table>
-    
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+    <pre class="usage"><span class='no'>SMG.Base</span></pre>
+        
+    <h2 class="hasAnchor" id="format"><a class="anchor" href="#format"></a>Format</h2>
 
-    <p><code>list</code> a list of estimator entries, each of which has a
- <code>data.table</code> of corresponding predicted probabilities.</p>
+    <p>An object of class <code>R6ClassGenerator</code> of length 24.</p>
+    
+    <h2 class="hasAnchor" id="methods"><a class="anchor" href="#methods"></a>Methods</h2>
+
+    
+    <dl class='dl-horizontal'>
+  <dt><code>initialize()</code></dt><dd><p></p></dd>
+    <dt><code>process()</code></dt><dd><p></p></dd>
+    <dt><code>update(data.current)</code></dt><dd><p></p></dd>
+</dl>
     
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
-      <li><a href="#arguments">Arguments</a></li>
       
-      <li><a href="#value">Value</a></li>
+      <li><a href="#format">Format</a></li>
+
+      <li><a href="#methods">Methods</a></li>
           </ul>
 
   </div>

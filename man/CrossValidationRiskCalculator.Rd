@@ -29,23 +29,23 @@ of an estimator.
     \code{add_evaluation_measure_name} to true.
 
     The input data should look looks as followos:
-      list >
-        normalized > 
-          AlgorithmName1 >
+      list
+        normalized 
+          AlgorithmName1
            data.table with a W, A, Y entry.
-          AlgorithmName2 >
+          AlgorithmName2
            data.table with a W, A, Y entry.
-        denormalized > 
-          AlgorithmName1 >
+        denormalized
+          AlgorithmName1
            data.table with a W, A, Y entry.
-          AlgorithmName2 >
+          AlgorithmName2
            data.table with a W, A, Y entry.
 
     The output data then looks as follows:
-      list >
-        AlgorithmName1 >
+      list
+        AlgorithmName1
          data.table with a W, A, Y entry.
-        AlgorithmName2 >
+        AlgorithmName2
          data.table with a W, A, Y entry.
 
     @param predicted.outcome the outcome predicted by the various algorithms

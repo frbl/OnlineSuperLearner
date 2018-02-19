@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>predict.OnlineSuperLearner — predict.OnlineSuperLearner • OnlineSuperLearner</title>
+<title>sampledata.OnlineSuperLearner — sampledata.OnlineSuperLearner • OnlineSuperLearner</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -78,16 +78,16 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>predict.OnlineSuperLearner</h1>
+    <h1>sampledata.OnlineSuperLearner</h1>
     </div>
 
     
     <p>S3 prediction function for the online superlearner package. Can be used to
-perform a prediction on the trained online superlearner object.</p>
+perform a sampling procedure on the fitted OSL method.</p>
     
 
     <pre class="usage"><span class='co'># S3 method for OnlineSuperLearner</span>
-<span class='fu'>predict</span>(<span class='no'>object</span>, <span class='no'>newdata</span>, <span class='kw'>Y</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>...</span>)</pre>
+<span class='fu'>sampledata</span>(<span class='no'>object</span>, <span class='no'>newdata</span>, <span class='kw'>Y</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>...</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -106,11 +106,11 @@ include all necessary variables.</p></td>
     <tr>
       <th>Y</th>
       <td><p>the dependent variables for which we want to predict the outcome.
-The parameter is allowed to take several forms:
- - List of <code>RandomVariable</code> objects to predict
- - Single <code>RandomVariable</code> object to predict
- - List of strings with the names of the outputs (<code>list('X','Y')</code>)
- - Single string with the name of the output (<code>'Y'</code>)</p></td>
+ The parameter is allowed to take several forms:</p>
+<p>- List of <code>RandomVariable</code> objects to predict
+  - Single <code>RandomVariable</code> object to predict
+  - List of strings with the names of the outputs (<code>list('X','Y')</code>)
+  - Single string with the name of the output (<code>'Y'</code>)</p></td>
     </tr>
     <tr>
       <th>...</th>
@@ -121,7 +121,7 @@ The parameter is allowed to take several forms:
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p><code>list</code> a list of estimator entries, each of which has a
- <code>data.table</code> of corresponding predicted probabilities.</p>
+ <code>data.table</code> of corresponding sampled values.</p>
     
 
   </div>

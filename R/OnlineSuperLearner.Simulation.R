@@ -74,7 +74,7 @@
 OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
   public =
     list(
-        initialize = function(configuration = 2) {
+        initialize = function(configuration = 1) {
           tic <- Sys.time()
           cat('Starting calculation with ', parallel::detectCores(),' cores\n')
           doParallel::registerDoParallel(cores = parallel::detectCores())
@@ -196,7 +196,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           )
 
           # We'd like to use the following features in our estimation:
-          W <- RandomVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
+          W <- RandomVariable$new(formula = W ~ W_mean + Y_mean + Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
           A <- RandomVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
           Y <- RandomVariable$new(formula = Y ~ A + W, family = 'binomial')
           randomVariables <- c(W, A, Y)

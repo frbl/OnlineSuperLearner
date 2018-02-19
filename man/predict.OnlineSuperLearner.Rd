@@ -24,7 +24,8 @@ The parameter is allowed to take several forms:
 \item{...}{other parameters directly passed to the predict function}
 }
 \value{
-\code{data.table} a \code{data.table} containing the predicted probabilities
+\code{list} a list of estimator entries, each of which has a
+ \code{data.table} of corresponding predicted probabilities.
 }
 \description{
 S3 prediction function for the online superlearner package. Can be used to

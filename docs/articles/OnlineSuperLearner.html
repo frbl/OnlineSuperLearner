@@ -180,16 +180,16 @@
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1">  <span class="co"># Create the simulator</span></a>
 <a class="sourceLine" id="cb7-2" data-line-number="2">  simulator  &lt;-<span class="st"> </span>OnlineSuperLearner<span class="op">::</span>Simulator.GAD<span class="op">$</span><span class="kw">new</span>()</a>
 <a class="sourceLine" id="cb7-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb7-4" data-line-number="4"></a>
-<a class="sourceLine" id="cb7-5" data-line-number="5">  <span class="co"># Approximate the truth under the treatment</span></a>
-<a class="sourceLine" id="cb7-6" data-line-number="6">  result.approx &lt;-<span class="st"> </span><span class="kw">mclapply</span>(<span class="kw">seq</span>(B), <span class="cf">function</span>(bb) {</a>
-<a class="sourceLine" id="cb7-7" data-line-number="7">    when &lt;-<span class="st"> </span><span class="kw">max</span>(intervention<span class="op">$</span>when)</a>
-<a class="sourceLine" id="cb7-8" data-line-number="8">    data.int &lt;-<span class="st"> </span>simulator<span class="op">$</span><span class="kw">simulateWAY</span>(tau, <span class="dt">qw =</span> llW, <span class="dt">ga =</span> llA, <span class="dt">Qy =</span> llY,</a>
-<a class="sourceLine" id="cb7-9" data-line-number="9">                                      <span class="dt">intervention =</span> intervention, <span class="dt">verbose =</span> log)</a>
-<a class="sourceLine" id="cb7-10" data-line-number="10">    data.int<span class="op">$</span>Y[tau]</a>
-<a class="sourceLine" id="cb7-11" data-line-number="11">  }, <span class="dt">mc.cores =</span> cores) <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb7-12" data-line-number="12"><span class="st">    </span>unlist</a>
-<a class="sourceLine" id="cb7-13" data-line-number="13"></a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">  <span class="co"># Approximate the truth under the treatment</span></a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">  result.approx &lt;-<span class="st"> </span><span class="kw">mclapply</span>(<span class="kw">seq</span>(B), <span class="cf">function</span>(bb) {</a>
+<a class="sourceLine" id="cb7-6" data-line-number="6">    when &lt;-<span class="st"> </span><span class="kw">max</span>(intervention<span class="op">$</span>when)</a>
+<a class="sourceLine" id="cb7-7" data-line-number="7">    data.int &lt;-<span class="st"> </span>simulator<span class="op">$</span><span class="kw">simulateWAY</span>(tau, <span class="dt">qw =</span> llW, <span class="dt">ga =</span> llA, <span class="dt">Qy =</span> llY,</a>
+<a class="sourceLine" id="cb7-8" data-line-number="8">                                      <span class="dt">intervention =</span> intervention, <span class="dt">verbose =</span> log)</a>
+<a class="sourceLine" id="cb7-9" data-line-number="9">    data.int<span class="op">$</span>Y[tau]</a>
+<a class="sourceLine" id="cb7-10" data-line-number="10">  }, <span class="dt">mc.cores =</span> cores) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb7-11" data-line-number="11"><span class="st">    </span>unlist</a>
+<a class="sourceLine" id="cb7-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb7-13" data-line-number="13">  <span class="co"># Calculate the approximation of the true parameter of interest</span></a>
 <a class="sourceLine" id="cb7-14" data-line-number="14">  psi.approx &lt;-<span class="st"> </span><span class="kw">mean</span>(result.approx)</a>
 <a class="sourceLine" id="cb7-15" data-line-number="15"></a>
 <a class="sourceLine" id="cb7-16" data-line-number="16">  <span class="kw">print</span>(psi.approx)</a></code></pre></div>
@@ -228,7 +228,7 @@
 <a class="sourceLine" id="cb9-29" data-line-number="29">  <span class="co">#algos &lt;- append(algos, list(list(algorithm = 'condensier::glmR6',</span></a>
 <a class="sourceLine" id="cb9-30" data-line-number="30">                        ##algorithm_params = list(),</a>
 <a class="sourceLine" id="cb9-31" data-line-number="31">                        <span class="co">#params = list(nbins = c(16, 20, 24, 30, 34, 40), online = FALSE))))</span></a></code></pre></div>
-<p>The next step is to define our random variables. In this example we only consider the default variables <span class="math inline">\(W\)</span>, <span class="math inline">\(A\)</span>, and <span class="math inline">\(Y\)</span>. Each of them is univariate, and the <span class="math inline">\(A\)</span> variable is a binary variable. Currently we only support the variable at time <span class="math inline">\(t\)</span> (<span class="math inline">\(W\)</span>, <span class="math inline">\(A\)</span>, or <span class="math inline">\(Y\)</span>) and a lagged version therof (<span class="math inline">\(*\_lag\_*\)</span>, e.g., <span class="math inline">\(A\_lag\_1\)</span>):</p>
+<p>The next step is to define our random variables. In this example we only consider the default variables <span class="math inline">\(W\)</span>, <span class="math inline">\(A\)</span>, and <span class="math inline">\(Y\)</span>. Each of them is univariate, and the <span class="math inline">\(A\)</span> variable is a binary variable:</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" data-line-number="1">  W &lt;-<span class="st"> </span>OnlineSuperLearner<span class="op">::</span>RandomVariable<span class="op">$</span><span class="kw">new</span>(<span class="dt">formula =</span> W <span class="op">~</span><span class="st"> </span>Y_lag_<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>A_lag_<span class="dv">1</span> <span class="op">+</span><span class="st">  </span>W_lag_<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>Y_lag_<span class="dv">2</span>, <span class="dt">family =</span> <span class="st">'gaussian'</span>)</a>
 <a class="sourceLine" id="cb10-2" data-line-number="2">  A &lt;-<span class="st"> </span>OnlineSuperLearner<span class="op">::</span>RandomVariable<span class="op">$</span><span class="kw">new</span>(<span class="dt">formula =</span> A <span class="op">~</span><span class="st"> </span>W <span class="op">+</span><span class="st"> </span>Y_lag_<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>A_lag_<span class="dv">1</span> <span class="op">+</span><span class="st"> </span>W_lag_<span class="dv">1</span>, <span class="dt">family =</span> <span class="st">'binomial'</span>)</a>
 <a class="sourceLine" id="cb10-3" data-line-number="3">  Y &lt;-<span class="st"> </span>OnlineSuperLearner<span class="op">::</span>RandomVariable<span class="op">$</span><span class="kw">new</span>(<span class="dt">formula =</span> Y <span class="op">~</span><span class="st"> </span>A <span class="op">+</span><span class="st"> </span>W, <span class="dt">family =</span> <span class="st">'gaussian'</span>)</a>
@@ -236,43 +236,49 @@
 <a class="sourceLine" id="cb10-5" data-line-number="5">  variable_of_interest &lt;-<span class="st"> </span>Y</a>
 <a class="sourceLine" id="cb10-6" data-line-number="6">  randomVariables &lt;-<span class="st"> </span><span class="kw">c</span>(W, A, Y)</a></code></pre></div>
 <p>Note the special notation for the lagged variables and the running mean variables. In the background we use the so-called <code>SummaryMeasureGenerator</code>, a class that automatically parses these formulae and generates the data accordingly. The idea is that given the definition provided in the previous code block, we have to generate several variables (e.g. the lags). Currently several options are provided: - <code>*A*_lag_*B*</code>: The lag operator. This will generate a lagged version of random variable <code>*A*</code> (replace with your own variable name), of lag <code>*B*</code> (replace with an integer, specifying the lag to use). - <code>*A*_mean</code>: The running mean operator. This will generate a running mean version of random variable <code>*A*</code> (replace with your own variable name).</p>
-</section><section id="here" class="level1"><h1>HERE!</h1>
 <p>The last step is to actually run and fit our SuperLearner and calculate its CV risk. We use the loglikelihood loss function as general loss function. Note that for this to work properly, we have to normalize our data. This is done by providing the <code>normalize = TRUE</code> argument to the <code>fit</code> function.</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" data-line-number="1">osl  &lt;-<span class="st"> </span>OnlineSuperLearner<span class="op">::</span>OnlineSuperLearner<span class="op">$</span><span class="kw">new</span>(algos, <span class="dt">summaryMeasureGenerator =</span> summaryMeasureGenerator,</a>
-<a class="sourceLine" id="cb11-2" data-line-number="2">                                                   <span class="dt">verbose =</span> log, <span class="dt">pre_processor =</span> pre_processor)</a>
-<a class="sourceLine" id="cb11-3" data-line-number="3">risk &lt;-<span class="st"> </span>osl<span class="op">$</span><span class="kw">fit</span>(data.train.static, <span class="dt">randomVariables =</span> randomVariables,</a>
-<a class="sourceLine" id="cb11-4" data-line-number="4">                <span class="dt">initial_data_size =</span> training_set_size <span class="op">/</span><span class="st"> </span><span class="dv">2</span>,</a>
-<a class="sourceLine" id="cb11-5" data-line-number="5">                <span class="dt">max_iterations =</span> max_iterations,</a>
-<a class="sourceLine" id="cb11-6" data-line-number="6">                <span class="dt">mini_batch_size =</span> (training_set_size <span class="op">/</span><span class="st"> </span><span class="dv">2</span>) <span class="op">/</span><span class="st"> </span>max_iterations)</a></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" data-line-number="1">osl  &lt;-<span class="st"> </span>OnlineSuperLearner<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/OnlineSuperLearner/topics/fit.OnlineSuperLearner">fit.OnlineSuperLearner</a></span>(</a>
+<a class="sourceLine" id="cb11-2" data-line-number="2">  <span class="dt">formulae =</span> randomVariables,</a>
+<a class="sourceLine" id="cb11-3" data-line-number="3">  <span class="dt">data =</span> data.train,</a>
+<a class="sourceLine" id="cb11-4" data-line-number="4">  <span class="dt">algorithms =</span> algos, </a>
+<a class="sourceLine" id="cb11-5" data-line-number="5">  <span class="dt">verbose =</span> log,</a>
+<a class="sourceLine" id="cb11-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb11-7" data-line-number="7">  <span class="dt">initial_data_size =</span> training_set_size <span class="op">/</span><span class="st"> </span><span class="dv">2</span>,</a>
+<a class="sourceLine" id="cb11-8" data-line-number="8">  <span class="dt">max_iterations =</span> max_iterations,</a>
+<a class="sourceLine" id="cb11-9" data-line-number="9">  <span class="dt">mini_batch_size =</span> (training_set_size <span class="op">/</span><span class="st"> </span><span class="dv">2</span>) <span class="op">/</span><span class="st"> </span>max_iterations</a>
+<a class="sourceLine" id="cb11-10" data-line-number="10">)</a></code></pre></div>
 <p>In order to see how well it can estimate we first generate our data set we want to use for testing as follows:</p>
-<ul>
-<li>Draw B observations from our simulator</li>
-<li>Input one of these observations in our algorithm</li>
-<li>Sample iteratively, and set a treatment using a prespecified when and then</li>
-<li>Record the outcome of our variable of interest (<span class="math inline">\(Y\)</span>) at time tau and we denormalize it (converting it back to the original data format)</li>
+<ol type="1">
+<li>Draw B observations from our <code>simulator</code> object.</li>
+<li>Input one of these observations in our algorithm.</li>
+<li>Sample iteratively, and set a treatment using a prespecified <code>variable</code>, <code>when</code>, and <code>then</code>.</li>
+<li>Record the outcome of our variable of interest (<span class="math inline">\(Y\)</span>) at time tau and we denormalize it (converting it back to the original data format).</li>
 <li>Repeat this procedure a large number of B times</li>
 <li>Finally we take the average over all B observations, giving us our estimation of the parameter of interest.</li>
-</ul>
+</ol>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" data-line-number="1">  datas &lt;-<span class="st"> </span>summaryMeasureGenerator<span class="op">$</span><span class="kw">getNext</span>(<span class="dt">n =</span> B)</a>
 <a class="sourceLine" id="cb12-2" data-line-number="2"></a>
-<a class="sourceLine" id="cb12-3" data-line-number="3">  do_parallel &lt;-<span class="st"> </span><span class="ot">FALSE</span></a>
-<a class="sourceLine" id="cb12-4" data-line-number="4">  <span class="cf">if</span> (do_parallel) {</a>
-<a class="sourceLine" id="cb12-5" data-line-number="5">      result &lt;-<span class="st"> </span><span class="kw">mclapply</span>(<span class="kw">seq</span>(B), <span class="cf">function</span>(i) {</a>
-<a class="sourceLine" id="cb12-6" data-line-number="6">          osl<span class="op">$</span><span class="kw">sample_iteratively</span>(<span class="dt">data =</span> datas[i,],</a>
-<a class="sourceLine" id="cb12-7" data-line-number="7">                            <span class="dt">randomVariables =</span> randomVariables,</a>
-<a class="sourceLine" id="cb12-8" data-line-number="8">                            <span class="dt">intervention =</span> intervention,</a>
-<a class="sourceLine" id="cb12-9" data-line-number="9">                            <span class="dt">tau =</span> tau)[tau, <span class="st">'Y'</span>]</a>
-<a class="sourceLine" id="cb12-10" data-line-number="10">      }, <span class="dt">mc.cores=</span> cores)</a>
-<a class="sourceLine" id="cb12-11" data-line-number="11">  } <span class="cf">else</span> {</a>
-<a class="sourceLine" id="cb12-12" data-line-number="12">      result &lt;-<span class="st"> </span><span class="kw">foreach</span>(<span class="dt">i=</span><span class="kw">seq</span>(B), <span class="dt">.combine=</span>rbind) <span class="op">%do%</span><span class="st"> </span>{</a>
-<a class="sourceLine" id="cb12-13" data-line-number="13">          osl<span class="op">$</span><span class="kw">sample_iteratively</span>(<span class="dt">data =</span> datas[i,],</a>
-<a class="sourceLine" id="cb12-14" data-line-number="14">                            <span class="dt">randomVariables =</span> randomVariables,</a>
-<a class="sourceLine" id="cb12-15" data-line-number="15">                            <span class="dt">intervention =</span> intervention,</a>
-<a class="sourceLine" id="cb12-16" data-line-number="16">                            <span class="dt">tau =</span> tau)[tau, <span class="st">'Y'</span>]</a>
-<a class="sourceLine" id="cb12-17" data-line-number="17">      }</a>
-<a class="sourceLine" id="cb12-18" data-line-number="18">  }</a>
-<a class="sourceLine" id="cb12-19" data-line-number="19"></a>
-<a class="sourceLine" id="cb12-20" data-line-number="20">  result <span class="op">%&lt;&gt;%</span><span class="st"> </span>unlist</a></code></pre></div>
+<a class="sourceLine" id="cb12-3" data-line-number="3">  <span class="co"># Should we run in parallel?</span></a>
+<a class="sourceLine" id="cb12-4" data-line-number="4">  do_parallel &lt;-<span class="st"> </span><span class="ot">FALSE</span></a>
+<a class="sourceLine" id="cb12-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb12-6" data-line-number="6">  <span class="co"># Would we like to have the results of the discrete (TRUE) or continuous (FALSE) osl?</span></a>
+<a class="sourceLine" id="cb12-7" data-line-number="7">  discrete =<span class="st"> </span><span class="ot">TRUE</span></a>
+<a class="sourceLine" id="cb12-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb12-9" data-line-number="9">  interventionEffectCalculator &lt;-<span class="st"> </span>InterventionEffectCalculator<span class="op">$</span><span class="kw">new</span>(</a>
+<a class="sourceLine" id="cb12-10" data-line-number="10">    <span class="dt">bootstrap_iterations =</span> B,</a>
+<a class="sourceLine" id="cb12-11" data-line-number="11">    <span class="dt">outcome_variable =</span> <span class="st">'Y'</span>,</a>
+<a class="sourceLine" id="cb12-12" data-line-number="12">    <span class="dt">parallel =</span> do_parallel</a>
+<a class="sourceLine" id="cb12-13" data-line-number="13">  )</a>
+<a class="sourceLine" id="cb12-14" data-line-number="14"></a>
+<a class="sourceLine" id="cb12-15" data-line-number="15">  interventionEffectCalculator<span class="op">$</span><span class="kw">evaluate_single_intervention</span>(</a>
+<a class="sourceLine" id="cb12-16" data-line-number="16">    <span class="dt">osl =</span> osl,</a>
+<a class="sourceLine" id="cb12-17" data-line-number="17">    <span class="dt">initial_data =</span> DDDDDDDDDAAAAAAAAAAAATTTTTTTTTTTAAAAAAAAAAAA,</a>
+<a class="sourceLine" id="cb12-18" data-line-number="18">    <span class="dt">intervention =</span> intervention,</a>
+<a class="sourceLine" id="cb12-19" data-line-number="19">    <span class="dt">tau =</span> tau,</a>
+<a class="sourceLine" id="cb12-20" data-line-number="20">    <span class="dt">discrete =</span> discrete</a>
+<a class="sourceLine" id="cb12-21" data-line-number="21">  )</a>
+<a class="sourceLine" id="cb12-22" data-line-number="22"></a>
+<a class="sourceLine" id="cb12-23" data-line-number="23">  result <span class="op">%&lt;&gt;%</span><span class="st"> </span>unlist</a></code></pre></div>
 <p>Finally, we can see how well the algorithms converge and estimate the approximated truth. The following plot shows this convergence for both the approximation (i.e., truth, black), and the estimation (red).</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" data-line-number="1">  <span class="co"># Calculate psi</span></a>
 <a class="sourceLine" id="cb13-2" data-line-number="2">  psi.estimation &lt;-<span class="st"> </span><span class="kw">mean</span>(result)</a>
@@ -286,11 +292,26 @@
 <a class="sourceLine" id="cb13-10" data-line-number="10">  <span class="kw">plot</span>(y2, <span class="dt">ylim=</span><span class="kw">range</span>(<span class="kw">c</span>(y1,y2)), <span class="dt">col=</span><span class="st">"red"</span>, <span class="dt">axes =</span> <span class="ot">FALSE</span>, <span class="dt">xlab =</span> <span class="st">""</span>, <span class="dt">ylab =</span> <span class="st">""</span>)</a>
 <a class="sourceLine" id="cb13-11" data-line-number="11"></a>
 <a class="sourceLine" id="cb13-12" data-line-number="12">  <span class="co"># Print the outcome</span></a>
-<a class="sourceLine" id="cb13-13" data-line-number="13">  <span class="kw">print</span>(<span class="kw">paste</span>(<span class="st">'We have approximated psi as'</span>, psi.approx, </a>
-<a class="sourceLine" id="cb13-14" data-line-number="14">              <span class="st">'our estimate is'</span>, psi.estimation, </a>
-<a class="sourceLine" id="cb13-15" data-line-number="15">              <span class="st">'which is a difference of:'</span>, <span class="kw">abs</span>(psi.approx <span class="op">-</span><span class="st"> </span>psi.estimation)))</a></code></pre></div>
+<a class="sourceLine" id="cb13-13" data-line-number="13">  outcome &lt;-<span class="st"> </span><span class="kw">paste</span>(</a>
+<a class="sourceLine" id="cb13-14" data-line-number="14">    <span class="st">'We have approximated psi as'</span>, psi.approx, </a>
+<a class="sourceLine" id="cb13-15" data-line-number="15">    <span class="st">'our estimate is'</span>, psi.estimation, </a>
+<a class="sourceLine" id="cb13-16" data-line-number="16">    <span class="st">'which is a difference of:'</span>, <span class="kw">abs</span>(psi.approx <span class="op">-</span><span class="st"> </span>psi.estimation)</a>
+<a class="sourceLine" id="cb13-17" data-line-number="17">  )</a>
+<a class="sourceLine" id="cb13-18" data-line-number="18">  <span class="kw">print</span>(outcome)</a></code></pre></div>
 <p>The result should be something like:</p>
 <pre class="plain"><code>[1] "We have approximated psi as 19.9016316150146 our estimate is 19.9018591048906 which is a difference of: 0.000227489875989306"</code></pre>
+</section><section id="prediction-and-sampling" class="level2"><h2>Prediction and sampling</h2>
+<p>Apart from calculating a variable of interest, the online superlearner package also offers the functionality to predict the probability of a given outcome (conditionally on other variables), and to sample conditionally on a set of variables. The package offers two S3 methods to do so: <code>predict</code> and <code>sample</code>.</p>
+<p>Examples of both methods are listed below</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" data-line-number="1">  <span class="co"># Predict some variables for our Y outcome variable. The newdata can be a data.table:</span></a>
+<a class="sourceLine" id="cb15-2" data-line-number="2">  newdata &lt;-<span class="st"> </span>simulator<span class="op">$</span><span class="kw">simulateWAY</span>(<span class="dv">100</span>, <span class="dt">qw=</span>llW, <span class="dt">ga=</span>llA, <span class="dt">Qy=</span>llY, <span class="dt">verbose=</span>log)</a>
+<a class="sourceLine" id="cb15-3" data-line-number="3">  <span class="kw">predict</span>(osl, newdata, <span class="dt">Y =</span> Y)</a>
+<a class="sourceLine" id="cb15-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb15-5" data-line-number="5">  <span class="co"># Apart from predicting, we can also sample new values</span></a>
+<a class="sourceLine" id="cb15-6" data-line-number="6">  initial_data &lt;-<span class="st"> </span>simulator<span class="op">$</span><span class="kw">simulateWAY</span>(<span class="dv">100</span>, <span class="dt">qw=</span>llW, <span class="dt">ga=</span>llA, <span class="dt">Qy=</span>llY, <span class="dt">verbose=</span>log)</a>
+<a class="sourceLine" id="cb15-7" data-line-number="7">  <span class="kw">sampledata</span>(osl, initial_data, <span class="dt">Y =</span> Y)</a></code></pre></div>
+<p>The result of these methods is a list with two entries: <code>normalized</code> and <code>denormalized</code>. The <code>normalized</code> entry contains the result normalized according to the preprocessor that had been defined based on the initial data frame. The <code>denormalized</code> entry contains the data in its original form (i.e., the normalization has been undone). Generally only the latter is of interest. These entries (the <code>normalized</code> and <code>denormalized</code> entry) again contain a number of lists, each with an outcome for each of the candidate estimators.</p>
+</section><section id="working-with-streaming-data" class="level2"><h2>Working with streaming data</h2>
 </section>
 </div>
   </div>
@@ -304,7 +325,8 @@
       <li><a href="#configuration">Configuration</a></li>
       <li><a href="#simulation">Simulation</a></li>
       <li><a href="#the-onlinesuperlearner-initialization">The OnlineSuperLearner initialization</a></li>
-      <li><a href="#here">HERE!</a></li>
+      <li><a href="#prediction-and-sampling">Prediction and sampling</a></li>
+      <li><a href="#working-with-streaming-data">Working with streaming data</a></li>
       </ul>
 </div>
       </div>

@@ -202,7 +202,7 @@ Now everything is set-up, we can start our super learner procedure. First let's 
                         #params = list(nbins = c(16, 20, 24, 30, 34, 40), online = FALSE))))
 ```
 
-The next step is to define our random variables. In this example we only consider the default variables $W$, $A$, and $Y$. Each of them is univariate, and the $A$ variable is a binary variable. Currently we only support the variable at time $t$ ($W$, $A$, or $Y$) and a lagged version therof ($*\_lag\_*$, e.g., $A\_lag\_1$):
+The next step is to define our random variables. In this example we only consider the default variables $W$, $A$, and $Y$. Each of them is univariate, and the $A$ variable is a binary variable:
 
 ``` R
   W <- OnlineSuperLearner::RandomVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
@@ -307,7 +307,7 @@ Examples of both methods are listed below
 
   # Apart from predicting, we can also sample new values
   initial_data <- simulator$simulateWAY(100, qw=llW, ga=llA, Qy=llY, verbose=log)
-  sample(osl, initial_data, Y = Y)
+  sampledata(osl, initial_data, Y = Y)
 ```
 
 The result of these methods is a list with two entries: `normalized` and `denormalized`. The `normalized` entry contains the result normalized according to the preprocessor that had been defined based on the initial data frame. The `denormalized` entry contains the data in its original form (i.e., the normalization has been undone). Generally only the latter is of interest. These entries (the `normalized` and `denormalized` entry) again contain a number of lists, each with an outcome for each of the candidate estimators.

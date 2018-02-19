@@ -56,7 +56,7 @@ fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, normalize 
   return(osl)
 }
 
-#' sample.OnlineSuperLearner
+#' sampledata.OnlineSuperLearner
 #' 
 #' S3 prediction function for the online superlearner package. Can be used to
 #' perform a sampling procedure on the fitted OSL method.
@@ -78,9 +78,10 @@ fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, normalize 
 #'
 #' @param ... other parameters directly passed to the predict function
 #'
-#' @return \code{data.table} a \code{data.table} containing the sampled outcomes
+#' @return \code{list} a list of estimator entries, each of which has a
+#'  \code{data.table} of corresponding sampled values.
 #' @export
-sample.OnlineSuperLearner <- function(object, newdata, Y = NULL, ...) {
+sampledata.OnlineSuperLearner <- function(object, newdata, Y = NULL, ...) {
   ## Test if the provided object is actually a OnlineSuperlearner
   object <- Arguments$getInstanceOf(object, 'OnlineSuperLearner')
 
@@ -92,11 +93,13 @@ sample.OnlineSuperLearner <- function(object, newdata, Y = NULL, ...) {
   }
 
   if (!is.null(Y)) Y <- object$retrieve_list_of_random_variables(random_variables = Y)
-  object$predict(data = newdata, randomVariables = Y, sample = TRUE, ...)
+  sampled <- object$predict(data = newdata, randomVariables = Y, sample = TRUE, ...)
+  sampled$denormalized
 }
 
 #' @export
-sample <- function(object, newdata, Y = NULL, ...) UseMethod("sample")
+sampledata <- function(object, newdata, Y = NULL, ...) UseMethod("sampledata")
+## NOTE: This function is not named sample to avoid namespace collisions.
 
 #' predict.OnlineSuperLearner
 #' 
@@ -115,7 +118,9 @@ sample <- function(object, newdata, Y = NULL, ...) UseMethod("sample")
 #'   - List of strings with the names of the outputs (\code{list('X','Y')})
 #'   - Single string with the name of the output (\code{'Y'})
 #' @param ... other parameters directly passed to the predict function
-#' @return \code{data.table} a \code{data.table} containing the predicted probabilities
+#'
+#' @return \code{list} a list of estimator entries, each of which has a
+#'  \code{data.table} of corresponding predicted probabilities.
 #' @export
 predict.OnlineSuperLearner <- function(object, newdata, Y = NULL, ...) {
   ## Test if the provided object is actually a OnlineSuperlearner
@@ -130,7 +135,8 @@ predict.OnlineSuperLearner <- function(object, newdata, Y = NULL, ...) {
   }
 
   if (!is.null(Y)) Y <- object$retrieve_list_of_random_variables(random_variables = Y)
-  object$predict(data = newdata, randomVariables = Y, sample = FALSE, ...)
+  prediction <- object$predict(data = newdata, randomVariables = Y, sample = FALSE, ...)
+  prediction$denormalized
 }
 
 #' summary.OnlineSuperLearner

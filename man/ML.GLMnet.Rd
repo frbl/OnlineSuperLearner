@@ -28,8 +28,8 @@ fashion, as described in \url{http://www.jstatsoft.org/v33/i01}.
      various logistic regressions). However, if you have a good reason to
      use a different specification, change it here.
 
-    @param alpha double (default = 0.5) the elasticnet mixing parameter, with $0 \le \alpha
-     \le 1$. $\alpha=1$ is the lasso penalty, and $\alpha=0$ the ridge
+    @param alpha double (default = 0.5) the elasticnet mixing parameter, with $0 <= alpha
+     <= 1$. $alpha=1$ is the lasso penalty, and $alpha=0$ the ridge
      penalty.
 
     @param nlambda integer (default = 100) the number of lambda values.

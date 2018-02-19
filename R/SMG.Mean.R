@@ -65,25 +65,21 @@ SMG.Mean <- R6Class("SMG.Mean",
       },
 
       process = function(data.current){
-        nobs <- nrow(data.current)
-        if(nobs < self$minimalObservations){
-          stop(paste('At least', self$minimalObservations, 'observations required'))
-        }
-        sums <- colSums(data.current[,private$colnames.to.mean, with=FALSE])
+        current_nobs <- nrow(data.current)
+        sums <- cumsum(data.current[,private$colnames.to.mean, with=FALSE])
+        divider <- seq(private$nobs + 1, private$nobs + current_nobs)
 
-        ## TODO: Super naive implementation, fix it
-        private$mean.current <- setNames(mapply('+',
-                                                sums[private$colnames.to.mean],
-                                                private$mean.current[private$colnames.to.mean] * private$nobs
-                                                ),
-                                          private$colnames.to.mean)
+        mean_column <- mapply('+',
+          sums[,private$colnames.to.mean, with = FALSE],
+           private$mean.current * private$nobs
+        ) / divider
 
-        private$nobs <- private$nobs + nobs
-        private$mean.current <- private$mean.current / private$nobs
+        ## NOTE: mean.current is a vector, not a scalar.
+        private$mean.current <- tail(mean_column, 1)[,private$colnames.to.mean]
+        private$nobs <- private$nobs + current_nobs
 
-        temp <- copy(private$mean.current)
-        names(temp) <- private$colnames.mean.affix
-        temp
+        colnames(mean_column) <- private$colnames.mean.affix
+        mean_column
       },
 
       update = function(data.current) {
@@ -97,7 +93,7 @@ SMG.Mean <- R6Class("SMG.Mean",
   active = 
     list(
       exposedVariables = function() {
-        private$colnames.to.mean
+        private$colnames.mean.affix
       },
 
       minimalObservations = function() {

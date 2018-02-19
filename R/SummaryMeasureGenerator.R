@@ -247,6 +247,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
           result <- smg$process(copy(data))
           tail(result, n)
         })
+        
 
         Reduce(cbind, datas)
       },
