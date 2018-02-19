@@ -213,7 +213,6 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
           observed.outcome <- Arguments$getInstanceOf(observed.outcome, 'data.table')
         }
 
-        predicted.outcome
         cv_risk <- lapply(predicted.outcome, function(algorithm_outcome) {
           self$risk_single_outcome(
             observed.outcome = observed.outcome,

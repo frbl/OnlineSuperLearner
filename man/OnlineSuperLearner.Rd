@@ -189,6 +189,21 @@ to the super learner machine learning model.
     Method to set the random_variables in the osl class. Generally not needed (apart from initialization).
   }
 
+  \item{\code{retrieve_list_of_random_variables(random_variables)}}{
+    Retrieves a list of random variables according to a specification. This
+    function allows for a more flexible way of retrieving random variables
+    from the OSL model.
+    @param random_variables the random_variables for which we want to
+     receive the list of variables, in a form that our model accepts. This
+     can be specified as follows:
+     - List of \code{RandomVariable} objects to predict
+     - Single \code{RandomVariable} object to predict
+     - List of strings with the names of the outputs (\code{list('X','Y')})
+     - Single string with the name of the output (\code{'Y'})
+
+    @return a list of \code{RandomVariable} objects to use in the prediction function.
+  }
+
   \item{\code{is_fitted}}{
     Active method. Returns whether the OSL has been fitted or not
 

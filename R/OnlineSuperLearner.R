@@ -20,6 +20,7 @@
 #' @include CrossValidationRiskCalculator.R
 #' @include InterventionParser.R
 #' @include OnlineSuperLearner.SampleIteratively.R
+#' @include OnlineSuperLearner.S3.R
 #'
 #' @section Methods:
 #' \describe{
@@ -195,6 +196,21 @@
 #'
 #'   \item{\code{set_random_variables(random_variables)}}{
 #'     Method to set the random_variables in the osl class. Generally not needed (apart from initialization).
+#'   }
+#'
+#'   \item{\code{retrieve_list_of_random_variables(random_variables)}}{
+#'     Retrieves a list of random variables according to a specification. This
+#'     function allows for a more flexible way of retrieving random variables
+#'     from the OSL model.
+#'     @param random_variables the random_variables for which we want to
+#'      receive the list of variables, in a form that our model accepts. This
+#'      can be specified as follows:
+#'      - List of \code{RandomVariable} objects to predict
+#'      - Single \code{RandomVariable} object to predict
+#'      - List of strings with the names of the outputs (\code{list('X','Y')})
+#'      - Single string with the name of the output (\code{'Y'})
+#'
+#'     @return a list of \code{RandomVariable} objects to use in the prediction function.
 #'   }
 #'
 #'   \item{\code{is_fitted}}{
@@ -564,6 +580,33 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           variable_names <- sapply(random_variables, function(rv) rv$getY)
           names(random_variables) <- variable_names
           private$random_variables <- random_variables
+        },
+
+        retrieve_list_of_random_variables = function(random_variables) {
+          ## Convert Y to random variable
+          if (is(random_variables, 'list')) {
+            if(length(random_variables) == 0) throw('There should be at least one entry in the outcomes specified')
+
+            random_variables <- lapply(random_variables, function(rv) {
+              if (!is(rv, 'RandomVariable')) {
+                ## convert it to the randomvariable
+                rv <- self$get_random_variables[[rv]]
+              }
+              rv
+            })
+          } else {
+            if (is(random_variables, 'RandomVariable')) {
+              ## Encapsulate it
+              random_variables <- list(random_variables)
+
+            ## Check to see if something is actually a string or a vector
+            } else if (length(nchar(random_variables)) == 1) {
+              ## convert it to the randomvariable
+              random_variables <- self$get_random_variables[[random_variables]]
+            } else {
+              throw('Either provide strings, or randomVariables')
+            }
+          }
         }
   ),
   active =
@@ -850,127 +893,3 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         }
     )
 )
-
-
-#' fit.OnlineSuperLearner
-#'
-#' Fits an online superlearner using a similar notation as a GLM.
-#' @param formulae list a list of all randomVariable objects that need to be fitted
-#' @param data data.frame the data set to use for fitting the OSL
-#' @param algorithms list of algorithms to use in the online superlearner 
-#' @param normalize boolean (default = FALSE) we provide the option to
-#'  normalize the data in the OSL procedure. This entails that the package will
-#'  automatically select a set of bounds (min and max) based on the data set
-#'  provided. After that it will only use the normalized features (all scaled
-#'  between 0-1).
-#' @param measurements_per_obs integer (default = Inf) the number of
-#'  measurments in a single observation. 
-#' @return a fitted version of an \code{OnlineSuperLearner} class
-#' @export
-fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, normalize = FALSE, measurements_per_obs = Inf, ...) {
-  ## Convert the data.frame to a data.static object
-  if(!is(data, 'Data.Base')) data <- Data.Static$new(dataset = data)
-
-  ## Build an SMG Factory from the provided formulae
-  smg_factory <- OnlineSuperLearner::SMGFactory$new()
-
-  ## Check if the provided formulae are indeed 
-  formulae <- Arguments$getInstanceOf(formulae, 'list')
-  formulae <- lapply(formulae, function(rv) Arguments$getInstanceOf(rv, 'RandomVariable'))
-
-  pre_processor <- NULL
-  if (normalize) {
-    bounds <- PreProcessor.generate_bounds(data.train)
-    pre_processor <- PreProcessor$new(bounds = bounds)
-  }
-
-  smg <- smg_factory$fabricate(formulae,
-    pre_processor = pre_processor,
-    number_of_observations_per_timeseries = measurements_per_obs
-  )
-
-  osl  <- OnlineSuperLearner$new(SL.library.definition = algorithms,
-                                 random_variables = formulae,
-                                 summaryMeasureGenerator = smg,
-                                 pre_processor = pre_processor,
-                                 ...)
-
-  osl$fit(data, ...)
-  return(osl)
-}
-
-#' predict.OnlineSuperLearner
-#' 
-#' S3 prediction function for the online superlearner package. Can be used to
-#' perform a prediction on the trained online superlearner object.
-#'
-#' @param object OnlineSuperLearner trained instance of an online superlearner class.
-#' @param newdata the new data to perform the prediction with. Note that this
-#'  can be a data.frame, after which we will generate blocks based on the
-#'  measurements in the data, or a \code{Data.Base}, which _should_ already
-#'  include all necessary variables.
-#' @param Y the dependent variables for which we want to predict the outcome.
-#'  The parameter is allowed to take several forms:
-#'   - List of \code{RandomVariable} objects to predict
-#'   - Single \code{RandomVariable} object to predict
-#'   - List of strings with the names of the outputs (\code{list('X','Y')})
-#'   - Single string with the name of the output (\code{'Y'})
-#' @param sample boolean would we like to sample an output or predict a probability
-#' @param ... other parameters directly passed to the predict function
-#' @return data.table the predicted outcomes / probabilities
-#' @export
-predict.OnlineSuperLearner <- function(object, newdata, Y = NULL, ...) {
-  ## Test if the provided object is actually a OnlineSuperlearner
-  object <- Arguments$getInstanceOf(object, 'OnlineSuperLearner')
-
-  ## Convert newdata to data.static
-  if(!is(newdata, 'Data.Base')) {
-    Data.Static$new(dataset = newdata) %>%
-      object$get_summary_measure_generator$setData(.)
-
-    newdata <- object$get_summary_measure_generator$getNext(nrow(newdata))
-  }
-
-  if (is.null(Y)) object$predict(data = newdata, ...)
-
-  ## Convert Y to random variable
-  if (is(Y, 'list')) {
-    if(length(Y) == 0) throw('There should be at least one entry in the outcomes specified')
-
-    Y <- lapply(Y, function(rv) {
-      if (!is(rv, 'RandomVariable')) {
-        ## convert it to the randomvariable
-        rv <- object$get_random_variables[[rv]]
-      }
-      rv
-    })
-  } else {
-    if (is(Y, 'RandomVariable')) {
-      ## Encapsulate it
-      Y <- list(Y)
-
-    ## Check to see if something is actually a string or a vector
-    } else if (length(nchar(Y)) == 1) {
-      ## convert it to the randomvariable
-      Y <- object$get_random_variables[[Y]]
-    } else {
-      throw('Either provide strings, or randomVariables')
-    }
-  }
-
-  object$predict(data = newdata, randomVariables = Y, ...)
-}
-
-#' summary.OnlineSuperLearner
-#'
-#' S3 method to provide a summary about the online superlearner object. Prints
-#' a description about the current fit of the OSL.
-#' @param object onlinesuperlearner the trained OSL instance
-#' @export
-summary.OnlineSuperLearner <- function(object, ...) {
-  if (!is(object, 'OnlineSuperLearner')) {
-    throw('The provided object is not an online superlearner instance') 
-  }
-  object$info
-}
-

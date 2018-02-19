@@ -1,3 +1,4 @@
+\.Rd2pdf*
 \.git
 \.ipynb*
 \.ipynb_checkpoints

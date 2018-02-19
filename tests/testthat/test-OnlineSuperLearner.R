@@ -140,6 +140,50 @@ test_that("it should call the predict function of the discrete online super lear
 test_that("it should call the predict function of the  online super learner if discrete is false", {
 })
 
+
+context(" retrieve_list_of_random_variables")
+test_that("it should work with the different formats", {
+  skip('Test this')
+  ## See the specs for the S3 methods. Most can be copied from there.
+})
+
+test_that("it should throw if the provided Y is a list, but not long enough", {
+  data <- Data.Base$new()
+  expect_error(subject$retrieve_list_of_random_variables(Y = list()),
+               'There should be at least one entry in the outcomes specified')
+
+})
+
+test_that("it should work with a single randomVariable as outcome", {
+  Y <- RandomVariable$new(formula = Y ~ A + W, family = 'binomial')
+
+  ## Stub the getrv function
+  random_variables <- subject$retrieve_list_of_random_variables(random_variables = Y)
+  expect_is(random_variables, 'list')
+  expect_equal(random_variables[[1]], Y)
+})
+
+test_that("it should work with a single randomVariable string as outcome", {
+  skip('Test this')
+})
+
+test_that("it should work with a list of randomVariables as outcome", {
+  Y <- list(
+    RandomVariable$new(formula = Y ~ A + W, family = 'binomial'),
+    RandomVariable$new(formula = Y ~ A + W, family = 'binomial')
+  )
+
+  random_variables <- subject$retrieve_list_of_random_variables(random_variables = Y)
+  expect_is(random_variables, 'list')
+  for(i in 1:length(random_variables)) {
+    expect_equal(random_variables[[i]], Y[[i]])
+  }
+})
+
+test_that("it should work with a list of randomVariable strings as outcome", {
+  skip('Test this')
+})
+
 context(' is_online')
 #==========================================================
 test_that("it should return true if all estimators are online", {

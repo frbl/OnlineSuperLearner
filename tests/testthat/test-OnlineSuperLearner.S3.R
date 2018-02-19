@@ -45,7 +45,6 @@ test_that("it should not throw if all arguments are correct", {
   expect_is(result, 'OnlineSuperLearner')
 })
 
-
 context(" predict.OnlineSuperLearner")
 #==========================================================
 expected_Y = 'therv_for_Y'
@@ -55,91 +54,97 @@ class(subject) <- 'OnlineSuperLearner'
 data <- data.frame(X = seq(10), Y = seq(10))
 data <- Data.Static$new(dataset = data)
 
-test_that("it should throw if the provided Y is a list, but not long enough", {
-  subject <- mock('osl')
-  class(subject) <- 'OnlineSuperLearner'
-  data <- Data.Base$new()
-  expect_error(predict(subject, newdata = data, Y = list()),
-               'There should be at least one entry in the outcomes specified')
-
-})
-
-test_that("it should work with a single randomVariable as outcome", {
-  Y <- RandomVariable$new(formula = Y ~ A + W, family = 'binomial')
-
-  ## We stub the loss function to return the data it gets, so we can check that it received the correct data
-  stub(predict.OnlineSuperLearner, 'object$predict', 
-    function(data, randomVariables, ...) {
-      expect_is(randomVariables, 'list')
-      expect_equal(randomVariables[[1]], Y)
-      called <<- TRUE
-    }
-  )
-
-  ## Stub the getrv function
-  called <<- FALSE
-  predict(subject, newdata = data, Y = Y)
-  expect_true(called)
-})
-
-test_that("it should work with a single randomVariable string as outcome", {
+test_that("it should work with a single randomVariable string as outcome and call the retrieve function", {
   Y = 'Y'
 
   ## We stub the loss function to return the data it gets, so we can check that it received the correct data
   stub(predict.OnlineSuperLearner, 'object$predict', 
-    function(data, randomVariables, ...) {
+    function(data, randomVariables, sample, ...) {
+      expect_false(sample)
       expect_equal(randomVariables, expected_Y)
       called <<- TRUE
     }
   )
 
+  stub(predict.OnlineSuperLearner, 'object$retrieve_list_of_random_variables', 
+    function(random_variables) {
+      expect_equal(random_variables, Y)
+      called2 <<- TRUE
+      return(expected_Y)
+    }
+  )
+
   ## Stub the getrv function
   called <<- FALSE
+  called2 <<- FALSE
   predict(subject, newdata = data, Y = Y)
   expect_true(called)
-})
-
-test_that("it should work with a list of randomVariables as outcome", {
-  Y <- list(
-    RandomVariable$new(formula = Y ~ A + W, family = 'binomial'),
-    RandomVariable$new(formula = Y ~ A + W, family = 'binomial')
-  )
-
-  stub(predict.OnlineSuperLearner, 'object$predict', 
-    function(data, randomVariables, ...) {
-      expect_is(randomVariables, 'list')
-      for(i in 1:length(randomVariables)) {
-        expect_equal(randomVariables[[i]], Y[[i]])
-      }
-      called <<- TRUE
-    }
-  )
-
-  called <<- FALSE
-  predict(subject, newdata = data, Y = Y)
-  expect_true(called)
-})
-
-test_that("it should work with a list of randomVariable strings as outcome", {
-  Y <- list('X', 'Y')
-
-  stub(predict.OnlineSuperLearner, 'object$predict', 
-    function(data, randomVariables, ...) {
-      expect_is(randomVariables, 'list')
-      expect_equal(randomVariables[[1]], expected_X)
-      expect_equal(randomVariables[[2]], expected_Y)
-      called <<- TRUE
-    }
-  )
-
-  called <<- FALSE
-  predict(subject, newdata = data, Y = Y)
-  expect_true(called)
+  expect_true(called2)
 })
 
 test_that("it should work without a randomVariable", {
+  stub(predict.OnlineSuperLearner, 'object$predict', 
+    function(data, randomVariables, sample, ...) {
+      expect_false(sample)
+      called <<- TRUE
+    }
+  )
 
+  called <<- FALSE
+  predict(subject, newdata = data)
+  expect_true(called)
 })
+
+context(" sample.OnlineSuperLearner")
+
+#==========================================================
+expected_Y = 'therv_for_Y'
+expected_X = 'therv_for_X'
+subject <- list(get_random_variables = list('Y' = expected_Y, 'X' = expected_X))
+class(subject) <- 'OnlineSuperLearner'
+data <- data.frame(X = seq(10), Y = seq(10))
+data <- Data.Static$new(dataset = data)
+
+test_that("it should work with a single randomVariable string as outcome and call the retrieve function", {
+  Y = 'Y'
+
+  ## We stub the loss function to return the data it gets, so we can check that it received the correct data
+  stub(sample.OnlineSuperLearner, 'object$predict', 
+    function(data, randomVariables, sample, ...) {
+      expect_equal(randomVariables, expected_Y)
+      expect_true(sample)
+      called <<- TRUE
+    }
+  )
+
+  stub(sample.OnlineSuperLearner, 'object$retrieve_list_of_random_variables', 
+    function(random_variables) {
+      expect_equal(random_variables, Y)
+      called2 <<- TRUE
+      return(expected_Y)
+    }
+  )
+
+  ## Stub the getrv function
+  called <<- FALSE
+  called2 <<- FALSE
+  sample(subject, newdata = data, Y = Y)
+  expect_true(called)
+  expect_true(called2)
+})
+
+test_that("it should work without a randomVariable", {
+  stub(sample.OnlineSuperLearner, 'object$predict', 
+    function(data, randomVariables, sample, ...) {
+      called <<- TRUE
+    }
+  )
+
+  called <<- FALSE
+  sample(subject, newdata = data)
+  expect_true(called)
+})
+
 
 context(" summary.OnlineSuperLearner")
 #==========================================================
