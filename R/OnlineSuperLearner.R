@@ -276,7 +276,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         initialize = function(SL.library.definition = c('ML.Local.lm', 'ML.H2O.glm'),
                               summaryMeasureGenerator, random_variables, should_fit_osl = TRUE,
                               should_fit_dosl = TRUE, pre_processor = NULL,
-                              verbose = FALSE ) {
+                              verbose = FALSE, ...) {
 
           self$set_verbosity(Arguments$getVerbose(verbose, timestamp = TRUE))
 
@@ -324,7 +324,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## Data = the data object from which the data can be retrieved
         ## initial_data_size = the number of observations needed to fit the initial estimator
         fit = function(data, initial_data_size = 5, max_iterations = 20,
-                       mini_batch_size = 20) {
+                       mini_batch_size = 20, ...) {
           tic <- Sys.time()
           initial_data_size <- Arguments$getInteger(initial_data_size, c(1,Inf))
           max_iterations <- Arguments$getInteger(max_iterations, c(0,Inf))
@@ -852,26 +852,115 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 )
 
 
+#' fit.OnlineSuperLearner
+#'
+#' Fits an online superlearner using a similar notation as a GLM.
+#' @param formulae list a list of all randomVariable objects that need to be fitted
+#' @param data data.frame the data set to use for fitting the OSL
+#' @param algorithms list of algorithms to use in the online superlearner 
+#' @param normalize boolean (default = FALSE) we provide the option to
+#'  normalize the data in the OSL procedure. This entails that the package will
+#'  automatically select a set of bounds (min and max) based on the data set
+#'  provided. After that it will only use the normalized features (all scaled
+#'  between 0-1).
+#' @param measurements_per_obs integer (default = Inf) the number of
+#'  measurments in a single observation. 
+#' @return a fitted version of an \code{OnlineSuperLearner} class
+#' @export
+fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, normalize = FALSE, measurements_per_obs = Inf, ...) {
+  ## Convert the data.frame to a data.static object
+  if(!is(data, 'Data.Base')) data <- Data.Static$new(dataset = data)
+
+  ## Build an SMG Factory from the provided formulae
+  smg_factory <- OnlineSuperLearner::SMGFactory$new()
+
+  ## Check if the provided formulae are indeed 
+  formulae <- Arguments$getInstanceOf(formulae, 'list')
+  formulae <- lapply(formulae, function(rv) Arguments$getInstanceOf(rv, 'RandomVariable'))
+
+  pre_processor <- NULL
+  if (normalize) {
+    bounds <- PreProcessor.generate_bounds(data.train)
+    pre_processor <- PreProcessor$new(bounds = bounds)
+  }
+
+  smg <- smg_factory$fabricate(formulae,
+    pre_processor = pre_processor,
+    number_of_observations_per_timeseries = measurements_per_obs
+  )
+
+  osl  <- OnlineSuperLearner$new(SL.library.definition = algorithms,
+                                 random_variables = formulae,
+                                 summaryMeasureGenerator = smg,
+                                 pre_processor = pre_processor,
+                                 ...)
+
+  osl$fit(data, ...)
+  return(osl)
+}
+
+
+
 #' predict.OnlineSuperLearner
 #' 
 #' S3 prediction function for the online superlearner package. Can be used to
 #' perform a prediction on the trained online superlearner object.
 #'
 #' @param object OnlineSuperLearner trained instance of an online superlearner class.
-#' @param newdata data.base instance of an data.base class with new data to
-#'  perform the prediction with.
-#' @param Y string the name of the Y variable to use as output of the prediction
+#' @param newdata the new data to perform the prediction with. Note that this
+#'  can be a data.frame, after which we will generate blocks based on the
+#'  measurements in the data, or a \code{Data.Base}, which _should_ already
+#'  include all necessary variables.
+#' @param Y the dependent variables for which we want to predict the outcome.
+#'  The parameter is allowed to take several forms:
+#'   - List of \code{RandomVariable} objects to predict
+#'   - Single \code{RandomVariable} object to predict
+#'   - List of strings with the names of the outputs (\code{list('X','Y')})
+#'   - Single string with the name of the output (\code{'Y'})
 #' @param sample boolean would we like to sample an output or predict a probability
 #' @param ... other parameters directly passed to the predict function
 #' @return data.table the predicted outcomes / probabilities
 #' @export
-predict.OnlineSuperLearner <- function(object, newdata, Y, ...) {
-  # Convert newdata to data.static
-  # Convert Y to random variable
-  if (!is(Y, 'RandomVariable')) {
-    Y <- object$get_random_variables[Y]
+predict.OnlineSuperLearner <- function(object, newdata, Y = NULL, ...) {
+  ## Test if the provided object is actually a OnlineSuperlearner
+  object <- Arguments$getInstanceOf(object, 'OnlineSuperLearner')
+
+  ## Convert newdata to data.static
+  if(!is(newdata, 'Data.Base')) {
+    Data.Static$new(dataset = newdata) %>%
+      object$get_summary_measure_generator$setData(.)
+
+    newdata <- object$get_summary_measure_generator$getNext(nrow(newdata))
   }
-  object$predict(data = newdata, ...)
+
+  if (is.null(Y)) object$predict(data = newdata, ...)
+
+  ## Convert Y to random variable
+  if (is(Y, 'list')) {
+    if(length(Y) == 0) throw('There should be at least one entry in the outcomes specified')
+
+    Y <- lapply(Y, function(rv) {
+      if (!is(rv, 'RandomVariable')) {
+        ## convert it to the randomvariable
+        rv <- object$get_random_variables[[rv]]
+      }
+      rv
+    })
+  } else {
+    if (is(Y, 'RandomVariable')) {
+      ## Encapsulate it
+      Y <- list(Y)
+
+    ## Check to see if something is actually a string or a vector
+    } else if (length(nchar(Y)) == 1) {
+      ## convert it to the randomvariable
+      Y <- object$get_random_variables[[Y]]
+    } else {
+      throw('Either provide strings, or randomVariables')
+    }
+  }
+
+  object$predict(data = newdata, randomVariables = Y, ...)
 }
 
 #' summary.OnlineSuperLearner
