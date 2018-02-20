@@ -24,6 +24,7 @@ WeightedCombinationComputer <- R6Class("WeightedCombinationComputer",
     list(
       initialize = function(weights.initial) {
         private$weights <- Arguments$getNumerics(weights.initial, c(0, 1))
+        private$nobs <- 0
         sum_of_weights <- sum(private$weights)
         if (sum_of_weights != 1) {
           throw("The sum of the initial weights, ", sum_of_weights, ", does not equal 1")
@@ -46,24 +47,44 @@ WeightedCombinationComputer <- R6Class("WeightedCombinationComputer",
         }
 
         if (length(private$weights) != length(libraryNames)) {
-          throw('Not each estimator has exactly one weight: estimators: ', length(libraryNames) ,' weights: ',length(private$weights),'.')
+          throw(
+            'Not each estimator has exactly one weight: estimators: ', length(libraryNames) ,
+            ' weights: ',length(private$weights),'.'
+          )
         }
 
         libraryNames <- Arguments$getCharacters(libraryNames)
 
         # Call the subclass
         self$compute(Z, Y, libraryNames, ...)
+        self$increment_nobs
         return(self$get_weights)
+      },
+
+      set_weights = function(weights) {
+        private$weights <- weights
       }
-    ),
-  private =
-    list(
-      weights = NULL
+
     ),
   active = 
     list(
       get_weights = function() {
         return(private$weights)
+      }, 
+
+      get_current_nobs = function() {
+        private$nobs
+      },
+
+      increment_nobs = function() {
+        # TODO: should this be +1? or + tau (the size of the testset?)
+        private$nobs <- private$nobs + 1
       }
-    )
+
+    ),
+  private =
+    list(
+      nobs = NULL,
+      weights = NULL
+    ),
 )

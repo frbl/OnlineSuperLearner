@@ -41,6 +41,7 @@ Imports:
     foreach,
     doParallel,
     optimr,
+    CVXR,
     sgd,
     nnls,
     ggplot2,
@@ -86,8 +87,9 @@ Collate:
     'OnlineSuperLearner.S3.R'
     'OnlineSuperLearner.SampleIteratively.R'
     'WCC.SGD.Simplex.R'
-    'WCC.NMBFGS.R'
     'WeightedCombinationComputer.R'
+    'WCC.CVXR.R'
+    'WCC.NMBFGS.R'
     'SMG.Mock.R'
     'SummaryMeasureGenerator.R'
     'zzz.R'
