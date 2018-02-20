@@ -11,6 +11,7 @@ RUN apt-get update && apt-get -f install -t unstable --no-install-recommends -y 
     openssl \
     libcurl4-openssl-dev \
     curl \
+    libgmp-dev \
     git \
     libxml2-dev \
     libssl-dev \
