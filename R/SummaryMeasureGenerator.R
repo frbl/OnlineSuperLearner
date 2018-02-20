@@ -176,8 +176,9 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
       },
 
       reset = function() {
+        ## We need to keep a cache for each of the trajectories
         cache <- lapply(private$trajectories, function(x) data.table())
-        names(cache) <- names(private$trajectories)
+        names(cache) <- self$get_trajectory_names
         private$cache <- cache
       },
 
@@ -201,12 +202,13 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
         ## We can also work with a single trajectory
         if (!is.list(data)) data <- list(data)
 
-        ## Set some names to make the data recognizable
+        ## Set some names in the list to make the data sets recognizable afterwards
         if (is.null(names(data))) {
           traj_names <- lapply(seq_along(data), function(i) paste('traj', i, sep = '_'))
           names(data) <- traj_names
         }
-        private$trajectories = data
+        private$trajectory_names <- names(data)
+        private$trajectories <- data
       },
 
       setData = function(data) {
@@ -240,6 +242,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
         }
         
         ## Remove the first n measurements from the dataframe
+        browser()
         private$cache <- lapply(private$cache, function(cache) tail(cache, -n))
         FALSE
       },
@@ -261,17 +264,24 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
           as.data.table
       },
 
-      summarizeData = function(data, n = 1){
+      summarizeData = function(data = NULL, n = 1){
+        if(is.null(data)) data <- private$cache
+
         ## If Not enough data provided to support all summary measures
-        if(nrow(data) <= self$get_minimal_measurements_needed) return(data)
+        ## Data here is a list of trajectories. We just select the first one and we assume
+        ## that each of them are the same
+        if(nrow(data[[1]]) <= self$get_minimal_measurements_needed) return(data)
 
-        datas <- lapply(private$SMG.list, function(smg) {
-          result <- smg$process(copy(data))
-          tail(result, n)
+        ## Run each of the processors over each of the trajectories
+        datas <- lapply(data, function(trajectory) {
+          lapply(private$SMG.list, function(smg) {
+            result <- smg$process(copy(trajectory))
+            tail(result, n)
+          })
         })
-        
 
-        Reduce(cbind, datas)
+        names(datas) <- self$get_trajectory_names
+        lapply(datas, function(trajectory) Reduce(cbind, trajectory))
       },
 
       getNext = function(n = 1) {
@@ -283,10 +293,13 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
         has_filled_cache <- self$fillCache()
 
         ## Now, this combined with the cache, should be enough to get the new observations
-        current <- private$get_next_normalized(n=n)
-        private$cache <- rbindlist(list(private$cache, current))
 
-        self$summarizeData(private$cache, n=n)
+        current <- private$get_next_normalized(n=n)
+        private$cache <- lapply(seq_along(current), function(i) { 
+          list(private$cache[[i]], current[[i]]) %>% rbindlist
+        })
+        warning('Only using the first trajectory')
+        self$summarizeData(private$cache, n=n)[[1]]
       },
 
       set_minimal_measurements_needed = function(minimal_measurements_needed) {
@@ -315,10 +328,12 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
 
       # TODO: Document
       get_cache_size = function(){
+        ## We assume that each entry in the cache is of the same size
         nrow(self$getCache[[1]])
       },
 
       get_data_object = function() {
+        warning('deprecated function: get_data_object in SummaryMeasureGenerator')
         return(self$get_trajectories[[1]])
       },
 
@@ -335,12 +350,18 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
       # TODO: Document
       get_trajectories = function() {
         return(private$trajectories)
+      },
+
+      # TODO: Document
+      get_trajectory_names = function() {
+        return(private$trajectory_names)
       }
 
     ),
   private =
     list(
       trajectories = NULL,
+      trajectory_names = NULL,
       minimal_measurements_needed = NULL,
       ts = NULL,
       number_of_observations_per_timeseries = NULL,
@@ -353,7 +374,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
       get_next_normalized = function(n) {
         ## Get the next N observations, rely on the data source to get this data efficient
         lapply(self$get_trajectories, function(trajectory) {
-          current <- traj$getNextN(n = n)
+          current <- trajectory$getNextN(n = n)
           if (is.null(current)) return(NULL)
 
           if (self$is_normalized) current %<>% self$get_pre_processor$normalize(.)
@@ -362,7 +383,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
       },
 
       check_data_available = function() {
-        if(is.null(self$get_data_object)) {
+        if(is.null(self$get_trajectories)) {
           throw('Please set the data of the summary measure generator first')
         }
       }
