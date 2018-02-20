@@ -93,8 +93,8 @@ test_that("it should initialize the historical cv risk variable", {
   expect_is(result, 'list') 
 })
 
-# HERE ================================
 context(" set_verbosity")
+#==========================================================
 test_that("it should set the correct verbosity", {
   subject$set_verbosity(TRUE)
   expect_true(subject$get_verbosity)
@@ -102,10 +102,9 @@ test_that("it should set the correct verbosity", {
   expect_false(subject$get_verbosity)
 })            
 
-
 context(" fit")
 #==========================================================
-test_that("it should throw if the provided datasize is not an int", {
+test_that("it should throw if the provided initial_datasize is not an int", {
   data <- mock('data')
   expect_error(subject$fit(data, initial_data_size = 'a', max_iterations = 20, mini_batch_size = 20), "Argument 'initial_data_size' contains")
   expect_error(
@@ -113,7 +112,7 @@ test_that("it should throw if the provided datasize is not an int", {
     "Argument 'initial_data_size' is out of range [1,Inf]: -1", fixed= TRUE)
 })
 
-test_that("it should throw if the provided iterations are note ints", {
+test_that("it should throw if the provided max_iterations are not ints", {
   data <- mock('data')
   expect_error(
     subject$fit(data, initial_data_size = 1, max_iterations = 'a', mini_batch_size = 20),
@@ -123,6 +122,16 @@ test_that("it should throw if the provided iterations are note ints", {
     "Argument 'max_iterations' is out of range [0,Inf]: -20", fixed= TRUE)
 })
 
+test_that("it should throw if the provided mini_batch_size are not ints", {
+  data <- mock('data')
+  expect_error(
+    subject$fit(data, initial_data_size = 1, max_iterations = 20, mini_batch_size = 'a'),
+    "Argument 'mini_batch_size' contains")
+  expect_error(
+    subject$fit(data, initial_data_size = 1, max_iterations = 20, mini_batch_size = -20),
+    "Argument 'mini_batch_size' is out of range [1,Inf]: -20", fixed= TRUE)
+})
+
 test_that("it should throw if the provided data is not a data object", {
   data <- mock('data')
   expect_error(
@@ -130,14 +139,154 @@ test_that("it should throw if the provided data is not a data object", {
     "Argument 'data' is neither of nor inherits class Data.Base: mock")
 })
 
-test_that("it should call the train_library function", {
-  
+test_that("it should set the data in the summary_measure_generator", {
+  thedata <- Data.Base$new()
+  SMG <- list(setData = function(data) {
+    expect_equal(data, thedata)
+    throw('stopping_execution')
+  })
+  class(SMG) <- 'SummaryMeasureGenerator'
+
+  random_variables <- list(list(getY='W'), list(getY='A'), list(getY='Y'))
+  subject <- described.class$new(summaryMeasureGenerator = SMG, random_variables = random_variables)
+
+  ## Note that we catch the error, just in order to stop the execution function
+  expect_error(subject$fit(thedata, initial_data_size = 1, max_iterations = 1, mini_batch_size = 20),
+               'stopping_execution')
 })
 
-test_that("it should call the update_library function", {
-  
+test_that("it should check if enough data is available, and it should call it with the correct (named) variables", {
+  thedata <- Data.Base$new()
+  SMG <- list(
+    setData = function(data) { },
+    checkEnoughDataAvailable = function(randomVariables) {
+      variable_names <- sapply(random_variables, function(rv) rv$getY)
+      expect_equal(unname(randomVariables), random_variables)
+      expect_named(randomVariables, variable_names)
+      throw('stopping_execution')
+    }
+  )
+  class(SMG) <- 'SummaryMeasureGenerator'
+
+  random_variables <- list(list(getY='W'), list(getY='A'), list(getY='Y'))
+  subject <- described.class$new(summaryMeasureGenerator = SMG, random_variables = random_variables)
+
+  ## Note that we catch the error, just in order to stop the execution function
+  expect_error(subject$fit(thedata, initial_data_size = 1, max_iterations = 1, mini_batch_size = 20),
+               'stopping_execution')
 })
 
+test_that("it should call the train_library function with the data from the summary measure generator", {
+  initial_data_size = 123
+  thedata <- Data.Base$new()
+  next_data <- data.table(a=seq(5), b=seq(5))
+  SMG <- list(
+    setData = function(data) { },
+    checkEnoughDataAvailable = function(randomVariables) { },
+    getNext = function(n) {
+      expect_equal(n, initial_data_size) 
+      return(next_data)
+    }
+  )
+  class(SMG) <- 'SummaryMeasureGenerator'
+
+  random_variables <- list(list(getY='W'), list(getY='A'), list(getY='Y'))
+  subject <- described.class$new(summaryMeasureGenerator = SMG, random_variables = random_variables)
+
+  stub(subject$fit, 'self$train_library', 
+    function(data_current) {
+      expect_equal(data_current, next_data)
+      called <<- TRUE
+      throw('stopping_execution')
+    }
+  )
+  called <<- FALSE
+
+  ## Note that we catch the error, just in order to stop the execution function
+  expect_error(subject$fit(thedata, initial_data_size = initial_data_size, 
+                           max_iterations = 1, mini_batch_size = 20), 'stopping_execution')
+  expect_true(called)
+})
+
+test_that("it should call the update_library function with the correct data", {
+  initial_data_size = 123
+  cur.max_iterations = 321
+  cur.mini_batch_size = 23
+
+  thedata <- Data.Base$new()
+  next_data <- data.table(a=seq(5), b=seq(5))
+  SMG <- list(
+    setData = function(...) { },
+    checkEnoughDataAvailable = function(...) { },
+    getNext = function(...) { }
+  )
+  class(SMG) <- 'SummaryMeasureGenerator'
+
+  random_variables <- list(list(getY='W'), list(getY='A'), list(getY='Y'))
+  subject <- described.class$new(summaryMeasureGenerator = SMG, random_variables = random_variables)
+
+  stub(subject$fit, 'self$train_library', 
+    function(...) {
+      called1 <<- TRUE
+    }
+  )
+
+  stub(subject$fit, 'self$update_library', 
+    function(max_iterations, mini_batch_size) {
+      expect_equal(max_iterations, cur.max_iterations)
+      expect_equal(mini_batch_size, cur.mini_batch_size)
+      called2 <<- TRUE
+      throw('stopping_execution')
+    }
+  )
+  called1 <<- FALSE
+  called2 <<- FALSE
+
+  ## Note that we catch the error, just in order to stop the execution function
+  expect_error(subject$fit(thedata, initial_data_size = initial_data_size, 
+                           max_iterations = cur.max_iterations, 
+                           mini_batch_size = cur.mini_batch_size), 'stopping_execution')
+  expect_true(called1)
+  expect_true(called2)
+})
+
+test_that("it should return the cvrisk in the end", {
+  initial_data_size = 123
+  cur.max_iterations = 321
+  cur.mini_batch_size = 23
+  expected_risk = 42
+
+  thedata <- Data.Base$new()
+  next_data <- data.table(a=seq(5), b=seq(5))
+  SMG <- list(
+    setData = function(...) { },
+    checkEnoughDataAvailable = function(...) { },
+    getNext = function(...) { }
+  )
+  class(SMG) <- 'SummaryMeasureGenerator'
+
+  random_variables <- list(list(getY='W'), list(getY='A'), list(getY='Y'))
+  subject <- described.class$new(summaryMeasureGenerator = SMG, random_variables = random_variables)
+
+  stub(subject$fit, 'self$train_library', function(...) { })
+
+  stub(subject$fit, 'self$update_library', function(...) { })
+  stub(subject$fit, 'self$get_cv_risk', function() {
+    called <<- TRUE
+    expected_risk
+  })
+
+  called <<- FALSE
+
+  ## Note that we catch the error, just in order to stop the execution function
+  result <- subject$fit(thedata, initial_data_size = initial_data_size, 
+                           max_iterations = cur.max_iterations, 
+                           mini_batch_size = cur.mini_batch_size)
+  expect_equal(result, expected_risk)
+  expect_true(called)
+})
+
+# HERE
 context(" predict")
 #==========================================================
 test_that("it should call the predict function of the discrete online super learner if discrete is true", {

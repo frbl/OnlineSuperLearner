@@ -356,8 +356,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                        max_iterations = 20,
                        mini_batch_size = 20, ...) {
           tic <- Sys.time()
+
           initial_data_size <- Arguments$getInteger(initial_data_size, c(1,Inf))
           max_iterations <- Arguments$getInteger(max_iterations, c(0,Inf))
+          mini_batch_size <- Arguments$getInteger(mini_batch_size, c(1,Inf))
           data <- Arguments$getInstanceOf(data, 'Data.Base')
 
           self$get_summary_measure_generator$setData(data = data)
@@ -371,7 +373,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           )
 
           ## Get the initial data for fitting the first estimator and train the initial models
-          next_data <- self$get_summary_measure_generator$getNext(initial_data_size)
+          next_data <- self$get_summary_measure_generator$getNext(n = initial_data_size)
 
           ## Create the initial fit
           private$verbose && enter(private$verbose, 'Fitting initial estimators')
@@ -383,7 +385,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$verbose && enter(private$verbose, 'Updating estimators')
           self$update_library(
             max_iterations = max_iterations,
-            mini_batch_size = Arguments$getInteger(mini_batch_size, c(1,Inf))
+            mini_batch_size = mini_batch_size
           )
           private$verbose && exit(private$verbose)
 
