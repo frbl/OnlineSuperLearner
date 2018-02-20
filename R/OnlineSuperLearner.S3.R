@@ -90,7 +90,10 @@ sampledata.OnlineSuperLearner <- function(object, newdata, Y = NULL, ...) {
   if(!is(newdata, 'Data.Base')) {
     Data.Static$new(dataset = newdata) %>%
       object$get_summary_measure_generator$setData(.)
-    newdata <- object$get_summary_measure_generator$getNext(nrow(newdata))
+
+    ## TODO: the [[1]] is because we retrieve a number of trajectories. We only have one so we need to 
+    ## select the first one here.
+    newdata <- object$get_summary_measure_generator$getNext(nrow(newdata))[[1]]
   }
 
   if (!is.null(Y)) Y <- object$retrieve_list_of_random_variables(random_variables = Y)
@@ -132,7 +135,9 @@ predict.OnlineSuperLearner <- function(object, newdata, Y = NULL, ...) {
     Data.Static$new(dataset = newdata) %>%
       object$get_summary_measure_generator$setData(.)
 
-    newdata <- object$get_summary_measure_generator$getNext(nrow(newdata))
+    ## TODO: the [[1]] is because we retrieve a number of trajectories. We only have one so we need to 
+    ## select the first one here.
+    newdata <- object$get_summary_measure_generator$getNext(nrow(newdata))[[1]]
   }
 
   if (!is.null(Y)) Y <- object$retrieve_list_of_random_variables(random_variables = Y)

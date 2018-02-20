@@ -76,10 +76,10 @@ algos <- list()
 
 algos <- append(algos, list(list(algorithm = "ML.XGBoost",
                                  algorithm_params = list(alpha = c(0.3, 0.4, 0.5)),
-                                 params = list(nbins = c(30, 40, 50, 60, 70, 80, 90), online = TRUE))))
+                                 params = list(nbins = c(30, 40, 50), online = TRUE))))
 
 algos <- append(algos, list(list(algorithm = "condensier::speedglmR6",
-                                 params = list(nbins = c(5, 10, 15, 20, 25), online = FALSE))))
+                                 params = list(nbins = c(5, 10, 15), online = FALSE))))
 
 ## General settings
 log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
@@ -107,10 +107,6 @@ preds$dosl.estimator %>% print
 preds <- predict(osl, newdata = cpp, randomVariables, plot = TRUE)
 preds$osl.estimator %>% print
 preds$dosl.estimator %>% print
-
-
-
-
 
 
 

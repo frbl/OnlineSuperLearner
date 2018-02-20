@@ -200,7 +200,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
         self$reset()
 
         ## We can also work with a single trajectory
-        if (!is.list(data)) data <- list(data)
+        if (is(data, 'Data.Static') || is.null(data)) data <- list(data)
 
         ## Set some names in the list to make the data sets recognizable afterwards
         if (is.null(names(data))) {
@@ -209,6 +209,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
         }
         private$trajectory_names <- names(data)
         private$trajectories <- data
+        private$trajectories
       },
 
       setData = function(data) {
@@ -236,13 +237,11 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
 
         extra_measurements_needed <- self$get_cache_size - self$get_minimal_measurements_needed
         if(extra_measurements_needed < 0) {
-          # TODO: Remove the [[1]]
           private$cache <- private$get_next_normalized(n = abs(extra_measurements_needed))
           return(TRUE)
         }
         
         ## Remove the first n measurements from the dataframe
-        browser()
         private$cache <- lapply(private$cache, function(cache) tail(cache, -n))
         FALSE
       },
@@ -298,8 +297,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
         private$cache <- lapply(seq_along(current), function(i) { 
           list(private$cache[[i]], current[[i]]) %>% rbindlist
         })
-        warning('Only using the first trajectory')
-        self$summarizeData(private$cache, n=n)[[1]]
+        self$summarizeData(private$cache, n=n)
       },
 
       set_minimal_measurements_needed = function(minimal_measurements_needed) {
