@@ -165,7 +165,7 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
 
       ## Output is a list of data.tables
       calculate_evaluation = function(predicted.outcome, observed.outcome, randomVariables, add_evaluation_measure_name=TRUE) {
-        # predicted.outcome <- Arguments$getInstanceOf(predicted.outcome, 'list')
+        ## predicted.outcome <- Arguments$getInstanceOf(predicted.outcome, 'list')
 
         ## If there is a normalized field, prefer the normalized outcomes
         if ('normalized' %in% names(predicted.outcome)) predicted.outcome = predicted.outcome$normalized 

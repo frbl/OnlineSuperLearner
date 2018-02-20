@@ -1,6 +1,18 @@
-devtools::load_all(".")
 
 ## Following the guide of the SL3 package
+## Requires:
+## - tidyverse
+## - sl3
+## - R.utils
+## - OnlineSuperLearner
+## - devtools
+
+## Load the OSL package
+devtools::load_all(".")
+
+## Dont ask for input while plotting
+devAskNewPage(ask = FALSE)
+
 set.seed(49753)
 library(sl3)
 library(tidyverse)
@@ -11,21 +23,23 @@ cpp <- cpp %>%
   dplyr::filter(!is.na(haz)) %>%
   mutate_all(funs(replace(., is.na(.), 0)))
 
+## Define the covariates
 W <-c("apgar1", "apgar5", "parity", "gagebrth", "mage", "meducyrs", "sexn")
 A <- c()
 Y <- c("haz")
-formulae <- generate_formulae(W,A,Y)
 
+## Generate the corresponding formulae and randomvariables
+formulae <- generate_formulae(W,A,Y)
 randomVariables <- list()
-#randomVariables <- append(randomVariables, RandomVariable$new(formula = formulae$W$apgar1, family = 'gaussian'))
-#randomVariables <- append(randomVariables, RandomVariable$new(formula = formulae$W$apgar5, family = 'gaussian'))
-#randomVariables <- append(randomVariables, RandomVariable$new(formula = formulae$W$parity, family = 'gaussian'))
-#randomVariables <- append(randomVariables, RandomVariable$new(formula = formulae$W$gagebrth, family = 'gaussian'))
-#randomVariables <- append(randomVariables, RandomVariable$new(formula = formulae$W$meducyrs, family = 'gaussian'))
-#randomVariables <- append(randomVariables, RandomVariable$new(formula = formulae$W$sexn, family = 'gaussian'))
+## randomVariables <- append(randomVariables, RandomVariable$new(formula = formulae$W$apgar1, family = 'gaussian'))
+## randomVariables <- append(randomVariables, RandomVariable$new(formula = formulae$W$apgar5, family = 'gaussian'))
+## randomVariables <- append(randomVariables, RandomVariable$new(formula = formulae$W$parity, family = 'gaussian'))
+## randomVariables <- append(randomVariables, RandomVariable$new(formula = formulae$W$gagebrth, family = 'gaussian'))
+## randomVariables <- append(randomVariables, RandomVariable$new(formula = formulae$W$meducyrs, family = 'gaussian'))
+## randomVariables <- append(randomVariables, RandomVariable$new(formula = formulae$W$sexn, family = 'gaussian'))
 randomVariables <- append(randomVariables, RandomVariable$new(formula = formulae$Y$haz, family = 'gaussian'))
 
-# Algos
+## Define a list of algorithms to use
 algos <- list()
 
 algos <- append(algos, list(list(algorithm = "ML.XGBoost",
@@ -33,17 +47,15 @@ algos <- append(algos, list(list(algorithm = "ML.XGBoost",
                                  params = list(nbins = c(30, 40, 50, 60, 70, 80, 90), online = TRUE))))
 
 algos <- append(algos, list(list(algorithm = "condensier::speedglmR6",
-                                 ## algorithm_params = list(),
                                  params = list(nbins = c(5, 10, 15, 20, 25), online = FALSE))))
 
-# bounds <- OnlineSuperLearner::PreProcessor.generate_bounds(data.train.static)
-# pre_processor <- PreProcessor$new(bounds = bounds)
-
-log <- FALSE
+## General settings
+log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
 nb_iter <- 10
 training_set_size <- nrow(cpp)
 
-osl  <- OnlineSuperLearner::fit.OnlineSuperLearner(
+## Fit the online SuperLearner
+osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
   formulae = randomVariables,
   data = cpp,
   algorithms = algos, 
@@ -54,54 +66,47 @@ osl  <- OnlineSuperLearner::fit.OnlineSuperLearner(
   mini_batch_size = (training_set_size / 2) / nb_iter
 )
 
-
+## With the fitted OSL we can now sample and perform predictions
 preds <- sampledata(osl, newdata = cpp, randomVariables, plot = TRUE)
-preds
-preds$osl.estimator
+preds$osl.estimator %>% print
+preds$dosl.estimator %>% print
+
+## With the fitted OSL we can now sample and perform predictions
+preds <- predict(osl, newdata = cpp, randomVariables, plot = TRUE)
+preds$osl.estimator %>% print
+preds$dosl.estimator %>% print
 
 
+
+
+
+
+######################
+## Helper functions ##
+######################
+## Function to create a formula notation
+generate_fomula <- function(dependent, independent) {
+  form <- lapply(dependent, function(dep) {
+    s <-dep 
+    first <- TRUE
+    for (dep_in in independent) {
+      if(dep_in == dep) next
+      if(first) s <- paste(s, dep_in, sep = ' ~ ')
+      else s <- paste(s, dep_in, sep = ' + ')
+      first <- FALSE
+    }
+    first <- TRUE
+    formula(s)
+  })
+  names(form) <- dependent
+}
+
+## Function to create a formula notation for a set of variables
 generate_formulae <- function(W, A, Y){
-  # Generate W Formulae
-  W_form <- lapply(W, function(w) {
-    s <- w
-    first <- TRUE
-    for (w_in in c(W)) {
-      if(w_in == w) next
-      if(first) s <- paste(s, w_in, sep = ' ~ ')
-      else s <- paste(s, w_in, sep = ' + ')
-      first <- FALSE
-    }
-    first <- TRUE
-    formula(s)
-  })
-  names(W_form) <- W
-
-  A_form <- lapply(A, function(a) {
-    s <- a
-    first <- TRUE
-    for (a_in in c(W)) {
-      if(first) s <- paste(s, a_in, sep = ' ~ ')
-      else s <- paste(s, a_in, sep = ' + ')
-      first <- FALSE
-    }
-    first <- TRUE
-    formula(s)
-  })
-  names(A_form) <- A
-
-  Y_form <- lapply(Y, function(y) {
-    s <- y
-    first <- TRUE
-    for (y_in in c(W, A)) {
-      if(first) s <- paste(s, y_in, sep = ' ~ ')
-      else s <- paste(s, y_in, sep = ' + ')
-      first <- FALSE
-    }
-    first <- TRUE
-    formula(s)
-  })
-  names(Y_form) <- Y
-
+  ## Generate W Formulae
+  W_form <- generate_fomula(W, W) 
+  A_form <- generate_fomula(W, W) 
+  Y_form <- generate_fomula(W, c(W,A)) 
   list(W=W_form, A=A_form, Y=Y_form)
 }
 

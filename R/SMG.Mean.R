@@ -54,6 +54,7 @@
 #' }  
 #' @export
 SMG.Mean <- R6Class("SMG.Mean",
+  inherit = SMG.Base,
   public =
     list(
       initialize = function(colnames.to.mean) {
@@ -66,6 +67,7 @@ SMG.Mean <- R6Class("SMG.Mean",
 
       process = function(data.current){
         current_nobs <- nrow(data.current)
+        self$check_enough_available(data.current)
         
         sums <- cumsum(data.current[,private$colnames.to.mean, with=FALSE])
         divider <- seq(private$nobs + 1, private$nobs + current_nobs)

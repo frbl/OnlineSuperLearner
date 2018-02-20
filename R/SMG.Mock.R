@@ -6,6 +6,7 @@
 #' @importFrom R6 R6Class
 #' @export
 SMG.Mock <- R6Class("SMG.Mock",
+  inherit = SMG.Base,
   private =
     list(
         theMinimalObservations = NULL,

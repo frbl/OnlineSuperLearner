@@ -30,15 +30,16 @@ SMG.Base <- R6Class ("SMG.Base",
 
       update = function(data.current){
         throw('This method needs to be inherited in a subclass')
-      }
-    ),
-  active =
-    list(
+      },
+
       check_enough_available = function(data.current) {
         nobs <- nrow(data.current)
         if(nobs < self$minimalObservations){
           stop(paste('At least', self$minimalObservations, 'observations required'))
         }
       }
+    ),
+  active =
+    list(
     )
 )

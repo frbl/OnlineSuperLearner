@@ -272,7 +272,7 @@ ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, pr
 
   if(any(is.na(data))) warning('Data contains NA values!')
 
-  # Use the C functions for expit / logit. Faster and gives the same results as the original GLM function.
+  ## Use the C functions for expit / logit. Faster and gives the same results as the original GLM function.
   link <- stats::make.link("logit")
 
   bounded_logit <- function(delta) {
@@ -307,17 +307,17 @@ ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, pr
 
   ## Override the residuals function
   ########################################
-  # TODO: Should we actually override this function?
-  #family$dev.resids <- function(y, eta, wt) {
-    #mu <- bd_logit$linkinv(eta)
-    #wt*(y/mu + (1-y)/(1-mu))
+  ## TODO: Should we actually override this function?
+  ##family$dev.resids <- function(y, eta, wt) {
+    ##mu <- bd_logit$linkinv(eta)
+    ##wt*(y/mu + (1-y)/(1-mu))
 
     ## This is the original C code:
     ##2 * wt * (y * log(y/mu) + (1-y) * log((1-y)/(1-mu)))
-  #}
+  ##}
 
   if (is.null(previous_glm)) {
-    #cat('Creating new glm.\n')
+    ## cat('Creating new glm.\n')
     return(ConstrainedGlm.fit_new_glm(
       formula = formula,
       family = family,
@@ -326,7 +326,7 @@ ConstrainedGlm.fit <- function(formula, delta, data, fall_back_to_glm = TRUE, pr
       ...)
     )
   } 
-  #cat('Updating previous glm.\n')
+  ##cat('Updating previous glm.\n')
   return(ConstrainedGlm.update_glm(previous_glm = previous_glm, data = data, ...))
 }
 
@@ -361,14 +361,14 @@ ConstrainedGlm.fit_new_glm <- function(formula, family, data, fall_back_to_glm, 
   ## TODO: UGLY CODE!
   ## First try speed glm. In case that fails, try the constrained version. In case that fails, try the normal glm.
   the_glm <- tryCatch({
-    # TODO: we'd need to use a different method here. The regular GLM does not support online updating. However, speedglm crashes more often. 
-    #speedglm::speedglm(formula = formula, data = data, family = family, ...)
+    ## TODO: we'd need to use a different method here. The regular GLM does not support online updating. However, speedglm crashes more often. 
+    ##speedglm::speedglm(formula = formula, data = data, family = family, ...)
     glm(formula = formula, data = data, family = family, ...)
   }, error = function(e) {
-    #<simpleError in solve.default(XTX, XTz, tol = tol.solve): system is computationally singular: reciprocal condition number = 2.65004e-18>
+    ##<simpleError in solve.default(XTX, XTz, tol = tol.solve): system is computationally singular: reciprocal condition number = 2.65004e-18>
     warning('Constrained GLM failed, using glm binomial: ') 
     warning(paste(e$message, collapse = ' '))
-    #speedglm::speedglm(formula = formula, data = data, family = binomial(), ...)
+    ##speedglm::speedglm(formula = formula, data = data, family = binomial(), ...)
     glm(formula = formula, data = data, family = binomial(), ...)
   })
   return(the_glm)

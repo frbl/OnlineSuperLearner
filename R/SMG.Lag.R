@@ -70,6 +70,7 @@
 #' }  
 #' @export
 SMG.Lag <- R6Class("SMG.Lag",
+  inherit = SMG.Base,
   public =
     list(
       initialize = function(lags, colnames.to.lag){
@@ -123,14 +124,7 @@ SMG.Lag <- R6Class("SMG.Lag",
       },
 
       process = function(data.current) {
-        # Create column names
-        if(nrow(data.current) < self$minimalObservations){
-          stop(paste('At least', self$minimalObservations, 'observations required'))
-        } #else if(anyNA(tail(data.current, 1))){
-          ## If the last row contains an NA, we are not supposed to create new lags,
-          ## So we just return the lagged data we received.
-          #return(head(data.current, -1))
-        #}
+        self$check_enough_available(data.current)
 
         # TODO: We could probably do this in a smarter way, i.e., creating an initial frame first
         # and than prepend new columns, and remove the last column.
