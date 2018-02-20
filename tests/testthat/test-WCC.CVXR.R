@@ -54,6 +54,24 @@ test_that("it should compute the correct convex combination", {
   expect_true(all(difference < 1e-2))
 })
 
+test_that("it should result in a list of weights summing to 1", {
+  subject <- described.class$new(weights.initial = initial_weights)
+  subject$process(pred, Y, libraryNames)
+  expect_length(subject$get_weights, length(true_params))
+
+  res <- subject$get_weights
+  expect_equal(sum(res),1)
+})
+
+test_that("it should result in a list of weights all greater or equal to zero", {
+  subject <- described.class$new(weights.initial = initial_weights)
+  subject$process(pred, Y, libraryNames)
+  expect_length(subject$get_weights, length(true_params))
+
+  res <- subject$get_weights
+  expect_true(all(res >= 0 && res < 1))
+})
+
 test_that("it should compute the correct convex combination with random initial weights", {
   set.seed(12345)
   weights <- runif(num_params, 0, 1)
