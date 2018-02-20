@@ -436,7 +436,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         train_library = function(data_current) {
           ## Fit or update the  estimators
           data.splitted <- self$get_data_splitter$split(data_current)
-          outcome.variables <- sapply(self$get_random_variables, function(rv) rv$getY)
+          outcome.variables <- names(self$get_random_variables)
 
           private$train_all_estimators(data = data.splitted$train)
 
@@ -722,6 +722,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         get_osl_sampler = function() {
           return(private$osl_sampler)
+        },
+
+        get_verbosity = function() {
+          return(private$verbose)
         }
 
         ),

@@ -94,7 +94,13 @@ test_that("it should initialize the historical cv risk variable", {
 })
 
 # HERE ================================
-context(" perform_sample")
+context(" set_verbosity")
+test_that("it should set the correct verbosity", {
+  subject$set_verbosity(TRUE)
+  expect_true(subject$get_verbosity)
+  subject$set_verbosity(FALSE)
+  expect_false(subject$get_verbosity)
+})            
 
 
 context(" fit")
@@ -149,7 +155,7 @@ test_that("it should work with the different formats", {
 
 test_that("it should throw if the provided Y is a list, but not long enough", {
   data <- Data.Base$new()
-  expect_error(subject$retrieve_list_of_random_variables(Y = list()),
+  expect_error(subject$retrieve_list_of_random_variables(random_variables = list()),
                'There should be at least one entry in the outcomes specified')
 
 })

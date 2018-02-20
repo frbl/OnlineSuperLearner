@@ -260,7 +260,7 @@ OnlineSuperLearner.SampleIteratively <- R6Class("OnlineSuperLearner.SampleIterat
         ## The variables need to be ordered when sampling from them
         private$random_variables <- RandomVariable.find_ordering(randomVariables)
 
-        private$random_variable_names <- lapply(unname(self$get_random_variables), function(rv) rv$getY) %>% unlist
+        private$random_variable_names <- names(private$random_variables)
         private$summary_measure_generator <- summary_measure_generator
         private$remove_future_variables <- remove_future_variables
         private$verbose <- Arguments$getVerbose(verbose)
