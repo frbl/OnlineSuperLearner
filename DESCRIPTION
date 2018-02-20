@@ -83,6 +83,7 @@ Collate:
     'RandomVariable.R'
     'OneStepEstimator.R'
     'OnlineSuperLearner.Predict.R'
+    'OnlineSuperLearner.S3.R'
     'OnlineSuperLearner.SampleIteratively.R'
     'WCC.SGD.Simplex.R'
     'WCC.NMBFGS.R'
@@ -99,6 +100,7 @@ Collate:
     'OutputPlotGenerator.R'
     'OnlineSuperLearner.Simulation.R'
     'PreProcessor.R'
+    'SMG.Base.R'
     'Simulator.GAD.R'
     'Simulator.Slow.R'
     'WCC.NLopt.R'
@@ -108,4 +110,5 @@ Remotes:
     github::osofr/condensier@fb-add-update,
     github::jeroenooms/jsonlite,
     github::jimhester/covr,
+    github::airoldilab/sgd,
     github::n-s-f/mockery@master

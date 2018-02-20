@@ -58,6 +58,9 @@
   </a>
 </li>
 <li>
+  <a href="../articles/OnlineSuperLearner.html">Get Started</a>
+</li>
+<li>
   <a href="../reference/index.html">Reference</a>
 </li>
       </ul>
@@ -134,7 +137,7 @@ variables provided to it.</p>
     @return list a list containing the predictions, where each entry is one
      of the randomvariables for which a conditional distribution was fit.</p></dd>
     <dt><code>predict_probability(datO, X, Y, plot = FALSE, check = FALSE) </code></dt><dd><p>Internal method used by the <code>predict</code> function. This function
-    predicts a $P(Y X)$. These arguments are therefore instances of the
+    predicts a $P(Y | X)$. These arguments are therefore instances of the
     RandomVariable class. The data of these random variables needs to be
     included in the <code>datO</code> argument.
     @param datO the data from which to predict the probability.
@@ -202,7 +205,7 @@ variables provided to it.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="http://hadley.github.io/pkgdown/">pkgdown</a>.</p>
+  <p>Site built with <a href="http://pkgdown.r-lib.org/">pkgdown</a>.</p>
 </div>
 
       </footer>

@@ -66,7 +66,7 @@
 #'
 #'   \item{\code{predict_probability(datO, X, Y, plot = FALSE, check = FALSE) }}{ 
 #'     Internal method used by the \code{predict} function. This function
-#'     predicts a $P(Y\mid X)$. These arguments are therefore instances of the
+#'     predicts a $P(Y | X)$. These arguments are therefore instances of the
 #'     RandomVariable class. The data of these random variables needs to be
 #'     included in the \code{datO} argument.
 #'

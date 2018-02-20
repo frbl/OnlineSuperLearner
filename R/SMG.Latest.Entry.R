@@ -61,6 +61,7 @@
 #' }  
 #' @export
 SMG.Latest.Entry <- R6Class("SMG.Latest.Entry",
+  inherit = SMG.Base,
   public =
     list(
       initialize = function(colnames.to.use) {
@@ -82,10 +83,7 @@ SMG.Latest.Entry <- R6Class("SMG.Latest.Entry",
       },
 
       process = function(data.current){
-        nobs <- nrow(data.current)
-        if(nobs < self$minimalObservations){
-          throw('At least ', self$minimalObservations, ' observations required')
-        }
+        self$check_enough_available(data.current)
         
         if(self$minimalObservations == 1) return(data.current[,private$colnames.to.use, with=FALSE])
         return(tail( data.current[,private$colnames.to.use, with=FALSE], -(self$minimalObservations - 1)))

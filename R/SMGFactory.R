@@ -29,14 +29,12 @@
 #'     Fabricates the actual SMG's. Given a list of \code{RandomVariable}s all
 #'     covariates are selected and merged.  These are used as a basis for
 #'     selecting the needed variables in the dataframe. The column names need to be specified as follows:
-#'     \begin{itemize}
-#'       \item{just the variable name}: uses the \code{SMG.Latest.Entry} class
-#'        to include the contemporaneous variables.
-#'       \item{the variable name\_lag\_the lag}: uses the \code{SMG.Lag} class
-#'        to include the lagged variables.
-#'       \item{the variable name\_mean}: uses the \code{SMG.Mean} class to
-#'        include the running mean for this variable.
-#'     \end{itemize}
+#'     - just the variable name: uses the \code{SMG.Latest.Entry} class
+#'       to include the contemporaneous variables.
+#'     - the variable name\_lag\_the lag: uses the \code{SMG.Lag} class
+#'       to include the lagged variables.
+#'     - the variable name\_mean: uses the \code{SMG.Mean} class to
+#'       include the running mean for this variable.
 #'
 #'     @param randomVariables = a list of \code{RandomVariable} objects, from
 #'      which the X variables are selected.
@@ -77,7 +75,8 @@ SMGFactory <- R6Class("SMGFactory",
 
         fabricate = function(randomVariables, ...) {
           SMG.list <- list()
-          variables_found <- FALSE
+          lag_variables_found <- FALSE
+          mean_variables_found <- FALSE
 
           needed_variables <- lapply(randomVariables, function(rv) c(rv$getX, rv$getY)) %>%
             unlist %>%
@@ -86,7 +85,7 @@ SMGFactory <- R6Class("SMGFactory",
           # Process lags
           smg_lag_params <- private$get_smg_lag_params(needed_variables)
           if (is.a(smg_lag_params, 'list')) {
-            variables_found <- TRUE
+            lag_variables_found <- TRUE
             SMG.list <- c(SMG.list, SMG.Lag$new(lags = smg_lag_params$lags,
                                                 colnames.to.lag = smg_lag_params$colnames.to.lag))
           }
@@ -94,17 +93,18 @@ SMGFactory <- R6Class("SMGFactory",
           # Process other stuff
           mean_params <- private$get_smg_mean_params(needed_variables)
           if (is.a(mean_params, 'list')) {
+            mean_variables_found <- TRUE
             SMG.list <- c(SMG.list, SMG.Mean$new(colnames.to.mean = mean_params$colnames.to.mean))
           }
 
           # Contemporaneos variables
-          if (variables_found) {
-            needed_variables %<>% setdiff(. ,smg_lag_params$covered_variables)
-          }
+          if (lag_variables_found)  { needed_variables %<>% setdiff(., smg_lag_params$covered_variables) }
+          if (mean_variables_found) { needed_variables %<>% setdiff(., mean_params$covered_variables) }
+
           SMG.list <- c(SMG.list, SMG.Latest.Entry$new(colnames.to.use = needed_variables))
           SummaryMeasureGenerator$new(SMG.list = SMG.list, ...)
         }
-        ),
+    ),
   active =
     list(
       get_candidate_smgs = function() {
@@ -124,7 +124,8 @@ SMGFactory <- R6Class("SMGFactory",
           gsub("_mean", "",  .) %>%
           unique
 
-        list(colnames.to.mean = variables)
+        list(colnames.to.mean = variables,
+             covered_variables = my_variables)
       },
       get_smg_lag_params = function(needed_variables) {
         my_variables <-  grep('_lag_', needed_variables) %>%

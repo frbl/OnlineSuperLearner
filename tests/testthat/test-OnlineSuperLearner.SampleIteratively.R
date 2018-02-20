@@ -65,7 +65,7 @@ test_that("it should initialize and store the random variable names", {
   result <- subject$get_random_variable_names
   expect_false(is.null(result))
   expect_false(is(result, 'list'))
-  expect_equal(result, c(rv.W$getY, rv.Y$getY))
+  expect_equal(result, unname(c(rv.W$getY, rv.Y$getY)))
 })
 
 context(" validate_parameters")
@@ -309,9 +309,9 @@ test_that("it should remove the future measurements (which are obviously not use
   })
 
   expect_error(subject$sample_single_block(
-    data = glob_data[1,],
-    start_from_variable = rv.W,
     current_time = current_time,
+    start_from_variable = rv.W,
+    data = glob_data[1,],
     intervention = glob_intervention,
     discrete = glob_discrete
   ), 'stop_execution')

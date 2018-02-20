@@ -22,14 +22,18 @@ devtools::install_github("frbl/OnlineSuperLearner")
 
 ## Examples 
 
-For an example on how to run the OnlineSuperLearner, view the Jupyter notebook, or the `R/OnlineSuperLearner.Simulation.R` file.
+For an example on how to run the OnlineSuperLearner, view the Jupyter notebook, or the `R/OnlineSuperLearner.Simulation.R` file. For a complete guide see [the documentation](https://frbl.eu/OnlineSuperLearner).
 
 [Jupyter]: http://jupyter.org/
+
+You can also run the demos for the project. Run:
+``` R
+demo('cpp-demo', package = 'OnlineSuperLearner')
+```
 
 ## TODO
 
 * View the issues page
-* Convert all # to ## for emacs
 
 ## References 
 

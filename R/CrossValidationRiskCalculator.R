@@ -5,7 +5,6 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
-#' @import R.utils R.oo
 #' @include Evaluation.R
 #'
 #' @section Methods:
@@ -24,23 +23,23 @@
 #'     \code{add_evaluation_measure_name} to true.
 #'
 #'     The input data should look looks as followos:
-#'       list >
-#'         normalized > 
-#'           AlgorithmName1 >
+#'       list
+#'         normalized 
+#'           AlgorithmName1
 #'            data.table with a W, A, Y entry.
-#'           AlgorithmName2 >
+#'           AlgorithmName2
 #'            data.table with a W, A, Y entry.
-#'         denormalized > 
-#'           AlgorithmName1 >
+#'         denormalized
+#'           AlgorithmName1
 #'            data.table with a W, A, Y entry.
-#'           AlgorithmName2 >
+#'           AlgorithmName2
 #'            data.table with a W, A, Y entry.
 #'
 #'     The output data then looks as follows:
-#'       list >
-#'         AlgorithmName1 >
+#'       list
+#'         AlgorithmName1
 #'          data.table with a W, A, Y entry.
-#'         AlgorithmName2 >
+#'         AlgorithmName2
 #'          data.table with a W, A, Y entry.
 #'
 #'     @param predicted.outcome the outcome predicted by the various algorithms
@@ -63,7 +62,7 @@
 #'   \item{\code{evaluate_single_outcome(observed.outcome, predicted.outcome, ra ndomVariables}}{
 #'     Perform the evaluation of a single estimator. In this case the data of
 #'     just one estimator can be provided, such as:
-#'       AlgorithmName1 >
+#'       AlgorithmName1
 #'        data.table with a W, A, Y entry.
 #'     the function will then use the default evaluation metric to determine
 #'     the performance of the estimator.
@@ -155,10 +154,6 @@
 #'     @param current_count the number of iterations used to calculate the old risk.
 #'     @param randomVariables the random variables for which the predictions have been created.
 #'     @return the updated risk as a data.table. 
-#'     @examples
-#'     \dontrun{ 
-#'       update_single_risk 
-#'     }
 #'   }
 #' }
 #' @export
@@ -170,7 +165,7 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
 
       ## Output is a list of data.tables
       calculate_evaluation = function(predicted.outcome, observed.outcome, randomVariables, add_evaluation_measure_name=TRUE) {
-        # predicted.outcome <- Arguments$getInstanceOf(predicted.outcome, 'list')
+        ## predicted.outcome <- Arguments$getInstanceOf(predicted.outcome, 'list')
 
         ## If there is a normalized field, prefer the normalized outcomes
         if ('normalized' %in% names(predicted.outcome)) predicted.outcome = predicted.outcome$normalized 
@@ -214,7 +209,6 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
           observed.outcome <- Arguments$getInstanceOf(observed.outcome, 'data.table')
         }
 
-        predicted.outcome
         cv_risk <- lapply(predicted.outcome, function(algorithm_outcome) {
           self$risk_single_outcome(
             observed.outcome = observed.outcome,

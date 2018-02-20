@@ -59,6 +59,7 @@
 #'   } 
 #' }  
 SMG.Transformation <- R6Class("SMG.Transformation",
+  inherit = SMG.Base,
   public =
     list(
       initialize = function(function_to_use = sin, suffix = 'sin', colnames_to_use) {
@@ -74,9 +75,7 @@ SMG.Transformation <- R6Class("SMG.Transformation",
       },
 
       process = function(data.current) {
-        if(nrow(data.current) < self$minimalObservations){
-          throw('At least', self$minimalObservations, 'observations required')
-        } 
+        self$check_enough_available(data.current)
         data <- private$function_to_use(data.current[,private$colnames_to_use, with=FALSE])
         colnames(data) <- private$exposed_columnames
         return(data)

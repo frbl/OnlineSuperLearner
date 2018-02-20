@@ -58,6 +58,9 @@
   </a>
 </li>
 <li>
+  <a href="../articles/OnlineSuperLearner.html">Get Started</a>
+</li>
+<li>
   <a href="../reference/index.html">Reference</a>
 </li>
       </ul>
@@ -102,22 +105,22 @@ of an estimator.</p>
     metric that was used to the names of the output. This is done by setting
     <code>add_evaluation_measure_name</code> to true.
     The input data should look looks as followos:
-      list &gt;
-        normalized &gt; 
-          AlgorithmName1 &gt;
+      list
+        normalized 
+          AlgorithmName1
            data.table with a W, A, Y entry.
-          AlgorithmName2 &gt;
+          AlgorithmName2
            data.table with a W, A, Y entry.
-        denormalized &gt; 
-          AlgorithmName1 &gt;
+        denormalized
+          AlgorithmName1
            data.table with a W, A, Y entry.
-          AlgorithmName2 &gt;
+          AlgorithmName2
            data.table with a W, A, Y entry.
     The output data then looks as follows:
-      list &gt;
-        AlgorithmName1 &gt;
+      list
+        AlgorithmName1
          data.table with a W, A, Y entry.
-        AlgorithmName2 &gt;
+        AlgorithmName2
          data.table with a W, A, Y entry.
     @param predicted.outcome the outcome predicted by the various algorithms
      in the super learner. This is a list which either has two entries
@@ -132,7 +135,7 @@ of an estimator.</p>
     @return a list with the evalutation of each of the algorithms.</p></dd>
     <dt><code>evaluate_single_outcome(observed.outcome, predicted.outcome, ra ndomVariables</code></dt><dd><p>Perform the evaluation of a single estimator. In this case the data of
     just one estimator can be provided, such as:
-      AlgorithmName1 &gt;
+      AlgorithmName1
        data.table with a W, A, Y entry.
     the function will then use the default evaluation metric to determine
     the performance of the estimator.
@@ -198,9 +201,7 @@ of an estimator.</p>
     @param new_risks the new risks, calculated using the current machine learning estimators.
     @param current_count the number of iterations used to calculate the old risk.
     @param randomVariables the random variables for which the predictions have been created.
-    @return the updated risk as a data.table. 
-    @examples
-          update_single_risk</p></dd>
+    @return the updated risk as a data.table.</p></dd>
 </dl>
     
 
@@ -223,7 +224,7 @@ of an estimator.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="http://hadley.github.io/pkgdown/">pkgdown</a>.</p>
+  <p>Site built with <a href="http://pkgdown.r-lib.org/">pkgdown</a>.</p>
 </div>
 
       </footer>

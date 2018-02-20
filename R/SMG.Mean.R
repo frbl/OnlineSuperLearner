@@ -54,6 +54,7 @@
 #' }  
 #' @export
 SMG.Mean <- R6Class("SMG.Mean",
+  inherit = SMG.Base,
   public =
     list(
       initialize = function(colnames.to.mean) {
@@ -65,25 +66,29 @@ SMG.Mean <- R6Class("SMG.Mean",
       },
 
       process = function(data.current){
-        nobs <- nrow(data.current)
-        if(nobs < self$minimalObservations){
-          stop(paste('At least', self$minimalObservations, 'observations required'))
+        current_nobs <- nrow(data.current)
+        self$check_enough_available(data.current)
+        
+        sums <- cumsum(data.current[,private$colnames.to.mean, with=FALSE])
+        divider <- seq(private$nobs + 1, private$nobs + current_nobs)
+        mean_column <- mapply('+',
+          sums[,private$colnames.to.mean, with = FALSE],
+           private$mean.current * private$nobs
+        ) / divider
+
+        ## NOTE: mean.current is a vector, not a scalar.
+        if(is.vector(mean_column)) {
+          private$mean.current <- mean_column
+          # TODO: Is this really necessary?
+          mean_column <- as.data.table(t(mean_column))
+        } else {
+          private$mean.current <- tail(mean_column, 1)[,private$colnames.to.mean]
         }
-        sums <- colSums(data.current[,private$colnames.to.mean, with=FALSE])
 
-        ## TODO: Super naive implementation, fix it
-        private$mean.current <- setNames(mapply('+',
-                                                sums[private$colnames.to.mean],
-                                                private$mean.current[private$colnames.to.mean] * private$nobs
-                                                ),
-                                          private$colnames.to.mean)
+        private$nobs <- private$nobs + current_nobs
 
-        private$nobs <- private$nobs + nobs
-        private$mean.current <- private$mean.current / private$nobs
-
-        temp <- copy(private$mean.current)
-        names(temp) <- private$colnames.mean.affix
-        temp
+        colnames(mean_column) <- private$colnames.mean.affix
+        mean_column
       },
 
       update = function(data.current) {
@@ -97,7 +102,7 @@ SMG.Mean <- R6Class("SMG.Mean",
   active = 
     list(
       exposedVariables = function() {
-        private$colnames.to.mean
+        private$colnames.mean.affix
       },
 
       minimalObservations = function() {

@@ -58,6 +58,9 @@
   </a>
 </li>
 <li>
+  <a href="../articles/OnlineSuperLearner.html">Get Started</a>
+</li>
+<li>
   <a href="../reference/index.html">Reference</a>
 </li>
       </ul>
@@ -124,7 +127,7 @@ the <code>sampleIteratively</code> function on that class.</p>
     @param start_from_variable RandomVariable should be an instance of a
      <code>RandomVariable</code> class.
     @param start_from_time integer should be an integer value $x$ where
-     $1 x &lt; $.
+     $1 &lt;= x &lt; tau$.
     @param tau integer a value when the intervention is measured. Should be
      greater or equal to 1.
     @param discrete boolean should we run the discrete superlearner? should
@@ -144,7 +147,7 @@ the <code>sampleIteratively</code> function on that class.</p>
     <code>start_from_variable</code>) at time 1 (or time <code>start_from_time</code>)
     and samples the next variable, and the next, until it reaches the last
     variable in the series. It will then overflow to the next unit of time,
-    until it reaches $$, the time at which the intervention should be
+    until it reaches $tau$, the time at which the intervention should be
     recorded.  Note that some preliminary  analysis showed that for this
     function approx 94<!-- % - 99% of time is  spent in the predict function. -->
     @param data data.table the initial data to initialize the sampling
@@ -273,7 +276,7 @@ the <code>sampleIteratively</code> function on that class.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="http://hadley.github.io/pkgdown/">pkgdown</a>.</p>
+  <p>Site built with <a href="http://pkgdown.r-lib.org/">pkgdown</a>.</p>
 </div>
 
       </footer>

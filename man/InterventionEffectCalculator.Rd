@@ -16,17 +16,13 @@ For the specification of how to define interventions, look at the
 \section{Methods}{
  
 \describe{  
-  \item{\code{initialize(bootstrap_iterations, randomVariables, outcome_variable}}{ 
+  \item{\code{initialize(bootstrap_iterations,  outcome_variable}}{ 
     Creates a new InterventionEffectCalculator.
     
     @param bootstrap_iterations integer the number of bootstrap iterations
      to use when calculating the effect of an intervention. If there are
      more iterations, the result will be more reliable, but calculating will
      take significantly longer.
-
-    @param randomVariables list of randomvariable objects. The
-     randomvariables used to create / fit the densities. Usualy a list of W,
-     A, and Y.
 
     @param outcome_variable string the name of the variable for which the
      outcome should be measured. This is usualy Y (depending on you setup).

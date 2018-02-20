@@ -58,6 +58,9 @@
   </a>
 </li>
 <li>
+  <a href="../articles/OnlineSuperLearner.html">Get Started</a>
+</li>
+<li>
   <a href="../reference/index.html">Reference</a>
 </li>
       </ul>
@@ -113,7 +116,7 @@ to the super learner machine learning model.</p>
      be propagated to other classes.</p></dd>
     <dt><code>set_verbosity(verbosity) </code></dt><dd><p>Method that can change the verbosity of a superlearner instance
     @param verbose the new verbosity (how much logging) to use.</p></dd>
-    <dt><code>fit(data, randomVariables, initial_data_size = 5, max_iterations = 20</code></dt><dd><p>Fits an instance of the OnlineSuperLearner class. This is the main
+    <dt><code>fit(data, initial_data_size = 5, max_iterations = 20</code></dt><dd><p>Fits an instance of the OnlineSuperLearner class. This is the main
     method used for training the online SuperLearner (and this will actually
     trigger the training process). This will fit the provided
     <code>SL.library.definition</code> estimators as well as the
@@ -121,10 +124,6 @@ to the super learner machine learning model.</p>
     @param data Data.Base the data to use to train the instance on. Note
      that this can be any instance of a <code>Data.Base</code> superclass, as long
      as it extends the correct functions.
-    @param randomVariables list a list of <code>RandomVariable</code> objects.
-     These are the randomVariables we will fit a conditional density for.
-     These variables need to be in the data as well, but can be a subset of
-     all `columns' of the data.
     @param initial_data_size integer (default = 5) when training an online
      algoritm, one first needs to specify a small number of rows of data that
      can be used for calculating the initial versions of the estimators
@@ -138,7 +137,7 @@ to the super learner machine learning model.</p>
     @param mini_batch_size integer (default = 20) the size of the mini batch
      to use for each update.
     @return data.table a data.table with the risks of each estimator.</p></dd>
-    <dt><code>predict(data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE)</code></dt><dd><p>Method to perform a prediction on the estimators. It can run in
+    <dt><code>predict(data, randomVariables = NULL, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE)</code></dt><dd><p>Method to perform a prediction on the estimators. It can run in
     different configurations. It can be configured to predict the outcome
     using all estimators (the <code>all_estimators</code> flag), using the
     discrete superlearner (the <code>discrete</code> flag), or using the
@@ -147,8 +146,10 @@ to the super learner machine learning model.</p>
     @param data Data.Base the data to use to train the instance on. Note
      that this can be any instance of a <code>Data.Base</code> superclass, as long
      as it extends the correct functions.
-    @param randomVariables list the random variables used for doing the
-     predictions (these should be the same as the ones used for fitting).
+    @param randomVariables list (default = NULL) the random variables used
+    for doing the predictions (these should be the same as the ones used for
+    fitting). If <code>NULL</code>, we will use the list provided on
+    initialization.
     @param all_estimators boolean (default = TRUE) whether or not to include
      the output of all candidate estimators in the output
     @param discrete boolean (default = TRUE) = whether or not to include the
@@ -164,7 +165,7 @@ to the super learner machine learning model.</p>
      normalized outcomes are the values scaled between 0-1 (using the
      <code>PreProcessor</code>), the denormalized outcomes are the values
      transformed back to their original range.</p></dd>
-    <dt><code>sample_iteratively(data, randomVariables, tau = 10, intervention = NULL)</code></dt><dd><p>Method to sample iteratively from the densities. It works by providing
+    <dt><code>sample_iteratively(data, tau = 10, intervention = NULL)</code></dt><dd><p>Method to sample iteratively from the densities. It works by providing
     an initial observation (<code>data</code>), from which iteretitatively the
     next measurement is estimated. This is done until <code>tau</code> steps in
     the future. Furthermore, this sampling step can be augmented with an
@@ -174,8 +175,6 @@ to the super learner machine learning model.</p>
     should show when the intervention is performed, the <code>what</code> entry
     shows what should be done.
     @param data = the initial data to start the sampling from. At most 1 row of data.
-    @param randomVariables list the random variables used for doing the
-     predictions (these should be the same as the ones used for fitting).
     @param tau integer (default = 10) the timestep at which you want to evaluate the output
     @param intervention list/intervention (default = NULL) the intervention,
     e.g.: <code>list(when = c(1,2), what = c(1,0), variable = 'A')</code>. See the
@@ -194,15 +193,11 @@ to the super learner machine learning model.</p>
     @param check boolean (default = FALSE) should we perform a check on the
      provided arguments?
     @return list/dataframe of sampled values.</p></dd>
-    <dt><code>train_library(data_current, randomVariables)</code></dt><dd><p>Function to train the initial set of models
-    @param data_current data.table the dataset to train the estimators on.
-    @param randomVariables list the random variables used for doing the
-     predictions (these should be the same as the ones used for fitting).</p></dd>
-    <dt><code>update_library(randomVariables, max_iterations, mini_batch_size)</code></dt><dd><p>Updates the initial / trained estimators with the available data. This
+    <dt><code>train_library(data_current)</code></dt><dd><p>Function to train the initial set of models
+    @param data_current data.table the dataset to train the estimators on.</p></dd>
+    <dt><code>update_library(max_iterations, mini_batch_size)</code></dt><dd><p>Updates the initial / trained estimators with the available data. This
     data does not need to be provided as it is already part of the Data.Base
     provided on initialization / fitting.
-    @param randomVariables list the random variables used for doing the
-     predictions (these should be the same as the ones used for fitting).
     @param max_iterations integer the maximal number of iterations of online
     learning to do.
     @param mini_batch_size integer (default = 20) the size of the mini batch
@@ -212,6 +207,18 @@ to the super learner machine learning model.</p>
     <dt><code>get_cv_risk()</code></dt><dd><p>Method to retrieve the current <code>cv_risk</code> (note that this is not an active
     method, so it can easiliy be stubbed).
     @return an overview of the CV risk of the different estimators</p></dd>
+    <dt><code>set_random_variables(random_variables)</code></dt><dd><p>Method to set the random_variables in the osl class. Generally not needed (apart from initialization).</p></dd>
+    <dt><code>retrieve_list_of_random_variables(random_variables)</code></dt><dd><p>Retrieves a list of random variables according to a specification. This
+    function allows for a more flexible way of retrieving random variables
+    from the OSL model.
+    @param random_variables the random_variables for which we want to
+     receive the list of variables, in a form that our model accepts. This
+     can be specified as follows:
+     - List of <code>RandomVariable</code> objects to predict
+     - Single <code>RandomVariable</code> object to predict
+     - List of strings with the names of the outputs (<code>list('X','Y')</code>)
+     - Single string with the name of the output (<code>'Y'</code>)
+    @return a list of <code>RandomVariable</code> objects to use in the prediction function.</p></dd>
     <dt><code>is_fitted</code></dt><dd><p>Active method. Returns whether the OSL has been fitted or not
     @return boolean true if it has been fitted, false if not</p></dd>
     <dt><code>is_online</code></dt><dd><p>Active method to deterimine whether the actual algorithm is fitted in an online way. That is to say, that all of
@@ -233,8 +240,12 @@ to the super learner machine learning model.</p>
     @return list a list containing the best estimator for each of the random variables.</p></dd>
     <dt><code>get_cv_risk</code></dt><dd><p>Active method to retrieve the crossvalidated risk of each of the estimators
     @return list a list containing the risk estimates for each of hte estimators.</p></dd>
+    <dt><code>get_random_variables</code></dt><dd><p>Active method. Returns all <code>RandomVariables</code> in the OSL object.
+    @return list a list containing all <code>RandomVariable</code>s</p></dd>
     <dt><code>get_valididy</code></dt><dd><p>Active method that throws an error if the current state of the OSL is not valid (i.e., that it has invalid
     parameters in it).</p></dd>
+    <dt><code>get_osl_sampler</code></dt><dd><p>Active method. Returns the OSL sampler (which is an instance of the
+    <code>OnlineSuperLearner.SampleIteratively</code> object.</p></dd>
 </dl>
     
 
@@ -257,7 +268,7 @@ to the super learner machine learning model.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="http://hadley.github.io/pkgdown/">pkgdown</a>.</p>
+  <p>Site built with <a href="http://pkgdown.r-lib.org/">pkgdown</a>.</p>
 </div>
 
       </footer>

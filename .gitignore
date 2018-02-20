@@ -2,6 +2,7 @@
 .Rhistory
 .Rapp.history
 xterm-256color.ti
+.Rd2pdf*
 
 # Files created by Emacs
 *.R~

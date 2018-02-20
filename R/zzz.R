@@ -1,13 +1,13 @@
 #' General packages used by all of the other classes
 #' @import methods
-#' @import R.oo
-#' @import R.utils
 #' @import foreach
 #' @import parallel
-#' @importFrom R.utils Arguments
+#' @import R.utils
+#' @importFrom R.oo equals
+#' @importFrom R.utils Verbose Arguments
 #' @importFrom R.methodsS3 throw
 #' @importFrom data.table data.table as.data.table is.data.table rbindlist copy shift setDT
-#' @import magrittr
+#' @importFrom magrittr %>% %<>% %T>%
 #' @import assertthat
 generalImports <- list()
 

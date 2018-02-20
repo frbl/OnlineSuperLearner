@@ -58,6 +58,9 @@
   </a>
 </li>
 <li>
+  <a href="../articles/OnlineSuperLearner.html">Get Started</a>
+</li>
+<li>
   <a href="../reference/index.html">Reference</a>
 </li>
       </ul>
@@ -94,14 +97,11 @@ For the specification of how to define interventions, look at the
 
     
     <dl class='dl-horizontal'>
-  <dt><code>initialize(bootstrap_iterations, randomVariables, outcome_variable</code></dt><dd><p>Creates a new InterventionEffectCalculator.
+  <dt><code>initialize(bootstrap_iterations,  outcome_variable</code></dt><dd><p>Creates a new InterventionEffectCalculator.
     @param bootstrap_iterations integer the number of bootstrap iterations
      to use when calculating the effect of an intervention. If there are
      more iterations, the result will be more reliable, but calculating will
      take significantly longer.
-    @param randomVariables list of randomvariable objects. The
-     randomvariables used to create / fit the densities. Usualy a list of W,
-     A, and Y.
     @param outcome_variable string the name of the variable for which the
      outcome should be measured. This is usualy Y (depending on you setup).
     @param parallel (default = TRUE) should the effect calculator run in a
@@ -195,7 +195,7 @@ For the specification of how to define interventions, look at the
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="http://hadley.github.io/pkgdown/">pkgdown</a>.</p>
+  <p>Site built with <a href="http://pkgdown.r-lib.org/">pkgdown</a>.</p>
 </div>
 
       </footer>

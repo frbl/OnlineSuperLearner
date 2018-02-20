@@ -20,6 +20,7 @@
 #' @include CrossValidationRiskCalculator.R
 #' @include InterventionParser.R
 #' @include OnlineSuperLearner.SampleIteratively.R
+#' @include OnlineSuperLearner.S3.R
 #'
 #' @section Methods:
 #' \describe{
@@ -197,6 +198,21 @@
 #'     Method to set the random_variables in the osl class. Generally not needed (apart from initialization).
 #'   }
 #'
+#'   \item{\code{retrieve_list_of_random_variables(random_variables)}}{
+#'     Retrieves a list of random variables according to a specification. This
+#'     function allows for a more flexible way of retrieving random variables
+#'     from the OSL model.
+#'     @param random_variables the random_variables for which we want to
+#'      receive the list of variables, in a form that our model accepts. This
+#'      can be specified as follows:
+#'      - List of \code{RandomVariable} objects to predict
+#'      - Single \code{RandomVariable} object to predict
+#'      - List of strings with the names of the outputs (\code{list('X','Y')})
+#'      - Single string with the name of the output (\code{'Y'})
+#'
+#'     @return a list of \code{RandomVariable} objects to use in the prediction function.
+#'   }
+#'
 #'   \item{\code{is_fitted}}{
 #'     Active method. Returns whether the OSL has been fitted or not
 #'
@@ -263,6 +279,11 @@
 #'     Active method that throws an error if the current state of the OSL is not valid (i.e., that it has invalid
 #'     parameters in it).
 #'   }
+#'
+#'   \item{\code{get_osl_sampler}}{
+#'     Active method. Returns the OSL sampler (which is an instance of the
+#'     \code{OnlineSuperLearner.SampleIteratively} object.
+#'   }
 #' }
 #' @export
 OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
@@ -276,7 +297,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         initialize = function(SL.library.definition = c('ML.Local.lm', 'ML.H2O.glm'),
                               summaryMeasureGenerator, random_variables, should_fit_osl = TRUE,
                               should_fit_dosl = TRUE, pre_processor = NULL,
-                              verbose = FALSE ) {
+                              verbose = FALSE, ...) {
 
           self$set_verbosity(Arguments$getVerbose(verbose, timestamp = TRUE))
 
@@ -314,6 +335,14 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$initialize_weighted_combination_calculators()
 
           private$is_parallel = FALSE
+
+          private$osl_sampler <- OnlineSuperLearner.SampleIteratively$new(
+            osl = self,
+            randomVariables = self$get_random_variables,
+            summary_measure_generator = self$get_summary_measure_generator,
+            remove_future_variables = TRUE
+          )
+
           self$get_validity
         },
 
@@ -323,11 +352,14 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         ## Data = the data object from which the data can be retrieved
         ## initial_data_size = the number of observations needed to fit the initial estimator
-        fit = function(data, initial_data_size = 5, max_iterations = 20,
-                       mini_batch_size = 20) {
+        fit = function(data, initial_data_size = 5,
+                       max_iterations = 20,
+                       mini_batch_size = 20, ...) {
           tic <- Sys.time()
+
           initial_data_size <- Arguments$getInteger(initial_data_size, c(1,Inf))
           max_iterations <- Arguments$getInteger(max_iterations, c(0,Inf))
+          mini_batch_size <- Arguments$getInteger(mini_batch_size, c(1,Inf))
           data <- Arguments$getInstanceOf(data, 'Data.Base')
 
           self$get_summary_measure_generator$setData(data = data)
@@ -341,7 +373,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           )
 
           ## Get the initial data for fitting the first estimator and train the initial models
-          next_data <- self$get_summary_measure_generator$getNext(initial_data_size)
+          next_data <- self$get_summary_measure_generator$getNext(n = initial_data_size)
 
           ## Create the initial fit
           private$verbose && enter(private$verbose, 'Fitting initial estimators')
@@ -353,7 +385,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$verbose && enter(private$verbose, 'Updating estimators')
           self$update_library(
             max_iterations = max_iterations,
-            mini_batch_size = Arguments$getInteger(mini_batch_size, c(1,Inf))
+            mini_batch_size = mini_batch_size
           )
           private$verbose && exit(private$verbose)
 
@@ -389,16 +421,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         sample_iteratively = function(data, tau = 10, intervention = NULL, discrete = TRUE, 
                                       return_type = 'observations', start_from_variable = NULL, 
                                       start_from_time = 1, check = FALSE) {
-          
-          # TODO: Store this object, and reuse it
-          osl_sampler <- OnlineSuperLearner.SampleIteratively$new(
-            osl = self,
-            randomVariables = self$get_random_variables,
-            summary_measure_generator = self$get_summary_measure_generator,
-            remove_future_variables = TRUE
-          )
 
-          osl_sampler$sample_iteratively(
+          self$get_osl_sampler$sample_iteratively(
             data = data,
             tau = tau,
             intervention = intervention,
@@ -414,7 +438,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         train_library = function(data_current) {
           ## Fit or update the  estimators
           data.splitted <- self$get_data_splitter$split(data_current)
-          outcome.variables <- sapply(self$get_random_variables, function(rv) rv$getY)
+          outcome.variables <- names(self$get_random_variables)
 
           private$train_all_estimators(data = data.splitted$train)
 
@@ -564,6 +588,33 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           variable_names <- sapply(random_variables, function(rv) rv$getY)
           names(random_variables) <- variable_names
           private$random_variables <- random_variables
+        },
+
+        retrieve_list_of_random_variables = function(random_variables) {
+          ## Convert Y to random variable
+          if (is(random_variables, 'list')) {
+            if(length(random_variables) == 0) throw('There should be at least one entry in the outcomes specified')
+
+            random_variables <- lapply(random_variables, function(rv) {
+              if (!is(rv, 'RandomVariable')) {
+                ## convert it to the randomvariable
+                rv <- self$get_random_variables[[rv]]
+              }
+              rv
+            })
+          } else {
+            if (is(random_variables, 'RandomVariable')) {
+              ## Encapsulate it
+              random_variables <- list(random_variables)
+
+            ## Check to see if something is actually a string or a vector
+            } else if (length(nchar(random_variables)) == 1) {
+              ## convert it to the randomvariable
+              random_variables <- self$get_random_variables[[random_variables]]
+            } else {
+              throw('Either provide strings, or randomVariables')
+            }
+          }
         }
   ),
   active =
@@ -669,6 +720,14 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         get_random_variables = function() {
           return(private$random_variables)
+        },
+
+        get_osl_sampler = function() {
+          return(private$osl_sampler)
+        },
+
+        get_verbosity = function() {
+          return(private$verbose)
         }
 
         ),
@@ -722,6 +781,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         ## Train / update CV in parallel?
         is_parallel = NULL,
+
+        ## The sampler
+        osl_sampler = NULL,
 
         ## Functions
         ## =========
@@ -842,7 +904,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         },
 
-
         get_looping_function = function() {
           if(private$is_parallel) {
             return(`%dopar%`)
@@ -851,16 +912,3 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         }
     )
 )
-
-# Create general R3 methods
-predict.OnlineSuperLearner <- function(object, newdata, Y, ...) {
-  # Convert newdata to data.static
-  # Convert Y to random variable
-  Y <- object$get_random_variables[Y]
-  object$predict(...)
-}
-
-summary.OnlineSuperLearner <- function(object, ...) {
-  object$info
-}
-

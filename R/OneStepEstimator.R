@@ -14,8 +14,6 @@
 #' @include DataCache.R
 #' @include RandomVariable.R
 #' @import methods
-#' @import R.oo
-#' @import R.utils
 #' @importFrom R6 R6Class
 #' @section Methods: 
 #' \describe{  
