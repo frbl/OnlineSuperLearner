@@ -4,13 +4,12 @@ devtools::load_all(".")
 set.seed(49753)
 library(sl3)
 library(tidyverse)
-data(cpp)
 
+## Load the cpp data
+data(cpp)
 cpp <- cpp %>%
   dplyr::filter(!is.na(haz)) %>%
   mutate_all(funs(replace(., is.na(.), 0)))
-
-covars <- 
 
 W <-c("apgar1", "apgar5", "parity", "gagebrth", "mage", "meducyrs", "sexn")
 A <- c()
@@ -58,7 +57,7 @@ osl  <- OnlineSuperLearner::fit.OnlineSuperLearner(
 
 preds <- sampledata(osl, newdata = cpp, randomVariables, plot = TRUE)
 preds
-preds$denormalized$osl.estimator
+preds$osl.estimator
 
 
 generate_formulae <- function(W, A, Y){

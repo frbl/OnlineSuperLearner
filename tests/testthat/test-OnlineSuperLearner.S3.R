@@ -47,6 +47,7 @@ test_that("it should not throw if all arguments are correct", {
 
 context(" predict.OnlineSuperLearner")
 #==========================================================
+theresult <- 'theresult'
 expected_Y = 'therv_for_Y'
 expected_X = 'therv_for_X'
 subject <- list(get_random_variables = list('Y' = expected_Y, 'X' = expected_X))
@@ -63,6 +64,7 @@ test_that("it should work with a single randomVariable string as outcome and cal
       expect_false(sample)
       expect_equal(randomVariables, expected_Y)
       called <<- TRUE
+      return(list(denormalized = theresult, normalized= 'Somethingelse'))
     }
   )
 
@@ -77,9 +79,10 @@ test_that("it should work with a single randomVariable string as outcome and cal
   ## Stub the getrv function
   called <<- FALSE
   called2 <<- FALSE
-  predict(subject, newdata = data, Y = Y)
+  result <- predict(subject, newdata = data, Y = Y)
   expect_true(called)
   expect_true(called2)
+  expect_equal(result, theresult)
 })
 
 test_that("it should work without a randomVariable", {
@@ -87,16 +90,17 @@ test_that("it should work without a randomVariable", {
     function(data, randomVariables, sample, ...) {
       expect_false(sample)
       called <<- TRUE
+      return(list(denormalized = theresult, normalized= 'Somethingelse'))
     }
   )
 
   called <<- FALSE
-  predict(subject, newdata = data)
+  result <- predict(subject, newdata = data)
   expect_true(called)
+  expect_equal(result, theresult)
 })
 
 context(" sampledata.OnlineSuperLearner")
-
 #==========================================================
 expected_Y = 'therv_for_Y'
 expected_X = 'therv_for_X'
@@ -114,6 +118,7 @@ test_that("it should work with a single randomVariable string as outcome and cal
       expect_equal(randomVariables, expected_Y)
       expect_true(sample)
       called <<- TRUE
+      return(list(denormalized = theresult, normalized= 'Somethingelse'))
     }
   )
 
@@ -128,21 +133,25 @@ test_that("it should work with a single randomVariable string as outcome and cal
   ## Stub the getrv function
   called <<- FALSE
   called2 <<- FALSE
-  sampledata(subject, newdata = data, Y = Y)
+  result <- sampledata(subject, newdata = data, Y = Y)
   expect_true(called)
   expect_true(called2)
+  expect_equal(result, theresult)
 })
 
 test_that("it should work without a randomVariable", {
   stub(sampledata.OnlineSuperLearner, 'object$predict', 
     function(data, randomVariables, sample, ...) {
+      expect_true(sample)
       called <<- TRUE
+      return(list(denormalized = theresult, normalized= 'Somethingelse'))
     }
   )
 
   called <<- FALSE
-  sampledata(subject, newdata = data)
+  result <- sampledata(subject, newdata = data)
   expect_true(called)
+  expect_equal(result, theresult)
 })
 
 

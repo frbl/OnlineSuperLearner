@@ -97,9 +97,9 @@ sampledata.OnlineSuperLearner <- function(object, newdata, Y = NULL, ...) {
   sampled$denormalized
 }
 
+## NOTE: This function is not named sample to avoid namespace collisions.
 #' @export
 sampledata <- function(object, newdata, Y = NULL, ...) UseMethod("sampledata")
-## NOTE: This function is not named sample to avoid namespace collisions.
 
 #' predict.OnlineSuperLearner
 #' 

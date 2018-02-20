@@ -18,19 +18,20 @@ test_that("it should return a dataframe with the correct names", {
   data <- data.table(x1=c(0,1,2,3),x2=c(5,2,1,0), y=c(1,0,1,0))
   result <-  subject$process(data)
 
-  expect_equal(length(names(result)), length(colnames))
-  for (name in c('x1_mean', 'x2_mean')) {
-    expect_true(name %in% names(result))
-  }
+  expect_equal(length(colnames(result)), length(colnames))
+  expect_equal(colnames(result), c('x1_mean', 'x2_mean'))
 })
+
 test_that("it should return the correct means", {
   colnames <- c('x1', 'x2')
   subject <- described.class$new(colnames.to.mean = colnames)
   data <- data.table(x1=c(0,1,2,3),x2=c(5,2,1,0), y=c(1,0,1,0))
   result <-  subject$process(data)
+  mean_x1 <- cumsum(data$x1) / seq(1, nrow(data))
+  mean_x2 <- cumsum(data$x2) / seq(1, nrow(data))
 
-  expect_true(all(unlist(result['x1_mean']) == mean(data$x1)))
-  expect_true(all(unlist(result['x2_mean']) == mean(data$x2)))
+  expect_true(all(unlist(result[,'x1_mean']) == mean_x1))
+  expect_true(all(unlist(result[,'x2_mean']) == mean_x2))
 })
 
 test_that("it should be able to update an existing mean", {
@@ -42,8 +43,8 @@ test_that("it should be able to update an existing mean", {
   newdata <- data.table(x1=c(3),x2=c(5), y=c(1))
   result <-  subject$process(newdata)
 
-  expect_true(all(unlist(result['x1_mean']) == mean(c(data$x1,  newdata$x1))))
-  expect_true(all(unlist(result['x2_mean']) == mean(c(data$x2,  newdata$x2))))
+  expect_true(all(unlist(result[,'x1_mean']) == mean(c(data$x1,  newdata$x1))))
+  expect_true(all(unlist(result[,'x2_mean']) == mean(c(data$x2,  newdata$x2))))
 })
 
 context(" update")

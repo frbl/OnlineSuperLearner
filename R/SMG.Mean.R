@@ -66,16 +66,23 @@ SMG.Mean <- R6Class("SMG.Mean",
 
       process = function(data.current){
         current_nobs <- nrow(data.current)
+        
         sums <- cumsum(data.current[,private$colnames.to.mean, with=FALSE])
         divider <- seq(private$nobs + 1, private$nobs + current_nobs)
-
         mean_column <- mapply('+',
           sums[,private$colnames.to.mean, with = FALSE],
            private$mean.current * private$nobs
         ) / divider
 
         ## NOTE: mean.current is a vector, not a scalar.
-        private$mean.current <- tail(mean_column, 1)[,private$colnames.to.mean]
+        if(is.vector(mean_column)) {
+          private$mean.current <- mean_column
+          # TODO: Is this really necessary?
+          mean_column <- as.data.table(t(mean_column))
+        } else {
+          private$mean.current <- tail(mean_column, 1)[,private$colnames.to.mean]
+        }
+
         private$nobs <- private$nobs + current_nobs
 
         colnames(mean_column) <- private$colnames.mean.affix
