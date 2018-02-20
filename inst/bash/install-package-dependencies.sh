@@ -25,6 +25,7 @@ packages <- c(
 "magrittr",
 "assertthat",
 "optimr",
+"CVXR",
 "nloptr",
 "purrr",
 "doParallel",
