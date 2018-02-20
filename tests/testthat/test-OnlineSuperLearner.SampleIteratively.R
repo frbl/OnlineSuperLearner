@@ -65,7 +65,7 @@ test_that("it should initialize and store the random variable names", {
   result <- subject$get_random_variable_names
   expect_false(is.null(result))
   expect_false(is(result, 'list'))
-  expect_equal(result, c(rv.W$getY, rv.Y$getY))
+  expect_equal(result, unname(c(rv.W$getY, rv.Y$getY)))
 })
 
 context(" validate_parameters")
