@@ -1,6 +1,7 @@
 #' Data.Static
 #'
-#' Class to provide the functionality of treating a static, finite datatable as a stream of incomming data.
+#' Class to provide the functionality of treating a static, finite datatable as
+#' a stream of incomming data.
 #'
 #' @docType class
 #' @include Data.Base.R

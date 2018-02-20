@@ -415,9 +415,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             sample = sample,
             plot = plot
           )
-
         },
 
+        ## TODO: Make S3 Function of this
         sample_iteratively = function(data, tau = 10, intervention = NULL, discrete = TRUE, 
                                       return_type = 'observations', start_from_variable = NULL, 
                                       start_from_time = 1, check = FALSE) {
@@ -449,9 +449,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           )
           observed.outcome <- data.splitted$train[,outcome.variables, with=FALSE]
 
-          private$fit_osl(predicted.outcome = predicted.outcome,
-                          observed.outcome = observed.outcome)
-
+          private$fit_osl(predicted.outcome = predicted.outcome, observed.outcome = observed.outcome)
           private$fitted <- TRUE
 
           ## Make a prediction using the learners on the test data

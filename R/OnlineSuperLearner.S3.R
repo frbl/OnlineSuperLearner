@@ -26,6 +26,7 @@
 #' @return a fitted version of an \code{OnlineSuperLearner} class
 #' @export
 fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, normalize = FALSE, measurements_per_obs = Inf, ...) {
+  ## TODO: Add bounds as a parameter
   ## Convert the data.frame to a data.static object
   if(!is(data, 'Data.Base')) data <- Data.Static$new(dataset = data)
 
@@ -38,7 +39,7 @@ fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, normalize 
 
   pre_processor <- NULL
   if (normalize) {
-    bounds <- PreProcessor.generate_bounds(data.train)
+    bounds <- PreProcessor.generate_bounds(data)
     pre_processor <- PreProcessor$new(bounds = bounds)
   }
 
