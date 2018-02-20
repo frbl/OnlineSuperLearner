@@ -110,4 +110,5 @@ Remotes:
     github::osofr/condensier@fb-add-update,
     github::jeroenooms/jsonlite,
     github::jimhester/covr,
+    github::airoldilab/sgd,
     github::n-s-f/mockery@master
