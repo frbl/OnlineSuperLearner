@@ -297,7 +297,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         initialize = function(SL.library.definition = c('ML.Local.lm', 'ML.H2O.glm'),
                               summaryMeasureGenerator, random_variables, should_fit_osl = TRUE,
                               should_fit_dosl = TRUE, pre_processor = NULL,
-                              verbose = FALSE, ...) {
+                              verbose = FALSE, test_set_size = 1, ...) {
 
           self$set_verbosity(Arguments$getVerbose(verbose, timestamp = TRUE))
 
@@ -313,7 +313,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$cv_risk = list()
           private$cv_risk_count = 0
           private$cv_risk_calculator = CrossValidationRiskCalculator$new()
-          private$data_splitter <- DataSplitter$new()
+          private$data_splitter <- DataSplitter$new(test_set_size = test_set_size)
 
           ## Initialization, Fabricate the various models
           libraryFactory <- LibraryFactory$new(verbose = verbose)
@@ -360,6 +360,17 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           initial_data_size <- Arguments$getInteger(initial_data_size, c(1,Inf))
           max_iterations <- Arguments$getInteger(max_iterations, c(0,Inf))
           mini_batch_size <- Arguments$getInteger(mini_batch_size, c(1,Inf))
+
+          ## We are taking part of the minibatch away to do the testing of the
+          ## algorithm. As such, the specified minibatch size should be more
+          ## than the specified test size.
+          if(mini_batch_size <= self$get_data_splitter$get_test_set_size) {
+            throw('We select a number of ', self$get_data_splitter$get_test_set_size,
+                  ' block(s) from the mini_batch to be used as part of the test_set.',
+                  ' As such, the mini batch size needs to be at least ',
+                  self$get_data_splitter$get_test_set_size + 1)
+          }
+
           data <- Arguments$getInstanceOf(data, 'Data.Base')
 
           self$get_summary_measure_generator$setData(data = data)
@@ -436,10 +447,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         ## TODO: Move function to separate file
         train_library = function(data_current) {
-          ## Fit or update the  estimators
+          ## Fit or update the estimators
           data.splitted <- self$get_data_splitter$split(data_current)
           outcome.variables <- names(self$get_random_variables)
-
           private$build_all_estimators(data = data.splitted$train)
 
           ## Extract the level 1 data and use it to fit the osl
@@ -447,7 +457,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             data = data.splitted$train,
             sl_library = self$get_estimators
           )
-          observed.outcome <- data.splitted$train[,outcome.variables, with=FALSE]
+          observed.outcome <- data.splitted$train[, outcome.variables, with=FALSE]
 
           private$fit_osl(predicted.outcome = predicted.outcome, observed.outcome = observed.outcome)
           private$fitted <- TRUE
