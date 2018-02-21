@@ -45,6 +45,11 @@ test_that("it should not throw if all arguments are correct", {
   expect_is(result, 'OnlineSuperLearner')
 })
 
+
+test_that("it should test the normalization", {
+  fail()
+})
+
 context(" predict.OnlineSuperLearner")
 #==========================================================
 theresult <- 'theresult'
