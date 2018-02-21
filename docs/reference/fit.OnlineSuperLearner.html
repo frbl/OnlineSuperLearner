@@ -85,8 +85,9 @@
     <p>Fits an online superlearner using a similar notation as a GLM.</p>
     
 
-    <pre class="usage"><span class='fu'>fit.OnlineSuperLearner</span>(<span class='no'>formulae</span>, <span class='no'>data</span>, <span class='kw'>algorithms</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>normalize</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>measurements_per_obs</span> <span class='kw'>=</span> <span class='fl'>Inf</span>, <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='co'># S3 method for OnlineSuperLearner</span>
+<span class='fu'>fit</span>(<span class='no'>formulae</span>, <span class='no'>data</span>, <span class='kw'>algorithms</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>bounds</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>measurements_per_obs</span> <span class='kw'>=</span> <span class='fl'>Inf</span>, <span class='no'>...</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
@@ -104,12 +105,18 @@
       <td><p>list of algorithms to use in the online superlearner</p></td>
     </tr>
     <tr>
-      <th>normalize</th>
-      <td><p>boolean (default = FALSE) we provide the option to
-normalize the data in the OSL procedure. This entails that the package will
-automatically select a set of bounds (min and max) based on the data set
-provided. After that it will only use the normalized features (all scaled
-between 0-1).</p></td>
+      <th>bounds</th>
+      <td><p>either a list of bounds, or a boolean (default = FALSE), in
+which TRUE forces the bounds to be generated automatically, FALSE causes the
+bounds not to be generated at all (no normalization) we provide the option
+to normalize the data in the OSL procedure. This entails that the package
+will automatically select a set of bounds (min and max) based on the data
+set provided. After that it will only use the normalized features (all
+scaled between 0-1). The bounds should be specified as a list in which each
+element represents one of the <code>RandomVariable</code> objects. Each of these
+entries should contain another list with two elements: <code>min_bound</code> and
+<code>max_bound</code>, which represent the lower and upper bound of that
+variable in specific.</p></td>
     </tr>
     <tr>
       <th>measurements_per_obs</th>

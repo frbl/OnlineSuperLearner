@@ -38,6 +38,9 @@ to the super learner machine learning model.
      \code{PreProcessor} which is used to normalize the in and output values
      for the OSL.
 
+    @param test_set_size integer (default = 1) the size of the test set to
+     use.
+
     @param verbose (default = FALSE) the verbosity (how much logging). Note that this might
      be propagated to other classes.
   }
@@ -72,7 +75,10 @@ to the super learner machine learning model.
      indefinitely.
 
     @param mini_batch_size integer (default = 20) the size of the mini batch
-     to use for each update.
+     to use for each update. Note that this needs to be larger than the
+     specified \code{test_set_size} on initialization. Part of this
+     collection of blocks / mini batch will be used as a validation set
+     while training.
 
     @return data.table a data.table with the risks of each estimator.
   } 

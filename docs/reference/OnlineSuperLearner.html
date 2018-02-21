@@ -112,6 +112,8 @@ to the super learner machine learning model.</p>
     @param pre_processor PreProcessor (default = NULL) an instance of the
      <code>PreProcessor</code> which is used to normalize the in and output values
      for the OSL.
+    @param test_set_size integer (default = 1) the size of the test set to
+     use.
     @param verbose (default = FALSE) the verbosity (how much logging). Note that this might
      be propagated to other classes.</p></dd>
     <dt><code>set_verbosity(verbosity) </code></dt><dd><p>Method that can change the verbosity of a superlearner instance
@@ -135,7 +137,10 @@ to the super learner machine learning model.</p>
      This is useful when there is a stream of data which would provide data
      indefinitely.
     @param mini_batch_size integer (default = 20) the size of the mini batch
-     to use for each update.
+     to use for each update. Note that this needs to be larger than the
+     specified <code>test_set_size</code> on initialization. Part of this
+     collection of blocks / mini batch will be used as a validation set
+     while training.
     @return data.table a data.table with the risks of each estimator.</p></dd>
     <dt><code>predict(data, randomVariables = NULL, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE)</code></dt><dd><p>Method to perform a prediction on the estimators. It can run in
     different configurations. It can be configured to predict the outcome

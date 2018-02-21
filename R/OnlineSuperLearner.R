@@ -47,6 +47,9 @@
 #'      \code{PreProcessor} which is used to normalize the in and output values
 #'      for the OSL.
 #'
+#'     @param test_set_size integer (default = 1) the size of the test set to
+#'      use.
+#'
 #'     @param verbose (default = FALSE) the verbosity (how much logging). Note that this might
 #'      be propagated to other classes.
 #'   }
@@ -81,7 +84,10 @@
 #'      indefinitely.
 #'
 #'     @param mini_batch_size integer (default = 20) the size of the mini batch
-#'      to use for each update.
+#'      to use for each update. Note that this needs to be larger than the
+#'      specified \code{test_set_size} on initialization. Part of this
+#'      collection of blocks / mini batch will be used as a validation set
+#'      while training.
 #'
 #'     @return data.table a data.table with the risks of each estimator.
 #'   } 
@@ -297,7 +303,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         initialize = function(SL.library.definition = c('ML.Local.lm', 'ML.H2O.glm'),
                               summaryMeasureGenerator, random_variables, should_fit_osl = TRUE,
                               should_fit_dosl = TRUE, pre_processor = NULL,
-                              verbose = FALSE, test_set_size = 1, ...) {
+                              test_set_size = 1, verbose = FALSE, ...) {
 
           self$set_verbosity(Arguments$getVerbose(verbose, timestamp = TRUE))
 
