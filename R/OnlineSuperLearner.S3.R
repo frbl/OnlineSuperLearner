@@ -7,11 +7,17 @@
 #'
 #' @param algorithms list of algorithms to use in the online superlearner 
 #'
-#' @param bounds  either a list of bounds, or a boolean (default = FALSE), in which TRUE forces the bounds to be generated automatically, FALSE causes the bounds not to be generated at all (no normalization) we provide the option to
-#'  normalize the data in the OSL procedure. This entails that the package will
-#'  automatically select a set of bounds (min and max) based on the data set
-#'  provided. After that it will only use the normalized features (all scaled
-#'  between 0-1).
+#' @param bounds  either a list of bounds, or a boolean (default = FALSE), in
+#'  which TRUE forces the bounds to be generated automatically, FALSE causes the
+#'  bounds not to be generated at all (no normalization) we provide the option
+#'  to normalize the data in the OSL procedure. This entails that the package
+#'  will automatically select a set of bounds (min and max) based on the data
+#'  set provided. After that it will only use the normalized features (all
+#'  scaled between 0-1). The bounds should be specified as a list in which each
+#'  element represents one of the \code{RandomVariable} objects. Each of these
+#'  entries should contain another list with two elements: \code{min_bound} and
+#'  \code{max_bound}, which represent the lower and upper bound of that
+#'  variable in specific.
 #'
 #' @param measurements_per_obs integer (default = Inf) the number of
 #'  measurments in a single observation. 
@@ -29,6 +35,10 @@ fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, bounds = F
   ## Convert the data.frame to a data.static object
   if(!is(data, 'Data.Base')) data <- Data.Static$new(dataset = data)
 
+  if (!is.list(bounds) && !is.logical(bounds)) {
+    throw('Bounds should either be a boolean, or a list of bounds.')
+  }
+
   ## Build an SMG Factory from the provided formulae
   smg_factory <- OnlineSuperLearner::SMGFactory$new()
 
@@ -37,10 +47,10 @@ fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, bounds = F
   formulae <- lapply(formulae, function(rv) Arguments$getInstanceOf(rv, 'RandomVariable'))
 
   pre_processor <- NULL
-  if (!is.null(bounds) || bounds) {
-    if(is.boolean(bounds)) {
-      bounds <- PreProcessor.generate_bounds(data)
-    }
+  if (is.list(bounds) || bounds) {
+    ## The provided bounds can be either a list of bounds or a boolean (in that case we'll define it ourselves)
+    ## TODO: Move this checking to the preprocessor itself / the generate bounds function?
+    if(is.logical(bounds)) { bounds <- PreProcessor.generate_bounds(data)}
     pre_processor <- PreProcessor$new(bounds = bounds)
   }
 

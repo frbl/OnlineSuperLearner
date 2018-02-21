@@ -101,6 +101,13 @@ PreProcessor <- R6Class("PreProcessor",
 #' @param eps an extra margin to add to the estimated bounds
 #' @export
 PreProcessor.generate_bounds <- function(data, eps = 0) {
+  if (is(data,'Data.Stream')) {
+    throw('Generating bounds based on a stream of data is currently not supported.')
+  }
+
+  ## Convert the data.static object to a data.table
+  if (is(data,'Data.Static')) data <- data$get_all
+
   data <- Arguments$getInstanceOf(data, 'data.table')
   bounds <- list()
   for(name in colnames(data)) {

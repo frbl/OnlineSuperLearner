@@ -18,7 +18,43 @@ test_that("it should throw if the list of formulae does not contain randomvariab
   algorithms <- c('a','b')
   expect_error(fit.OnlineSuperLearner(formulae = formulae, data = data, algorithms = algorithms), 
                "Argument 'rv' is neither of nor inherits class RandomVariable: character")
+
 })
+
+test_that("it should throw when the provided bounds are not a boolean or a list", {
+  data <- data.frame(W = seq(10), A=rbinom(10,1,0.5), Y = seq(10))
+  W <- RandomVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
+  A <- RandomVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
+  Y <- RandomVariable$new(formula = Y ~ A + W, family = 'binomial')
+  formulae <- c(W, A, Y)
+  stub(fit.OnlineSuperLearner, 'smg_factory$fabricate', function(...) { throw('stop_execution') })
+
+  expect_error(fit.OnlineSuperLearner(formulae = formulae, data = data, bounds = 'test'),
+              'Bounds should either be a boolean, or a list of bounds.')
+  expect_error(fit.OnlineSuperLearner(formulae = formulae, data = data, bounds = NULL),
+              'Bounds should either be a boolean, or a list of bounds.')
+})
+
+test_that("it should not throw when the provided bounds are a boolean or a list", {
+  data <- data.frame(W = seq(10), A=rbinom(10,1,0.5), Y = seq(10))
+  W <- RandomVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
+  A <- RandomVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
+  Y <- RandomVariable$new(formula = Y ~ A + W, family = 'binomial')
+  formulae <- c(W, A, Y)
+
+  ## Stub a weird error which we can test. If we throw this, we know everything went through
+  stub(fit.OnlineSuperLearner, 'PreProcessor$new', function(bounds) { 
+    expect_is(bounds, 'list')
+    throw('stop_execution') 
+  })
+
+  expect_error(fit.OnlineSuperLearner(formulae = formulae, data = data, bounds = TRUE),
+              'stop_execution')
+
+  expect_error(fit.OnlineSuperLearner(formulae = formulae, data = data, bounds = list()),
+              'stop_execution')
+})
+
 
 test_that("it should not throw if all arguments are correct", {
   data <- data.frame(W = seq(10), A=rbinom(10,1,0.5), Y = seq(10))
@@ -45,9 +81,16 @@ test_that("it should not throw if all arguments are correct", {
   expect_is(result, 'OnlineSuperLearner')
 })
 
+test_that("it should create bounds when bounds is TRUE", {
+  skip('Not yet tested')
+})
 
-test_that("it should test the normalization", {
-  fail()
+test_that("it should not create bounds when bounds is a list of bounds, but it should normalize", {
+  skip('Not yet tested')
+})
+
+test_that("it should not normalize when bounds is FALSE", {
+  skip('Not yet tested')
 })
 
 context(" predict.OnlineSuperLearner")
