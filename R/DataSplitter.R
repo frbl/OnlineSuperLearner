@@ -26,16 +26,20 @@
 DataSplitter <- R6Class("DataSplitter",
   public =
     list(
-      initialize = function() { },
+      initialize = function(test_set_size = 1) {
+
+        ## Initialize the number of blocks that need to be used as test set
+        private$test_set_size <- Arguments$getInteger(test_set_size, c(1,Inf))
+      },
 
       split = function(data){
         if (is.null(private$data.previous) && nrow(data) < 2) throw('At least 2 rows of data are needed, 1 train and 1 test')
 
-        ## Use the last observation as test set
-        test <- tail(data, 1)
+        ## Use the last tau observation as test set
+        test <- tail(data, self$get_test_set_size)
 
         ## use the rest of the observations as trainingset
-        train <- head(data, nrow(data) - 1)
+        train <- head(data, nrow(data) - self$get_test_set_size)
 
         if(!is.null(private$data.previous)){
           ## Use the rest of the observations as trainingset, including the previous testset
@@ -47,8 +51,16 @@ DataSplitter <- R6Class("DataSplitter",
         return(list(train = train, test = test))
       }
     ),
+  active =
+    list(
+      #TODO: Document
+      get_test_set_size = function() {
+        return(private$test_set_size)
+      }
+    ),
   private =
     list(
-      data.previous = NULL
+      data.previous = NULL,
+      test_set_size = NULL
     )
 )
