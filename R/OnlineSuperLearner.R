@@ -379,7 +379,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           data <- Arguments$getInstanceOf(data, 'Data.Base')
 
-          self$get_summary_measure_generator$setData(data = data)
+          self$get_summary_measure_generator$set_trajectories(data = data)
           self$get_summary_measure_generator$check_enough_data_available(randomVariables = self$get_random_variables)
 
           private$verbose && cat(private$verbose, 
@@ -390,10 +390,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           )
 
           ## Get the initial data for fitting the first estimator and train the initial models
-          next_data <- self$get_summary_measure_generator$getNext(n = initial_data_size)
-
-          ## Get the new row of data
-          trajectories <- self$get_summary_measure_generator$getNext(mini_batch_size)
+          trajectories <- self$get_summary_measure_generator$getNext(n = initial_data_size)
 
           ## Note that there could be multiple trajectories, so we need to iterate
           for(next_data in trajectories) {

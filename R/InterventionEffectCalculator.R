@@ -199,6 +199,8 @@ InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
       perform_initial_estimation = function(osl, interventions, discrete, initial_data, tau) {
         private$verbose && enter(private$verbose, 'Performing initial estimation of parameter of interest')
 
+        initial_data <- Arguments$getInstanceOf(initial_data, 'data.table')
+
         result <- self$calculate_intervention_effect(
           osl = osl,
           interventions = interventions,

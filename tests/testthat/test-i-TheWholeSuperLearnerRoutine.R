@@ -140,14 +140,16 @@ test_that("it should estimate the true treatment", {
 
   hide_warning_replace_weights_osl(
     risk <- osl$fit(data.train, 
-                          initial_data_size = training_set_size / 2,
-                          max_iterations = max_iterations,
-                          mini_batch_size = (training_set_size / 2) / max_iterations)
+                    initial_data_size = training_set_size / 2,
+                    max_iterations = max_iterations,
+                    mini_batch_size = (training_set_size / 2) / max_iterations)
   )
 
 
   summaryMeasureGenerator$reset()
-  datas <- summaryMeasureGenerator$getNext(n = 1000)
+
+  ## We get a trajectory back, only use the first trajectory
+  datas <- summaryMeasureGenerator$getNext(n = 1000)[[1]]
 
   intervention_effect_caluculator = InterventionEffectCalculator$new(bootstrap_iterations = B, 
                                                                     outcome_variable = Y$getY,
