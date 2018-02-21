@@ -7,6 +7,12 @@ test_that("it should initialize", {
   expect_error(described.class$new(), NA)
 })
 
+test_that("it should initialize with a test_set_size", {
+  test_set_size <- 10
+  expect_error(result <- described.class$new(test_set_size = test_set_size), NA)
+  expect_equal(result$get_test_set_size, test_set_size)
+})
+
 context(' split')
 #==========================================================
 data <- data.table(x=c(1,2,3,4), y=c(4,3,2,1))
@@ -63,6 +69,16 @@ test_that("it should throw whenever not enough data is provided", {
   expect_error(subject$split(data), NA)
 })
 
+test_that("it should throw whenever not enough data is provided when the default test size is increased", {
+  data <- data.table(x=c(1,2), y=c(4,3))
+  subject <- described.class$new(test_set_size = 2)
+  expect_error(subject$split(data), 'At least 3 rows of data are needed, 1 train and 2 test')
+
+  ## No error if enough data is in fact available
+  data <- data.table(x=c(1,2,3), y=c(4,3,2))
+  expect_error(subject$split(data), NA)
+})
+
 test_that("it should not throw if not enough data is provided, but there is some in the cache", {
   subject <- described.class$new()
   data_cache <- data.table(x=c(1,2), y=c(4,3))
@@ -70,4 +86,35 @@ test_that("it should not throw if not enough data is provided, but there is some
 
   data <- data.table(x=c(1), y=c(4))
   expect_error(subject$split(data), NA)
+})
+
+test_that("it should return the tau last rows if tau is set different than 1", {
+  test_set_size <- 10
+  subject <- described.class$new(test_set_size = test_set_size)
+
+  data_cache <- data.table(x=seq(20), y=-seq(20))
+  result <- subject$split(data_cache)
+  expected_train <- data.table(x=seq(10), y=-seq(10))
+  expected_test <- data.table(x=seq(11, 20), y=-seq(11, 20))
+  expect_equal(result$train, expected_train)
+  expect_equal(result$test, expected_test)
+})
+
+test_that("it should append the tau last rows for tau set different than 1", {
+  test_set_size <- 10
+  subject <- described.class$new(test_set_size = test_set_size)
+
+  data_cache <- data.table(x = seq(20), y = -seq(20))
+  result <- subject$split(data_cache)
+  result <- subject$split(data_cache)
+
+  ## Note: the training set is now the previous testset
+  previous_test <- data.table(x=seq(11, 20), y = -seq(11, 20))
+  expected_train <- data.table(x = c(previous_test[,x], seq(10)), 
+                               y = c(previous_test[,y], -seq(10)))
+
+  expected_test <- data.table(x = seq(11, 20), y = -seq(11, 20))
+
+  expect_equal(result$train, expected_train)
+  expect_equal(result$test, expected_test)
 })

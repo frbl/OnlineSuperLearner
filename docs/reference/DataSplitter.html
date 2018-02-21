@@ -95,7 +95,9 @@
 
     
     <dl class='dl-horizontal'>
-  <dt><code>initialize() </code></dt><dd><p>Creates a new datasplitter</p></dd>
+  <dt><code>initialize(test_set_size = 1) </code></dt><dd><p>Creates a new datasplitter
+    @param test_set_size (default = 1) an integer to specify the size of the
+     test set to use.</p></dd>
     <dt><code>split(data)</code></dt><dd><p>Splits the data in a train and test set. A block that was used as a test
     set previously is automatically appended to the traininset (so all data
     gets used for training that has been used for testing before).
@@ -104,7 +106,8 @@
     <code>n</code> number of observations should be includable.
     @param data data.table the data to spit into a train and test set.
     @return list with two entries: <code>train</code> and <code>test</code>. Each
-     containing the respective dataframe.</p></dd> 
+     containing the respective dataframe.</p></dd>
+    <dt><code>get_test_set_size</code></dt><dd><p>Active method. The size of the testset used by this splitter instance.</p></dd> 
 </dl>
     
 

@@ -91,6 +91,16 @@ test_that("it should should return the correct log likelihood loss", {
   expect_true(loss == 0)
 })
 
+test_that("it should work with single and multiple observations", {
+  for (nobs in c(1, 10)) {
+    observed  <- rep(1, nobs)
+    predicted <- rep(0, nobs) 
+    expect_error(result <- Evaluation.log_likelihood_loss(data.observed = observed, data.predicted = predicted),
+                NA)
+    expect_true(is.numeric(result))
+  }
+})
+
 test_that("it should also work with non binary values", {
   set.seed(12345)
   nobs <- 10
@@ -115,7 +125,7 @@ test_that("it should also work with non binary values", {
   expect_true(loss != 0)
 })
 
-test_that("it should also wotk with non binary values, and should be minimized when all are one", {
+test_that("it should also work with non binary values, and should be minimized when all are one", {
   set.seed(12345)
   nobs <- 10
   observed  <- rep(1, nobs)
