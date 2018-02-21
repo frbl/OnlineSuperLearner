@@ -455,27 +455,38 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           )
         },
 
-        ## TODO: Move function to separate file
+        ## XXX: Move function to separate file?
         train_library = function(data_current) {
           ## Fit or update the estimators
+
+          ## 0. Split data in test and training set
           data.splitted <- self$get_data_splitter$split(data_current)
+
+          ## 1. Train the algorithms on the initial training set
           outcome.variables <- names(self$get_random_variables)
           private$build_all_estimators(data = data.splitted$train)
 
-          ## Extract the level 1 data and use it to fit the osl
-          predicted.outcome <- self$get_online_super_learner_predict$predict_using_all_estimators(
-            data = data.splitted$train,
+          ## 2. Train the SL algorithm based on the predictions on a left out validation set
+          ## Make a prediction using the learners on the test data
+          predicted.outcome <- self$predict(data = data.splitted$test, discrete = FALSE,
+                                            continuous = FALSE, all_estimators = TRUE)
+          observed.outcome <- data.splitted$test[, outcome.variables, with=FALSE]
+          ## Remove / replaced?
+          predicted.outcome2 <- self$get_online_super_learner_predict$predict_using_all_estimators(
+            data = data.splitted$test,
             sl_library = self$get_estimators
           )
-          observed.outcome <- data.splitted$train[, outcome.variables, with=FALSE]
 
+          ## Extract the level 1 data and use it to fit the osl
+          browser()
           private$fit_osl(predicted.outcome = predicted.outcome, observed.outcome = observed.outcome)
           private$fitted <- TRUE
 
-          ## Make a prediction using the learners on the test data
-          observed.outcome <- data.splitted$test[,outcome.variables, with=FALSE]
-          predicted.outcome <- self$predict(data = data.splitted$test,
-                                            discrete = TRUE, continuous = TRUE, all_estimators = TRUE)
+          ## 3. Select the discrete SL algorithm based on the left out validation set
+          ## 4. Update the CV risk of each of the algorithms
+          ## 4.1 Build a function that only updates the risk of the OSL and DOSL once every X observations,
+          ##     based on a subset of unseen data
+          ## 5. rinse and repeat
 
           ## We need to store the dosl risk, as we will update it later.
           pre_dosl_risk <- private$cv_risk$dosl.estimator

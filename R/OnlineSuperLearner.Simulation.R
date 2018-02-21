@@ -513,12 +513,13 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                         random_variables = randomVariables,
                                         summaryMeasureGenerator = summaryMeasureGenerator,
                                         pre_processor = pre_processor,
+                                        test_set_size = 20, # Make sure this is bigger than the number of K-1 algorithms
                                         verbose = private$log)
 
           private$log && cat(private$log, 'Running OSL')
 
           initial_training_set_size <- floor(private$training_set_size / 2)
-          mini_batch_size <- max((private$training_set_size / 2) / max_iterations, 1)
+          mini_batch_size <- 40
           mini_batch_size <- ifelse(is.na(mini_batch_size) || is.infinite(mini_batch_size), 1, floor(mini_batch_size))
 
           # Store the configuration

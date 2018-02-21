@@ -92,6 +92,7 @@ osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
   data = cpp,
   algorithms = algos, 
   verbose = log,
+  test_set_size = 5 + (3 * 3 + 3),
 
   initial_data_size = training_set_size / 2,
   max_iterations = nb_iter,
