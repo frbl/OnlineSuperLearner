@@ -494,7 +494,7 @@ OnlineSuperLearner.SampleIteratively <- R6Class("OnlineSuperLearner.SampleIterat
       summary_measure_generator = NULL,
       verbose = NULL,
       get_latest_covariates = function(data) {
-        self$get_summary_measure_generator$getLatestCovariates(data)
+        self$get_summary_measure_generator$get_latest_covariates(data)
       }
     )
 )

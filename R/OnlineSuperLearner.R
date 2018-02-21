@@ -380,7 +380,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           data <- Arguments$getInstanceOf(data, 'Data.Base')
 
           self$get_summary_measure_generator$setData(data = data)
-          self$get_summary_measure_generator$checkEnoughDataAvailable(randomVariables = self$get_random_variables)
+          self$get_summary_measure_generator$check_enough_data_available(randomVariables = self$get_random_variables)
 
           private$verbose && cat(private$verbose, 
             'Fitting OnlineSuperLearner with a library: ', paste(self$get_estimator_descriptions, collapse = ', '),
