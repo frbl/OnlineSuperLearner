@@ -4,8 +4,11 @@
 #'
 #' @section Methods: 
 #' \describe{  
-#'   \item{\code{initialize() }}{ 
+#'   \item{\code{initialize(test_set_size = 1) }}{ 
 #'     Creates a new datasplitter
+#'
+#'     @param test_set_size (default = 1) an integer to specify the size of the
+#'      test set to use.
 #'   } 
 #' 
 #'   \item{\code{split(data)}}{ 
@@ -16,9 +19,15 @@
 #'     In the current implementation it will always use the last observation as
 #'     the test set observation.  Eventually this should be configurable, and
 #'     \code{n} number of observations should be includable.
+#'
 #'     @param data data.table the data to spit into a train and test set.
+#'
 #'     @return list with two entries: \code{train} and \code{test}. Each
 #'      containing the respective dataframe.
+#'   } 
+#'
+#'   \item{\code{get_test_set_size}}{ 
+#'     Active method. The size of the testset used by this splitter instance.
 #'   } 
 #' }  
 #' @docType class
@@ -27,13 +36,15 @@ DataSplitter <- R6Class("DataSplitter",
   public =
     list(
       initialize = function(test_set_size = 1) {
-
         ## Initialize the number of blocks that need to be used as test set
         private$test_set_size <- Arguments$getInteger(test_set_size, c(1,Inf))
       },
 
       split = function(data){
-        if (is.null(private$data.previous) && nrow(data) < 2) throw('At least 2 rows of data are needed, 1 train and 1 test')
+        if (is.null(private$data.previous) && nrow(data) < (self$get_test_set_size + 1)) {
+          throw('At least ', self$get_test_set_size + 1, ' rows of data are needed, ',
+                '1 train and ', self$get_test_set_size,' test')
+        }
 
         ## Use the last tau observation as test set
         test <- tail(data, self$get_test_set_size)
@@ -53,7 +64,6 @@ DataSplitter <- R6Class("DataSplitter",
     ),
   active =
     list(
-      #TODO: Document
       get_test_set_size = function() {
         return(private$test_set_size)
       }

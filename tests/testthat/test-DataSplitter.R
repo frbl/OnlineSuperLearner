@@ -69,6 +69,16 @@ test_that("it should throw whenever not enough data is provided", {
   expect_error(subject$split(data), NA)
 })
 
+test_that("it should throw whenever not enough data is provided when the default test size is increased", {
+  data <- data.table(x=c(1,2), y=c(4,3))
+  subject <- described.class$new(test_set_size = 2)
+  expect_error(subject$split(data), 'At least 3 rows of data are needed, 1 train and 2 test')
+
+  ## No error if enough data is in fact available
+  data <- data.table(x=c(1,2,3), y=c(4,3,2))
+  expect_error(subject$split(data), NA)
+})
+
 test_that("it should not throw if not enough data is provided, but there is some in the cache", {
   subject <- described.class$new()
   data_cache <- data.table(x=c(1,2), y=c(4,3))
