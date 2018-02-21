@@ -116,7 +116,9 @@
     @param eta double (default = 0.3) the stepsize used
     @param objective string (default = 'binary:logistic') the objective to
      optimize.</p></dd>
-  <dt><code>get_validity</code></dt><dd><p>Active method. Function that shows wheter the current configuration of
+    <dt><code>get_nthread</code></dt><dd><p>Active method. Function that returns the number of threads the XGBoost
+    algorithm runs on.</p></dd>
+    <dt><code>get_validity</code></dt><dd><p>Active method. Function that shows wheter the current configuration of
     the booster is valid. The function returns <code>TRUE</code> if everything is
     specified correctly. It will throw an error (with the error messages)
     when something is misspecified. This function is automatically called

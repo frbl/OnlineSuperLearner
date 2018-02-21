@@ -18,6 +18,8 @@ latex: false
 os:
   - linux
 r_build_args: "--no-build-vignettes --no-manual"
+env:
+  - CI=travis
 
 #before_install:
   #- Rscript -e 'update.packages(ask = FALSE)'

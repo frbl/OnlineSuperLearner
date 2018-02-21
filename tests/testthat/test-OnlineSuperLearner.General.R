@@ -139,6 +139,21 @@ test_that("it should throw if the provided data is not a data object", {
     "Argument 'data' is neither of nor inherits class Data.Base: mock")
 })
 
+
+test_that("it should throw if the provided mini_batch_size is less than the test_set_size", {
+  data <- mock('data')
+  expected <- 'We select a number of 1 block(s) from the mini_batch to be used as part of the test_set. As such, the mini batch size needs to be at least 2'
+  expect_error(
+    subject$fit(data, initial_data_size = 1, max_iterations = 20, mini_batch_size = 1),
+    expected, fixed = TRUE)
+
+  subject <- described.class$new(summaryMeasureGenerator = SMG, random_variables = random_variables, test_set_size = 10)
+  expected <- 'We select a number of 10 block(s) from the mini_batch to be used as part of the test_set. As such, the mini batch size needs to be at least 11'
+  expect_error(
+    subject$fit(data, initial_data_size = 1, max_iterations = 20, mini_batch_size = 10),
+    expected, fixed = TRUE)
+})
+
 test_that("it should set the data in the summary_measure_generator", {
   thedata <- Data.Base$new()
   SMG <- list(setData = function(data) {

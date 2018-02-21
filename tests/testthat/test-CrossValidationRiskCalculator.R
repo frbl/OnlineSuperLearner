@@ -21,7 +21,7 @@ names(glob_predicted.outcome) <- c('a','b')
 
 ## Create predicted outcomes with both normalized and denormalized data
 glob_new_prediction <- list()
-glob_new_prediction$denormalized <- glob_predicted.outcome 
+glob_new_prediction$denormalized <- glob_predicted.outcome
 maxval <- glob_predicted.outcome %>% unlist %>% max
 glob_new_prediction$normalized <- lapply(glob_predicted.outcome, function(x) as.data.table(lapply(x, function(y) y / maxval)))
 
@@ -36,7 +36,7 @@ test_that("it should call the evaluate single outcome function with the correct 
   iter <<- 1
 
   ## We stub the loss function to return the data it gets, so we can check that it received the correct data
-  stub(subject$calculate_evaluation, 'self$evaluate_single_outcome', 
+  stub(subject$calculate_evaluation, 'self$evaluate_single_outcome',
     function(observed.outcome, predicted.outcome, randomVariables, add_evaluation_measure_name) {
       expect_is(observed.outcome, 'data.table')
       expect_equal(observed.outcome, glob_observed.outcome)
@@ -52,17 +52,17 @@ test_that("it should call the evaluate single outcome function with the correct 
     }
   )
 
-  result <- subject$calculate_evaluation(predicted.outcome = glob_new_prediction, 
-                              observed.outcome = glob_observed.outcome, 
-                              randomVariables = glob_randomVariables, 
+  result <- subject$calculate_evaluation(predicted.outcome = glob_new_prediction,
+                              observed.outcome = glob_observed.outcome,
+                              randomVariables = glob_randomVariables,
                               add_evaluation_measure_name=FALSE)
 })
 
 test_that("it should return the output in a list of data.tables", {
   subject <- described.class$new()
-  result <- subject$calculate_evaluation(predicted.outcome = glob_new_prediction, 
-                              observed.outcome = glob_observed.outcome, 
-                              randomVariables = glob_randomVariables, 
+  result <- subject$calculate_evaluation(predicted.outcome = glob_new_prediction,
+                              observed.outcome = glob_observed.outcome,
+                              randomVariables = glob_randomVariables,
                               add_evaluation_measure_name=FALSE)
   expect_is(result, 'list')
   expect_equal(length(result), length(names(glob_predicted.outcome)))
@@ -79,7 +79,7 @@ test_that("it should use the normalized data if it is available", {
 
   ## We stub the loss function to return the data it gets, so we can check that it received the correct data
   input_prediction <- glob_new_prediction$normalized
-  stub(subject$calculate_evaluation, 'self$evaluate_single_outcome', 
+  stub(subject$calculate_evaluation, 'self$evaluate_single_outcome',
     function(observed.outcome, predicted.outcome, randomVariables, add_evaluation_measure_name) {
       expect_is(predicted.outcome, 'data.table')
       expect_equal(predicted.outcome, input_prediction[[iter]])
@@ -89,16 +89,16 @@ test_that("it should use the normalized data if it is available", {
 
   ## Without the normalized input it should use everything
   iter <<- 1
-  result <- subject$calculate_evaluation(predicted.outcome = input_prediction, 
-                              observed.outcome = glob_observed.outcome, 
-                              randomVariables = glob_randomVariables, 
+  result <- subject$calculate_evaluation(predicted.outcome = input_prediction,
+                              observed.outcome = glob_observed.outcome,
+                              randomVariables = glob_randomVariables,
                               add_evaluation_measure_name=FALSE)
 
   ## With the normalized input it should use the normalized part
   iter <<- 1
-  result <- subject$calculate_evaluation(predicted.outcome = glob_new_prediction, 
-                              observed.outcome = glob_observed.outcome, 
-                              randomVariables = glob_randomVariables, 
+  result <- subject$calculate_evaluation(predicted.outcome = glob_new_prediction,
+                              observed.outcome = glob_observed.outcome,
+                              randomVariables = glob_randomVariables,
                               add_evaluation_measure_name=FALSE)
 })
 
@@ -111,9 +111,9 @@ test_that("it should call the Evaluation.get_evaluation_function with the correc
   mock_lossFn <- mock(c(test_loss = 123), cycle = TRUE)
   mock_get_evaluation <- mock(mock_lossFn, cycle = TRUE)
   with_mock(Evaluation.get_evaluation_function = mock_get_evaluation,
-    result <- subject$evaluate_single_outcome(predicted.outcome = prediction, 
-                                observed.outcome = glob_observed.outcome, 
-                                randomVariables = glob_randomVariables, 
+    result <- subject$evaluate_single_outcome(predicted.outcome = prediction,
+                                observed.outcome = glob_observed.outcome,
+                                randomVariables = glob_randomVariables,
                                 add_evaluation_measure_name=FALSE)
   )
 
@@ -134,9 +134,9 @@ test_that("it should call the resulting Loss function with the correct arguments
   mock_lossFn <- mock(c(test_loss = 123), cycle = TRUE)
   mock_get_evaluation <- mock(mock_lossFn, cycle = TRUE)
   with_mock(Evaluation.get_evaluation_function = mock_get_evaluation,
-    result <- subject$evaluate_single_outcome(predicted.outcome = prediction, 
-                                observed.outcome = glob_observed.outcome, 
-                                randomVariables = glob_randomVariables, 
+    result <- subject$evaluate_single_outcome(predicted.outcome = prediction,
+                                observed.outcome = glob_observed.outcome,
+                                randomVariables = glob_randomVariables,
                                 add_evaluation_measure_name=FALSE)
   )
 
@@ -158,9 +158,9 @@ test_that("it should set the correct names for the output with the evaluation me
   mock_lossFn <- mock(c(test_loss = 123), cycle = TRUE)
   mock_get_evaluation <- mock(mock_lossFn, cycle = TRUE)
   with_mock(Evaluation.get_evaluation_function = mock_get_evaluation,
-    result <- subject$evaluate_single_outcome(predicted.outcome = prediction, 
-                                observed.outcome = glob_observed.outcome, 
-                                randomVariables = glob_randomVariables, 
+    result <- subject$evaluate_single_outcome(predicted.outcome = prediction,
+                                observed.outcome = glob_observed.outcome,
+                                randomVariables = glob_randomVariables,
                                 add_evaluation_measure_name=TRUE)
   )
   expect_named(result, c('test_loss.A','test_loss.W','test_loss.Y'))
@@ -173,9 +173,9 @@ test_that("it should set the correct names for the output without the evaluation
   mock_lossFn <- mock(c(test_loss = 123), cycle = TRUE)
   mock_get_evaluation <- mock(mock_lossFn, cycle = TRUE)
   with_mock(Evaluation.get_evaluation_function = mock_get_evaluation,
-    result <- subject$evaluate_single_outcome(predicted.outcome = prediction, 
-                                observed.outcome = glob_observed.outcome, 
-                                randomVariables = glob_randomVariables, 
+    result <- subject$evaluate_single_outcome(predicted.outcome = prediction,
+                                observed.outcome = glob_observed.outcome,
+                                randomVariables = glob_randomVariables,
                                 add_evaluation_measure_name=FALSE)
   )
   expect_named(result, c('A','W','Y'))
@@ -187,7 +187,7 @@ test_that("it should use the normalized data if it is available", {
   subject <- described.class$new()
 
   ## We stub the loss function to return the data it gets, so we can check that it received the correct data
-  stub(subject$calculate_risk, 'self$risk_single_outcome', 
+  stub(subject$calculate_risk, 'self$calculate_risk_of_single_estimator',
     function(observed.outcome, predicted.outcome, randomVariables) {
       expect_is(predicted.outcome, 'data.table')
       expect_equal(predicted.outcome, glob_predicted.outcome[[iter]])
@@ -197,49 +197,49 @@ test_that("it should use the normalized data if it is available", {
 
   ## Without the normalized input it should use everything
   iter <<- 1
-  result <- subject$calculate_risk(predicted.outcome = glob_predicted.outcome, 
-                              observed.outcome = glob_observed.outcome, 
+  result <- subject$calculate_risk(predicted.outcome = glob_predicted.outcome,
+                              observed.outcome = glob_observed.outcome,
                               randomVariables = glob_randomVariables)
 
   ## With the normalized input it should use the normalized part
   iter <<- 1
-  result <- subject$calculate_risk(predicted.outcome = list(normalized = glob_predicted.outcome), 
-                              observed.outcome = glob_observed.outcome, 
+  result <- subject$calculate_risk(predicted.outcome = list(normalized = glob_predicted.outcome),
+                              observed.outcome = glob_observed.outcome,
                               randomVariables = glob_randomVariables)
 })
 
 test_that("it should throw if the predicted outcome is not a list and check is true", {
   predicted.outcome <- 'not a list'
   msg <- "Argument 'predicted.outcome' is neither of nor inherits class list: character"
-  expect_error(subject$calculate_risk(predicted.outcome = predicted.outcome, 
-                         observed.outcome = glob_observed.outcome, 
+  expect_error(subject$calculate_risk(predicted.outcome = predicted.outcome,
+                         observed.outcome = glob_observed.outcome,
                          randomVariables = glob_randomVariables, check = TRUE), msg)
 })
 
 test_that("it should throw if the observed.outcome is not a data.table and check is true", {
   observed.outcome <- 'not a data.table'
   msg <- "Argument 'observed.outcome' is neither of nor inherits class data.table: character"
-  expect_error(subject$calculate_risk(predicted.outcome = glob_predicted.outcome, 
-                         observed.outcome = observed.outcome, 
+  expect_error(subject$calculate_risk(predicted.outcome = glob_predicted.outcome,
+                         observed.outcome = observed.outcome,
                          randomVariables = glob_randomVariables, check = TRUE), msg)
 })
 
 test_that("it should set the correct names to the correct risks", {
   evaluation_mock <- mock(function(...) 42, cycle=TRUE)
-  with_mock(Evaluation.get_evaluation_function = evaluation_mock, 
-  result <-subject$calculate_risk(predicted.outcome = glob_predicted.outcome, 
-                          observed.outcome = glob_observed.outcome, 
+  with_mock(Evaluation.get_evaluation_function = evaluation_mock,
+  result <-subject$calculate_risk(predicted.outcome = glob_predicted.outcome,
+                          observed.outcome = glob_observed.outcome,
                           randomVariables = glob_randomVariables))
   expect_equal(names(result), names(glob_predicted.outcome))
 
-  lapply(result, function(x) names(x) == randomVariable_names) %>% 
-    unlist %>% 
-    all %>% 
+  lapply(result, function(x) names(x) == randomVariable_names) %>%
+    unlist %>%
+    all %>%
     expect_true
 
 })
 
-context(" risk_single_outcome")
+context(" calculate_risk_of_single_estimator")
 #=====================================================================
 test_that("it should call the Evaluation.get_evaluation_function with the correct arguments", {
   subject <- described.class$new()
@@ -248,8 +248,8 @@ test_that("it should call the Evaluation.get_evaluation_function with the correc
   mock_lossFn <- mock(c(test_loss = 123), cycle = TRUE)
   mock_get_evaluation <- mock(mock_lossFn, cycle = TRUE)
   with_mock(Evaluation.get_evaluation_function = mock_get_evaluation,
-    result <- subject$risk_single_outcome(predicted.outcome = prediction, 
-                                observed.outcome = glob_observed.outcome, 
+    result <- subject$calculate_risk_of_single_estimator(predicted.outcome = prediction,
+                                observed.outcome = glob_observed.outcome,
                                 randomVariables = glob_randomVariables)
   )
 
@@ -271,8 +271,8 @@ test_that("it should call the resulting Loss function with the correct arguments
   mock_lossFn <- mock(c(test_loss = 123), cycle = TRUE)
   mock_get_evaluation <- mock(mock_lossFn, cycle = TRUE)
   with_mock(Evaluation.get_evaluation_function = mock_get_evaluation,
-    result <- subject$risk_single_outcome(predicted.outcome = prediction, 
-                                observed.outcome = glob_observed.outcome, 
+    result <- subject$calculate_risk_of_single_estimator(predicted.outcome = prediction,
+                                observed.outcome = glob_observed.outcome,
                                 randomVariables = glob_randomVariables)
   )
 
@@ -295,8 +295,8 @@ test_that("it should return the output in the correct format", {
   mock_lossFn <- mock(c(test_loss = 123), cycle = TRUE)
   mock_get_evaluation <- mock(mock_lossFn, cycle = TRUE)
   with_mock(Evaluation.get_evaluation_function = mock_get_evaluation,
-    result <- subject$risk_single_outcome(predicted.outcome = prediction, 
-                                observed.outcome = glob_observed.outcome, 
+    result <- subject$calculate_risk_of_single_estimator(predicted.outcome = prediction,
+                                observed.outcome = glob_observed.outcome,
                                 randomVariables = glob_randomVariables)
   )
 
@@ -309,11 +309,11 @@ test_that("it should return the output in the correct format", {
 test_that("it should call the loss function with the correct data", {
   loss_mock <- mock(42, cycle=TRUE)
 
-  with_mock(Evaluation.get_evaluation_function = function(...) loss_mock, 
-    subject$calculate_risk(predicted.outcome = glob_predicted.outcome, 
-                           observed.outcome = glob_observed.outcome, 
+  with_mock(Evaluation.get_evaluation_function = function(...) loss_mock,
+    subject$calculate_risk(predicted.outcome = glob_predicted.outcome,
+                           observed.outcome = glob_observed.outcome,
                            randomVariables = glob_randomVariables))
-  
+
   expect_called(loss_mock,length(glob_randomVariables) * length(glob_predicted.outcome))
   args <- mock_args(loss_mock)
 
@@ -340,7 +340,7 @@ test_that("it should throw if the predicted outcomes are not a list", {
   expected_msg <- "Argument 'predicted.outcome' is neither of nor inherits class list: "
   for (input in erroneous_inputs) {
     expect_error(subject$update_risk(predicted.outcome = input,
-                                      observed.outcome = glob_observed.outcome, 
+                                      observed.outcome = glob_observed.outcome,
                                       randomVariables = glob_randomVariables,
                                       current_risk = 0, current_count = 0, check = TRUE), expected_msg, fixed = TRUE)
   }
@@ -350,7 +350,7 @@ test_that("it should throw if the predicted outcomes are not a list", {
   input <- list()
   expected_msg <- 'Predicted outcome is empty!'
   expect_error(subject$update_risk(predicted.outcome = input,
-                                    observed.outcome = glob_observed.outcome, 
+                                    observed.outcome = glob_observed.outcome,
                                     randomVariables = glob_randomVariables,
                                     current_risk = 0, current_count = 0, check = TRUE), expected_msg, fixed = TRUE)
 })
@@ -360,7 +360,7 @@ test_that("it should throw if the observed outcomes are empty and check is true"
   expected_msg <- "Argument 'observed.outcome' is neither of nor inherits class data.table:"
   for (input in erroneous_inputs) {
     expect_error(subject$update_risk(predicted.outcome = glob_predicted.outcome,
-                                     observed.outcome = input, 
+                                     observed.outcome = input,
                                      randomVariables = glob_randomVariables,
                                      current_risk = 0, current_count = 0, check = TRUE), expected_msg)
   }
@@ -373,7 +373,7 @@ test_that("it should should call the update_single_risk function with the correc
 
   mocked_risks <- list(a = data.table(A = 1, W = 2, Y=3), b = data.table(A = 4, W = 5, Y = 6))
 
-  stub(subject$update_risk, 'self$calculate_risk', 
+  stub(subject$update_risk, 'self$calculate_risk',
     function(predicted.outcome, observed.outcome, randomVariables) {
       expect_false(is.null(predicted.outcome))
       expect_equal(predicted.outcome, glob_predicted.outcome)
@@ -385,7 +385,7 @@ test_that("it should should call the update_single_risk function with the correc
     }
   )
 
-  stub(subject$update_risk, 'self$update_single_risk', 
+  stub(subject$update_risk, 'self$update_single_risk',
     function(old_risk, new_risks, current_count, randomVariables) {
       expect_null(old_risk)
       expect_equal(new_risks, mocked_risks[[iter]])
@@ -397,10 +397,10 @@ test_that("it should should call the update_single_risk function with the correc
 
   iter <<- 1
   updated_risk <- subject$update_risk(
-    predicted.outcome = glob_predicted.outcome, 
-    observed.outcome = glob_observed.outcome, 
+    predicted.outcome = glob_predicted.outcome,
+    observed.outcome = glob_observed.outcome,
     randomVariables = glob_randomVariables,
-    current_count = cur.current_count, 
+    current_count = cur.current_count,
     current_risk = cur.current_risk
   )
 
@@ -413,7 +413,7 @@ test_that("it should should call the update_single_risk function with the correc
 
   mocked_risks <- list(a = data.table(A = 1, W = 2, Y=3), b = data.table(A = 4, W = 5, Y = 6))
 
-  stub(subject$update_risk, 'self$calculate_risk', 
+  stub(subject$update_risk, 'self$calculate_risk',
     function(predicted.outcome, observed.outcome, randomVariables) {
       expect_false(is.null(predicted.outcome))
       expect_equal(predicted.outcome, glob_predicted.outcome)
@@ -425,7 +425,7 @@ test_that("it should should call the update_single_risk function with the correc
     }
   )
 
-  stub(subject$update_risk, 'self$update_single_risk', 
+  stub(subject$update_risk, 'self$update_single_risk',
     function(old_risk, new_risks, current_count, randomVariables) {
       expect_equal(old_risk, cur.current_risk[[iter]])
       expect_equal(new_risks, mocked_risks[[iter]])
@@ -437,10 +437,10 @@ test_that("it should should call the update_single_risk function with the correc
 
   iter <<- 1
   updated_risk <- subject$update_risk(
-    predicted.outcome = glob_predicted.outcome, 
-    observed.outcome = glob_observed.outcome, 
+    predicted.outcome = glob_predicted.outcome,
+    observed.outcome = glob_observed.outcome,
     randomVariables = glob_randomVariables,
-    current_count = cur.current_count, 
+    current_count = cur.current_count,
     current_risk = cur.current_risk
   )
 })
@@ -452,23 +452,23 @@ test_that("is should set the correct names for the calculated risks", {
 
   mocked_risks <- list(a = data.table(A = 1, W = 2, Y=3), b = data.table(A = 4, W = 5, Y = 6))
 
-  stub(subject$update_risk, 'self$calculate_risk', 
+  stub(subject$update_risk, 'self$calculate_risk',
     function(predicted.outcome, observed.outcome, randomVariables) {
       return(mocked_risks)
     }
   )
 
-  stub(subject$update_risk, 'self$update_single_risk', 
+  stub(subject$update_risk, 'self$update_single_risk',
     function(old_risk, new_risks, current_count, randomVariables) {
       data.table(A = 1, W = 2, Y=3)
     }
   )
 
   updated_risk <- subject$update_risk(
-    predicted.outcome = glob_predicted.outcome, 
-    observed.outcome = glob_observed.outcome, 
+    predicted.outcome = glob_predicted.outcome,
+    observed.outcome = glob_observed.outcome,
     randomVariables = glob_randomVariables,
-    current_count = cur.current_count, 
+    current_count = cur.current_count,
     current_risk = cur.current_risk
   )
 
@@ -493,8 +493,8 @@ test_that("it should update the risk properly when there already was a risk", {
   expected_risk <- (cur.current_risk * cur.current_count + cur.new_risks) / (cur.current_count + 1)
 
   updated_risk <- subject$update_single_risk(
-    old_risk = cur.current_risk, 
-    new_risks = cur.new_risks, 
+    old_risk = cur.current_risk,
+    new_risks = cur.new_risks,
     current_count = cur.current_count,
     randomVariables = glob_randomVariables
   )
@@ -511,8 +511,8 @@ test_that("it should update (set) the risk properly when there is no current ris
   expected_risk <- cur.new_risks
 
   updated_risk <- subject$update_single_risk(
-    old_risk = cur.current_risk, 
-    new_risks = cur.new_risks, 
+    old_risk = cur.current_risk,
+    new_risks = cur.new_risks,
     current_count = cur.current_count,
     randomVariables = glob_randomVariables
   )
@@ -528,8 +528,8 @@ test_that("it should update the risk properly and return the correct named datat
   cur.current_count <- 20
 
   updated_risk <- subject$update_single_risk(
-    old_risk = cur.current_risk, 
-    new_risks = cur.new_risks, 
+    old_risk = cur.current_risk,
+    new_risks = cur.new_risks,
     current_count = cur.current_count,
     randomVariables = glob_randomVariables
   )

@@ -41,6 +41,12 @@
 #'      optimize.
 #'
 #'   }
+#'
+#'   \item{\code{get_nthread}}{
+#'     Active method. Function that returns the number of threads the XGBoost
+#'     algorithm runs on.
+#'   }
+#'
 #'   \item{\code{get_validity}}{
 #'     Active method. Function that shows wheter the current configuration of
 #'     the booster is valid. The function returns \code{TRUE} if everything is
@@ -58,6 +64,7 @@ ML.XGBoost <- R6Class("ML.XGBoost",
       initialize = function(booster = 'gblinear', max_depth = 6, nthread = 1, alpha = 0, lambda = 0, rounds = 200, gamma = 0, eta = 0.3, objective = 'binary:logistic', verbose = FALSE) {
 
         if (nthread == -1) nthread <- parallel::detectCores()
+        private$nthread <- nthread
 
         private$rounds <- Arguments$getInteger(rounds, c(1, Inf))
         private$params <- list(objective = Arguments$getCharacter(objective),
@@ -77,6 +84,10 @@ ML.XGBoost <- R6Class("ML.XGBoost",
     ),
   active =
     list(
+      get_nthread = function() {
+        return(private$nthread)
+      },
+
       get_validity = function() {
         errors <- c()
         allowed_boosters <- c('gbtree', 'gblinear', 'dart')
@@ -100,6 +111,7 @@ ML.XGBoost <- R6Class("ML.XGBoost",
       params = NULL,
       rounds = NULL,
       verbosity = NULL,
+      nthread = NULL,
 
       do.predict = function(X_mat, m.fit) {
 

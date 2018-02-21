@@ -36,13 +36,9 @@ test_that("it should throw if gamma is < 0", {
 })
 
 test_that("it should run in parallel if nthread = -1", {
-  m <- mock(1)
-
-  with_mock(`parallel::detectCores` = m,
-    described.class$new(nthread = -1)
-  )
-
-  expect_called(m, 1)
+  subject <- described.class$new(nthread = -1)
+  expect_false(subject$get_nthread == -1)
+  expect_equal(subject$get_nthread, parallel::detectCores())
 })
 
 test_that("it should throw if verbose is invalid", {
