@@ -47,6 +47,12 @@ Base class for any XGBoost machine learning model.
      optimize.
 
   }
+
+  \item{\code{get_nthread}}{
+    Active method. Function that returns the number of threads the XGBoost
+    algorithm runs on.
+  }
+
   \item{\code{get_validity}}{
     Active method. Function that shows wheter the current configuration of
     the booster is valid. The function returns \code{TRUE} if everything is
