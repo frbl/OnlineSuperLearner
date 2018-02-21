@@ -125,7 +125,7 @@ test_that("it should estimate the true treatment", {
   )
 
   summaryMeasureGenerator$reset()
-  datas <- summaryMeasureGenerator$getNext(n = 1)
+  datas <- summaryMeasureGenerator$getNext(n = 1)[[1]]
 
   #result <- mclapply(seq(B), function(i) {
    #osl$sample_iteratively(data = datas[i,],

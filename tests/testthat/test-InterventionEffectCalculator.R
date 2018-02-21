@@ -320,6 +320,25 @@ test_that("it should return the tau'th block and the outcome_variable variable f
 
 context(" perform_initial_estimation")
 #==========================================================
+test_that("it should throw an error when the provided data is not a data table", {
+
+  subject <- described.class$new(
+    bootstrap_iterations = glob_bootstrap_iterations,
+    outcome_variable = glob_outcome_variable,
+    parallel = FALSE
+  )
+
+  cur.initial_data = mock('initial_data')
+  expect_error(subject$perform_initial_estimation(
+    osl = mock(), 
+    interventions = mock(), 
+    discrete = mock() ,
+    initial_data = cur.initial_data,
+    tau = mock()
+  ), "Argument 'initial_data' is neither of nor inherits class data.table: mock" )
+
+})
+
 test_that("it should call the intervention effect calculator with the correct parameters", {
   subject <- described.class$new(
     bootstrap_iterations = glob_bootstrap_iterations,
@@ -331,7 +350,7 @@ test_that("it should call the intervention effect calculator with the correct pa
   names(cur.interventions) = LETTERS[1:length(cur.interventions)]
 
   cur.discrete = mock('discrete')
-  cur.initial_data = mock('initial_data')
+  cur.initial_data = data.table(W=10, Y=1)
   cur.tau = 3
 
   mock_result <- data.table(W = c(1,2,3,4), Y = c(4,3,2,1))
@@ -370,6 +389,7 @@ test_that("it should return the mean of all outcomes with their correct names", 
 
   cur.discrete = mock('discrete')
   cur.initial_data = mock('initial_data')
+  class(cur.initial_data) <- 'data.table'
   cur.tau = 3
 
   mock_result <- c(1,2,3,4,5)

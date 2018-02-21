@@ -1,4 +1,5 @@
 #' WCC.NMBFGS
+#'
 #' convex optimisation algorithm using a two step approach. First it uses the Nelder-Mead algorithm to find a rough
 #' estimation, which it then updates using the BFGS algorithm.
 #' 
@@ -24,12 +25,12 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
         names(private$data) <- names(newdata)
       },
 
-      # Function to transform the provided params to the log space, which makes sure they can never be negative
+      ## Function to transform the provided params to the log space, which makes sure they can never be negative
       transform_parameters = function(param, epsilon, check = TRUE) {
         lengthOfParam <- length(param)
         epsilon <- Arguments$getNumeric(epsilon, c(0, 0.1 / lengthOfParam))
         if (check) {
-          # There are rounding erros, and because of that the get numerics fails. Work around that for now.
+          ## There are rounding erros, and because of that the get numerics fails. Work around that for now.
           param <- sapply(param, function(x) min(max(x,epsilon), 1 - lengthOfParam * epsilon))
 
           param <- Arguments$getNumerics(param, c(epsilon, 1 - lengthOfParam * epsilon))
@@ -61,7 +62,7 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
         return(marap)
       },
 
-      # Function to transform smarap back from the log space to the normal space
+      ## Function to transform smarap back from the log space to the normal space
       back_transform_parameters = function(marap, epsilon, check = TRUE) {
         marap <- Arguments$getNumerics(marap)
         lengthOfMarap <- length(marap)
@@ -104,8 +105,8 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
 
         sthgiew <- private$transform_parameters(weights[-length(weights)], epsilon = epsilon, check = TRUE)
 
-        # It could be the case that one of the weights was right on the border (0 for example), and this will
-        # result in Inf
+        ## It could be the case that one of the weights was right on the border (0 for example), and this will
+        ## result in Inf
         if (any(is.infinite(sthgiew))) {
           msg <-  "Trying to start from the border, so doing nothing..."
           private$verbose && cat(private$verbose, msg)
@@ -120,7 +121,7 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
           nuf <- private$transform_function(private$function_to_optimize, 
                                                        epsilon = epsilon, check = FALSE, data = data, ...)
 
-          # Note that after optimizing we still need to transform the weights back to the parameter world
+          ## Note that after optimizing we still need to transform the weights back to the parameter world
           tpo <- optimr(sthgiew, fn = nuf, method = method)
           par <- private$back_transform_parameters(tpo$par, epsilon = epsilon, check = TRUE)
           opt <- tpo
@@ -139,14 +140,10 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
             -2 * t(alpha) %*% data$Qa + t(alpha) %*% data$Qb %*% alpha
           }
           #function_to_optimize <- function(alpha, data) {
-            #Z <- data$Z %*% alpha
-            #Y <- data$Y
             ##Z <- sapply(Z, function(x) min(x, 0.9999))
-            ##browser()
-            #browser()
-            #print( Y %*% log((Z)) + (1- Y) %*% log((1 - Z)))
-            #Y %*% log((Z)) + (1- Y) %*% log((1 - Z))
-          #}
+            ##print( Y %*% log((Z)) + (1- Y) %*% log((1 - Z)))
+            ##Y %*% log((Z)) + (1- Y) %*% log((1 - Z))
+          ##}
         }
 
         function_mode <- mode(function_to_optimize)
@@ -157,17 +154,17 @@ WCC.NMBFGS <- R6Class("WCC.NMBFGS",
         private$epsilon <- Arguments$getNumeric(epsilon, c(0, 0.1/length(private$weights))) ## say
       },
 
-      # Z and Y are always matrices
+      ## Z and Y are always matrices
       compute = function(Z, Y, libraryNames, ...) {
-        # We have to store the new data in order to fake the online update (i.e., it gets trained on all 
-        # level 1 data
+        ## We have to store the new data in order to fake the online update (i.e., it gets trained on all 
+        ## level 1 data
         private$update_data(list(Z=Z, Y=Y))
 
         Z = private$data$Z
         Y = private$data$Y
 
         data <- list(Y =Y, Z = Z, Qa = t(Z) %*% Y, Qb=t(Z) %*% Z)
-        # dimensions: Qa = x * 1, Qb = x * x
+        ## dimensions: Qa = x * 1, Qb = x * x
         optFirst <- private$perform_optimization(weights = private$weights,
                                   epsilon = private$epsilon,
                                   method = "Nelder-Mead",

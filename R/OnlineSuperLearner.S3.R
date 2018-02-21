@@ -3,7 +3,7 @@
 #' Fits an online superlearner using a similar notation as a GLM.
 #' @param formulae list a list of all randomVariable objects that need to be fitted
 #'
-#' @param data data.frame the data set to use for fitting the OSL
+#' @param data data.frame or list of data.frames the data set to use for fitting the OSL
 #'
 #' @param algorithms list of algorithms to use in the online superlearner 
 #'
@@ -19,9 +19,6 @@
 #'  \code{max_bound}, which represent the lower and upper bound of that
 #'  variable in specific.
 #'
-#' @param measurements_per_obs integer (default = Inf) the number of
-#'  measurments in a single observation. 
-#'
 #' @param ... other parameters directly passed to the OSL and fit function.
 #'  There are several named variables to provide here:
 #'  - initial_data_size 
@@ -31,7 +28,7 @@
 #'  \code{fit} and \code{initialize} functions.
 #' @return a fitted version of an \code{OnlineSuperLearner} class
 #' @export
-fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, bounds = FALSE, measurements_per_obs = Inf, ...) {
+fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, bounds = FALSE, ...) {
   ## Convert the data.frame to a data.static object
   if(!is(data, 'Data.Base')) data <- Data.Static$new(dataset = data)
 
@@ -55,8 +52,7 @@ fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, bounds = F
   }
 
   smg <- smg_factory$fabricate(formulae,
-    pre_processor = pre_processor,
-    number_of_observations_per_timeseries = measurements_per_obs
+    pre_processor = pre_processor
   )
 
   osl  <- OnlineSuperLearner$new(SL.library.definition = algorithms,
@@ -104,7 +100,10 @@ sampledata.OnlineSuperLearner <- function(object, newdata, Y = NULL, ...) {
   if(!is(newdata, 'Data.Base')) {
     Data.Static$new(dataset = newdata) %>%
       object$get_summary_measure_generator$setData(.)
-    newdata <- object$get_summary_measure_generator$getNext(nrow(newdata))
+
+    ## TODO: the [[1]] is because we retrieve a number of trajectories. We only have one so we need to 
+    ## select the first one here.
+    newdata <- object$get_summary_measure_generator$getNext(nrow(newdata))[[1]]
   }
 
   if (!is.null(Y)) Y <- object$retrieve_list_of_random_variables(random_variables = Y)
@@ -146,7 +145,9 @@ predict.OnlineSuperLearner <- function(object, newdata, Y = NULL, ...) {
     Data.Static$new(dataset = newdata) %>%
       object$get_summary_measure_generator$setData(.)
 
-    newdata <- object$get_summary_measure_generator$getNext(nrow(newdata))
+    ## TODO: the [[1]] is because we retrieve a number of trajectories. We only have one so we need to 
+    ## select the first one here.
+    newdata <- object$get_summary_measure_generator$getNext(nrow(newdata))[[1]]
   }
 
   if (!is.null(Y)) Y <- object$retrieve_list_of_random_variables(random_variables = Y)
