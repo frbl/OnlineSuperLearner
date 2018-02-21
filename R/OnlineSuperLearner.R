@@ -440,7 +440,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           data.splitted <- self$get_data_splitter$split(data_current)
           outcome.variables <- names(self$get_random_variables)
 
-          private$train_all_estimators(data = data.splitted$train)
+          private$build_all_estimators(data = data.splitted$train)
 
           ## Extract the level 1 data and use it to fit the osl
           predicted.outcome <- self$get_online_super_learner_predict$predict_using_all_estimators(
@@ -820,14 +820,13 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           })
         },
 
-        ## Train using all estimators separately.
+        ## Build using all estimators separately.
         ## Postcondition: each of our density estimators will have a fitted conditional
-        ## density in them for each of our random vars WAY *AND IT SHOULD DO THIS FOR ALL
-        ## $w \in W$*
+        ## density in them for each of our random vars WAY 
+        ## *AND IT SHOULD DO THIS FOR ALL $w \in W$*
         ## Params:
-        ## @param data_current: the initial dataset to train the estimators on
-        ## @return a vector of outcomes, each entry being the predicted outcome of an estimator on the test set
-        train_all_estimators = function(data) {
+        ## @param data: the dataset to build the estimators with
+        build_all_estimators = function(data) {
           private$verbose && enter(private$verbose, 'Training all estimators')
 
           # If not all estimators are online, we have to keep track of a cache of data.
@@ -838,7 +837,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           if(!self$is_online) {
             cache <- self$get_data_cache$get_data_cache
           }
-
 
           `%looping_function%` <- private$get_looping_function()
           #private$fabricated_estimators <- mclapply(self$get_estimators, function(estimator) {
