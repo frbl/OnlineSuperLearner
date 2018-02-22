@@ -841,7 +841,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## Initializes the weighted combination calculators. One for each randomvariable.
         initialize_weighted_combination_calculators = function() {
           lapply(self$get_random_variables, function(rv) {
-            weights.initial <- rep(1 / length(self$get_estimator_descriptions), length(self$get_estimator_descriptions))
+            weights.initial <- rep(1 / length(self$get_estimator_descriptions), 
+                                   length(self$get_estimator_descriptions))
 
             ## TODO: DIP the WCC
             private$weightedCombinationComputers[[rv$getY]] <- private$default_wcc$new(weights.initial = weights.initial)

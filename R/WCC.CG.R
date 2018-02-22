@@ -9,18 +9,21 @@ WCC.CG <- R6Class("WCC.CG",
   inherit = WeightedCombinationComputer,
   public =
     list(
-        initialize = function(weights.initial) {
-          if(is.null(weights.initial)){
-            throw('Please provide initial weights (or NA vector with the correct size)')
+        initialize = function(weights.initial = NULL, number_of_algorithms = NULL ) {
+          if(is.null(weights.initial) && is.null(number_of_algorithms)){
+            throw('Please provide initial weights (or number_of_algorithms with the number of alphas to estimate)')
           }
-          weights.initial <- rep(1 / length(weights.initial), length(weights.initial))
+          if(is.null(weights.initial)) {
+            weights.initial <- rep(1 / number_of_algorithms, number_of_algorithms)
+          }
+
           super$initialize(weights.initial)
         },
 
         compute = function(Z, y, libraryNames) {
           ## Using the definition of eta of the OCO Book
           ## See: page 44: http://www.nowpublishers.com/article/Details/OPT-013
-          eta <- 1/(2*nrow(Z) * sqrt(self$get_step_count))
+          eta <- 1 / (2 * nrow(Z) * sqrt(self$get_step_count))
           current_alpha <- self$get_weights
 
           ## Using algorithm 6 of the OCO Book,
