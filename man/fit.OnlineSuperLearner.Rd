@@ -5,12 +5,12 @@
 \title{fit.OnlineSuperLearner}
 \usage{
 \method{fit}{OnlineSuperLearner}(formulae, data, algorithms = NULL,
-  bounds = FALSE, measurements_per_obs = Inf, ...)
+  bounds = FALSE, ...)
 }
 \arguments{
 \item{formulae}{list a list of all randomVariable objects that need to be fitted}
 
-\item{data}{data.frame the data set to use for fitting the OSL}
+\item{data}{data.frame or list of data.frames the data set to use for fitting the OSL}
 
 \item{algorithms}{list of algorithms to use in the online superlearner}
 
@@ -25,9 +25,6 @@ element represents one of the \code{RandomVariable} objects. Each of these
 entries should contain another list with two elements: \code{min_bound} and
 \code{max_bound}, which represent the lower and upper bound of that
 variable in specific.}
-
-\item{measurements_per_obs}{integer (default = Inf) the number of
-measurments in a single observation.}
 
 \item{...}{other parameters directly passed to the OSL and fit function.
 There are several named variables to provide here:
