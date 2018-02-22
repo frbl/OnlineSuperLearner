@@ -51,7 +51,7 @@ WCC.CG <- R6Class("WCC.CG",
           super$initialize(weights.initial)
         },
 
-        compute = function(Z, y, libraryNames, ...) {
+        compute = function(Z, Y, libraryNames, ...) {
           ## Using the definition of eta of the OCO Book
           ## See: page 44: http://www.nowpublishers.com/article/Details/OPT-013
           eta <- 1 / (2 * nrow(Z) * sqrt(self$get_step_count))
@@ -65,7 +65,7 @@ WCC.CG <- R6Class("WCC.CG",
 
           ## SGD Method
           ## 2. yt+1 = xt −ηt∇ft(xt)
-          gradient <- -2 * t(y - prediction) %*% Z 
+          gradient <- -2 * t(Y - prediction) %*% Z 
           tentative_alpha <- current_alpha - eta * gradient %>% as.vector
 
           ## 3. Project to the simplex
