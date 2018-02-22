@@ -341,7 +341,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           ## We initialize the WCC's
           private$initialize_weighted_combination_calculators()
 
-          private$is_parallel = TRUE
+          private$is_parallel = FALSE
 
           private$osl_sampler <- OnlineSuperLearner.SampleIteratively$new(
             osl = self,
@@ -466,27 +466,18 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           outcome.variables <- names(self$get_random_variables)
           private$build_all_estimators(data = data.splitted$train)
 
+          private$fitted <- TRUE
+
           ## 2. Train the SL algorithm based on the predictions on a left out validation set
           ## Make a prediction using the learners on the test data
           predicted.outcome <- self$predict(data = data.splitted$test, discrete = FALSE,
                                             continuous = FALSE, all_estimators = TRUE)
           observed.outcome <- data.splitted$test[, outcome.variables, with=FALSE]
-          ## Remove / replaced?
-          predicted.outcome2 <- self$get_online_super_learner_predict$predict_using_all_estimators(
-            data = data.splitted$test,
-            sl_library = self$get_estimators
-          )
 
           ## Extract the level 1 data and use it to fit the osl
-          browser()
           private$fit_osl(predicted.outcome = predicted.outcome, observed.outcome = observed.outcome)
-          private$fitted <- TRUE
 
-          ## 3. Select the discrete SL algorithm based on the left out validation set
-          ## 4. Update the CV risk of each of the algorithms
-          ## 4.1 Build a function that only updates the risk of the OSL and DOSL once every X observations,
-          ##     based on a subset of unseen data
-          ## 5. rinse and repeat
+          ## 3. Update the CV risk of each of the algorithms (based on test set), except for dosl
 
           ## We need to store the dosl risk, as we will update it later.
           pre_dosl_risk <- private$cv_risk$dosl.estimator
@@ -495,7 +486,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$update_risk(predicted.outcome = predicted.outcome,
                               observed.outcome = observed.outcome)
 
-          ## Update the discrete superlearner (take the first if there are multiple candidates)
+
+          ## 4. Select the discrete SL algorithm based on the left out validation set
           if (self$fits_dosl) {
             self$fit_dosl()
 
@@ -531,11 +523,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## @param max_iterations: the number of iterations we can maximaly run for training
         ## @param mini_batch_size: size of the batch we use
         ## TODO: Move function to separate file
-        update_library = function(max_iterations, mini_batch_size){
+        update_library = function(max_iterations, mini_batch_size, log_rate = 5, osl_update_risk_threshold = 0){
           private$verbose && enter(private$verbose, 'Starting estimator updating')
-          if(!self$is_fitted){
-            throw('Fit the inital D-OSL and OSL first')
-          }
+          if(!self$is_fitted){ throw('Fit the inital DOSL and OSL before updating them.') }
 
           ## Set the current timestep to 1
           t <- 0
@@ -553,8 +543,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                 break
               }
 
-              ## Only show this log every 5 times
-              if(private$verbose && t %% 5 == 0) {
+              ## Only show this log every log_rate times
+              if(private$verbose && t %% log_rate == 0) {
                 risk <- self$get_cv_risk()
                 lapply(names(risk), function(cv_name) {
                   paste(
@@ -565,6 +555,19 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                 })
               }
               self$train_library(data_current = data_current)
+            }
+
+            if (FALSE && (t %% osl_update_risk_threshold) == 0) {
+              ## TODO: Build a function that only updates the risk of the OSL and
+              ## DOSL once every osl_update_risk_threshold blocks, based on
+              ## a subset of unseen data. This should be different from other
+              ## datasources, and should be an extra step in the training
+              ## procedure.
+
+              ## 0. Create two variables to store the actual risk in of the OSL
+              ## and DOSL.
+              ## 1. Test on an unseen validation set
+              ## 2. Update the risk of the OSL and DOSL
             }
 
             output = paste('performance_iteration', t, sep='_')

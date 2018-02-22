@@ -149,7 +149,10 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
       predict = function(osl, data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, 
                          sample = FALSE, plot = FALSE) {
 
-        if (!osl$is_fitted) return(NA)
+        if (!osl$is_fitted) {
+          warning('Predicting before fitting. Returning NA')
+          return(NA)
+        }
 
         all_estimators <- Arguments$getLogical(all_estimators)
         discrete <- Arguments$getLogical(discrete) && osl$fits_dosl

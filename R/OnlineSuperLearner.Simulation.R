@@ -503,7 +503,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           summaryMeasureGenerator <- smg_factory$fabricate(randomVariables, pre_processor = pre_processor)
 
           Data.Static$new(dataset = data.test) %>%
-            summaryMeasureGenerator$setData(.)
+            summaryMeasureGenerator$set_trajectories(.)
           data.test <- summaryMeasureGenerator$getNext(private$test_set_size)
 
           data.train <- Data.Static$new(dataset = data.train)
@@ -576,7 +576,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           tic <- Sys.time()
           data.train$reset
-          summaryMeasureGenerator$setData(data.train)
+          summaryMeasureGenerator$set_trajectories(data.train)
           data.train.set <- summaryMeasureGenerator$getNext(private$training_set_size)
 
           OutputPlotGenerator.export_key_value(output=key_output, 'iterations', B)
