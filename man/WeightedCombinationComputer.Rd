@@ -14,18 +14,65 @@ WeightedCombinationComputer
 \section{Methods}{
 
 \describe{
-  \item{\code{new()}}{
-   Creates a new computer for determining the best weighted combination of the ML libraries.
-   \code{weigths.initial} vector containing the initial weights
+  \item{\code{initialize(weights.initial)}}{
+   Creates a new computer for determining the best weighted combination of
+   the ML libraries.  \code{weigths.initial} vector containing the initial
+   weights.
+   @param weights.initial vector the initial vector of weights to use.
   }
-  \item{\code{getWeigths()}}{
-   Returns the current list of optimal weights (or the initial weights, if not yet fitted)
+
+  \item{\code{compute(Z, Y, libraryNames, ...)}}{
+   Method to compute the best weighted combination in an underlying
+   optimizer. Note that by default this method is not implemented, and
+   should be implemented by one of the subclasses. 
+
+   @param Z matrix containing the outcomes of each of the estimators.
+
+   @param Y vector containing the actual observed outcomes.
+
+   @param libraryNames vector containing the names of the estimators.
+
+   @param ... other parameters to pass to the underlying combination
+    computers.
   }
-  \item{\code{compute(Z, Y, libraryNames)}}{
-   Method to compute the best weighted combination of the underlying estimators
-   \code{Z} matrix containing the outcomes of each of the estimators
-   \code{Y} vector containing the actual outcome
-   \code{libraryNames} vector containing the names of the estimators
+
+  \item{\code{process(Z, Y, libraryNames, ...)}}{
+   Method to compute the best weighted combination of the underlying
+   optimizer. This function internally calls the extended \code{compute}
+   function.
+
+   @param Z matrix containing the outcomes of each of the estimators.
+
+   @param Y vector containing the actual observed outcome.
+
+   @param libraryNames vector containing the names of the estimators.
+
+   @param ... other parameters to pass to the underlying combination
+    computers.
+
+   @return vector of the trained / updated weights.
+  }
+
+  \item{\code{get_weights}}{
+   Active Method. Returns the current vector of optimal weights (or the
+   initial weights, if not yet fitted)
+
+   @return vector the current vector of weights
+  }
+
+  \item{\code{get_historical_weights()}}{
+   Active Method. Returns the history of the alphas, and shows how they were
+   updated over time.
+
+   @return data.frame a data.frame containing the alphas. One row for each
+   iteration, one column for each algorithm.
+  }
+
+  \item{\code{get_step_count}}{
+   Active Method. Returns the current step count of the algorithm. This is
+   updated on every \code{process} call.
+
+   @return integer the current stepcount
   }
 }
 }

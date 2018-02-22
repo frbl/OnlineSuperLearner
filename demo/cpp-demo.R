@@ -98,6 +98,8 @@ osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
   mini_batch_size = (training_set_size / 2) / nb_iter
 )
 
+browser()
+
 ## With the fitted OSL we can now sample and perform predictions
 preds <- sampledata(osl, newdata = cpp, randomVariables, plot = TRUE)
 preds$osl.estimator %>% print

@@ -16,6 +16,7 @@
 #' @include WeightedCombinationComputer.R
 #' @include DataCache.R
 #' @include WCC.NMBFGS.R
+#' @include WCC.CG.R
 #' @include WCC.SGD.Simplex.R
 #' @include CrossValidationRiskCalculator.R
 #' @include InterventionParser.R
@@ -340,7 +341,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           ## We initialize the WCC's
           private$initialize_weighted_combination_calculators()
 
-          private$is_parallel = FALSE
+          private$is_parallel = TRUE
 
           private$osl_sampler <- OnlineSuperLearner.SampleIteratively$new(
             osl = self,
@@ -761,7 +762,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## Variables
         ## =========
         ## The R.cv score of the current fit
-        default_wcc = WCC.NMBFGS,
+        default_wcc = WCC.CG,
 
         # The random_variables to use throughout the osl object
         random_variables = NULL,
@@ -840,7 +841,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## Initializes the weighted combination calculators. One for each randomvariable.
         initialize_weighted_combination_calculators = function() {
           lapply(self$get_random_variables, function(rv) {
-            weights.initial <- rep(1 / length(self$get_estimator_descriptions), length(self$get_estimator_descriptions))
+            weights.initial <- rep(1 / length(self$get_estimator_descriptions), 
+                                   length(self$get_estimator_descriptions))
 
             ## TODO: DIP the WCC
             private$weightedCombinationComputers[[rv$getY]] <- private$default_wcc$new(weights.initial = weights.initial)

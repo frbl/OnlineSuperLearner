@@ -21,7 +21,6 @@ WCC.SGD.Simplex <- R6Class("WCC.SGD.Simplex",
         super$initialize(weights.initial)
 
         private$auto_update_stepsize <- Arguments$getLogical(auto_update_stepsize)
-        private$step_count <- 0
 
         private$step_size <- Arguments$getNumerics(step_size, c(0.0000000001, Inf))
         private$iterations <- Arguments$getInteger(iterations, c(1, Inf))
@@ -59,9 +58,6 @@ WCC.SGD.Simplex <- R6Class("WCC.SGD.Simplex",
     ),
   active =
     list(
-      get_step_count = function() {
-        return(private$step_count)
-      },
 
       get_step_size = function() {
         if (self$is_auto_updating_stepsize) {
@@ -83,7 +79,6 @@ WCC.SGD.Simplex <- R6Class("WCC.SGD.Simplex",
     list(
       iterations = NULL,
       step_size = NULL,
-      step_count = NULL,
       auto_update_stepsize = NULL,
 
       # This function performs one step of gradient descent on the weight vector provided to it. 
@@ -102,11 +97,6 @@ WCC.SGD.Simplex <- R6Class("WCC.SGD.Simplex",
         names(new_weights) <- libraryNames
         # Normalize the weights using the L1 simplex
         private$project_to_l1_simplex(new_weights)
-      },
-
-      increase_and_return_counter = function() {
-        private$step_count <- private$step_count + 1
-        private$step_count
       },
 
       # This function computes the gradient of the current weights provided to it.
