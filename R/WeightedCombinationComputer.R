@@ -24,6 +24,8 @@ WeightedCombinationComputer <- R6Class("WeightedCombinationComputer",
     list(
       initialize = function(weights.initial) {
         private$weights <- Arguments$getNumerics(weights.initial, c(0, 1))
+        private$step_count <- 0
+
         sum_of_weights <- sum(private$weights)
         if (sum_of_weights != 1) {
           throw("The sum of the initial weights, ", sum_of_weights, ", does not equal 1")
@@ -51,19 +53,32 @@ WeightedCombinationComputer <- R6Class("WeightedCombinationComputer",
 
         libraryNames <- Arguments$getCharacters(libraryNames)
 
-        # Call the subclass
+        ## Increase the counter
+        private$increase_and_return_counter()
+
+        ## Call the subclass
         self$compute(Z, Y, libraryNames, ...)
         return(self$get_weights)
       }
-    ),
-  private =
-    list(
-      weights = NULL
     ),
   active = 
     list(
       get_weights = function() {
         return(private$weights)
+      },
+
+      get_step_count = function() {
+        return(private$step_count)
+      }
+    ),
+  private =
+    list(
+      step_count = NULL,
+      weights = NULL,
+
+      increase_and_return_counter = function() {
+        private$step_count <- private$step_count + 1
+        private$step_count
       }
     )
 )

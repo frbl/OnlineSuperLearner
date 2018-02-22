@@ -13,25 +13,71 @@ WCC.CG <- R6Class("WCC.CG",
           if(is.null(weights.initial)){
             throw('Please provide initial weights (or NA vector with the correct size)')
           }
-          weights.initial <- runif(length(weights.initial), 0, 1)
-          weights.initial <- weights.initial / sum(weights.initial)
+          weights.initial <- rep(1 / length(weights.initial), length(weights.initial))
           super$initialize(weights.initial)
         },
 
-        compute = function(Z, Y, libraryNames) {
-          dat <- data.frame(y=Y, x=Z)
+        compute = function(Z, y, libraryNames) {
+          ## Using the definition of eta of the OCO Book
+          ## See: page 44: http://www.nowpublishers.com/article/Details/OPT-013
+          eta <- 1/(2*nrow(Z) * sqrt(self$get_step_count))
+          current_alpha <- self$get_weights
 
-          colnames(dat) <- c('y', libraryNames)
-          # Compute the best convex combination
+          ## Using algorithm 6 of the OCO Book,
+          ## See: page 43 http://www.nowpublishers.com/article/Details/OPT-013
 
-          private$weights <- 0 ## PERFORM THE COMPUTATION
+          ## 1. Play xt and observe ft (prediction).
+          prediction <- Z %*% current_alpha
 
-        ),
+          ## SGD Method
+          ## 2. yt+1 = xt −ηt∇ft(xt)
+          gradient <- -2 * t(y - prediction) %*% Z 
+          tentative_alpha <- current_alpha - eta * gradient 
+
+          ## 3. Project to the simplex
+          updated_alpha <- private$project_to_l1_simplex(tentative_alpha)
+
+          colnames(updated_alpha) <- c(libraryNames)
+          private$weights <- updated_alpha
+          updated_alpha
+        }
+      ),
   active =
     list(
         ),
   private =
     list(
-        sgd_weights = NULL
+      # Function to project a vector of alpha (alpha) to the  L1-simplex.
+      # Essentially, this function makes sure that all values aree scaled
+      # between 0 and 1
+      # @param alpha the vector of alpha to be projected
+      # @return the vector projected onto L1 simplex
+      project_to_l1_simplex = function(alpha) {
+        ## Partly based on https://gist.github.com/daien/1272551
+        ## Check if we are already in the simplex
+        if(sum(alpha) == 1 && all(alpha >= 0)) { return(alpha) }
+
+        sorted_alpha <- sort(alpha, decreasing = TRUE)
+        sequence_alpha <- alpha %>% 
+          length %>% 
+          seq
+
+        cumulative_sum_of_alpha <- cumsum(sorted_alpha) - 1
+        
+        # By dividing the cumulative sum of alpha (which was sorted), the lower alpha will be
+        # divided by a larger number 
+        # (resulting in a larger numbers at the end if < 1 , lower numbers at the end if > 1)
+        reweighted_cumulative_sum_of_alpha <- cumulative_sum_of_alpha / sequence_alpha
+
+        K <- sorted_alpha - reweighted_cumulative_sum_of_alpha
+        K <- which(K > 0)
+        K <- rev(K)[1]
+
+        tau <- (sum(sorted_alpha[seq(K)]) - 1) / K
+
+        w_pos <- alpha - tau
+        ifelse(w_pos >= 0, w_pos, 0) %>%
+          return
+      }
     )
 )

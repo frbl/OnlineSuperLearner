@@ -16,6 +16,7 @@
 #' @include WeightedCombinationComputer.R
 #' @include DataCache.R
 #' @include WCC.NMBFGS.R
+#' @include WCC.CG.R
 #' @include WCC.SGD.Simplex.R
 #' @include CrossValidationRiskCalculator.R
 #' @include InterventionParser.R
@@ -734,7 +735,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## Variables
         ## =========
         ## The R.cv score of the current fit
-        default_wcc = WCC.NMBFGS,
+        default_wcc = WCC.CG,
 
         # The random_variables to use throughout the osl object
         random_variables = NULL,
