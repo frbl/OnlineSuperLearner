@@ -66,7 +66,7 @@ test_that("it should initialize the fabricated descriptions", {
 })
 
 test_that("it should should check if all provided estimators are online", {
-  ## Not testing this. It call s the density estimation function with the self$get_estimators variable. It is tested in that class.
+  skip( 'Not testing this. It call s the density estimation function with the self$get_estimators variable. It is tested in that class.')
 })
 
 test_that("it should should create a data cache for non online super learner tasks", {
@@ -139,9 +139,24 @@ test_that("it should throw if the provided data is not a data object", {
     "Argument 'data' is neither of nor inherits class Data.Base: mock")
 })
 
+
+test_that("it should throw if the provided mini_batch_size is less than the test_set_size", {
+  data <- mock('data')
+  expected <- 'We select a number of 1 block(s) from the mini_batch to be used as part of the test_set. As such, the mini batch size needs to be at least 2'
+  expect_error(
+    subject$fit(data, initial_data_size = 1, max_iterations = 20, mini_batch_size = 1),
+    expected, fixed = TRUE)
+
+  subject <- described.class$new(summaryMeasureGenerator = SMG, random_variables = random_variables, test_set_size = 10)
+  expected <- 'We select a number of 10 block(s) from the mini_batch to be used as part of the test_set. As such, the mini batch size needs to be at least 11'
+  expect_error(
+    subject$fit(data, initial_data_size = 1, max_iterations = 20, mini_batch_size = 10),
+    expected, fixed = TRUE)
+})
+
 test_that("it should set the data in the summary_measure_generator", {
   thedata <- Data.Base$new()
-  SMG <- list(setData = function(data) {
+  SMG <- list(set_trajectories = function(data) {
     expect_equal(data, thedata)
     throw('stopping_execution')
   })
@@ -158,8 +173,8 @@ test_that("it should set the data in the summary_measure_generator", {
 test_that("it should check if enough data is available, and it should call it with the correct (named) variables", {
   thedata <- Data.Base$new()
   SMG <- list(
-    setData = function(data) { },
-    checkEnoughDataAvailable = function(randomVariables) {
+    set_trajectories = function(data) { },
+    check_enough_data_available = function(randomVariables) {
       variable_names <- sapply(random_variables, function(rv) rv$getY)
       expect_equal(unname(randomVariables), random_variables)
       expect_named(randomVariables, variable_names)
@@ -181,11 +196,11 @@ test_that("it should call the train_library function with the data from the summ
   thedata <- Data.Base$new()
   next_data <- data.table(a=seq(5), b=seq(5))
   SMG <- list(
-    setData = function(data) { },
-    checkEnoughDataAvailable = function(randomVariables) { },
+    set_trajectories = function(data) { },
+    check_enough_data_available = function(randomVariables) { },
     getNext = function(n) {
       expect_equal(n, initial_data_size) 
-      return(next_data)
+      return(list(next_data))
     }
   )
   class(SMG) <- 'SummaryMeasureGenerator'
@@ -216,9 +231,11 @@ test_that("it should call the update_library function with the correct data", {
   thedata <- Data.Base$new()
   next_data <- data.table(a=seq(5), b=seq(5))
   SMG <- list(
-    setData = function(...) { },
-    checkEnoughDataAvailable = function(...) { },
-    getNext = function(...) { }
+    set_trajectories = function(...) { },
+    check_enough_data_available = function(...) { },
+    getNext = function(...) {
+      list(next_data)
+    }
   )
   class(SMG) <- 'SummaryMeasureGenerator'
 
@@ -259,8 +276,8 @@ test_that("it should return the cvrisk in the end", {
   thedata <- Data.Base$new()
   next_data <- data.table(a=seq(5), b=seq(5))
   SMG <- list(
-    setData = function(...) { },
-    checkEnoughDataAvailable = function(...) { },
+    set_trajectories = function(...) { },
+    check_enough_data_available = function(...) { },
     getNext = function(...) { }
   )
   class(SMG) <- 'SummaryMeasureGenerator'
@@ -290,15 +307,17 @@ test_that("it should return the cvrisk in the end", {
 context(" predict")
 #==========================================================
 test_that("it should call the predict function of the discrete online super learner if discrete is true", {
+  skip('Not yet tested')
 })
 
 test_that("it should call the predict function of the  online super learner if discrete is false", {
+  skip('Not yet tested')
 })
 
 
 context(" retrieve_list_of_random_variables")
 test_that("it should work with the different formats", {
-  skip('Test this')
+  skip('Not yet tested')
   ## See the specs for the S3 methods. Most can be copied from there.
 })
 

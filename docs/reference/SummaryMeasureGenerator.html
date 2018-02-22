@@ -99,7 +99,7 @@ super learner machine learning model.</p>
 
     
     <dl class='dl-horizontal'>
-  <dt><code>initialize(data = NULL, SMG.list, verbose = FALSE, pre_processor = NULL, number_of_observations_per_timeseries = Inf)</code></dt><dd><p>Initializes a new <code>SummaryMeasureGenerator</code>. Note that generating a
+  <dt><code>initialize(data = NULL, SMG.list, verbose = FALSE, pre_processor = NULL)</code></dt><dd><p>Initializes a new <code>SummaryMeasureGenerator</code>. Note that generating a
     new SMG can also be done using the <code>SMGFactory</code> class.
     @param data Data.Base (default = NULL) the data to use as the basis to
     generate the summary measures from. This should be an instance of a
@@ -110,14 +110,9 @@ super learner machine learning model.</p>
     @param verbose (default = FALSE) the verbosity of the <code>SummaryMeasureGenerator</code>.
     @param pre_processor PreProcessor (default = NULL) the
      <code>PreProcessor</code> to use for processing the data. This is an optional
-     parameter. If <code>NULL</code> the data won't be preprocessed / normalized.
-    @param number_of_observations_per_timeseries integer (default = Inf)
-     when working with multiple observations, this argument allows one to
-     differentiate between the different (concatenated) timeseries. This is
-     needed as it is necessary for 'restarting' some of the summary measures
-     (e.g., the lagged variables).</p></dd>
+     parameter. If <code>NULL</code> the data won't be preprocessed / normalized.</p></dd>
     <dt><code>reset() </code></dt><dd><p>Removes all data in the SMG and resets it to a neutral state.</p></dd>
-    <dt><code>checkEnoughDataAvailable(randomVariables) </code></dt><dd><p>This function asks each of the provided SMGs how much data they need to
+    <dt><code>check_enough_data_available(randomVariables) </code></dt><dd><p>This function asks each of the provided SMGs how much data they need to
     generate a new block. This function returns a boolean representing
     whether or not this condition is met.
     @param randomVariables list the random variables for which we want to
@@ -129,14 +124,14 @@ super learner machine learning model.</p>
     generate a new observation. This function fills this cache and makes
     sure enough data is available.
     @return boolean representing whether the cache was actually updated.</p></dd>
-    <dt><code>getLatestCovariates(data) </code></dt><dd><p>For online learning we need to be able to create new data blocks on the
+    <dt><code>get_latest_covariates(data) </code></dt><dd><p>For online learning we need to be able to create new data blocks on the
     fly (as not all data is available beforehand. This function updates a
     set of variables to contain the current variables as well. This function
     can be used to get the last set of covariates given a data.table of
     current blocks
     @param data data.table the currently available data.
     @return the updated / latest available data.table.</p></dd>
-    <dt><code>summarizeData(data, n = 1) </code></dt><dd><p>Returns the latest <code>n</code> rows from the processed (the blocks) data.
+    <dt><code>summarize_data(data, n = 1) </code></dt><dd><p>Returns the latest <code>n</code> rows from the processed (the blocks) data.
     @param data data.table the data currently available for the SMGs (e.g.,
      the cache of this class).
     @param n integer (default = 1) the number of blocks to retrieve from the

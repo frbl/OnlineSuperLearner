@@ -18,7 +18,7 @@ super learner machine learning model.
 \section{Methods}{
  
 \describe{  
-  \item{\code{initialize(data = NULL, SMG.list, verbose = FALSE, pre_processor = NULL, number_of_observations_per_timeseries = Inf)}}{ 
+  \item{\code{initialize(data = NULL, SMG.list, verbose = FALSE, pre_processor = NULL)}}{ 
     Initializes a new \code{SummaryMeasureGenerator}. Note that generating a
     new SMG can also be done using the \code{SMGFactory} class.
 
@@ -35,19 +35,13 @@ super learner machine learning model.
     @param pre_processor PreProcessor (default = NULL) the
      \code{PreProcessor} to use for processing the data. This is an optional
      parameter. If \code{NULL} the data won't be preprocessed / normalized.
-
-    @param number_of_observations_per_timeseries integer (default = Inf)
-     when working with multiple observations, this argument allows one to
-     differentiate between the different (concatenated) timeseries. This is
-     needed as it is necessary for 'restarting' some of the summary measures
-     (e.g., the lagged variables).
   } 
 
   \item{\code{reset() }}{ 
     Removes all data in the SMG and resets it to a neutral state. 
   } 
 
-  \item{\code{checkEnoughDataAvailable(randomVariables) }}{ 
+  \item{\code{check_enough_data_available(randomVariables) }}{ 
     This function asks each of the provided SMGs how much data they need to
     generate a new block. This function returns a boolean representing
     whether or not this condition is met.
@@ -71,7 +65,7 @@ super learner machine learning model.
     @return boolean representing whether the cache was actually updated.
   } 
 
-  \item{\code{getLatestCovariates(data) }}{ 
+  \item{\code{get_latest_covariates(data) }}{ 
     For online learning we need to be able to create new data blocks on the
     fly (as not all data is available beforehand. This function updates a
     set of variables to contain the current variables as well. This function
@@ -83,7 +77,7 @@ super learner machine learning model.
     @return the updated / latest available data.table.
   } 
 
-  \item{\code{summarizeData(data, n = 1) }}{ 
+  \item{\code{summarize_data(data, n = 1) }}{ 
     Returns the latest \code{n} rows from the processed (the blocks) data. 
 
     @param data data.table the data currently available for the SMGs (e.g.,

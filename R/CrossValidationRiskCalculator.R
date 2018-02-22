@@ -210,7 +210,7 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
         }
 
         cv_risk <- lapply(predicted.outcome, function(algorithm_outcome) {
-          self$risk_single_outcome(
+          self$calculate_risk_of_single_estimator(
             observed.outcome = observed.outcome,
             predicted.outcome = algorithm_outcome,
             randomVariables = randomVariables
@@ -220,13 +220,15 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
         return(cv_risk)
       },
 
-      risk_single_outcome = function(observed.outcome, predicted.outcome, randomVariables) {
+      calculate_risk_of_single_estimator = function(observed.outcome, predicted.outcome, randomVariables) {
         result <- lapply(randomVariables, function(rv) {
           current_outcome <- rv$getY
+
+          ## Retrieve the fitting loss function
           lossFn <- Evaluation.get_evaluation_function(family = rv$getFamily, useAsLoss = TRUE)
           risk <- lossFn(data.observed = observed.outcome[[current_outcome]],
-                          data.predicted = predicted.outcome[[current_outcome]])
-          current_outcome
+                         data.predicted = predicted.outcome[[current_outcome]])
+
           names(risk) <- current_outcome
           risk
         }) 

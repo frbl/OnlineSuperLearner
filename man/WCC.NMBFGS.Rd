@@ -3,14 +3,16 @@
 \docType{class}
 \name{WCC.NMBFGS}
 \alias{WCC.NMBFGS}
-\title{WCC.NMBFGS
-convex optimisation algorithm using a two step approach. First it uses the Nelder-Mead algorithm to find a rough
-estimation, which it then updates using the BFGS algorithm.}
+\title{WCC.NMBFGS}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 WCC.NMBFGS
 }
 \description{
+convex optimisation algorithm using a two step approach. First it uses the Nelder-Mead algorithm to find a rough
+estimation, which it then updates using the BFGS algorithm.
+}
+\details{
 We use the convention that a transformed variable is has the same variable name but mirrored:
 param -> marap
 fun -> nuf

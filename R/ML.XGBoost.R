@@ -165,7 +165,6 @@ ML.XGBoost <- R6Class("ML.XGBoost",
           verbose    = 0
         ) #private$verbosity)
 
-        coef
         if(any(is.na(estimator))) browser()
 
         return(estimator)

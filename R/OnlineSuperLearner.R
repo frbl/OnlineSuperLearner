@@ -48,6 +48,9 @@
 #'      \code{PreProcessor} which is used to normalize the in and output values
 #'      for the OSL.
 #'
+#'     @param test_set_size integer (default = 1) the size of the test set to
+#'      use.
+#'
 #'     @param verbose (default = FALSE) the verbosity (how much logging). Note that this might
 #'      be propagated to other classes.
 #'   }
@@ -82,7 +85,10 @@
 #'      indefinitely.
 #'
 #'     @param mini_batch_size integer (default = 20) the size of the mini batch
-#'      to use for each update.
+#'      to use for each update. Note that this needs to be larger than the
+#'      specified \code{test_set_size} on initialization. Part of this
+#'      collection of blocks / mini batch will be used as a validation set
+#'      while training.
 #'
 #'     @return data.table a data.table with the risks of each estimator.
 #'   } 
@@ -298,7 +304,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         initialize = function(SL.library.definition = c('ML.Local.lm', 'ML.H2O.glm'),
                               summaryMeasureGenerator, random_variables, should_fit_osl = TRUE,
                               should_fit_dosl = TRUE, pre_processor = NULL,
-                              verbose = FALSE, ...) {
+                              test_set_size = 1, verbose = FALSE, ...) {
 
           self$set_verbosity(Arguments$getVerbose(verbose, timestamp = TRUE))
 
@@ -314,7 +320,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$cv_risk = list()
           private$cv_risk_count = 0
           private$cv_risk_calculator = CrossValidationRiskCalculator$new()
-          private$data_splitter <- DataSplitter$new()
+          private$data_splitter <- DataSplitter$new(test_set_size = test_set_size)
 
           ## Initialization, Fabricate the various models
           libraryFactory <- LibraryFactory$new(verbose = verbose)
@@ -361,10 +367,21 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           initial_data_size <- Arguments$getInteger(initial_data_size, c(1,Inf))
           max_iterations <- Arguments$getInteger(max_iterations, c(0,Inf))
           mini_batch_size <- Arguments$getInteger(mini_batch_size, c(1,Inf))
+
+          ## We are taking part of the minibatch away to do the testing of the
+          ## algorithm. As such, the specified minibatch size should be more
+          ## than the specified test size.
+          if(mini_batch_size <= self$get_data_splitter$get_test_set_size) {
+            throw('We select a number of ', self$get_data_splitter$get_test_set_size,
+                  ' block(s) from the mini_batch to be used as part of the test_set.',
+                  ' As such, the mini batch size needs to be at least ',
+                  self$get_data_splitter$get_test_set_size + 1)
+          }
+
           data <- Arguments$getInstanceOf(data, 'Data.Base')
 
-          self$get_summary_measure_generator$setData(data = data)
-          self$get_summary_measure_generator$checkEnoughDataAvailable(randomVariables = self$get_random_variables)
+          self$get_summary_measure_generator$set_trajectories(data = data)
+          self$get_summary_measure_generator$check_enough_data_available(randomVariables = self$get_random_variables)
 
           private$verbose && cat(private$verbose, 
             'Fitting OnlineSuperLearner with a library: ', paste(self$get_estimator_descriptions, collapse = ', '),
@@ -374,12 +391,15 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           )
 
           ## Get the initial data for fitting the first estimator and train the initial models
-          next_data <- self$get_summary_measure_generator$getNext(n = initial_data_size)
+          trajectories <- self$get_summary_measure_generator$getNext(n = initial_data_size)
 
-          ## Create the initial fit
-          private$verbose && enter(private$verbose, 'Fitting initial estimators')
-          self$train_library(data_current = next_data)
-          private$verbose && exit(private$verbose)
+          ## Note that there could be multiple trajectories, so we need to iterate
+          for(next_data in trajectories) {
+            ## Create the initial fit
+            private$verbose && enter(private$verbose, 'Fitting initial estimators')
+            self$train_library(data_current = next_data)
+            private$verbose && exit(private$verbose)
+          }
 
 
           ## Update the library of models using a given number of max_iterations
@@ -437,18 +457,17 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         ## TODO: Move function to separate file
         train_library = function(data_current) {
-          ## Fit or update the  estimators
+          ## Fit or update the estimators
           data.splitted <- self$get_data_splitter$split(data_current)
           outcome.variables <- names(self$get_random_variables)
-
-          private$train_all_estimators(data = data.splitted$train)
+          private$build_all_estimators(data = data.splitted$train)
 
           ## Extract the level 1 data and use it to fit the osl
           predicted.outcome <- self$get_online_super_learner_predict$predict_using_all_estimators(
             data = data.splitted$train,
             sl_library = self$get_estimators
           )
-          observed.outcome <- data.splitted$train[,outcome.variables, with=FALSE]
+          observed.outcome <- data.splitted$train[, outcome.variables, with=FALSE]
 
           private$fit_osl(predicted.outcome = predicted.outcome, observed.outcome = observed.outcome)
           private$fitted <- TRUE
@@ -509,28 +528,36 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           ## Set the current timestep to 1
           t <- 0
-          data_current <- self$get_summary_measure_generator$getNext(mini_batch_size)
+          stopped <- FALSE
 
-          ## TODO: Check wether the stopping criteria are met (e.g., improvement < theta)
-          while(t < max_iterations && nrow(data_current) >= 1 && !is.null(data_current)) {
-            risk <- self$get_cv_risk()
+          while(t < max_iterations && !stopped) {
+            ## Get the new row of data
+            trajectories <- self$get_summary_measure_generator$getNext(mini_batch_size)
 
-            ## Only show this log every 5 times
-            if(t %% 5 == 0 && private$verbose) {
-              lapply(names(risk), function(cv_name) {
-                cat(private$verbose, paste('Updating OSL at iteration', t,
-                                          'error for', cv_name,
-                                          'is', risk[cv_name]))
-              })
+            ## Note that there could be multiple trajectories, so we need to iterate
+            for(data_current in trajectories) {
+              if(!is.null(data_current) || nrow(data_current) < 1) {
+                ## TODO: Check wether the stopping criteria are met (e.g., improvement < theta)
+                stopped <- TRUE
+                break
+              }
+
+              ## Only show this log every 5 times
+              if(private$verbose && t %% 5 == 0) {
+                risk <- self$get_cv_risk()
+                lapply(names(risk), function(cv_name) {
+                  paste(
+                    'Updating OSL at iteration', t,
+                    'error for', cv_name,
+                    'is', risk[cv_name]
+                  ) %>% cat(private$verbose, .)
+                })
+              }
+              self$train_library(data_current = data_current)
             }
 
-            self$train_library(data_current = data_current)
-            output = paste('performance_iteration',t,sep='_')
-            OutputPlotGenerator.create_risk_plot(risk, output, '/tmp/osl/')
-
-
-            ## Get the new row of data
-            data_current <- self$get_summary_measure_generator$getNext(mini_batch_size)
+            output = paste('performance_iteration', t, sep='_')
+            OutputPlotGenerator.create_risk_plot(self$get_cv_risk(), output, '/tmp/osl/')
             t <- t + 1
           }
           private$verbose && exit(private$verbose)
@@ -821,14 +848,13 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           })
         },
 
-        ## Train using all estimators separately.
+        ## Build using all estimators separately.
         ## Postcondition: each of our density estimators will have a fitted conditional
-        ## density in them for each of our random vars WAY *AND IT SHOULD DO THIS FOR ALL
-        ## $w \in W$*
+        ## density in them for each of our random vars WAY 
+        ## *AND IT SHOULD DO THIS FOR ALL $w \in W$*
         ## Params:
-        ## @param data_current: the initial dataset to train the estimators on
-        ## @return a vector of outcomes, each entry being the predicted outcome of an estimator on the test set
-        train_all_estimators = function(data) {
+        ## @param data: the dataset to build the estimators with
+        build_all_estimators = function(data) {
           private$verbose && enter(private$verbose, 'Training all estimators')
 
           # If not all estimators are online, we have to keep track of a cache of data.
@@ -839,7 +865,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           if(!self$is_online) {
             cache <- self$get_data_cache$get_data_cache
           }
-
 
           `%looping_function%` <- private$get_looping_function()
           #private$fabricated_estimators <- mclapply(self$get_estimators, function(estimator) {

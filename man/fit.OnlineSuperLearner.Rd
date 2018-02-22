@@ -4,8 +4,8 @@
 \alias{fit.OnlineSuperLearner}
 \title{fit.OnlineSuperLearner}
 \usage{
-fit.OnlineSuperLearner(formulae, data, algorithms = NULL, normalize = FALSE,
-  measurements_per_obs = Inf, ...)
+\method{fit}{OnlineSuperLearner}(formulae, data, algorithms = NULL,
+  bounds = FALSE, measurements_per_obs = Inf, ...)
 }
 \arguments{
 \item{formulae}{list a list of all randomVariable objects that need to be fitted}
@@ -14,11 +14,17 @@ fit.OnlineSuperLearner(formulae, data, algorithms = NULL, normalize = FALSE,
 
 \item{algorithms}{list of algorithms to use in the online superlearner}
 
-\item{normalize}{boolean (default = FALSE) we provide the option to
-normalize the data in the OSL procedure. This entails that the package will
-automatically select a set of bounds (min and max) based on the data set
-provided. After that it will only use the normalized features (all scaled
-between 0-1).}
+\item{bounds}{either a list of bounds, or a boolean (default = FALSE), in
+which TRUE forces the bounds to be generated automatically, FALSE causes the
+bounds not to be generated at all (no normalization) we provide the option
+to normalize the data in the OSL procedure. This entails that the package
+will automatically select a set of bounds (min and max) based on the data
+set provided. After that it will only use the normalized features (all
+scaled between 0-1). The bounds should be specified as a list in which each
+element represents one of the \code{RandomVariable} objects. Each of these
+entries should contain another list with two elements: \code{min_bound} and
+\code{max_bound}, which represent the lower and upper bound of that
+variable in specific.}
 
 \item{measurements_per_obs}{integer (default = Inf) the number of
 measurments in a single observation.}

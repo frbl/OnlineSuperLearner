@@ -3,18 +3,21 @@
 #' Fits an online superlearner using a similar notation as a GLM.
 #' @param formulae list a list of all randomVariable objects that need to be fitted
 #'
-#' @param data data.frame the data set to use for fitting the OSL
+#' @param data data.frame or list of data.frames the data set to use for fitting the OSL
 #'
 #' @param algorithms list of algorithms to use in the online superlearner 
 #'
-#' @param normalize boolean (default = FALSE) we provide the option to
-#'  normalize the data in the OSL procedure. This entails that the package will
-#'  automatically select a set of bounds (min and max) based on the data set
-#'  provided. After that it will only use the normalized features (all scaled
-#'  between 0-1).
-#'
-#' @param measurements_per_obs integer (default = Inf) the number of
-#'  measurments in a single observation. 
+#' @param bounds  either a list of bounds, or a boolean (default = FALSE), in
+#'  which TRUE forces the bounds to be generated automatically, FALSE causes the
+#'  bounds not to be generated at all (no normalization) we provide the option
+#'  to normalize the data in the OSL procedure. This entails that the package
+#'  will automatically select a set of bounds (min and max) based on the data
+#'  set provided. After that it will only use the normalized features (all
+#'  scaled between 0-1). The bounds should be specified as a list in which each
+#'  element represents one of the \code{RandomVariable} objects. Each of these
+#'  entries should contain another list with two elements: \code{min_bound} and
+#'  \code{max_bound}, which represent the lower and upper bound of that
+#'  variable in specific.
 #'
 #' @param ... other parameters directly passed to the OSL and fit function.
 #'  There are several named variables to provide here:
@@ -25,10 +28,13 @@
 #'  \code{fit} and \code{initialize} functions.
 #' @return a fitted version of an \code{OnlineSuperLearner} class
 #' @export
-fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, normalize = FALSE, measurements_per_obs = Inf, ...) {
-  ## TODO: Add bounds as a parameter
+fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, bounds = FALSE, ...) {
   ## Convert the data.frame to a data.static object
   if(!is(data, 'Data.Base')) data <- Data.Static$new(dataset = data)
+
+  if (!is.list(bounds) && !is.logical(bounds)) {
+    throw('Bounds should either be a boolean, or a list of bounds.')
+  }
 
   ## Build an SMG Factory from the provided formulae
   smg_factory <- OnlineSuperLearner::SMGFactory$new()
@@ -38,14 +44,15 @@ fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, normalize 
   formulae <- lapply(formulae, function(rv) Arguments$getInstanceOf(rv, 'RandomVariable'))
 
   pre_processor <- NULL
-  if (normalize) {
-    bounds <- PreProcessor.generate_bounds(data)
+  if (is.list(bounds) || bounds) {
+    ## The provided bounds can be either a list of bounds or a boolean (in that case we'll define it ourselves)
+    ## TODO: Move this checking to the preprocessor itself / the generate bounds function?
+    if(is.logical(bounds)) { bounds <- PreProcessor.generate_bounds(data)}
     pre_processor <- PreProcessor$new(bounds = bounds)
   }
 
   smg <- smg_factory$fabricate(formulae,
-    pre_processor = pre_processor,
-    number_of_observations_per_timeseries = measurements_per_obs
+    pre_processor = pre_processor
   )
 
   osl  <- OnlineSuperLearner$new(SL.library.definition = algorithms,
@@ -56,6 +63,9 @@ fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, normalize 
   osl$fit(data, ...)
   return(osl)
 }
+
+#' @export
+fit <- function(formulae, data, algorithms = NULL, bounds = FALSE, measurements_per_obs = Inf, ...) UseMethod("fit")
 
 #' sampledata.OnlineSuperLearner
 #' 
@@ -90,7 +100,10 @@ sampledata.OnlineSuperLearner <- function(object, newdata, Y = NULL, ...) {
   if(!is(newdata, 'Data.Base')) {
     Data.Static$new(dataset = newdata) %>%
       object$get_summary_measure_generator$setData(.)
-    newdata <- object$get_summary_measure_generator$getNext(nrow(newdata))
+
+    ## TODO: the [[1]] is because we retrieve a number of trajectories. We only have one so we need to 
+    ## select the first one here.
+    newdata <- object$get_summary_measure_generator$getNext(nrow(newdata))[[1]]
   }
 
   if (!is.null(Y)) Y <- object$retrieve_list_of_random_variables(random_variables = Y)
@@ -132,7 +145,9 @@ predict.OnlineSuperLearner <- function(object, newdata, Y = NULL, ...) {
     Data.Static$new(dataset = newdata) %>%
       object$get_summary_measure_generator$setData(.)
 
-    newdata <- object$get_summary_measure_generator$getNext(nrow(newdata))
+    ## TODO: the [[1]] is because we retrieve a number of trajectories. We only have one so we need to 
+    ## select the first one here.
+    newdata <- object$get_summary_measure_generator$getNext(nrow(newdata))[[1]]
   }
 
   if (!is.null(Y)) Y <- object$retrieve_list_of_random_variables(random_variables = Y)
