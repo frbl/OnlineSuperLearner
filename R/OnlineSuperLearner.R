@@ -341,7 +341,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           ## We initialize the WCC's
           private$initialize_weighted_combination_calculators()
 
-          private$is_parallel = FALSE
+          private$is_parallel = TRUE
 
           private$osl_sampler <- OnlineSuperLearner.SampleIteratively$new(
             osl = self,

@@ -32,14 +32,14 @@ WCC.CG <- R6Class("WCC.CG",
           ## SGD Method
           ## 2. yt+1 = xt −ηt∇ft(xt)
           gradient <- -2 * t(y - prediction) %*% Z 
-          tentative_alpha <- current_alpha - eta * gradient 
+          tentative_alpha <- current_alpha - eta * gradient %>% as.vector
 
           ## 3. Project to the simplex
           updated_alpha <- private$project_to_l1_simplex(tentative_alpha)
-
-          colnames(updated_alpha) <- c(libraryNames)
-          private$weights <- updated_alpha
+          names(updated_alpha) <- c(libraryNames)
           updated_alpha
+          ## output has to be a vector
+          private$weights <- updated_alpha
         }
       ),
   active =
