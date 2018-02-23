@@ -32,6 +32,9 @@ Splits a dataset into a train and test set.
 
     @param data data.table the data to spit into a train and test set.
 
+    @param test_set_size integer (default = NULL) overrides the initialized
+     test_set_size. If \code{NULL}, we use the initialized one (default).
+
     @return list with two entries: \code{train} and \code{test}. Each
      containing the respective dataframe.
   } 

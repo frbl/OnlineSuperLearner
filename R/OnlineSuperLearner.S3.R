@@ -99,7 +99,7 @@ sampledata.OnlineSuperLearner <- function(object, newdata, Y = NULL, ...) {
   ## Convert newdata to data.static
   if(!is(newdata, 'Data.Base')) {
     Data.Static$new(dataset = newdata) %>%
-      object$get_summary_measure_generator$setData(.)
+      object$get_summary_measure_generator$set_trajectories(.)
 
     ## TODO: the [[1]] is because we retrieve a number of trajectories. We only have one so we need to 
     ## select the first one here.
@@ -143,7 +143,7 @@ predict.OnlineSuperLearner <- function(object, newdata, Y = NULL, ...) {
   ## Convert newdata to data.static
   if(!is(newdata, 'Data.Base')) {
     Data.Static$new(dataset = newdata) %>%
-      object$get_summary_measure_generator$setData(.)
+      object$get_summary_measure_generator$set_trajectories(.)
 
     ## TODO: the [[1]] is because we retrieve a number of trajectories. We only have one so we need to 
     ## select the first one here.

@@ -503,7 +503,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           summaryMeasureGenerator <- smg_factory$fabricate(randomVariables, pre_processor = pre_processor)
 
           Data.Static$new(dataset = data.test) %>%
-            summaryMeasureGenerator$setData(.)
+            summaryMeasureGenerator$set_trajectories(.)
           data.test <- summaryMeasureGenerator$getNext(private$test_set_size)
 
           data.train <- Data.Static$new(dataset = data.train)
@@ -513,12 +513,13 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
                                         random_variables = randomVariables,
                                         summaryMeasureGenerator = summaryMeasureGenerator,
                                         pre_processor = pre_processor,
+                                        test_set_size = 20, # Make sure this is bigger than the number of K-1 algorithms
                                         verbose = private$log)
 
           private$log && cat(private$log, 'Running OSL')
 
           initial_training_set_size <- floor(private$training_set_size / 2)
-          mini_batch_size <- max((private$training_set_size / 2) / max_iterations, 1)
+          mini_batch_size <- 40
           mini_batch_size <- ifelse(is.na(mini_batch_size) || is.infinite(mini_batch_size), 1, floor(mini_batch_size))
 
           # Store the configuration
@@ -575,7 +576,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           tic <- Sys.time()
           data.train$reset
-          summaryMeasureGenerator$setData(data.train)
+          summaryMeasureGenerator$set_trajectories(data.train)
           data.train.set <- summaryMeasureGenerator$getNext(private$training_set_size)
 
           OutputPlotGenerator.export_key_value(output=key_output, 'iterations', B)
