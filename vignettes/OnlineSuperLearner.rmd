@@ -7,33 +7,45 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+In this guide we present a basic example of how the OnlineSuperLearner (OSL) can be used. The goal of OSL is to be able to make predictions and do inference based on (in machine learning terms) online machine learning algorithtms. The OSL can for example be used on time series data. In order to do so, it estimates a density function for each of the covariates of interest, the treatment variables of interest, and the outcome of interest. After these densities are fitted, OSL can simulate interventions and determine the outcome given such an intervention. This package relies heavily on the [condensier](https://github.com/osofr/condensier) package.
 
-<span style="color:red">Note: this guide is out of date and will be updated in the future.</span>
+In this guide we will present a basic overview of the steps needed to perform a simulation study or to use the OSL with your own data set. We will start by installing and configuring the package. The next step is to approximate our true parameter of interest given the simulation data. This approximated truth is used as ground truth for the rest of the algorithm. Note that this step is only possible in simulation studies; in real life the true parameter of interest is not available. After approximating the parameter of interest, the next step is to perform the actual machine learning procedure. We estimate the densities and run an iteritative sampling method, in which we apply the same treatment as in the approximation step. If everything goes well, both parameters should converge to approximately the same values. Note that this guide does not apply any TMLE. We do perform an initial one-step estimation procedure, but this procedure is still in its infancy. 
 
-In this guide we present a basic example of how the OnlineSuperLearner (OSL) can be used. The goal of OSL is to be able to make predictions and do inference on time series data in an (in machine learning terms) online fashion. In order to do so, it estimates a density function for each of the covariates, the treatment variables, and the outcome. After these densities are fitted, OSL can simulate interventions and determine the outcome given such an intervention. This package relies heavily on the [condensier](https://github.com/osofr/condensier) package.
-
-In this guide we will present the steps needed to perform a basic simulation or to use the OSL with your own data set. We will start by installing and configuring the package. Then we approximate our true parameter of interest given the simulation data. This approximated truth is used as ground truth for the rest of the algorithm. In the next step we estimate the densities and run an iteritative sampling method, in which we apply the same treatment as in the approximation step. If everything goes well, both parameters should be approximately the same. Note that this guide does not apply any TMLE. In this tutorial / guide we assume that the user's working directory is the root folder of the _OnlineSuperLearner_ repository.
+In this tutorial / guide we assume that the user's working directory is the root folder of the _OnlineSuperLearner_ repository. We also assume that the latest version of R is installed (3.4.3 at the time of writing).
 
 ## Install dependencies
-Before anything else we need to install several dependencies. Most dependencies are used by OSL and some are used by Condensier. First define the dependencies we need.
+Before anything else we need to install several dependencies. Most dependencies are used by OSL and some are used by Condensier. We created a script that can be ran to install the packages needed by the online super learner. The script can be ran as follows:
 
 ``` bash
-  ./inst/bash/install-package-dependencies.sh
+./inst/bash/install-package-dependencies.sh
 ```
 
-After installing the packages we then need to load them. We will use the local version from source for the OSL package.
-
+An other option to install the dependencies is to install the `OnlineSuperLearner` package as a whole, installing all of its dependencies automatically. After installing the packages we then need to load them. We do not assume that you have installed the latest version of the OSL package, and as such will use the local version from source:
 
 ``` R
-  if ("package:OnlineSuperLearner" %in% search()) { detach("package:OnlineSuperLearner", unload=TRUE) }
-  if ("OnlineSuperLearner" %in% rownames(installed.packages())) { remove.packages("OnlineSuperLearner") }
-  install.packages('.', repos = NULL, type="source")
+if ("package:OnlineSuperLearner" %in% search()) { detach("package:OnlineSuperLearner", unload=TRUE) }
+if ("OnlineSuperLearner" %in% rownames(installed.packages())) { remove.packages("OnlineSuperLearner") }
+install.packages('.', repos = NULL, type="source")
 ```
 
-Check if the correct functions are exported.
+Quick check if the correct functions are exported.
 
 ``` R
-  getNamespaceExports("OnlineSuperLearner")
+getNamespaceExports("OnlineSuperLearner")
+```
+
+This should return something like:
+
+``` plaintext 
+[1] "PreProcessor"
+[2] "Evaluation.log_likelihood_loss"
+[3] "PreProcessor.generate_bounds"
+[4] "Simulator.GAD"
+  ...
+[60] "InterventionParser.first_intervention"
+[61] "Evaluation.get_evaluation_function"
+[62] "InterventionParser.generate_intervention"
+[63] "OnlineSuperLearner.Simulation"
 ```
 
 ## Configuration
