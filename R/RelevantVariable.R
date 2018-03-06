@@ -1,6 +1,6 @@
-#' RandomVariable
+#' RelevantVariable
 #'
-#' This class represents the structure we see as a random variable. A random
+#' This class represents the structure we see as a relevant variable. A random
 #' variable in our case is a variable for which we want to estimate its
 #' conditional distribution. This class helps organizing / creating its formula
 #' (the parametric form of the covariates that could predict this random
@@ -12,14 +12,14 @@
 #' @section Methods: 
 #' \describe{  
 #'   \item{\code{initialize(formula, family) }}{ 
-#'     Creates a new \code{RandomVariable} object. It creates this object
+#'     Creates a new \code{RelevantVariable} object. It creates this object
 #'     according to a formula (the y ~ x1 + x2 representation we expect to
-#'     predict this random variable) and the family (gaussian if it is a double
+#'     predict this relevant variable) and the family (gaussian if it is a double
 #'     / integer value, and binomial if it is a binary variable)
 #'
 #'     @param formula formula the formula to use for predicting this random
 #'      variable.
-#'     @param family string a string representing the type of random variable
+#'     @param family string a string representing the type of relevant variable
 #'      this is.
 #'   } 
 #' 
@@ -29,11 +29,11 @@
 #'
 #'     @param X string (default = NULL) the variables to use as the predicting
 #'      variables in this formula. If \code{NULL}, it will use the X of the
-#'      current random variable.
+#'      current relevant variable.
 #'
 #'     @param Y string (default = NULL) the variables to use as the outcome
 #'      variable in this formula. If \code{NULL}, it will use the X of the
-#'      current random variable.
+#'      current relevant variable.
 #'   } 
 #' 
 #'   \item{\code{parse_formula(formula) }}{ 
@@ -67,7 +67,7 @@
 #'   } 
 #'
 #'   \item{\code{getValidity}}{ 
-#'     Active method. Checks the validity of the \code{RandomVariable}
+#'     Active method. Checks the validity of the \code{RelevantVariable}
 #'     instance. This method is called automatically on initialization.
 #' 
 #'     @return boolean true if everything is valid, or it throws if not valid.
@@ -75,7 +75,7 @@
 #' 
 #' }  
 #' @export
-RandomVariable <- R6Class("RandomVariable",
+RelevantVariable <- R6Class("RelevantVariable",
   public =
     list(
       initialize = function(formula, family) {
@@ -131,7 +131,7 @@ RandomVariable <- R6Class("RandomVariable",
             msg <- 'Provided formula should be a formula'
             errors <- c(errors, msg)
           }
-          if(!private$family %in% RandomVariable.get_supported_families()){
+          if(!private$family %in% RelevantVariable.get_supported_families()){
             msg <- paste('Provided family', private$family, 'not supported')
             errors <- c(errors, msg)
           }
@@ -156,7 +156,7 @@ RandomVariable <- R6Class("RandomVariable",
 )
 # Static functions
 # ================
-RandomVariable.get_supported_families <- function() {
+RelevantVariable.get_supported_families <- function() {
   return(c('binomial', 'gaussian'))
 }
 
@@ -164,15 +164,15 @@ RandomVariable.get_supported_families <- function() {
 #' The worst case run time of this algorithm is pretty bad, and can it
 #' probably done more efficiently
 #' 
-#' @param randomVariables the random variables to sort
+#' @param relevantVariables the relevant variables to sort
 #' @param verbose (default false) whether or not to be verbose when sorting
 #' @export 
-RandomVariable.find_ordering <- function(randomVariables, verbose=FALSE) {
+RelevantVariable.find_ordering <- function(relevantVariables, verbose=FALSE) {
   dependencies <- list()
   order <- c()
   managed_deps <- c()
 
-  for (rv in randomVariables) {
+  for (rv in relevantVariables) {
     dependencies[[rv$getY]] <- list(deps = rv$getX, rv= rv)
   }
 

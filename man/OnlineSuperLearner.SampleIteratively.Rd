@@ -16,7 +16,7 @@ the \code{sampleIteratively} function on that class.
 \section{Methods}{
  
 \describe{  
-  \item{\code{initialize(osl, randomVariables, summary_measure_generator, remove_future_variables = FALSE, verbose = FALSE)}}{ 
+  \item{\code{initialize(osl, relevantVariables, summary_measure_generator, remove_future_variables = FALSE, verbose = FALSE)}}{ 
     Creates a new instance of the OSL sampleiteratively class. When creating
     a new instance, we expect to receive the fitted instance of the OSL, as
     it is used to sample data from. This instance is stored so you don't
@@ -26,8 +26,8 @@ the \code{sampleIteratively} function on that class.
     @param osl OnlineSuperLearner a fitted instance of the
      \code{OnlineSuperLearner} class.
 
-    @param randomVariables list a list of \code{RandomVariable} objects.
-     These are the randomVariables we have fit a conditional density for.
+    @param relevantVariables list a list of \code{RelevantVariable} objects.
+     These are the relevantVariables we have fit a conditional density for.
 
     @param summaryMeasureGenerator SummaryMeasureGenerator an object of the type
      SummaryMeasureGenerator. This generator is used to get new observations
@@ -53,8 +53,8 @@ the \code{sampleIteratively} function on that class.
     function is called from the sample functions whenever the corresponding
     \code{check} parameters are \code{TRUE}.
 
-    @param start_from_variable RandomVariable should be an instance of a
-     \code{RandomVariable} class.
+    @param start_from_variable RelevantVariable should be an instance of a
+     \code{RelevantVariable} class.
 
     @param start_from_time integer should be an integer value $x$ where
      $1 <= x < tau$.
@@ -108,8 +108,8 @@ the \code{sampleIteratively} function on that class.
     summary_measures, we only return the normalized summary_measured,
     and when full, we return both (normalized and denormalized)
 
-    @param start_from_variable RandomVariable (default = NULL) the
-    randomvariable to start the sampling from. When \code{NULL}, we'll just
+    @param start_from_variable RelevantVariable (default = NULL) the
+    relevantvariable to start the sampling from. When \code{NULL}, we'll just
     start from the first in the sequence.
 
     @param start_from_time the start time to start from (default 1)
@@ -131,7 +131,7 @@ the \code{sampleIteratively} function on that class.
      know where we are in the sampling process. This variable representes
      the current time in the sampling process.
 
-    @param start_from_variable RandomVariable the \code{RandomVariable} from
+    @param start_from_variable RelevantVariable the \code{RelevantVariable} from
      which we should start the sampling procedure.
 
     @param data data.table the current data needed to initialize the
@@ -150,13 +150,13 @@ the \code{sampleIteratively} function on that class.
 
   \item{\code{sample_or_intervene_current_rv(data, intervention, current_time, current_rv, discrete)}}{ 
     On an even lower level (a lower level than sampling a block), we need to
-    sample \code{RandomVariables}. This is the heart of the sampling
+    sample \code{RelevantVariables}. This is the heart of the sampling
     procedure, and is used to sample (if the current time and RV are not an
     intervention node) or intervene (if they are) and get a new value for
-    the next random variable in line.
+    the next relevant variable in line.
 
     @param data data.table the current data needed to initialize the
-     sampling of the randomvariable.
+     sampling of the relevantvariable.
 
     @param intervention list the intervention that might (or might not) be
      used in the sampling of the present block. This takes into account the
@@ -169,7 +169,7 @@ the \code{sampleIteratively} function on that class.
      know where we are in the sampling process. This variable representes
      the current time in the sampling process.
 
-    @param current_rv RandomVariable the \code{RandomVariable} we are
+    @param current_rv RelevantVariable the \code{RelevantVariable} we are
      currently working with.
 
     @param discrete boolean (default = TRUE) should we run the discrete (=
@@ -190,9 +190,9 @@ the \code{sampleIteratively} function on that class.
     Actually runs the prediction and performs the sample from the OSL.
 
     @param data data.table the current data needed to initialize the
-     sampling of the randomvariable.
+     sampling of the relevantvariable.
 
-    @param current_rv RandomVariable the \code{RandomVariable} we are
+    @param current_rv RelevantVariable the \code{RelevantVariable} we are
      currently working with.
 
     @param discrete boolean (default = TRUE) should we run the discrete (=
@@ -224,11 +224,11 @@ the \code{sampleIteratively} function on that class.
     \code{NULL}), we have to select the firest one. If one is provided, we
     have to use that one. This is exactly what this function takes care of.
 
-    @param start_from_variable RandomVariable (default = NULL) the
-     \code{RandomVariable} to start from. If NULL, we return the first one.
+    @param start_from_variable RelevantVariable (default = NULL) the
+     \code{RelevantVariable} to start from. If NULL, we return the first one.
 
-    @return RandomVariable the actual start_from_variable which is a
-     \code{RandomVariable} to start from. If NULL is provided, we return the
+    @return RelevantVariable the actual start_from_variable which is a
+     \code{RelevantVariable} to start from. If NULL is provided, we return the
      first one.
   } 
 
@@ -242,13 +242,13 @@ the \code{sampleIteratively} function on that class.
     Active method. Is the current instance removing future variables?
   } 
 
-  \item{\code{get_random_variables}}{ 
-    Active method. Returns the list of \code{RandomVariable} objects
+  \item{\code{get_relevant_variables}}{ 
+    Active method. Returns the list of \code{RelevantVariable} objects
     provided on initialization.
   } 
 
-  \item{\code{get_random_variable_names}}{ 
-    Active method. Returns a list with names of the \code{RandomVariable}s
+  \item{\code{get_relevant_variable_names}}{ 
+    Active method. Returns a list with names of the \code{RelevantVariable}s
     provided on initialization.
   } 
 

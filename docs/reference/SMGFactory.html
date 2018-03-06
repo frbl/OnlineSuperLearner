@@ -108,7 +108,7 @@ actual package code. This should be improved.</p>
   <dt><code>initialize(candidate_smgs) </code></dt><dd><p>Creates a new SMG factory
     @param candidate_smgs list UNUSED. This argument should be used to
      specify a list of possible SMGs.</p></dd>
-    <dt><code>fabricate(randomVariables, ...) </code></dt><dd><p>Fabricates the actual SMG's. Given a list of <code>RandomVariable</code>s all
+    <dt><code>fabricate(relevantVariables, ...) </code></dt><dd><p>Fabricates the actual SMG's. Given a list of <code>RelevantVariable</code>s all
     covariates are selected and merged.  These are used as a basis for
     selecting the needed variables in the dataframe. The column names need to be specified as follows:
     - just the variable name: uses the <code>SMG.Latest.Entry</code> class
@@ -117,13 +117,13 @@ actual package code. This should be improved.</p>
       to include the lagged variables.
     - the variable name\_mean: uses the <code>SMG.Mean</code> class to
       include the running mean for this variable.
-    @param randomVariables = a list of <code>RandomVariable</code> objects, from
+    @param relevantVariables = a list of <code>RelevantVariable</code> objects, from
      which the X variables are selected.
     @param ... = data to get passed to the SMG</p></dd>
-    <dt><code>fabricate(randomVariables, ...) </code></dt><dd><p>Fabricates the actual SMG's. Given a list of <code>RandomVariable</code>s all
+    <dt><code>fabricate(relevantVariables, ...) </code></dt><dd><p>Fabricates the actual SMG's. Given a list of <code>RelevantVariable</code>s all
     covariates are selected and merged.  These are used as a basis for
     selecting the needed variables in the dataframe.
-    @param randomVariables list a list of <code>RandomVariable</code> objects, from which the X variables are selected.
+    @param relevantVariables list a list of <code>RelevantVariable</code> objects, from which the X variables are selected.
     @param ... the data to get passed to the SMG.
     @return SummaryMeasureGenerator with the correct SMGs.</p></dd>
     <dt><code>get_candidate_smgs</code></dt><dd><p>Active method. Returns the candidate <code>SummaryMeasureGenerator</code>s provided on initialization.

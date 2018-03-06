@@ -25,8 +25,8 @@
 #'      specify a list of possible SMGs.
 #'   }
 #'
-#'   \item{\code{fabricate(randomVariables, ...) }}{
-#'     Fabricates the actual SMG's. Given a list of \code{RandomVariable}s all
+#'   \item{\code{fabricate(relevantVariables, ...) }}{
+#'     Fabricates the actual SMG's. Given a list of \code{RelevantVariable}s all
 #'     covariates are selected and merged.  These are used as a basis for
 #'     selecting the needed variables in the dataframe. The column names need to be specified as follows:
 #'     - just the variable name: uses the \code{SMG.Latest.Entry} class
@@ -36,18 +36,18 @@
 #'     - the variable name\_mean: uses the \code{SMG.Mean} class to
 #'       include the running mean for this variable.
 #'
-#'     @param randomVariables = a list of \code{RandomVariable} objects, from
+#'     @param relevantVariables = a list of \code{RelevantVariable} objects, from
 #'      which the X variables are selected.
 #'
 #'     @param ... = data to get passed to the SMG
 #'   }
 #'
-#'   \item{\code{fabricate(randomVariables, ...) }}{
-#'     Fabricates the actual SMG's. Given a list of \code{RandomVariable}s all
+#'   \item{\code{fabricate(relevantVariables, ...) }}{
+#'     Fabricates the actual SMG's. Given a list of \code{RelevantVariable}s all
 #'     covariates are selected and merged.  These are used as a basis for
 #'     selecting the needed variables in the dataframe.
 #'
-#'     @param randomVariables list a list of \code{RandomVariable} objects, from which the X variables are selected.
+#'     @param relevantVariables list a list of \code{RelevantVariable} objects, from which the X variables are selected.
 #'
 #'     @param ... the data to get passed to the SMG.
 #'
@@ -68,17 +68,17 @@ SMGFactory <- R6Class("SMGFactory",
           # TODO:
           # 1. Inject a list of possible SMG's here
           private$candidate_smgs <- candidate_smgs
-          # 2. let each define a function that describes the variables they need, given the randomvariables
+          # 2. let each define a function that describes the variables they need, given the relevantvariables
           # 3. Make a loop in here that processes the RV's
           # This allows for flexible, new SMG's to be added outside of the package.
         },
 
-        fabricate = function(randomVariables, ...) {
+        fabricate = function(relevantVariables, ...) {
           SMG.list <- list()
           lag_variables_found <- FALSE
           mean_variables_found <- FALSE
 
-          needed_variables <- lapply(randomVariables, function(rv) c(rv$getX, rv$getY)) %>%
+          needed_variables <- lapply(relevantVariables, function(rv) c(rv$getX, rv$getY)) %>%
             unlist %>%
             unique
 

@@ -126,11 +126,11 @@ For the specification of how to define interventions, look at the
     @return integer the number of bootstrap iterations.
   } 
 
-  \item{\code{get_random_variables) }}{ 
-    Active method. The random variables specified when intializing the
+  \item{\code{get_relevant_variables) }}{ 
+    Active method. The relevant variables specified when intializing the
     object.
 
-    @return list of \code{RandomVariable} objects.
+    @return list of \code{RelevantVariable} objects.
   } 
 
   \item{\code{get_outcome_variable() }}{ 

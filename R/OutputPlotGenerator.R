@@ -116,9 +116,9 @@ OutputPlotGenerator.create_convergence_plot = function(data, output, dir = '~/tm
 #'
 #' @param historical_cvs the historical CV risks. List of lists of datatables.
 #'  First list is for each iteration, second for each learner, and the datatable
-#'  has columns for each random variable.
+#'  has columns for each relevant variable.
 #'
-#' @param randomVariables list of randomvariables to use in the output
+#' @param relevantVariables list of relevantvariables to use in the output
 #'
 #' @param output string (default = 'historical_cvs') the filename to write the
 #'  pdf to (without .pdf).
@@ -126,12 +126,12 @@ OutputPlotGenerator.create_convergence_plot = function(data, output, dir = '~/tm
 #' @param dir string (default = '~/tmp/osl/') the directory to write the file
 #'  to.
 #' @export
-OutputPlotGenerator.create_training_curve = function(historical_cvs, randomVariables, output = 'historical_cvs', dir = '~/tmp/osl/') {
+OutputPlotGenerator.create_training_curve = function(historical_cvs, relevantVariables, output = 'historical_cvs', dir = '~/tmp/osl/') {
   # historical_cvs is a list of lists of datatables
   #                     - each iteration
   #                             - each learner
   #                                      - each RV
-  result <- lapply(randomVariables, function(rv){
+  result <- lapply(relevantVariables, function(rv){
     lapply (historical_cvs, function(epoch) {
       lapply(epoch, function(algorithm_outcome) algorithm_outcome[, rv$getY, with=FALSE]) %>% unlist
     })
@@ -205,7 +205,7 @@ OutputPlotGenerator.create_training_curve = function(historical_cvs, randomVaria
 #' @importFrom utils head
 #'
 #' @param performance a list of list with performances: list 1 the estimators
-#'  used, list 2 the random variables predicted.
+#'  used, list 2 the relevant variables predicted.
 #'
 #' @param output string the filename to use for the plot (without .pdf).
 #'
@@ -222,7 +222,7 @@ OutputPlotGenerator.create_training_curve = function(historical_cvs, randomVaria
 OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tmp/osl', make_summary=FALSE, label='total.risk') {
   # Performance should be a list of data.tables:
   # List: the estimator used
-  # Datatable: the random variable predicted
+  # Datatable: the relevant variable predicted
   if(make_summary) {
     ## Beware, the unlist is needed, it looks the same but without the unlist the contents are lists instead of numerics
     performance_dt <- lapply(performance,sum) %>% unlist %>% data.table

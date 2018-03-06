@@ -211,27 +211,27 @@ Now everything is set-up, we can start our super learner procedure. First let's 
                         params = list(nbins = c(6, 15), online = FALSE))))
 ```
 
-The next step is to define our random variables. In this example we only consider the default variables $W$, $A$, and $Y$. Each of them is univariate, and the $A$ variable is a binary variable:
+The next step is to define our relevant variables. In this example we only consider the default variables $W$, $A$, and $Y$. Each of them is univariate, and the $A$ variable is a binary variable:
 
 ``` R
-  W <- OnlineSuperLearner::RandomVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
-  A <- OnlineSuperLearner::RandomVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
-  Y <- OnlineSuperLearner::RandomVariable$new(formula = Y ~ A + W, family = 'gaussian')
+  W <- OnlineSuperLearner::RelevantVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
+  A <- OnlineSuperLearner::RelevantVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
+  Y <- OnlineSuperLearner::RelevantVariable$new(formula = Y ~ A + W, family = 'gaussian')
 
   variable_of_interest <- Y
-  randomVariables <- c(W, A, Y)
+  relevantVariables <- c(W, A, Y)
 ```
 
 Note the special notation for the lagged variables and the running mean variables. In the background we use the so-called `SummaryMeasureGenerator`, a class that automatically parses these formulae and generates the data accordingly. The idea is that given the definition provided in the previous code block, we have to generate several variables (e.g. the lags). Currently several options are provided:
 
-- `*A*_lag_*B*`: The lag operator. This will generate a lagged version of random variable `*A*` (replace with your own variable name), of lag `*B*` (replace with an integer, specifying the lag to use).
-- `*A*_mean`: The running mean operator. This will generate a running mean version of random variable `*A*` (replace with your own variable name).
+- `*A*_lag_*B*`: The lag operator. This will generate a lagged version of relevant variable `*A*` (replace with your own variable name), of lag `*B*` (replace with an integer, specifying the lag to use).
+- `*A*_mean`: The running mean operator. This will generate a running mean version of relevant variable `*A*` (replace with your own variable name).
 
 The last step is to actually run and fit our SuperLearner and calculate its cross-validated risk. We use the loglikelihood loss function as general loss function. Note that for this to work properly, we have to normalize our data. This is done by providing the `normalize = TRUE` argument to the `fit` function. 
 
 ``` R
 osl  <- fit(
-  formulae = randomVariables,
+  formulae = relevantVariables,
   data = data.train,
   algorithms = algos, 
   verbose = log,

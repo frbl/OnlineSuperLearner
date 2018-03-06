@@ -3,7 +3,7 @@ library(mockery)
 context("OnlineSuperLearner.Predict.R")
 described.class <- OnlineSuperLearner.Predict
 
-glob_randomVariables <- list(
+glob_relevantVariables <- list(
   list(getY='W', getX='X', getFamily='gaussian'),
   list(getY='A', getX='X', getFamily='binomial'),
   list(getY='Y', getX='X', getFamily='gaussian')
@@ -37,14 +37,14 @@ test_that("it should return NA if no estimators were fit", {
   cur.data <- data.frame(a=c(1,2,3),b= c(3,2,1))
   OnlineSuperLearner_mock <- list(is_fitted=FALSE)
   subject <- described.class$new(pre_processor = NULL)
-  expect_equal(subject$predict(osl = OnlineSuperLearner_mock, cur.data, randomVariables = c('a')), NA)
+  expect_equal(subject$predict(osl = OnlineSuperLearner_mock, cur.data, relevantVariables = c('a')), NA)
 })
 
 test_that("it should throw if all estimators are disabled", {
   cur.data <- data.frame(a=c(1,2,3),b= c(3,2,1))
   OnlineSuperLearner_mock <- list(is_fitted=TRUE)
   subject <- described.class$new(pre_processor = NULL)
-  expect_error(subject$predict(osl = OnlineSuperLearner_mock, cur.data, randomVariables = c('a'),
+  expect_error(subject$predict(osl = OnlineSuperLearner_mock, cur.data, relevantVariables = c('a'),
                                all_estimators = FALSE, discrete = FALSE, continuous = FALSE), 
                'At least one option should be selected: discrete, all_estimators, or continuous')
 })
@@ -54,14 +54,14 @@ test_that("it should throw if estimator are enabled but not trained", {
   OnlineSuperLearner_mock <- list(is_fitted=TRUE, fits_dosl = FALSE)
 
   subject <- described.class$new(pre_processor = NULL)
-  expect_error(subject$predict(osl = OnlineSuperLearner_mock, cur.data, randomVariables = c('a'),
+  expect_error(subject$predict(osl = OnlineSuperLearner_mock, cur.data, relevantVariables = c('a'),
                                all_estimators = FALSE, discrete = TRUE, continuous = FALSE), 
                'At least one option should be selected: discrete, all_estimators, or continuous')
 
   OnlineSuperLearner_mock <- list(is_fitted=TRUE, fits_osl = FALSE)
 
   subject <- described.class$new(pre_processor = NULL)
-  expect_error(subject$predict(osl = OnlineSuperLearner_mock, cur.data, randomVariables = c('a'),
+  expect_error(subject$predict(osl = OnlineSuperLearner_mock, cur.data, relevantVariables = c('a'),
                                all_estimators = FALSE, discrete = FALSE, continuous = TRUE), 
                'At least one option should be selected: discrete, all_estimators, or continuous')
 })
@@ -76,10 +76,10 @@ test_that("it should call the dosl with the correct parameters if enabled", {
   cur.plot <- TRUE
 
   stub(subject$predict, 'self$predict_dosl',
-    function(dosl, data, randomVariables, current_result, sample, plot) {
+    function(dosl, data, relevantVariables, current_result, sample, plot) {
       expect_equal(dosl, osl$get_dosl)
       expect_equal(data, glob_data)
-      expect_equal(randomVariables, c('a'))
+      expect_equal(relevantVariables, c('a'))
       expect_equal(sample, cur.sample)
       expect_equal(plot, cur.plot)
       called <<- TRUE
@@ -91,7 +91,7 @@ test_that("it should call the dosl with the correct parameters if enabled", {
   subject$predict(
     osl = osl,
     data = glob_data, 
-    randomVariables = c('a'),
+    relevantVariables = c('a'),
     all_estimators = FALSE,
     discrete = TRUE,
     continuous = FALSE,
@@ -116,7 +116,7 @@ test_that("it should put the results in the correct lists", {
   subject$predict(
     osl = osl,
     data = cur.data, 
-    randomVariables = c('a'),
+    relevantVariables = c('a'),
     all_estimators = FALSE,
     discrete = TRUE,
     continuous = FALSE,
@@ -163,7 +163,7 @@ test_that("it should update the predictions according to the osl_weights", {
     osl_weights = osl_weights,
     current_result = predictions, 
     sl_library = cur.sl_library, 
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     weight_threshold = 0.01,
     sample = FALSE,
     plot = FALSE
@@ -210,7 +210,7 @@ test_that("it should calculate new predictions if not all are available", {
     osl_weights = osl_weights,
     current_result = predictions, 
     sl_library = cur.sl_library, 
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     weight_threshold = 0.01,
     sample = FALSE,
     plot = FALSE
@@ -258,7 +258,7 @@ test_that("it should return the whole data set, not just the osl estimed ones", 
     osl_weights = osl_weights,
     current_result = predictions, 
     sl_library = cur.sl_library, 
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     weight_threshold = 0.01,
     sample = FALSE,
     plot = FALSE
@@ -309,7 +309,7 @@ test_that("it should should predict using the dosl provided", {
 
 
   result <- subject$predict_dosl(dosl = dosl, data = glob_data, current_result = glob_current_result, sample = glob_sample, plot = glob_plot,
-                                randomVariables = glob_randomVariables)
+                                relevantVariables = glob_relevantVariables)
 
   expect_true(is(result, 'list'))
   expect_named(result, c('denormalized', 'normalized'), ignore.order = TRUE)
@@ -349,7 +349,7 @@ test_that("it should not predict if the predictions have been done before", {
     current_result = predictions,
     sample = glob_sample,
     plot = glob_plot,
-    randomVariables = glob_randomVariables
+    relevantVariables = glob_relevantVariables
   )
 
   expect_false(should_not_be_called)
@@ -372,7 +372,7 @@ test_that("it should predict and normalize if set", {
   subject <- described.class$new(pre_processor = pre_processor)
 
   result <- subject$predict_dosl(dosl = dosl, data = glob_data,  current_result = glob_current_result, sample = glob_sample, plot = glob_plot,
-                                randomVariables = glob_randomVariables)
+                                relevantVariables = glob_relevantVariables)
 
   expect_named(result, c('denormalized', 'normalized'), ignore.order = TRUE)
   expect_equal(result$denormalized$dosl.estimator, data.table(W=expected, A=expected, Y=expected))
@@ -404,7 +404,7 @@ test_that("it should return the whole data set, not just the dosl estimed ones",
     current_result = predictions,
     sample = FALSE,
     plot = FALSE,
-    randomVariables = glob_randomVariables  
+    relevantVariables = glob_relevantVariables  
   )
   
   expect_named(result, c('normalized', 'denormalized'))

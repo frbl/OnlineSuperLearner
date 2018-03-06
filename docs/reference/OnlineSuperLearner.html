@@ -142,7 +142,7 @@ to the super learner machine learning model.</p>
      collection of blocks / mini batch will be used as a validation set
      while training.
     @return data.table a data.table with the risks of each estimator.</p></dd>
-    <dt><code>predict(data, randomVariables = NULL, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE)</code></dt><dd><p>Method to perform a prediction on the estimators. It can run in
+    <dt><code>predict(data, relevantVariables = NULL, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE)</code></dt><dd><p>Method to perform a prediction on the estimators. It can run in
     different configurations. It can be configured to predict the outcome
     using all estimators (the <code>all_estimators</code> flag), using the
     discrete superlearner (the <code>discrete</code> flag), or using the
@@ -151,7 +151,7 @@ to the super learner machine learning model.</p>
     @param data Data.Base the data to use to train the instance on. Note
      that this can be any instance of a <code>Data.Base</code> superclass, as long
      as it extends the correct functions.
-    @param randomVariables list (default = NULL) the random variables used
+    @param relevantVariables list (default = NULL) the relevant variables used
     for doing the predictions (these should be the same as the ones used for
     fitting). If <code>NULL</code>, we will use the list provided on
     initialization.
@@ -189,7 +189,7 @@ to the super learner machine learning model.</p>
      configurations. It can return all data, only a subset, or denormalized
      outcomes. Check the <code>OnlineSuperlearner.SampleIteratively</code> class for more
      details.
-    @param start_from_variable RandomVariable (default = NULL) if we don't
+    @param start_from_variable RelevantVariable (default = NULL) if we don't
      start with sampling from the first argument in the sequence of
      variables, specify which one to start from.
     @param start_from_time integer (default = 1) generally the sampling
@@ -212,18 +212,18 @@ to the super learner machine learning model.</p>
     <dt><code>get_cv_risk()</code></dt><dd><p>Method to retrieve the current <code>cv_risk</code> (note that this is not an active
     method, so it can easiliy be stubbed).
     @return an overview of the CV risk of the different estimators</p></dd>
-    <dt><code>set_random_variables(random_variables)</code></dt><dd><p>Method to set the random_variables in the osl class. Generally not needed (apart from initialization).</p></dd>
-    <dt><code>retrieve_list_of_random_variables(random_variables)</code></dt><dd><p>Retrieves a list of random variables according to a specification. This
-    function allows for a more flexible way of retrieving random variables
+    <dt><code>set_relevant_variables(relevant_variables)</code></dt><dd><p>Method to set the relevant_variables in the osl class. Generally not needed (apart from initialization).</p></dd>
+    <dt><code>retrieve_list_of_relevant_variables(relevant_variables)</code></dt><dd><p>Retrieves a list of relevant variables according to a specification. This
+    function allows for a more flexible way of retrieving relevant variables
     from the OSL model.
-    @param random_variables the random_variables for which we want to
+    @param relevant_variables the relevant_variables for which we want to
      receive the list of variables, in a form that our model accepts. This
      can be specified as follows:
-     - List of <code>RandomVariable</code> objects to predict
-     - Single <code>RandomVariable</code> object to predict
+     - List of <code>RelevantVariable</code> objects to predict
+     - Single <code>RelevantVariable</code> object to predict
      - List of strings with the names of the outputs (<code>list('X','Y')</code>)
      - Single string with the name of the output (<code>'Y'</code>)
-    @return a list of <code>RandomVariable</code> objects to use in the prediction function.</p></dd>
+    @return a list of <code>RelevantVariable</code> objects to use in the prediction function.</p></dd>
     <dt><code>is_fitted</code></dt><dd><p>Active method. Returns whether the OSL has been fitted or not
     @return boolean true if it has been fitted, false if not</p></dd>
     <dt><code>is_online</code></dt><dd><p>Active method to deterimine whether the actual algorithm is fitted in an online way. That is to say, that all of
@@ -242,11 +242,11 @@ to the super learner machine learning model.</p>
     <dt><code>get_osl_weights</code></dt><dd><p>Active method to retrieve a vector of weights that the OSL has found for its continuous online super learner fit.
     @return vector a vector containing the estimates of the OSL weights</p></dd>
     <dt><code>get_dosl</code></dt><dd><p>Active method to retrieve the actual DOSL fit. this could be nil if no dosl has been fit yet.
-    @return list a list containing the best estimator for each of the random variables.</p></dd>
+    @return list a list containing the best estimator for each of the relevant variables.</p></dd>
     <dt><code>get_cv_risk</code></dt><dd><p>Active method to retrieve the crossvalidated risk of each of the estimators
     @return list a list containing the risk estimates for each of hte estimators.</p></dd>
-    <dt><code>get_random_variables</code></dt><dd><p>Active method. Returns all <code>RandomVariables</code> in the OSL object.
-    @return list a list containing all <code>RandomVariable</code>s</p></dd>
+    <dt><code>get_relevant_variables</code></dt><dd><p>Active method. Returns all <code>RelevantVariables</code> in the OSL object.
+    @return list a list containing all <code>RelevantVariable</code>s</p></dd>
     <dt><code>get_valididy</code></dt><dd><p>Active method that throws an error if the current state of the OSL is not valid (i.e., that it has invalid
     parameters in it).</p></dd>
     <dt><code>get_osl_sampler</code></dt><dd><p>Active method. Returns the OSL sampler (which is an instance of the

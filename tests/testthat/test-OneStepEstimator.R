@@ -3,10 +3,10 @@ context("OneStepEstimator")
 #==========================================================
 described.class <- OneStepEstimator
 
-W <- RandomVariable$new(formula = W ~ Y_lag_1, family = 'gaussian')
-A <- RandomVariable$new(formula = A ~ W, family = 'binomial')
-Y <- RandomVariable$new(formula = Y ~ A + W, family = 'gaussian')
-glob_randomVariables <- c(W, A, Y)
+W <- RelevantVariable$new(formula = W ~ Y_lag_1, family = 'gaussian')
+A <- RelevantVariable$new(formula = A ~ W, family = 'binomial')
+Y <- RelevantVariable$new(formula = Y ~ A + W, family = 'gaussian')
+glob_relevantVariables <- c(W, A, Y)
 
 # Mock the pre_processor
 pre_processor <- list(
@@ -33,7 +33,7 @@ create_subject <- function(other_B = NULL, other_osl = NULL) {
   if(is.null(other_osl)) other_osl <- glob_osl 
   described.class$new(
     osl = other_osl,
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     N = N,
     B = other_B,
     pre_processor = pre_processor,
@@ -52,7 +52,7 @@ context(" initialize")
 test_that("it should succesfully initialize when the correct arguments are provided", {
   expect_error(described.class$new(
     osl = glob_osl,
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     N = N,
     B = B,
     pre_processor = pre_processor,
@@ -65,7 +65,7 @@ test_that("it should succesfully initialize when the correct arguments are provi
 test_that("it should initialize the last oos estimate", {
   result <- described.class$new(
     osl = glob_osl,
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     N = N,
     B = B,
     pre_processor = pre_processor,
@@ -80,7 +80,7 @@ test_that("it should throw if the provided osl is not an online super learner", 
   wrong_osl <- glm
   expect_error(described.class$new(
     osl = wrong_osl,
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     N = N,
     B = B,
     pre_processor = pre_processor,
@@ -95,7 +95,7 @@ test_that("it should throw if the provided N is not valid", {
   for (cur.N in wrong_N) {
     expect_error(described.class$new(
       osl = glob_osl,
-      randomVariables = glob_randomVariables,
+      relevantVariables = glob_relevantVariables,
       N = cur.N,
       B = B,
       pre_processor = pre_processor,
@@ -113,7 +113,7 @@ test_that("it should throw if the provided B is not valid", {
   for (cur.B in wrong_B) {
     expect_error(described.class$new(
       osl = glob_osl,
-      randomVariables = glob_randomVariables,
+      relevantVariables = glob_relevantVariables,
       N = N,
       B = cur.B,
       pre_processor = pre_processor,
@@ -129,7 +129,7 @@ test_that("it should should throw if the provided 'discrete' is not valid", {
   for (cur.discrete in wrong_discrete) {
     expect_error(described.class$new(
       osl = glob_osl,
-      randomVariables = glob_randomVariables,
+      relevantVariables = glob_relevantVariables,
       N = N,
       B = B,
       pre_processor = pre_processor,
@@ -141,26 +141,26 @@ test_that("it should should throw if the provided 'discrete' is not valid", {
   }
 })
 
-test_that("it should throw if the provided random variables are not a list", {
+test_that("it should throw if the provided relevant variables are not a list", {
     expect_error(described.class$new(
       osl = glob_osl,
-      randomVariables = glob_randomVariables[[1]],
+      relevantVariables = glob_relevantVariables[[1]],
       N = N,
       B = B,
       pre_processor = pre_processor,
       tau = glob_tau,
       intervention = intervention,
       variable_of_interest = Y
-    ), "Argument 'randomVariables' is neither of nor inherits class list: RandomVariable, R6", fixed = TRUE)
+    ), "Argument 'relevantVariables' is neither of nor inherits class list: RelevantVariable, R6", fixed = TRUE)
 })
 
-test_that("it should order the random variables in the beginning", {
+test_that("it should order the relevant variables in the beginning", {
   rv_mock <- mock(function(...) 42)
 
-  with_mock(RandomVariable.find_ordering = rv_mock, 
+  with_mock(RelevantVariable.find_ordering = rv_mock, 
   described.class$new(
     osl = glob_osl,
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     N = N,
     B = B,
     pre_processor = pre_processor,
@@ -170,7 +170,7 @@ test_that("it should order the random variables in the beginning", {
   ))
   expect_called(rv_mock, 1)
   args <- mock_args(rv_mock)[[1]]
-  expect_equal(args$randomVariables, glob_randomVariables)
+  expect_equal(args$relevantVariables, glob_relevantVariables)
 })
 
 test_that("it should should store the preprocessor", {
@@ -178,7 +178,7 @@ test_that("it should should store the preprocessor", {
 
   subject <- described.class$new(
     osl = glob_osl,
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     N = N,
     B = B,
     pre_processor = pre_processor_mock,
@@ -194,7 +194,7 @@ test_that("it should store tau", {
 
   subject <- described.class$new(
     osl = glob_osl,
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     N = N,
     B = B,
     pre_processor = pre_processor,
@@ -210,7 +210,7 @@ test_that("it should store the intervention", {
 
   subject <- described.class$new(
     osl = glob_osl,
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     N = N,
     B = B,
     pre_processor = pre_processor,
@@ -224,7 +224,7 @@ test_that("it should store the intervention", {
 test_that("it should store the variable of interest", {
   subject <- described.class$new(
     osl = glob_osl,
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     N = N,
     B = B,
     pre_processor = pre_processor,
@@ -239,7 +239,7 @@ test_that("it should determine wheter it is parallel or not", {
   for (parallel in c(T,F)) {
     subject <- described.class$new(
       osl = glob_osl,
-      randomVariables = glob_randomVariables,
+      relevantVariables = glob_relevantVariables,
       N = N,
       B = B,
       pre_processor = pre_processor,
@@ -257,7 +257,7 @@ test_that("it should determine wheter it is online or not", {
   for (online in c(T,F)) {
     subject <- described.class$new(
       osl = glob_osl,
-      randomVariables = glob_randomVariables,
+      relevantVariables = glob_relevantVariables,
       N = N,
       B = B,
       pre_processor = pre_processor,
@@ -274,7 +274,7 @@ test_that("it should create a data cache for storing the P values", {
   for (online in c(T,F)) {
     subject <- described.class$new(
       osl = glob_osl,
-      randomVariables = glob_randomVariables,
+      relevantVariables = glob_relevantVariables,
       N = N,
       B = B,
       pre_processor = pre_processor,
@@ -293,7 +293,7 @@ test_that("it should store a data cach for storing the Pstar values", {
   for (online in c(T,F)) {
     subject <- described.class$new(
       osl = glob_osl,
-      randomVariables = glob_randomVariables,
+      relevantVariables = glob_relevantVariables,
       N = N,
       B = B,
       pre_processor = pre_processor,
@@ -312,7 +312,7 @@ test_that("it should store the minimal values needed before a complete block is 
   mock_minimal_measurements <- 1293
   subject <- described.class$new(
     osl = glob_osl,
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     N = N,
     B = B,
     pre_processor = pre_processor,
@@ -328,7 +328,7 @@ test_that("it should store the minimal values needed before a complete block is 
 test_that("it should throw if the provided verbosity is invalid", {
   expect_error(described.class$new(
     osl = glob_osl,
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     N = N,
     B = B,
     pre_processor = pre_processor,
@@ -344,7 +344,7 @@ context(" perform")
 test_that("it should call the caluclate full oos function with the correct parameters", {
  subject <- described.class$new(
     osl = glob_osl,
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     N = N,
     B = B,
     pre_processor = pre_processor,
@@ -379,7 +379,7 @@ test_that("it should call the caluclate full oos function with the correct param
 test_that("it should call the calculate variance function (which doesnt do anything)", {
   subject <- described.class$new(
     osl = glob_osl,
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     N = N,
     B = B,
     pre_processor = pre_processor,
@@ -410,7 +410,7 @@ test_that("it should call the calculate variance function (which doesnt do anyth
 test_that("it should return a list with two entries (variance and estimate)", {
   subject <- described.class$new(
     osl = glob_osl,
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     N = N,
     B = B,
     pre_processor = pre_processor,
@@ -441,7 +441,7 @@ context(" calculate_full_oos")
 test_that("it should throw if the initial estimate is not numeric", {
    subject <- described.class$new(
     osl = glob_osl,
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     N = N,
     B = B,
     pre_processor = pre_processor,
@@ -464,7 +464,7 @@ test_that("it should call, from 1:N times, the get H ratio function", {
   cur.N <- 10
   subject <- described.class$new(
     osl = glob_osl,
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     N = cur.N,
     B = B,
     pre_processor = pre_processor,
@@ -501,7 +501,7 @@ test_that("it should call, from 1:N times, the evaluation of conditional expecta
   cur.N <- 10
   subject <- described.class$new(
     osl = glob_osl,
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     N = cur.N,
     B = B,
     pre_processor = pre_processor,
@@ -534,7 +534,7 @@ test_that("it should calculate the correct dstar, and update it every N iteratio
   cur.N <- 10
   subject <- described.class$new(
     osl = glob_osl,
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     N = cur.N,
     B = B,
     pre_processor = pre_processor,
@@ -574,7 +574,7 @@ test_that("it should return the initial estimate if the oos estimate is NA or na
   cur.N <- 10
   subject <- described.class$new(
     osl = glob_osl,
-    randomVariables = glob_randomVariables,
+    relevantVariables = glob_relevantVariables,
     N = cur.N,
     B = B,
     pre_processor = pre_processor,
@@ -657,7 +657,7 @@ test_that("it should result in the correct output", {
 
   # Each of the tau lists, should have 3 estimators (one for each covariate)
   lapply(result,function(entry){
-    expect_equal(length(result), length(glob_randomVariables))
+    expect_equal(length(result), length(glob_relevantVariables))
     lapply(entry,function(estimator){
       expect_true(is(estimator, 'speedglm'))
     })
@@ -684,7 +684,7 @@ test_that("it should result in the correct output", {
 
   #subject <- described.class$new(
     #osl = osl,
-    #randomVariables = glob_randomVariables,
+    #relevantVariables = glob_relevantVariables,
     #N = N,
     #B = B,
     #pre_processor = pre_processor,
@@ -702,7 +702,7 @@ test_that("it should result in the correct output", {
 
   ## Each of the tau lists, should have 3 estimators (one for each covariate)
   #lapply(result,function(entry){
-    #expect_equal(length(result), length(glob_randomVariables))
+    #expect_equal(length(result), length(glob_relevantVariables))
     #lapply(entry,function(estimator){
       #expect_true(is(estimator, 'speedglm'))
       ## TODO: test whether the estimators make sense
@@ -735,7 +735,7 @@ test_that("it should create the correct estimators -> the ratio should be approx
   h_ratio_predictors <- subject$get_h_ratio_estimators(data = data)
 
   result <- lapply(seq(tau), function(s) {
-    lapply(glob_randomVariables, function(rv) {
+    lapply(glob_relevantVariables, function(rv) {
       formula <- rv$get_formula_string(Y='Delta')
       ## We essentially force the h_ratio to be high, hence remove the warning
       hide_warning_high_h_ratio(
@@ -791,7 +791,7 @@ test_that("it should create the correct estimators -> the ratio should be approx
   h_ratio_predictors <- subject$get_h_ratio_estimators(data = data)
 
   result <- lapply(seq(tau), function(s) {
-    lapply(glob_randomVariables, function(rv) {
+    lapply(glob_relevantVariables, function(rv) {
       formula <- rv$get_formula_string(Y='Delta')
       subject$calculate_h_ratio(h_ratio_predictors,
                                 s=s,
@@ -829,7 +829,7 @@ test_that("it should create the correct estimators -> the ratio should be approx
   h_ratio_predictors <- subject$get_h_ratio_estimators(data = data)
 
   result <- lapply(seq(tau), function(s) {
-    lapply(glob_randomVariables, function(rv) {
+    lapply(glob_relevantVariables, function(rv) {
       formula <- rv$get_formula_string(Y='Delta')
       subject$calculate_h_ratio(h_ratio_predictors,
                                 s=s,
@@ -971,7 +971,7 @@ test_that("it should perform the evaluation", {
 
    ##Each of the tau lists, should have 3 estimators (one for each covariate)
   #lapply(result,function(entry){
-    #expect_equal(length(result), length(glob_randomVariables))
+    #expect_equal(length(result), length(glob_relevantVariables))
     #lapply(entry,function(estimator){
       #expect_true(is(estimator, 'speedglm'))
        #TODO: test whether the estimators make sense
@@ -983,25 +983,25 @@ test_that("it should perform the evaluation", {
 
 context(" get_next_and_current_rv")
 #==========================================================
-test_that("it should get the next and the current random variable without overflowing the S", {
+test_that("it should get the next and the current relevant variable without overflowing the S", {
   rv_id <- 1
   result <- subject$get_next_and_current_rv(rv_id) 
-  expect_equal(result$rv, glob_randomVariables[[rv_id]])
-  expect_equal(result$next_rv, glob_randomVariables[[rv_id+1]])
+  expect_equal(result$rv, glob_relevantVariables[[rv_id]])
+  expect_equal(result$next_rv, glob_relevantVariables[[rv_id+1]])
   expect_equal(result$s_offset, 0)
 
   rv_id <- 2
   result <- subject$get_next_and_current_rv(rv_id) 
-  expect_equal(result$rv, glob_randomVariables[[rv_id]])
-  expect_equal(result$next_rv, glob_randomVariables[[rv_id+1]])
+  expect_equal(result$rv, glob_relevantVariables[[rv_id]])
+  expect_equal(result$next_rv, glob_relevantVariables[[rv_id+1]])
   expect_equal(result$s_offset, 0)
 })
 
-test_that("it should get the next and current random variable with overvlowing the S", {
+test_that("it should get the next and current relevant variable with overvlowing the S", {
   rv_id <- 3
   result <- subject$get_next_and_current_rv(rv_id) 
-  expect_equal(result$rv, glob_randomVariables[[rv_id]])
-  expect_equal(result$next_rv, glob_randomVariables[[1]])
+  expect_equal(result$rv, glob_relevantVariables[[rv_id]])
+  expect_equal(result$next_rv, glob_relevantVariables[[1]])
   expect_equal(result$s_offset, 1)
 })
 

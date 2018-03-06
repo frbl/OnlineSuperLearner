@@ -10,10 +10,10 @@ class(glob_osl) <- 'OnlineSuperLearner'
 glob_SMG <- list('mock')
 class(glob_SMG) <- 'SummaryMeasureGenerator'
 
-## Create mock randomVariables
-rv.W <- RandomVariable$new(formula = W ~ D, family = 'binomial')
-rv.Y <- RandomVariable$new(formula = Y ~ W, family = 'gaussian')
-glob_random_variables <- list(W = rv.W, Y = rv.Y)
+## Create mock relevantVariables
+rv.W <- RelevantVariable$new(formula = W ~ D, family = 'binomial')
+rv.Y <- RelevantVariable$new(formula = Y ~ W, family = 'gaussian')
+glob_relevant_variables <- list(W = rv.W, Y = rv.Y)
 
 
 glob_data <- data.table(W = seq(1,10), Y = seq(10,20))
@@ -28,41 +28,41 @@ glob_check = TRUE
 context(' initialize')
 #==========================================================
 test_that("it should initalize and store the OSL", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
   result <- subject$get_online_super_learner
   expect_false(is.null(result))
   expect_equal(result, glob_osl)
 })
 
 test_that("it should initalize and store the smg", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
   result <- subject$get_summary_measure_generator
   expect_false(is.null(result))
   expect_equal(result, glob_SMG)
 })
 
-test_that("it should initalize, sort, and store the randomVariables", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = list(rv.Y, rv.W), summary_measure_generator = glob_SMG) 
-  result <- subject$get_random_variables
+test_that("it should initalize, sort, and store the relevantVariables", {
+  subject <- described.class$new(osl = glob_osl, relevantVariables = list(rv.Y, rv.W), summary_measure_generator = glob_SMG) 
+  result <- subject$get_relevant_variables
   expect_false(is.null(result))
   expect_equal(result, list(W = rv.W, Y = rv.Y))
 })
 
 test_that("it should initalize and store the remove future rvs", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
   result <- subject$is_removing_future_variables
   expect_false(is.null(result))
   expect_false(result)
 
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG, remove_future_variables = TRUE) 
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG, remove_future_variables = TRUE) 
   result <- subject$is_removing_future_variables
   expect_false(is.null(result))
   expect_true(result)
 })
 
-test_that("it should initialize and store the random variable names", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = list(rv.Y, rv.W), summary_measure_generator = glob_SMG) 
-  result <- subject$get_random_variable_names
+test_that("it should initialize and store the relevant variable names", {
+  subject <- described.class$new(osl = glob_osl, relevantVariables = list(rv.Y, rv.W), summary_measure_generator = glob_SMG) 
+  result <- subject$get_relevant_variable_names
   expect_false(is.null(result))
   expect_false(is(result, 'list'))
   expect_equal(result, unname(c(rv.W$getY, rv.Y$getY)))
@@ -74,7 +74,7 @@ context(" validate_parameters")
 context(' sample_iteratively')
 #==========================================================
 test_that("it should call the validate function with the correct parameters if check is true", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
   stub(subject$sample_iteratively, 'self$validate_parameters', 
     function(start_from_variable, start_from_time, tau, discrete, return_type, intervention) {
       expect_equal(glob_start_from_variable, start_from_variable)
@@ -103,7 +103,7 @@ test_that("it should call the validate function with the correct parameters if c
 })
 
 test_that("it should call set start_from variable equal to the first one provided to it, if not provided", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
 
   cur.start_from_variable <- NULL
   stub(subject$sample_iteratively, 'self$set_start_from_variable', 
@@ -143,7 +143,7 @@ test_that("it should call set start_from variable equal to the first one provide
 })
 
 test_that("it should call the sample_single_block function for each t from start til end", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
   cur.tau <- 10
   stub(subject$sample_iteratively, 'self$sample_single_block', 
     function(current_time, data, start_from_variable, intervention, discrete) {
@@ -177,7 +177,7 @@ test_that("it should call the sample_single_block function for each t from start
 })
 
 test_that("it should return using the create_correct_result function", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
   cur.tau <- 10
   mock_correct_result <- mock('correct_result')
   expected_result <- data.table(W = seq(0, (cur.tau - 1)), Y = seq(2, 2 + (cur.tau - 1)))
@@ -223,7 +223,7 @@ test_that("it should return using the create_correct_result function", {
 })
 
 test_that("it should keep asking for new covariates, until T = tau", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
   cur.tau <- 10
   mock_correct_result <- mock('correct_result')
   mock_block <- list(normalized = data.table(W = 1, Y = 2), denormalized = data.table(W = 1, Y = 8))
@@ -274,8 +274,8 @@ test_that("it should keep asking for new covariates, until T = tau", {
 
 context(" sample_single_block")
 #==========================================================
-test_that("it should sample a single block for each of the random variables and the result should be a list of data tables", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+test_that("it should sample a single block for each of the relevant variables and the result should be a list of data tables", {
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
   current_time = 1
 
   mock_rv_outcome <- list(normalized = 1, denormalized = 1)
@@ -298,7 +298,7 @@ test_that("it should sample a single block for each of the random variables and 
 })
 
 test_that("it should remove the future measurements (which are obviously not used for sampling) if this is set in the constructor", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG, 
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG, 
                                  remove_future_variables = TRUE) 
   current_time = 1
 
@@ -319,7 +319,7 @@ test_that("it should remove the future measurements (which are obviously not use
 })
 
 test_that("it should not remove past measurements", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG, 
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG, 
                                  remove_future_variables = TRUE) 
   current_time = 1
   stub(subject$sample_single_block, 'self$sample_or_intervene_current_rv', function(data, ...) { 
@@ -341,7 +341,7 @@ test_that("it should not remove past measurements", {
 
 
 test_that("it should not remove any measurements (which are obviously not used for sampling) if this is set in the constructor", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG, 
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG, 
                                  remove_future_variables = FALSE) 
   current_time = 1
   stub(subject$sample_single_block, 'self$sample_or_intervene_current_rv', function(data, ...) { 
@@ -360,7 +360,7 @@ test_that("it should not remove any measurements (which are obviously not used f
 })
 
 test_that("it should call the should intervene function with the correct parameters", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
   cur.current_time = 1
 
   mock_rv_outcome <- list(normalized = 1, denormalized = 1)
@@ -370,7 +370,7 @@ test_that("it should call the should intervene function with the correct paramet
     expect_equal(data, glob_data[1,])
     expect_equal(intervention, glob_intervention)
     expect_equal(current_time, cur.current_time)
-    expect_equal(current_rv, glob_random_variables[[iter]])
+    expect_equal(current_rv, glob_relevant_variables[[iter]])
     expect_equal(discrete, glob_discrete)
     mock_rv_outcome 
   })
@@ -383,13 +383,13 @@ test_that("it should call the should intervene function with the correct paramet
     start_from_variable = rv.W,
     discrete = glob_discrete
   )
-  expect_equal(iter, length(glob_random_variables))
+  expect_equal(iter, length(glob_relevant_variables))
 })
 
 context(" sample_or_intervene_current_rv")
 #==========================================================
 test_that("it should parse the intervention", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
   cur.current_time = 1
   stub(subject$sample_or_intervene_current_rv, 'InterventionParser.parse_intervention', 
     function( intervention, current_time, current_outcome ) { 
@@ -409,7 +409,7 @@ test_that("it should parse the intervention", {
 })
 
 test_that("it should intervene if the parsed intervention says to intervene", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
 
   mock_intervened_outcome <- list(normalized = 1, denormalized = 1)
   mock_intervention_parsed <- list(should_intervene = TRUE)
@@ -449,7 +449,7 @@ test_that("it should intervene if the parsed intervention says to intervene", {
 })
 
 test_that("it should not intervene if the parsed intervention doesnt say to intervene", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
 
   mock_intervened_outcome <- list(normalized = 1, denormalized = 1)
   mock_intervention_parsed <- list(should_intervene = FALSE)
@@ -494,7 +494,7 @@ test_that("it should not intervene if the parsed intervention doesnt say to inte
 context(" perform_intervention")
 #==========================================================
 test_that("it should return a list with a normalized and denormalized value according to the intervention provided", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
   what <- 123
   mock_intervention <- list(what = what)
   result <- subject$perform_intervention(mock_intervention)
@@ -507,9 +507,9 @@ context(" perform_sample")
 #==========================================================
 test_that("it should call the osl predict function", {
   mock_normal_outcome <- list(normalized = list(osl.estimator = 1), denormalized = list(osl.estimator = 1))
-  cur.osl <- list(predict = function(data, randomVariables, discrete, continuous, all_estimators, sample)  {
+  cur.osl <- list(predict = function(data, relevantVariables, discrete, continuous, all_estimators, sample)  {
     expect_equal(data, glob_data[1,])                  
-    expect_equal(randomVariables, c(rv.W))                  
+    expect_equal(relevantVariables, c(rv.W))                  
     expect_equal(discrete, glob_discrete)                  
     expect_equal(continuous, !glob_discrete)                  
     expect_equal(all_estimators, FALSE)                  
@@ -519,7 +519,7 @@ test_that("it should call the osl predict function", {
   })
   class(cur.osl) <- 'OnlineSuperLearner'
 
-  subject <- described.class$new(osl = cur.osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+  subject <- described.class$new(osl = cur.osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
 
   called <<- FALSE
   result <- subject$perform_sample(
@@ -533,13 +533,13 @@ test_that("it should call the osl predict function", {
 test_that("it should pass on the correct discrete value, and return the results of the dosl", {
   mock_normal_outcome <- list(normalized = list(osl.estimator = 123, dosl.estimator = 111), denormalized = list(osl.estimator = 321, dosl.estimator = 333))
   discrete <- TRUE
-  cur.osl <- list(predict = function(data, randomVariables, discrete, continuous, all_estimators, sample)  {
+  cur.osl <- list(predict = function(data, relevantVariables, discrete, continuous, all_estimators, sample)  {
     called <<- TRUE
     mock_normal_outcome
   })
   class(cur.osl) <- 'OnlineSuperLearner'
 
-  subject <- described.class$new(osl = cur.osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+  subject <- described.class$new(osl = cur.osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
 
   called <<- FALSE
   result <- subject$perform_sample(
@@ -557,13 +557,13 @@ test_that("it should pass on the correct discrete value, and return the results 
 test_that("it should pass on the correct discrete value, and return the results of the osl", {
   mock_normal_outcome <- list(normalized = list(osl.estimator = 123, dosl.estimator = 111), denormalized = list(osl.estimator = 321, dosl.estimator = 333))
   discrete <- FALSE
-  cur.osl <- list(predict = function(data, randomVariables, discrete, continuous, all_estimators, sample)  {
+  cur.osl <- list(predict = function(data, relevantVariables, discrete, continuous, all_estimators, sample)  {
     called <<- TRUE
     mock_normal_outcome
   })
   class(cur.osl) <- 'OnlineSuperLearner'
 
-  subject <- described.class$new(osl = cur.osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+  subject <- described.class$new(osl = cur.osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
 
   called <<- FALSE
   result <- subject$perform_sample(
@@ -580,7 +580,7 @@ test_that("it should pass on the correct discrete value, and return the results 
 context(" create_correct_result")
 #==========================================================
 test_that("it should return the denormalized observations if the return type = observations", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
 
   result <- mock('result')
   result_denormalized_observations <- data.table(A = 1, W = 2, Y = 3)
@@ -588,13 +588,13 @@ test_that("it should return the denormalized observations if the return type = o
 
   result <- subject$create_correct_result(result, result_denormalized_observations, cur.return_type)
   expect_is(result, 'data.table')
-  expect_named(result, lapply(glob_random_variables, function(rv) rv$getY) %>% unlist %>% unname)
+  expect_named(result, lapply(glob_relevant_variables, function(rv) rv$getY) %>% unlist %>% unname)
   expect_equal(result$W, 2)
   expect_equal(result$Y, 3)
 })
 
 test_that("it should return the summary measures (normalized) if the return type = summary_measures", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
 
   result_denormalized_observations <- mock('result')
   result <- data.table(A = 1, W = 2, Y = 3)
@@ -607,7 +607,7 @@ test_that("it should return the summary measures (normalized) if the return type
 })
 
 test_that("it should return the normalized results by default", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
 
   result_denormalized_observations <- mock('result')
   result <- data.table(A = 1, W = 2, Y = 3)
@@ -622,18 +622,18 @@ test_that("it should return the normalized results by default", {
 context(" set_start_from_variable")
 #==========================================================
 test_that("it should should return the provided start_from variable if it is not nil", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
   mock_start_from <- mock('start from')
   result <- subject$set_start_from_variable(mock_start_from)
   expect_equal(result, mock_start_from)
 })
 
-test_that("it should should return the first of the random variables if it is null", {
-  subject <- described.class$new(osl = glob_osl, randomVariables = glob_random_variables, summary_measure_generator = glob_SMG) 
+test_that("it should should return the first of the relevant variables if it is null", {
+  subject <- described.class$new(osl = glob_osl, relevantVariables = glob_relevant_variables, summary_measure_generator = glob_SMG) 
   result <- subject$set_start_from_variable(NULL)
-  expect_equal(result, glob_random_variables[[1]])
+  expect_equal(result, glob_relevant_variables[[1]])
 
   result <- subject$set_start_from_variable()
-  expect_equal(result, glob_random_variables[[1]])
+  expect_equal(result, glob_relevant_variables[[1]])
 })
 

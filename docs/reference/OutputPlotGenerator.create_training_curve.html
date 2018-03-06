@@ -85,7 +85,7 @@
     <p>Function to plot the training curve given the number of iterations used</p>
     
 
-    <pre class="usage"><span class='fu'>OutputPlotGenerator.create_training_curve</span>(<span class='no'>historical_cvs</span>, <span class='no'>randomVariables</span>,
+    <pre class="usage"><span class='fu'>OutputPlotGenerator.create_training_curve</span>(<span class='no'>historical_cvs</span>, <span class='no'>relevantVariables</span>,
   <span class='kw'>output</span> <span class='kw'>=</span> <span class='st'>"historical_cvs"</span>, <span class='kw'>dir</span> <span class='kw'>=</span> <span class='st'>"~/tmp/osl/"</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
@@ -95,11 +95,11 @@
       <th>historical_cvs</th>
       <td><p>the historical CV risks. List of lists of datatables.
 First list is for each iteration, second for each learner, and the datatable
-has columns for each random variable.</p></td>
+has columns for each relevant variable.</p></td>
     </tr>
     <tr>
-      <th>randomVariables</th>
-      <td><p>list of randomvariables to use in the output</p></td>
+      <th>relevantVariables</th>
+      <td><p>list of relevantvariables to use in the output</p></td>
     </tr>
     <tr>
       <th>output</th>

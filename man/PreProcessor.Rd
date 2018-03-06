@@ -21,7 +21,7 @@ and max of the data).
     Initializes a new \code{PreProcessor} class.
 
     @param bounds list the bounds that should be used when normalizing the
-    data. This list should contain an entry for each random variable that
+    data. This list should contain an entry for each relevant variable that
     should be scaled. Each of those entries should then contain a \code{min}
     and \code{max} entry.
   } 

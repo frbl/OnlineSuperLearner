@@ -1,8 +1,8 @@
 context("InterventionEffectCalculator.R")
 
 described.class <- InterventionEffectCalculator
-rv.W <- RandomVariable$new(formula = W ~ D, family = 'binomial')
-rv.Y <- RandomVariable$new(formula = Y ~ W, family = 'gaussian')
+rv.W <- RelevantVariable$new(formula = W ~ D, family = 'binomial')
+rv.Y <- RelevantVariable$new(formula = Y ~ W, family = 'gaussian')
 
 glob_bootstrap_iterations <- 5
 glob_outcome_variable <- rv.Y$getY

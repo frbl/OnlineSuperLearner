@@ -44,7 +44,7 @@
 #'
 #'     @param data the data from which to predict the outcome. It depends on
 #'      the goal of the prediction what this needs to be. If the goal is to
-#'      sample a new random variable, the value for the random variables to
+#'      sample a new relevant variable, the value for the relevant variables to
 #'      sample does not need to be set in the data table (they can be NA).
 #'      However, if one wants to know the probability of an instance of a random
 #'      variable given the other variables, ($P(Y | X_1, X2_)$), then the random
@@ -61,18 +61,18 @@
 #'      sampled distribution over the actual distribution.
 #'
 #'     @return list a list containing the predictions, where each entry is one
-#'      of the randomvariables for which a conditional distribution was fit.
+#'      of the relevantvariables for which a conditional distribution was fit.
 #'   } 
 #'
 #'   \item{\code{predict_probability(datO, X, Y, plot = FALSE, check = FALSE) }}{ 
 #'     Internal method used by the \code{predict} function. This function
 #'     predicts a $P(Y | X)$. These arguments are therefore instances of the
-#'     RandomVariable class. The data of these random variables needs to be
+#'     RelevantVariable class. The data of these relevant variables needs to be
 #'     included in the \code{datO} argument.
 #'
 #'     @param datO the data from which to predict the probability.
 #'      As we want to predict the probability of Y given a set of X, ($P(Y |
-#'      X_1, X2_)$), the random variable column in \code{datO} cannot be empty. 
+#'      X_1, X2_)$), the relevant variable column in \code{datO} cannot be empty. 
 #'
 #'     @param sample (default = FALSE) boolean would we like to sample a value
 #'      (true) or a probability (false) from the conditional density
@@ -85,13 +85,13 @@
 #'      sampled distribution over the actual distribution.
 #'
 #'     @return list a list containing the predictions, where each entry is one
-#'      of the randomvariables for which a conditional distribution was fit.
+#'      of the relevantvariables for which a conditional distribution was fit.
 #'   } 
 #' 
 #'   \item{\code{getConditionalDensities(outcome = NULL) }}{ 
 #'     Function to get all fitted conditional densities. By default it will
 #'     return the full list of conditional densities (when \code{outcome =
-#'     NULL}).  One could also provide a subset of random variables to the
+#'     NULL}).  One could also provide a subset of relevant variables to the
 #'     function.  Note that if only a single variable is returned (e.g.
 #'     \code{outcome = 'Y'}), it will return a single conditional density
 #'     (i.e., this outcome is not encapsulated in a list). If a vector of
@@ -170,12 +170,12 @@ DensityEstimation <- R6Class ("DensityEstimation",
           if (check) {
             data <- Arguments$getInstanceOf(data, 'data.table')
             plot <- Arguments$getLogical(plot)
-            if (is.null(self$get_random_variables) || length(self$get_raw_conditional_densities) == 0) {
+            if (is.null(self$get_relevant_variables) || length(self$get_raw_conditional_densities) == 0) {
               throw('The conditional_densities need to be fit first!')
             }
           }
 
-          results <- lapply(self$get_random_variables, function(rv) {
+          results <- lapply(self$get_relevant_variables, function(rv) {
             current_outcome <- rv$getY
 
             ## Return NA if we want to skip this iteration (next is not available in lapply)
@@ -266,13 +266,13 @@ DensityEstimation <- R6Class ("DensityEstimation",
           sampled_data
         },
 
-        fit = function(datO, randomVariables){
-          if(is.null(self$get_random_variables)) {
-            self$set_random_variables(randomVariables = randomVariables)
+        fit = function(datO, relevantVariables){
+          if(is.null(self$get_relevant_variables)) {
+            self$set_relevant_variables(relevantVariables = relevantVariables)
           }
 
-          ## Fit conditional density for all of the randomVariables
-          for(rv in private$randomVariables) {
+          ## Fit conditional density for all of the relevantVariables
+          for(rv in private$relevantVariables) {
             ## TODO: Currently it is is not yet possible to sample from an non-conditional distribution!
             ## OS: Maybe the following hack (its probably not a very good one):
             ## 1) Fit unconditional density using the same method (histogram) with intercept only GLMs
@@ -311,16 +311,16 @@ DensityEstimation <- R6Class ("DensityEstimation",
             return(dens_fit)
         },
 
-        set_random_variables = function(randomVariables) {
+        set_relevant_variables = function(relevantVariables) {
           # Convert the formula in vectors (can probably be done easier)
-          for (rv in randomVariables) {
-            private$randomVariables[[rv$getY]] <- Arguments$getInstanceOf(rv, 'RandomVariable')
+          for (rv in relevantVariables) {
+            private$relevantVariables[[rv$getY]] <- Arguments$getInstanceOf(rv, 'RelevantVariable')
           }
         },
 
         # Updates the used condistional density
         update = function(newdata) {
-          for (rv in private$randomVariables) {
+          for (rv in private$relevantVariables) {
             ## TODO: Currently it is is not yet possible to sample from an non-conditional distribution!
             ## OS: Maybe the following hack (its probably not a very good one):
             ## 1) Fit unconditional density using the same method (histogram) with intercept only GLMs
@@ -363,8 +363,8 @@ DensityEstimation <- R6Class ("DensityEstimation",
           return(private$is_online_estimator)
         },
 
-        get_random_variables = function() {
-          private$randomVariables
+        get_relevant_variables = function() {
+          private$relevantVariables
         },
 
         get_bin_estimator = function() {
@@ -398,7 +398,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
         data = NULL,
         nbins = NULL,
         verbose = NULL,
-        randomVariables = NULL,
+        relevantVariables = NULL,
         bin_estimator = NULL,
         is_online_estimator = NULL,
         name = NULL,

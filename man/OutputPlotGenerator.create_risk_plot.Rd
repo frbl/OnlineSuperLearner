@@ -9,7 +9,7 @@ OutputPlotGenerator.create_risk_plot(performance, output, dir = "~/tmp/osl",
 }
 \arguments{
 \item{performance}{a list of list with performances: list 1 the estimators
-used, list 2 the random variables predicted.}
+used, list 2 the relevant variables predicted.}
 
 \item{output}{string the filename to use for the plot (without .pdf).}
 

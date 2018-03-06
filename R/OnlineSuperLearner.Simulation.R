@@ -8,7 +8,7 @@
 #' @importFrom R6 R6Class
 #' @importFrom doParallel registerDoParallel
 #' @importFrom foreach foreach
-#' @include RandomVariable.R
+#' @include RelevantVariable.R
 #' @include OutputPlotGenerator.R
 #' @include OneStepEstimator.R
 #' @include SMGFactory.R
@@ -38,7 +38,7 @@
 #' 
 #'   \item{\code{configuration2(id) }}{ 
 #'     Configuration 2 is slightly more complex than the first configuration.
-#'     In this configuration, we include more random variables (W2 and W3). We
+#'     In this configuration, we include more relevant variables (W2 and W3). We
 #'     still don't have a time dependency in the system.
 #'
 #'     @param id integer (default = 2) the id of the configuration. Used for
@@ -47,7 +47,7 @@
 #' 
 #'   \item{\code{configuration3(id) }}{ 
 #'     Configuration 3 is the same configuration as configuration 1, in terms
-#'     of random variables. However, this implementation does include a time
+#'     of relevant variables. However, this implementation does include a time
 #'     dependency. 
 #'
 #'     @param id integer (default = 3) the id of the configuration. Used for
@@ -56,7 +56,7 @@
 #' 
 #'   \item{\code{configuration4(id) }}{ 
 #'     Configuration 4 is the similar configuration to configuration 2, in terms
-#'     of random variables. However, this implementation does include a time
+#'     of relevant variables. However, this implementation does include a time
 #'     dependency. 
 #'
 #'     @param id integer (default = 4) the id of the configuration. Used for
@@ -196,16 +196,16 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           )
 
           # We'd like to use the following features in our estimation:
-          W <- RandomVariable$new(formula = W ~ W_mean + Y_mean + Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
-          A <- RandomVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
-          Y <- RandomVariable$new(formula = Y ~ A + W, family = 'binomial')
-          randomVariables <- c(W, A, Y)
+          W <- RelevantVariable$new(formula = W ~ W_mean + Y_mean + Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
+          A <- RelevantVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
+          Y <- RelevantVariable$new(formula = Y ~ A + W, family = 'binomial')
+          relevantVariables <- c(W, A, Y)
 
           # Generate a dataset we will use for testing.
           # Create the measures we'd like to include in our model
           # In this simulation we will include 2 lags and the latest data (non lagged)
           # Define the variables in the initial dataset we'd like to use
-          #private$train(data.test, data.train, bounds, randomVariables, 2)
+          #private$train(data.test, data.train, bounds, relevantVariables, 2)
           intervention <- list(variable = 'A',
                                when = c(3), 
                                what = c(1))
@@ -216,7 +216,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           private$train(intervention = intervention,
                         control = control,
-                        randomVariables, Y,  max_iterations = 100,
+                        relevantVariables, Y,  max_iterations = 100,
                         llW = llW,
                         llA = llA, 
                         llY = llY,
@@ -276,12 +276,12 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           )
 
           # We'd like to use the following features in our estimation:
-          W  <- RandomVariable$new(family = 'gaussian', formula = W  ~ Y_lag_1 + W2_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2)
-          W2 <- RandomVariable$new(family = 'gaussian', formula = W2 ~ W_lag_1)
-          W3 <- RandomVariable$new(family = 'gaussian', formula = W3 ~ Y_lag_1)
-          A  <- RandomVariable$new(family = 'binomial', formula = A  ~ W + Y_lag_1 + A_lag_1 + W_lag_1)
-          Y  <- RandomVariable$new(family = 'gaussian', formula = Y  ~ A + W + Y_lag_1 + A_lag_1 + W_lag_1)
-          randomVariables <- c(W, W2, W3, A, Y)
+          W  <- RelevantVariable$new(family = 'gaussian', formula = W  ~ Y_lag_1 + W2_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2)
+          W2 <- RelevantVariable$new(family = 'gaussian', formula = W2 ~ W_lag_1)
+          W3 <- RelevantVariable$new(family = 'gaussian', formula = W3 ~ Y_lag_1)
+          A  <- RelevantVariable$new(family = 'binomial', formula = A  ~ W + Y_lag_1 + A_lag_1 + W_lag_1)
+          Y  <- RelevantVariable$new(family = 'gaussian', formula = Y  ~ A + W + Y_lag_1 + A_lag_1 + W_lag_1)
+          relevantVariables <- c(W, W2, W3, A, Y)
 
           # Create the measures we'd like to include in our model
           # In this simulation we will include 2 lags and the latest data (non lagged)
@@ -300,7 +300,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           private$train(intervention = intervention,
                         control = control,
-                        randomVariables, 
+                        relevantVariables, 
                         Y,
                         max_iterations = 10, llW, llA, llY,
                         configuration = id)
@@ -338,15 +338,15 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           )
 
           # We'd like to use the following features in our estimation:
-          W <- RandomVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
-          A <- RandomVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
-          Y <- RandomVariable$new(formula = Y ~ A + W, family = 'binomial')
-          randomVariables <- c(W, A, Y)
+          W <- RelevantVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
+          A <- RelevantVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
+          Y <- RelevantVariable$new(formula = Y ~ A + W, family = 'binomial')
+          relevantVariables <- c(W, A, Y)
 
           # Create the measures we'd like to include in our model
           # In this simulation we will include 2 lags and the latest data (non lagged)
           # Define the variables in the initial dataset we'd like to use
-          #private$train(data.test, data.train, bounds, randomVariables, 2)
+          #private$train(data.test, data.train, bounds, relevantVariables, 2)
           intervention <- list(variable = 'A',
                                when = c(2), 
                                what = c(1))
@@ -357,7 +357,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           private$train(intervention = intervention,
                         control = control,
-                        randomVariables,
+                        relevantVariables,
                         Y,  max_iterations = 100,
                         llW = llW,
                         llA = llA, 
@@ -420,12 +420,12 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           # In this simulation we will include 2 lags and the latest data (non lagged)
           # Define the variables in the initial dataset we'd like to use
           # We'd like to use the following features in our estimation:
-          W  <- RandomVariable$new(family = 'gaussian', formula = W  ~ Y_lag_1 + W2_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2)
-          W2 <- RandomVariable$new(family = 'gaussian', formula = W2 ~ W_lag_1)
-          W3 <- RandomVariable$new(family = 'gaussian', formula = W3 ~ Y_lag_1)
-          A  <- RandomVariable$new(family = 'binomial', formula = A  ~ W + Y_lag_1 + A_lag_1 + W_lag_1)
-          Y  <- RandomVariable$new(family = 'gaussian', formula = Y  ~ A + W + Y_lag_1 + A_lag_1 + W_lag_1)
-          randomVariables <- c(W, W2, W3, A, Y)
+          W  <- RelevantVariable$new(family = 'gaussian', formula = W  ~ Y_lag_1 + W2_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2)
+          W2 <- RelevantVariable$new(family = 'gaussian', formula = W2 ~ W_lag_1)
+          W3 <- RelevantVariable$new(family = 'gaussian', formula = W3 ~ Y_lag_1)
+          A  <- RelevantVariable$new(family = 'binomial', formula = A  ~ W + Y_lag_1 + A_lag_1 + W_lag_1)
+          Y  <- RelevantVariable$new(family = 'gaussian', formula = Y  ~ A + W + Y_lag_1 + A_lag_1 + W_lag_1)
+          relevantVariables <- c(W, W2, W3, A, Y)
 
 
           # Create the measures we'd like to include in our model
@@ -442,7 +442,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           private$train(intervention = intervention,
                         control = control,
-                        randomVariables, 
+                        relevantVariables, 
                         Y,
                         max_iterations = 100, llW, llA, llY,
                         configuration = id)
@@ -460,7 +460,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
         SL.library.definition = NULL,
         cv_risk_calculator = NULL,
 
-        train = function(intervention, control, randomVariables, variable_of_interest, max_iterations, llW, llA, llY, configuration) {
+        train = function(intervention, control, relevantVariables, variable_of_interest, max_iterations, llW, llA, llY, configuration) {
 
           tic <- Sys.time()
 
@@ -496,11 +496,11 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           # Create the bounds
           bounds <- PreProcessor.generate_bounds(data.train)
 
-          outcome.variables <- sapply(randomVariables, function(rv) rv$getY)
+          outcome.variables <- sapply(relevantVariables, function(rv) rv$getY)
           smg_factory <- SMGFactory$new()
 
           pre_processor <- PreProcessor$new(bounds = bounds)
-          summaryMeasureGenerator <- smg_factory$fabricate(randomVariables, pre_processor = pre_processor)
+          summaryMeasureGenerator <- smg_factory$fabricate(relevantVariables, pre_processor = pre_processor)
 
           Data.Static$new(dataset = data.test) %>%
             summaryMeasureGenerator$set_trajectories(.)
@@ -510,7 +510,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
 
           private$log && cat(private$log, 'Initializing OSL')
           osl <- OnlineSuperLearner$new(private$SL.library.definition,
-                                        random_variables = randomVariables,
+                                        relevant_variables = relevantVariables,
                                         summaryMeasureGenerator = summaryMeasureGenerator,
                                         pre_processor = pre_processor,
                                         test_set_size = 20, # Make sure this is bigger than the number of K-1 algorithms
@@ -548,7 +548,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           performance <- 
             private$cv_risk_calculator$calculate_evaluation(predicted.outcome = predicted.outcome,
                                                             observed.outcome = observed.outcome,
-                                                            randomVariables = randomVariables) 
+                                                            relevantVariables = relevantVariables) 
 
           key_performance = paste('performance_cfg_', configuration, sep='')
           OutputPlotGenerator.create_risk_plot(performance=performance, output=key_performance)
@@ -563,7 +563,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           OutputPlotGenerator.create_risk_plot(performance=osl$get_cv_risk(), output=key_performance, make_summary=TRUE, label='total.risk')
 
           OutputPlotGenerator.create_training_curve(osl$get_historical_cv_risk, 
-                                                    randomVariables = randomVariables,
+                                                    relevantVariables = relevantVariables,
                                                     output = paste('curve',configuration, sep='_'))
 
           toc <- Sys.time()
@@ -583,7 +583,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           OutputPlotGenerator.export_key_value(output=key_output, 'simulation-number-of-observations', N)
 
           intervention_effect_caluculator = InterventionEffectCalculator$new(bootstrap_iterations = B, 
-                                                                             randomVariables = randomVariables, 
+                                                                             relevantVariables = relevantVariables, 
                                                                              outcome_variable = variable_of_interest$getY,
                                                                              verbose = private$log,
                                                                              parallel = TRUE)
@@ -684,7 +684,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           if('dosl' %in% (oos_options)) {
             OOS.intervention <- OneStepEstimator$new(
               osl = osl, 
-              randomVariables = randomVariables, 
+              relevantVariables = relevantVariables, 
               discrete = TRUE,
               N = N, 
               B = B_oos,
@@ -706,7 +706,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           if('dosl_control' %in% (oos_options)) {
             OOS.control <- OneStepEstimator$new(
 							osl = osl, 
-							randomVariables = randomVariables, 
+							relevantVariables = relevantVariables, 
 							discrete = TRUE,
 							N = N, 
 							B = B_oos,
@@ -728,7 +728,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           if('osl' %in% (oos_options)) {
             OOS.control <- OneStepEstimator$new(
 							osl = osl, 
-							randomVariables = randomVariables, 
+							relevantVariables = relevantVariables, 
 							discrete = FALSE,
 							N = N, 
 							B = B_oos,
@@ -750,7 +750,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
           if('osl_control' %in% (oos_options)) {
             OOS.control <- OneStepEstimator$new(
 							osl = osl, 
-							randomVariables = randomVariables, 
+							relevantVariables = relevantVariables, 
 							discrete = FALSE,
 							N = N, 
 							B = B_oos,

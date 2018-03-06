@@ -93,7 +93,7 @@
 #'     @return data.table a data.table with the risks of each estimator.
 #'   } 
 #' 
-#'   \item{\code{predict(data, randomVariables = NULL, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE)}}{
+#'   \item{\code{predict(data, relevantVariables = NULL, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE)}}{
 #'     Method to perform a prediction on the estimators. It can run in
 #'     different configurations. It can be configured to predict the outcome
 #'     using all estimators (the \code{all_estimators} flag), using the
@@ -105,7 +105,7 @@
 #'      that this can be any instance of a \code{Data.Base} superclass, as long
 #'      as it extends the correct functions.
 #'
-#'     @param randomVariables list (default = NULL) the random variables used
+#'     @param relevantVariables list (default = NULL) the relevant variables used
 #'     for doing the predictions (these should be the same as the ones used for
 #'     fitting). If \code{NULL}, we will use the list provided on
 #'     initialization.
@@ -157,7 +157,7 @@
 #'      outcomes. Check the \code{OnlineSuperlearner.SampleIteratively} class for more
 #'      details.
 #'
-#'     @param start_from_variable RandomVariable (default = NULL) if we don't
+#'     @param start_from_variable RelevantVariable (default = NULL) if we don't
 #'      start with sampling from the first argument in the sequence of
 #'      variables, specify which one to start from.
 #'
@@ -201,23 +201,23 @@
 #'     @return an overview of the CV risk of the different estimators
 #'   }
 #'
-#'   \item{\code{set_random_variables(random_variables)}}{
-#'     Method to set the random_variables in the osl class. Generally not needed (apart from initialization).
+#'   \item{\code{set_relevant_variables(relevant_variables)}}{
+#'     Method to set the relevant_variables in the osl class. Generally not needed (apart from initialization).
 #'   }
 #'
-#'   \item{\code{retrieve_list_of_random_variables(random_variables)}}{
-#'     Retrieves a list of random variables according to a specification. This
-#'     function allows for a more flexible way of retrieving random variables
+#'   \item{\code{retrieve_list_of_relevant_variables(relevant_variables)}}{
+#'     Retrieves a list of relevant variables according to a specification. This
+#'     function allows for a more flexible way of retrieving relevant variables
 #'     from the OSL model.
-#'     @param random_variables the random_variables for which we want to
+#'     @param relevant_variables the relevant_variables for which we want to
 #'      receive the list of variables, in a form that our model accepts. This
 #'      can be specified as follows:
-#'      - List of \code{RandomVariable} objects to predict
-#'      - Single \code{RandomVariable} object to predict
+#'      - List of \code{RelevantVariable} objects to predict
+#'      - Single \code{RelevantVariable} object to predict
 #'      - List of strings with the names of the outputs (\code{list('X','Y')})
 #'      - Single string with the name of the output (\code{'Y'})
 #'
-#'     @return a list of \code{RandomVariable} objects to use in the prediction function.
+#'     @return a list of \code{RelevantVariable} objects to use in the prediction function.
 #'   }
 #'
 #'   \item{\code{is_fitted}}{
@@ -267,7 +267,7 @@
 #'   \item{\code{get_dosl}}{
 #'     Active method to retrieve the actual DOSL fit. this could be nil if no dosl has been fit yet.
 #'
-#'     @return list a list containing the best estimator for each of the random variables.
+#'     @return list a list containing the best estimator for each of the relevant variables.
 #'   }
 #'
 #'   \item{\code{get_cv_risk}}{
@@ -276,10 +276,10 @@
 #'     @return list a list containing the risk estimates for each of hte estimators.
 #'   }
 #'
-#'   \item{\code{get_random_variables}}{
-#'     Active method. Returns all \code{RandomVariables} in the OSL object.
+#'   \item{\code{get_relevant_variables}}{
+#'     Active method. Returns all \code{RelevantVariables} in the OSL object.
 #'
-#'     @return list a list containing all \code{RandomVariable}s
+#'     @return list a list containing all \code{RelevantVariable}s
 #'   }
 #'
 #'   \item{\code{get_valididy}}{
@@ -302,14 +302,14 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## Functions
         ## =========
         initialize = function(SL.library.definition = c('ML.Local.lm', 'ML.H2O.glm'),
-                              summaryMeasureGenerator, random_variables, should_fit_osl = TRUE,
+                              summaryMeasureGenerator, relevant_variables, should_fit_osl = TRUE,
                               should_fit_dosl = TRUE, pre_processor = NULL,
                               test_set_size = 1, verbose = FALSE, ...) {
 
           self$set_verbosity(Arguments$getVerbose(verbose, timestamp = TRUE))
 
-          ## Initialize the random_variables early, as we use them in many places
-          self$set_random_variables(random_variables)
+          ## Initialize the relevant_variables early, as we use them in many places
+          self$set_relevant_variables(relevant_variables)
 
           private$fitted = FALSE
           private$summary_measure_generator <- Arguments$getInstanceOf(summaryMeasureGenerator, 'SummaryMeasureGenerator')
@@ -329,9 +329,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$all_estimators_online <- DensityEstimation.are_all_estimators_online(self$get_estimators)
           private$data_cache <- DataCache$new(self$is_online)
 
-          ## We need a weighted combination computer for each of the randomvariables.
+          ## We need a weighted combination computer for each of the relevantvariables.
           ## We could reuse the WCC, and just save the weights here. However, this way we do allow
-          ## to use a different wcc for each of the random variables.
+          ## to use a different wcc for each of the relevant variables.
           private$weightedCombinationComputers <- list()
           private$online_super_learner_predict <- OnlineSuperLearner.Predict$new(pre_processor = pre_processor,
                                                                                  verbose = verbose)
@@ -345,7 +345,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           private$osl_sampler <- OnlineSuperLearner.SampleIteratively$new(
             osl = self,
-            randomVariables = self$get_random_variables,
+            relevantVariables = self$get_relevant_variables,
             summary_measure_generator = self$get_summary_measure_generator,
             remove_future_variables = TRUE
           )
@@ -381,7 +381,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           data <- Arguments$getInstanceOf(data, 'Data.Base')
 
           self$get_summary_measure_generator$set_trajectories(data = data)
-          self$get_summary_measure_generator$check_enough_data_available(randomVariables = self$get_random_variables)
+          self$get_summary_measure_generator$check_enough_data_available(relevantVariables = self$get_relevant_variables)
 
           private$verbose && cat(private$verbose, 
             'Fitting OnlineSuperLearner with a library: ', paste(self$get_estimator_descriptions, collapse = ', '),
@@ -417,19 +417,19 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         ## Predict should return a nrow(data) * 1 matrix, where the predictions are multiplied by
         ## the weights of each estimator.
-        predict = function(data, randomVariables = NULL,
+        predict = function(data, relevantVariables = NULL,
                            all_estimators = TRUE, discrete = TRUE, continuous = TRUE,
                            sample = FALSE, plot = FALSE) {
 
-          if (is.null(randomVariables)) {
-            randomVariables = self$get_random_variables
+          if (is.null(relevantVariables)) {
+            relevantVariables = self$get_relevant_variables
           }
 
           ## Pass the function to the separate class so it won't fill up this class
           self$get_online_super_learner_predict$predict(
             osl = self,
             data = data,
-            randomVariables = randomVariables,
+            relevantVariables = relevantVariables,
             all_estimators = all_estimators,
             discrete = discrete,
             continuous = continuous,
@@ -463,7 +463,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           data.splitted <- self$get_data_splitter$split(data_current)
 
           ## 1. Train the algorithms on the initial training set
-          outcome.variables <- names(self$get_random_variables)
+          outcome.variables <- names(self$get_relevant_variables)
           private$build_all_estimators(data = data.splitted$train)
 
           private$fitted <- TRUE
@@ -505,7 +505,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             private$cv_risk$dosl.estimator <-
               private$cv_risk_calculator$update_risk(predicted.outcome = predicted.outcome,
                                                      observed.outcome = observed.outcome,
-                                                     randomVariables  = self$get_random_variables,
+                                                     relevantVariables  = self$get_relevant_variables,
                                                      current_count    = self$get_cv_risk_count-1,
                                                      current_risk     = self$get_cv_risk())$dosl.estimator
           }
@@ -624,35 +624,35 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           return(private$cv_risk)
         },
 
-        set_random_variables = function(random_variables) {
-          variable_names <- sapply(random_variables, function(rv) rv$getY)
-          names(random_variables) <- variable_names
-          private$random_variables <- random_variables
+        set_relevant_variables = function(relevant_variables) {
+          variable_names <- sapply(relevant_variables, function(rv) rv$getY)
+          names(relevant_variables) <- variable_names
+          private$relevant_variables <- relevant_variables
         },
 
-        retrieve_list_of_random_variables = function(random_variables) {
-          ## Convert Y to random variable
-          if (is(random_variables, 'list')) {
-            if(length(random_variables) == 0) throw('There should be at least one entry in the outcomes specified')
+        retrieve_list_of_relevant_variables = function(relevant_variables) {
+          ## Convert Y to relevant variable
+          if (is(relevant_variables, 'list')) {
+            if(length(relevant_variables) == 0) throw('There should be at least one entry in the outcomes specified')
 
-            random_variables <- lapply(random_variables, function(rv) {
-              if (!is(rv, 'RandomVariable')) {
-                ## convert it to the randomvariable
-                rv <- self$get_random_variables[[rv]]
+            relevant_variables <- lapply(relevant_variables, function(rv) {
+              if (!is(rv, 'RelevantVariable')) {
+                ## convert it to the relevantvariable
+                rv <- self$get_relevant_variables[[rv]]
               }
               rv
             })
           } else {
-            if (is(random_variables, 'RandomVariable')) {
+            if (is(relevant_variables, 'RelevantVariable')) {
               ## Encapsulate it
-              random_variables <- list(random_variables)
+              relevant_variables <- list(relevant_variables)
 
             ## Check to see if something is actually a string or a vector
-            } else if (length(nchar(random_variables)) == 1) {
-              ## convert it to the randomvariable
-              random_variables <- self$get_random_variables[[random_variables]]
+            } else if (length(nchar(relevant_variables)) == 1) {
+              ## convert it to the relevantvariable
+              relevant_variables <- self$get_relevant_variables[[relevant_variables]]
             } else {
-              throw('Either provide strings, or randomVariables')
+              throw('Either provide strings, or relevantVariables')
             }
           }
         }
@@ -758,8 +758,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           return(private$data_splitter)
         },
 
-        get_random_variables = function() {
-          return(private$random_variables)
+        get_relevant_variables = function() {
+          return(private$relevant_variables)
         },
 
         get_osl_sampler = function() {
@@ -778,8 +778,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         ## The R.cv score of the current fit
         default_wcc = WCC.CG,
 
-        # The random_variables to use throughout the osl object
-        random_variables = NULL,
+        # The relevant_variables to use throughout the osl object
+        relevant_variables = NULL,
 
         #default_wcc = WCC.SGD.Simplex,
         cv_risk = NULL,
@@ -832,7 +832,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         update_risk = function(predicted.outcome, observed.outcome, update_counter = TRUE) {
           private$cv_risk <- private$cv_risk_calculator$update_risk(predicted.outcome = predicted.outcome,
                                                                     observed.outcome = observed.outcome,
-                                                                    randomVariables = self$get_random_variables,
+                                                                    relevantVariables = self$get_relevant_variables,
                                                                     current_count = private$cv_risk_count,
                                                                     current_risk = self$get_cv_risk())
           if (update_counter) {
@@ -852,9 +852,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           ## TODO: Implement
         },
 
-        ## Initializes the weighted combination calculators. One for each randomvariable.
+        ## Initializes the weighted combination calculators. One for each relevantvariable.
         initialize_weighted_combination_calculators = function() {
-          lapply(self$get_random_variables, function(rv) {
+          lapply(self$get_relevant_variables, function(rv) {
             weights.initial <- rep(1 / length(self$get_estimator_descriptions), 
                                    length(self$get_estimator_descriptions))
 
@@ -893,7 +893,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
               # update the estimator.
               estimator$update(data)
             } else {
-              estimator$fit(cache, randomVariables = self$get_random_variables)
+              estimator$fit(cache, relevantVariables = self$get_relevant_variables)
             }
             private$verbose && cat(private$verbose, 'Done training (or updating) ', estimator$get_name)
             estimator
@@ -924,19 +924,19 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           ## If there is no estimator, we need to fit a estimator based on Nl observations.
           ## If we already have a estimator, we update the old one, given the new measurement
-          random_variable_names <- Arguments$getCharacters(colnames(observed.outcome))
-          if(is.null(random_variable_names)) throw('Something went wrong, the random_variable_names are not defined')
+          relevant_variable_names <- Arguments$getCharacters(colnames(observed.outcome))
+          if(is.null(relevant_variable_names)) throw('Something went wrong, the relevant_variable_names are not defined')
 
-          lapply (random_variable_names, function(random_variable_name) {
-            observed_outcome <- observed.outcome[, random_variable_name, with=FALSE]
+          lapply (relevant_variable_names, function(relevant_variable_name) {
+            observed_outcome <- observed.outcome[, relevant_variable_name, with=FALSE]
 
             ## Convert the predictions to wide format so we can use them per column
             predicted_outcomes <- do.call(cbind, predicted.outcome$normalized) %>%
-              subset(., select = grep(paste(random_variable_name,"$",sep=""), names(.)))
+              subset(., select = grep(paste(relevant_variable_name,"$",sep=""), names(.)))
 
             if(is.null(colnames(predicted_outcomes))) throw('Something went wrong, the predicted_outcome colnames are not defined')
 
-            self$get_weighted_combination_computers[[random_variable_name]]$process(Z = as.matrix(predicted_outcomes),
+            self$get_weighted_combination_computers[[relevant_variable_name]]$process(Z = as.matrix(predicted_outcomes),
                                                         Y = as.matrix(observed_outcome),
                                                         self$get_estimator_descriptions)
           })

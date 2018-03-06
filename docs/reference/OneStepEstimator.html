@@ -103,10 +103,10 @@ the <code>perform</code> method of an instance of this class.</p>
 
     
     <dl class='dl-horizontal'>
-  <dt><code>initialize(osl, randomVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE, parallel= TRUE, online = FALSE, verbose = FALSE, minimal_measurements_needed = 1) </code></dt><dd><p>Initializes the online one step estimator. It uses an earlier fitted
+  <dt><code>initialize(osl, relevantVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE, parallel= TRUE, online = FALSE, verbose = FALSE, minimal_measurements_needed = 1) </code></dt><dd><p>Initializes the online one step estimator. It uses an earlier fitted
     online super learner to sample from the conditional densities.
     @param osl the online superlearner, which was fitted earlier on the data
-    @param randomVariables a list of random variables used for fitting the OSL
+    @param relevantVariables a list of relevant variables used for fitting the OSL
     @param N the number of measurements in a timeseries
     @param B the number of iterations we should do while sampling from the
      conditional expectations
@@ -117,7 +117,7 @@ the <code>perform</code> method of an instance of this class.</p>
     @param intervention the intervention we want to perform. See
      <code>InterventionParser</code> for more details
     @param variable_of_interest the variable we are interested in (e.g., the
-     Y random variable)
+     Y relevant variable)
     @param discrete (default = TRUE) whether we should use the discrete (true) or
      continuous (false) super learner
     @param parallel (default = TRUE) should the estimation run in parallel?
@@ -154,7 +154,7 @@ the <code>perform</code> method of an instance of this class.</p>
     <dt><code>calculate_oos_variance() </code></dt><dd><p>NOTE! NOT YET IMPLEMENTED
     Calculates the variance of the estimator. This can be used to determine
     the confidence bands of an estimand.</p></dd>
-    <dt><code>get_h_ratio_estimators(data, last_h_ratio_estimators = NULL) </code> </dt><dd><p>Calculates a list of h-ratio estimators, one for each randomvariable.
+    <dt><code>get_h_ratio_estimators(data, last_h_ratio_estimators = NULL) </code> </dt><dd><p>Calculates a list of h-ratio estimators, one for each relevantvariable.
     This function calls the <code>calculate_h_ratio_predictors</code>  and returns
     the result (== actual estimators) in a list.
     @param data the data used to seed the sampling procedure.
@@ -162,7 +162,7 @@ the <code>perform</code> method of an instance of this class.</p>
      the reuse (and update) the previous set of h-ratio estimators.
     @return a list of H-ratio estimators. This list is 2 dimentional. THe
      outer list is a list per time s. The inner list is a list with an
-     estimator for each randomVariable.</p></dd>
+     estimator for each relevantVariable.</p></dd>
     <dt><code>evaluation_of_conditional_expectations(data, h_ratio_predictors</code></dt><dd><p>In this function one can perform the second step of OOS, calculate the
     conditional expectations / difference in conditional expectations.
     @param data the data to seed the sampling procedure and thereby
@@ -179,7 +179,7 @@ the <code>perform</code> method of an instance of this class.</p>
     distribution.
     @return a list of H-ratio estimators. This list is 2 dimentional. THe
      outer list is a list per time s. The inner list is a list with an
-     estimator for each randomVariable.</p></dd>
+     estimator for each relevantVariable.</p></dd>
     <dt><code>calculate_h_ratio(h_ratio_predictors, s, formula, data) </code></dt><dd><p>Calculates a specific h-ratio for a specific formula (== the
     variable of interest and the needed covariates) and a specific time s.
     The result of this function is an estimated h-ratio
@@ -193,12 +193,12 @@ the <code>perform</code> method of an instance of this class.</p>
     <dt><code>calculate_difference_in_expectations(s, dat, formula, current_rvs) </code></dt><dd><p>The efficient influence curve equation consists of two equations. One is
     the h-ratio calculation, the other is the difference between two
     expectations. In this function we calculate the difference in
-    expectations for a specified random variable.
+    expectations for a specified relevant variable.
     @param s the time at which the difference in expectations needs to be
      calculated.
     @param dat data.table the initial data to use for estimating the
      difference in expectations
-    @param current_rvs the current list of random variables
+    @param current_rvs the current list of relevant variables
     @return the difference in expectations</p></dd>
     <dt><code>get_next_and_current_rv(current_rv_index) </code></dt><dd><p>&lt;&lt;description&gt;&gt;
     @param current_rv_index</p></dd>

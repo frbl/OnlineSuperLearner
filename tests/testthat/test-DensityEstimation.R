@@ -27,8 +27,8 @@ otherDefaultDataTable = function() {
 }
 
 # TESTING:
-rv.W <- RandomVariable$new(formula = W ~ D, family = 'binomial')
-rv.Y <- RandomVariable$new(formula = Y ~ W, family = 'gaussian')
+rv.W <- RelevantVariable$new(formula = W ~ D, family = 'binomial')
+rv.Y <- RelevantVariable$new(formula = Y ~ W, family = 'gaussian')
 
 
 #nodeObjectsSub <- self$defineNodeObjects(datO = datO[1:40,], X = X, Y = Y)
@@ -108,17 +108,17 @@ test_that("it should throw if the cond densities have not yet been fitted", {
 
 test_that("it should call the predict function if sample is false, with the correct arguments", {
   subject <- described.class$new()
-  cur.randomVariables <- c(rv.W, rv.Y)
+  cur.relevantVariables <- c(rv.W, rv.Y)
   cur.plot <- FALSE
   cur.check <- FALSE
   cur.data <- defaultDataTable()
-  subject$set_random_variables(randomVariables = cur.randomVariables)
+  subject$set_relevant_variables(relevantVariables = cur.relevantVariables)
 
   stub(subject$predict, 'self$predict_probability', 
     function(datO, X, Y, plot, check) {
       expect_equal(datO, cur.data)
-      expect_equal(X, cur.randomVariables[[iter]]$getX)
-      expect_equal(Y, cur.randomVariables[[iter]]$getY)
+      expect_equal(X, cur.relevantVariables[[iter]]$getX)
+      expect_equal(Y, cur.relevantVariables[[iter]]$getY)
       expect_equal(plot, cur.plot)
       expect_equal(check, cur.check)
       iter <<- iter + 1
@@ -129,49 +129,49 @@ test_that("it should call the predict function if sample is false, with the corr
   subject$predict(cur.data, sample = FALSE, subset = NULL, plot = cur.plot, check = cur.check)
 })
 
-test_that("it should use a subset of the random variables for predicting if a subset is provided", {
+test_that("it should use a subset of the relevant variables for predicting if a subset is provided", {
   subject <- described.class$new()
-  cur.randomVariables <- c(rv.W, rv.Y)
+  cur.relevantVariables <- c(rv.W, rv.Y)
   cur.plot <- FALSE
   cur.check <- FALSE
   cur.data <- defaultDataTable()
-  subject$set_random_variables(randomVariables = cur.randomVariables)
+  subject$set_relevant_variables(relevantVariables = cur.relevantVariables)
 
   stub(subject$predict, 'self$predict_probability', 
     function(datO, X, Y, plot, check) {
       expect_equal(datO, cur.data)
-      expect_equal(X, cur.randomVariables[[1]]$getX)
-      expect_equal(Y, cur.randomVariables[[1]]$getY)
+      expect_equal(X, cur.relevantVariables[[1]]$getX)
+      expect_equal(Y, cur.relevantVariables[[1]]$getY)
       expect_equal(plot, cur.plot)
       expect_equal(check, cur.check)
     }
   )
-  subject$predict(cur.data, sample = FALSE, subset = cur.randomVariables[[1]]$getY, plot = cur.plot, check = cur.check)
+  subject$predict(cur.data, sample = FALSE, subset = cur.relevantVariables[[1]]$getY, plot = cur.plot, check = cur.check)
 
   stub(subject$predict, 'self$predict_probability', 
     function(datO, X, Y, plot, check) {
       expect_equal(datO, cur.data)
-      expect_equal(X, cur.randomVariables[[2]]$getX)
-      expect_equal(Y, cur.randomVariables[[2]]$getY)
+      expect_equal(X, cur.relevantVariables[[2]]$getX)
+      expect_equal(Y, cur.relevantVariables[[2]]$getY)
       expect_equal(plot, cur.plot)
       expect_equal(check, cur.check)
     }
   )
-  subject$predict(cur.data, sample = FALSE, subset = cur.randomVariables[[2]]$getY, plot = cur.plot, check = cur.check)
+  subject$predict(cur.data, sample = FALSE, subset = cur.relevantVariables[[2]]$getY, plot = cur.plot, check = cur.check)
 })
 
 test_that("it should call the sample function if sample is true, with the correct arguments", {
   subject <- described.class$new()
-  cur.randomVariables <- c(rv.W, rv.Y)
+  cur.relevantVariables <- c(rv.W, rv.Y)
   cur.plot <- FALSE
   cur.data <- defaultDataTable()
-  subject$set_random_variables(randomVariables = cur.randomVariables)
+  subject$set_relevant_variables(relevantVariables = cur.relevantVariables)
 
   stub(subject$predict, 'self$sample', 
     function(datO, X, Y, plot) {
       expect_equal(datO, cur.data)
-      expect_equal(X, cur.randomVariables[[iter]]$getX)
-      expect_equal(Y, cur.randomVariables[[iter]]$getY)
+      expect_equal(X, cur.relevantVariables[[iter]]$getX)
+      expect_equal(Y, cur.relevantVariables[[iter]]$getY)
       expect_equal(plot, cur.plot)
       iter <<- iter + 1
     }
@@ -181,48 +181,48 @@ test_that("it should call the sample function if sample is true, with the correc
   subject$predict(cur.data, sample = TRUE, subset = NULL, plot = cur.plot, check = FALSE)
 })
 
-test_that("it should use a subset of the random variables for sampling if a subset is provided", {
+test_that("it should use a subset of the relevant variables for sampling if a subset is provided", {
   subject <- described.class$new()
-  cur.randomVariables <- c(rv.W, rv.Y)
+  cur.relevantVariables <- c(rv.W, rv.Y)
   cur.plot <- FALSE
   cur.data <- defaultDataTable()
-  subject$set_random_variables(randomVariables = cur.randomVariables)
+  subject$set_relevant_variables(relevantVariables = cur.relevantVariables)
 
   stub(subject$predict, 'self$sample', 
     function(datO, X, Y, plot) {
       expect_equal(datO, cur.data)
-      expect_equal(X, cur.randomVariables[[1]]$getX)
-      expect_equal(Y, cur.randomVariables[[1]]$getY)
+      expect_equal(X, cur.relevantVariables[[1]]$getX)
+      expect_equal(Y, cur.relevantVariables[[1]]$getY)
       expect_equal(plot, cur.plot)
     }
   )
-  subject$predict(cur.data, sample = TRUE, subset = cur.randomVariables[[1]]$getY, plot = cur.plot, check = FALSE)
+  subject$predict(cur.data, sample = TRUE, subset = cur.relevantVariables[[1]]$getY, plot = cur.plot, check = FALSE)
 
   stub(subject$predict, 'self$sample', 
     function(datO, X, Y, plot) {
       expect_equal(datO, cur.data)
-      expect_equal(X, cur.randomVariables[[2]]$getX)
-      expect_equal(Y, cur.randomVariables[[2]]$getY)
+      expect_equal(X, cur.relevantVariables[[2]]$getX)
+      expect_equal(Y, cur.relevantVariables[[2]]$getY)
       expect_equal(plot, cur.plot)
     }
   )
-  subject$predict(cur.data, sample = TRUE, subset = cur.randomVariables[[2]]$getY, plot = cur.plot, check = FALSE)
+  subject$predict(cur.data, sample = TRUE, subset = cur.relevantVariables[[2]]$getY, plot = cur.plot, check = FALSE)
 })
 
 
 test_that("it should return a list with the correct names", {
   subject <- described.class$new()
-  cur.randomVariables <- c(rv.W, rv.Y)
+  cur.relevantVariables <- c(rv.W, rv.Y)
   cur.plot <- FALSE
   cur.check <- FALSE
   cur.data <- defaultDataTable()
-  subject$set_random_variables(randomVariables = cur.randomVariables)
+  subject$set_relevant_variables(relevantVariables = cur.relevantVariables)
 
   stub(subject$predict, 'self$predict_probability', 
     function(datO, X, Y, plot, check) {
       expect_equal(datO, cur.data)
-      expect_equal(X, cur.randomVariables[[iter]]$getX)
-      expect_equal(Y, cur.randomVariables[[iter]]$getY)
+      expect_equal(X, cur.relevantVariables[[iter]]$getX)
+      expect_equal(Y, cur.relevantVariables[[iter]]$getY)
       expect_equal(plot, cur.plot)
       expect_equal(check, cur.check)
       iter <<- iter + 1
@@ -233,7 +233,7 @@ test_that("it should return a list with the correct names", {
   iter <<- 1
   result <- subject$predict(cur.data, sample = FALSE, subset = NULL, plot = cur.plot, check = FALSE)
   expect_is(result, 'list')
-  expect_length(result, length(cur.randomVariables))
+  expect_length(result, length(cur.relevantVariables))
   expect_named(result, unname(c(rv.W$getY, rv.Y$getY)))
 })
 
@@ -242,7 +242,7 @@ test_that("integration - it should get the correct probabilities from the cond d
   subject <- described.class$new()
 
   ## Really fit a density
-  subject$fit(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
+  subject$fit(defaultDataTable(), relevantVariables = c(rv.W, rv.Y))
   n <- 4
   Y_val <- 1
 
@@ -296,7 +296,7 @@ test_that("it should call the condensier package with the correct data", {
   cur.rv <- rv.W
   cur.plot <- FALSE
   cur.data <- defaultDataTable()
-  subject$set_random_variables(randomVariables = c(cur.rv))
+  subject$set_relevant_variables(relevantVariables = c(cur.rv))
 
   mock_cond_density <- mock(123)
 
@@ -325,7 +325,7 @@ test_that("it should call the plotting package according to the plot setting", {
   cur.rv <- rv.W
   cur.plot <- FALSE
   cur.data <- defaultDataTable()
-  subject$set_random_variables(randomVariables = c(cur.rv))
+  subject$set_relevant_variables(relevantVariables = c(cur.rv))
 
   mock_cond_density <- mock(123, cycle = TRUE)
   mock_output_plot_generator <- mock(321)
@@ -365,7 +365,7 @@ test_that("it should return the estimated probabilities", {
   cur.rv <- rv.W
   cur.plot <- FALSE
   cur.data <- defaultDataTable()
-  subject$set_random_variables(randomVariables = c(cur.rv))
+  subject$set_relevant_variables(relevantVariables = c(cur.rv))
 
   ## The cycle is true because we need it in the expect at the end
   mock_cond_density <- mock(123, cycle=TRUE)
@@ -395,7 +395,7 @@ test_that("it should throw if the data.table is incomplete and check is true", {
 test_that("cond density predictions should work for only one row of data", {
   set.seed(12345)
   subject <- described.class$new(nbins = 10)
-  subject$fit(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
+  subject$fit(defaultDataTable(), relevantVariables = c(rv.W, rv.Y))
 
   n <- 1
   Y_val <- 1000
@@ -419,7 +419,7 @@ test_that("it should call the condensier package with the correct data", {
   cur.rv <- rv.W
   cur.plot <- FALSE
   cur.data <- defaultDataTable()
-  subject$set_random_variables(randomVariables = c(cur.rv))
+  subject$set_relevant_variables(relevantVariables = c(cur.rv))
 
   mock_cond_density <- mock(123)
 
@@ -447,7 +447,7 @@ test_that("it should call the plotting package according to the plot setting wit
   cur.rv <- rv.W
   cur.plot <- FALSE
   cur.data <- defaultDataTable()
-  subject$set_random_variables(randomVariables = c(cur.rv))
+  subject$set_relevant_variables(relevantVariables = c(cur.rv))
 
   mock_sampled_values <- mock(seq(10), cycle = TRUE)
   mock_output_plot_generator <- mock(321)
@@ -494,7 +494,7 @@ test_that("it should return the sampled values", {
   cur.rv <- rv.W
   cur.plot <- FALSE
   cur.data <- defaultDataTable()
-  subject$set_random_variables(randomVariables = c(cur.rv))
+  subject$set_relevant_variables(relevantVariables = c(cur.rv))
 
   ## The cycle is true because we need it in the expect at the end
   ## Note that we inject the rnorm, so it is only ran once
@@ -525,7 +525,7 @@ test_that("it should throw if the data.table is incomplete and check is true", {
 
 test_that("cond density predictions should work for only one row of data", {
   subject <- described.class$new(nbins = 10)
-  subject$fit(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
+  subject$fit(defaultDataTable(), relevantVariables = c(rv.W, rv.Y))
 
   n <- 1
 
@@ -540,7 +540,7 @@ test_that("cond density predictions should work for only one row of data", {
 test_that("it should sample better than random", {
   set.seed(12345)
   subject <- described.class$new(nbins = 10)
-  subject$fit(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
+  subject$fit(defaultDataTable(), relevantVariables = c(rv.W, rv.Y))
   n <- 500
 
   ## Create some completely not related data
@@ -561,7 +561,7 @@ test_that("it should sample better than random", {
 test_that("integration - it should sample from the cond densities once they've been fitted", {
   set.seed(12345)
   subject <- described.class$new(nbins = 30)
-  subject$fit(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
+  subject$fit(defaultDataTable(), relevantVariables = c(rv.W, rv.Y))
 
   nobs <- 13000
 
@@ -585,7 +585,7 @@ test_that("integration - it should sample from the cond densities once they've b
   subject <- described.class$new(nbins = 30)
   dat <- defaultDataTable(nobs=10000)
 
-  subject$fit(dat, randomVariables = c(rv.W, rv.Y))
+  subject$fit(dat, relevantVariables = c(rv.W, rv.Y))
   accepted_error <- 1 
   Y_val <- NA
 
@@ -602,39 +602,39 @@ test_that("integration - it should sample from the cond densities once they've b
 
 context(' fit')
 #==========================================================
-test_that("it should store the random variables the first time", {
+test_that("it should store the relevant variables the first time", {
   subject <- described.class$new(nbins = 3)
-  cur.randomVariables <- c(rv.W, rv.Y)
-  expect_null(subject$get_random_variables)
+  cur.relevantVariables <- c(rv.W, rv.Y)
+  expect_null(subject$get_relevant_variables)
 
   stub(subject$fit, 'self$fit_single_rv', function(...) {} )
-  stub(subject$fit, 'self$set_random_variables', 
-    function(randomVariables) { 
-      expect_equal(randomVariables, cur.randomVariables)
+  stub(subject$fit, 'self$set_relevant_variables', 
+    function(relevantVariables) { 
+      expect_equal(relevantVariables, cur.relevantVariables)
     }
   )
 
-  subject$fit(defaultDataTable(), randomVariables = cur.randomVariables )
-  stub(subject$fit, 'self$set_random_variables', 
+  subject$fit(defaultDataTable(), relevantVariables = cur.relevantVariables )
+  stub(subject$fit, 'self$set_relevant_variables', 
     function(...) { stop('It should only call this function once!') }
   )
-  stub(subject$fit, 'self$get_random_variables', 
+  stub(subject$fit, 'self$get_relevant_variables', 
     function(...) { list('something, not nil!') }
   )
-  expect_error(subject$fit(defaultDataTable(), randomVariables = cur.randomVariables ), NA)
+  expect_error(subject$fit(defaultDataTable(), relevantVariables = cur.relevantVariables ), NA)
 })
 
 test_that("it should call the fit_single_rv with the correct parameters", {
   subject <- described.class$new(nbins = 3)
-  cur.randomVariables <- c(rv.W, rv.Y)
+  cur.relevantVariables <- c(rv.W, rv.Y)
   cur.dat <- defaultDataTable()
 
   stub(subject$fit, 'self$fit_single_rv', 
     function(datO, X, Y, family) {
       expect_equal(datO, cur.dat)
-      expect_equal(X, cur.randomVariables[[iter]]$getX)
-      expect_equal(Y, cur.randomVariables[[iter]]$getY)
-      expect_equal(family, cur.randomVariables[[iter]]$getFamily)
+      expect_equal(X, cur.relevantVariables[[iter]]$getX)
+      expect_equal(Y, cur.relevantVariables[[iter]]$getY)
+      expect_equal(family, cur.relevantVariables[[iter]]$getFamily)
       iter <<- iter + 1
       mock()
     }
@@ -643,12 +643,12 @@ test_that("it should call the fit_single_rv with the correct parameters", {
   stub(subject$fit, 'private$store_conditional_density', function(...) {})
 
   iter <<- 1
-  subject$fit(cur.dat, randomVariables = cur.randomVariables)
+  subject$fit(cur.dat, relevantVariables = cur.relevantVariables)
 })
 
 test_that("it should store the fitted density in the list of conditional densities", {
   subject <- described.class$new(nbins = 3)
-  cur.randomVariables <- c(rv.W, rv.Y)
+  cur.relevantVariables <- c(rv.W, rv.Y)
   cur.dat <- defaultDataTable()
 
   mocks <- list(mock(1), mock(2))
@@ -656,14 +656,14 @@ test_that("it should store the fitted density in the list of conditional densiti
 
   stub(subject$fit, 'private$store_conditional_density', 
     function(Y, density) {
-      expect_equal(Y, cur.randomVariables[[iter]]$getY)
+      expect_equal(Y, cur.relevantVariables[[iter]]$getY)
       expect_equal(density, mocks[[iter]])
       iter <<- iter + 1
     }
   )
 
   iter <<- 1
-  subject$fit(cur.dat, randomVariables = cur.randomVariables)
+  subject$fit(cur.dat, relevantVariables = cur.relevantVariables)
 })
 
 
@@ -727,22 +727,22 @@ test_that("it should return the fit of the density", {
  
 })
 
-context(' set_random_variables')
+context(' set_relevant_variables')
 #==========================================================
-test_that("it should throw when the list provided does not consist of randomvariables", {
+test_that("it should throw when the list provided does not consist of relevantvariables", {
   subject <- described.class$new(nbins = 3)
-  expect_error(subject$fit(defaultDataTable(), randomVariables = c(rv.W, 'not-an-rv!')),
-               "Argument 'rv' is neither of nor inherits class RandomVariable: character", fixed=TRUE)
+  expect_error(subject$fit(defaultDataTable(), relevantVariables = c(rv.W, 'not-an-rv!')),
+               "Argument 'rv' is neither of nor inherits class RelevantVariable: character", fixed=TRUE)
 
 })
 
-test_that("it should store the randomvariables under their corresponding outcome variable", {
-  cur.randomVariables <- c(rv.W, rv.Y)
+test_that("it should store the relevantvariables under their corresponding outcome variable", {
+  cur.relevantVariables <- c(rv.W, rv.Y)
   subject <- described.class$new(nbins = 3)
-  subject$fit(defaultDataTable(), randomVariables = cur.randomVariables)
+  subject$fit(defaultDataTable(), relevantVariables = cur.relevantVariables)
 
-  rv_names <- lapply(cur.randomVariables, function(rv) rv$getY) %>% unlist %>% unname
-  expect_named(subject$get_random_variables, rv_names)
+  rv_names <- lapply(cur.relevantVariables, function(rv) rv$getY) %>% unlist %>% unname
+  expect_named(subject$get_relevant_variables, rv_names)
 })
 
 context(' update')
@@ -750,7 +750,7 @@ context(' update')
 test_that("it should update existing estimators with new data and still sets the correct names", {
   subject <- described.class$new(nbins = 20)
 
-  subject$fit(otherDefaultDataTable(), randomVariables = c(rv.W, rv.Y))
+  subject$fit(otherDefaultDataTable(), relevantVariables = c(rv.W, rv.Y))
   result_pre <- copy(subject$getConditionalDensities())
   result_pre <- result_pre[[1]]$getPsAsW.models()[[1]]$getfit$coef
 
@@ -766,9 +766,9 @@ test_that("it should update existing estimators with new data and still sets the
 
 test_that("it should call the update function for each of the densities", {
   subject <- described.class$new()
-  cur.randomVariables <- c(rv.W, rv.Y)
+  cur.relevantVariables <- c(rv.W, rv.Y)
   cur.data <- defaultDataTable()
-  subject$set_random_variables(randomVariables = cur.randomVariables)
+  subject$set_relevant_variables(relevantVariables = cur.relevantVariables)
 
   mock_data_store <- mock('data_store', cycle = TRUE)
   mock_update <- mock('update_density_function', cycle = TRUE)
@@ -777,15 +777,15 @@ test_that("it should call the update function for each of the densities", {
   stub(subject$update, "private$create_data_store",
     function(newdata, Y, X) {
       expect_equal(newdata, cur.data)
-      expect_equal(Y, cur.randomVariables[[iter]]$getY)
-      expect_equal(X, cur.randomVariables[[iter]]$getX)
+      expect_equal(Y, cur.relevantVariables[[iter]]$getY)
+      expect_equal(X, cur.relevantVariables[[iter]]$getX)
       mock_data_store
     } 
   )
 
   stub(subject$update, 'self$getConditionalDensities', 
     function(Y) {
-      expect_equal(Y, cur.randomVariables[[iter]]$getY)
+      expect_equal(Y, cur.relevantVariables[[iter]]$getY)
       iter <<- iter + 1
       return(mock_density)
     }
@@ -800,9 +800,9 @@ test_that("it should call the update function for each of the densities", {
 
 test_that("it should store the updated densities", {
   subject <- described.class$new()
-  cur.randomVariables <- c(rv.W, rv.Y)
+  cur.relevantVariables <- c(rv.W, rv.Y)
   cur.data <- defaultDataTable()
-  subject$set_random_variables(randomVariables = cur.randomVariables)
+  subject$set_relevant_variables(relevantVariables = cur.relevantVariables)
 
   mock_data_store <- mock('data_store', cycle = TRUE)
   mock_update <- mock('update_density_function', cycle = TRUE)
@@ -818,7 +818,7 @@ test_that("it should store the updated densities", {
 
   stub(subject$update, 'private$store_conditional_density', 
     function(Y, density) {
-      expect_equal(Y, cur.randomVariables[[iter]]$getY)
+      expect_equal(Y, cur.relevantVariables[[iter]]$getY)
       expect_equal(density, mock_update)
       iter <<- iter + 1
     }
@@ -830,9 +830,9 @@ test_that("it should store the updated densities", {
 
 test_that("it should return true", {
   subject <- described.class$new()
-  cur.randomVariables <- c(rv.W, rv.Y)
+  cur.relevantVariables <- c(rv.W, rv.Y)
   cur.data <- defaultDataTable()
-  subject$set_random_variables(randomVariables = cur.randomVariables)
+  subject$set_relevant_variables(relevantVariables = cur.relevantVariables)
 
   mock_data_store <- mock('data_store', cycle = TRUE)
   mock_update <- mock('update_density_function', cycle = TRUE)
@@ -863,23 +863,23 @@ test_that("it should throw if the densities were not yet fitted", {
 
 test_that("it should return all CDs when no outcome is provided", {
   subject <- described.class$new()
-  cur.randomVariables <- c(rv.W, rv.Y)
+  cur.relevantVariables <- c(rv.W, rv.Y)
 
   ## Use the fit function here, so we don't have to mock the private function
-  subject$fit(defaultDataTable(), randomVariables = cur.randomVariables)
+  subject$fit(defaultDataTable(), relevantVariables = cur.relevantVariables)
 
   result <- subject$getConditionalDensities()
   expect_false(length(result) == 0)
   expect_is(result, 'list')
-  expect_named(result, unname(unlist(lapply(cur.randomVariables, function(rv) rv$getY))))
+  expect_named(result, unname(unlist(lapply(cur.relevantVariables, function(rv) rv$getY))))
 })
 
 test_that("it should provide just the CD with a given name when an outcome is provided", {
   subject <- described.class$new(nbins = 3)
-  cur.randomVariables <- c(rv.W, rv.Y)
+  cur.relevantVariables <- c(rv.W, rv.Y)
 
   ## Use the fit function here, so we don't have to mock the private function
-  subject$fit(defaultDataTable(), randomVariables = cur.randomVariables)
+  subject$fit(defaultDataTable(), relevantVariables = cur.relevantVariables)
   result <- subject$getConditionalDensities(outcome = rv.Y$getY)
   expect_true(is.a(result, 'SummariesModel'))
   expect_equal(result$outvar, rv.Y$getY)
@@ -892,7 +892,7 @@ test_that("it should throw whenever a CD is provided as outcome that has not bee
     function(Y) { return(mock_density) }
   )
 
-  subject$fit(defaultDataTable(), randomVariables = c(rv.W, rv.Y))
+  subject$fit(defaultDataTable(), relevantVariables = c(rv.W, rv.Y))
   expect_error(subject$getConditionalDensities(outcome = 'this-should-never-exist'),
                'this-should-never-exist is not a fitted outcome')
 })

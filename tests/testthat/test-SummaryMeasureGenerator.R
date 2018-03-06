@@ -518,9 +518,9 @@ test_that("it should scale the data if scaling is provided with multiple traject
 context(" check_enough_data_available")
 #==========================================================
 test_that("it should check if enough data is available for all formulae, and return true if all is available", {
-  f1 <- RandomVariable$new(formula = y ~ w + w2 + w3 + a, family='gaussian')
-  f2 <- RandomVariable$new(formula = w ~ a + a1 + a2, family='gaussian')
-  f3 <- RandomVariable$new(formula = a ~ x + y + z, family='gaussian')
+  f1 <- RelevantVariable$new(formula = y ~ w + w2 + w3 + a, family='gaussian')
+  f2 <- RelevantVariable$new(formula = w ~ a + a1 + a2, family='gaussian')
+  f3 <- RelevantVariable$new(formula = a ~ x + y + z, family='gaussian')
 
   variables = c('y','a','w', 'x', 'z')
   exposed_variables1 <- c('1','2','3','4')
@@ -532,9 +532,9 @@ test_that("it should check if enough data is available for all formulae, and ret
 })
 
 test_that("it should check if enough data is available for all formulae", {
-  f1 <- RandomVariable$new(formula = y ~ w + w2 + w3 + a, family='gaussian')
-  f2 <- RandomVariable$new(formula = w ~ a + a1 + a2, family='gaussian')
-  f3 <- RandomVariable$new(formula = a ~ x + y + z, family='gaussian')
+  f1 <- RelevantVariable$new(formula = y ~ w + w2 + w3 + a, family='gaussian')
+  f2 <- RelevantVariable$new(formula = w ~ a + a1 + a2, family='gaussian')
+  f3 <- RelevantVariable$new(formula = a ~ x + y + z, family='gaussian')
 
   variables = c('y', 'a', 'w')
   exposed_variables1 <- c('1','2','3','4')

@@ -12,7 +12,7 @@ InterventionParser.is_current_node_treatment(current_time, intervention,
 
 \item{intervention}{the specified intervention}
 
-\item{current_rv_output}{the current randomvariable output}
+\item{current_rv_output}{the current relevantvariable output}
 }
 \value{
 boolean, whether this is a treatment node

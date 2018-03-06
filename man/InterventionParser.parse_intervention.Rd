@@ -12,7 +12,7 @@ InterventionParser.parse_intervention(intervention, current_time,
 
 \item{current_time}{integer with the current time}
 
-\item{current_outcome}{string the name of the current random variable}
+\item{current_outcome}{string the name of the current relevant variable}
 
 \item{check}{boolean perform checks on the input variables}
 }
