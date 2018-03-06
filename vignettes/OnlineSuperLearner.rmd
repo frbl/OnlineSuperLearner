@@ -49,13 +49,20 @@ This should return something like:
 ```
 
 ## Configuration
-The next step is to configure several parameters for the estimation procedure itself. There are several options to configure:
+The next step is to configure several parameters for the estimation procedure itself. These meta-parameters determine how the OSL will actually learn from a very applied point of view. There are several options to configure:
 
-- `log`: Whether or not we want logging of the application. Logging can be done using the R.utils verbose object, e.g.: `log <- Arguments$getVerbose(-8, timestamp=TRUE)`.
+- `log`: Whether or not we want logging of the application. Logging can be done using the `R.utils` verbose object, e.g.: `log <- Arguments$getVerbose(-8, timestamp=TRUE)`.
 - `condensier_options`: The options to pass to the condensier package.
 - `cores`: The number of cores used by OSL
+
+Apart from these very high-level settings, there are some other settings one needs to specify prior to starting the learning process:
+
 - `training_set_size`: OSL trains the estimator on a number of training examples. After that it evaluates its performance on a different (test) set.
 - `max_iterations`: OSL will process the trainingset iteratively. That is, it won't use all data in one go, but will use micro batches forn a `max_iterations` number of steps.
+- `test_set_size`: the size of the testset to use. Each iteration the algorithms are tested against a subset of the data (the testset). The size of this set can be specified using this parameter. Note that the size should be $>= 1$, and depending on the number of algorithms $K$, it should be $>= K - 1$.
+- `mini_batch_size`: for training the OSL can use a single observation (online learning) or a minibatch of observations (use $n \ll N$ observations for learning). The size of this set can be set in the `mini_batch_size` parameter. Note that this has to be >= 1 + `test_set_size` (one observation used for training, one for testing).
+
+Implemented in R this looks as follows:
 
 ``` R
   # Set the seed
@@ -71,13 +78,19 @@ The next step is to configure several parameters for the estimation procedure it
   # How many cores would we like to use?
   cores = parallel::detectCores()
 
-  # Number of items we have in our testset
+  # Number of items we have in our training set
   training_set_size <- 200
 
-  # Number of iterations we want to use (this is for the online training part)
-  max_iterations = 3
+  # Number of items we have in our testset
+  test_set_size <- 2
 
-  # The calculator for estimating the risk
+  # Number of iterations we want to use (this is for the online training part)
+  max_iterations <- 3
+
+  # Size of the mini batch
+  mini_batch_size <- 3
+
+  # The calculator for estimating the risk. This is just used for testing.
   cv_risk_calculator <- OnlineSuperLearner::CrossValidationRiskCalculator$new()
 ```
 
@@ -93,15 +106,15 @@ We could also specify a list of interventions, but for now this will do. Specify
   # Number of iterations for approximation of the true parameter of interest
   B <- 1e2
 
-  # The intervention we are interested in
+  # The intervention we are interested in (intervene at time 2, give intervention 1, on variable A)
   intervention  <- list(when = c(2), what = c(1), variable = 'A')
 
   # The time of the outcome we are interested in
-  tau = 2
+  tau <- 2
 ```
 
 ## Simulation
-In order to have some data to use for testing, we have to create a simulator. This simulator uses the simulation scheme as defined in Blaauw, Chambaz and van der Laan, in prep. For this scheme we can define various things for each of the data generating systems:
+In order to have some data to use for testing, we have to create a simulator. This simulator uses the simulation scheme as defined in CH. 8 of Blaauw (2018). For this scheme we can define various things for each of the data generating systems:
 
   - `stochMech`: the mechanism we use to generate the observations
   - `param`: the number of steps $t$ the mechanism is connected to the past
@@ -109,7 +122,7 @@ In order to have some data to use for testing, we have to create a simulator. Th
 
 For example:
 ``` R
-  complex_treatment = FALSE
+  complex_treatment <- FALSE
 
   # Our covariate definition
   llW <- list(
@@ -159,8 +172,14 @@ Now, using these mechanisms we need to setup our simulator. First we define the 
   # Approximate the truth under the treatment
   result.approx <- mclapply(seq(B), function(bb) {
     when <- max(intervention$when)
-    data.int <- simulator$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
-                                      intervention = intervention, verbose = log)
+    data.int <- simulator$simulateWAY(
+      tau,
+      qw = llW,
+      ga = llA,
+      Qy = llY,
+      intervention = intervention,
+      verbose = log
+    )
     data.int$Y[tau]
   }, mc.cores = cores) %>%
     unlist
@@ -175,43 +194,21 @@ The next step is to use the mechanisms to create a test set of data. Store the r
 
 ``` R
   data.train <- simulator$simulateWAY(training_set_size + B + 100, qw=llW, ga=llA, Qy=llY, verbose=log)
+  data.test <- simulator$simulateWAY(1000, qw=llW, ga=llA, Qy=llY, verbose=log)
 ```
 
 ## The OnlineSuperLearner initialization
-Now everything is set-up, we can start our super learner procedure. First let's choose a set of estimators we wish to include in our learner. Note that OSL automatically creates a grid of learners based on te hyperparameters provided in the setup.
+Now everything is set-up, we can start our super learner procedure. First let's choose a set of algorithms we wish to include in our learner. Note that OSL automatically creates a grid of learners based on te hyperparameters provided in the setup.
 
 ``` R
   algos <- list()
-  #algos <- list(list(description='ML.H2O.randomForest-1tree',
-                        #algorithm = 'ML.H2O.randomForest',
-                        #params = list(ntrees = 1)))
-
-  #algos <- append(algos, list(list(description='ML.H2O.randomForest-50trees',
-                        #algorithm = 'ML.H2O.randomForest',
-                        #params = list(ntrees = 50))))
-
-  #algos <- append(algos, list(list(description='ML.H2O.gbm',
-                        #algorithm = 'ML.H2O.gbm')))
 
   algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                        algorithm_params = list(alpha = 0),
-                        params = list(nbins = c(6,40), online = TRUE))))
-
-  #algos <- append(algos, list(list(algorithm = 'ML.H2O.gbm',
-                        #algorithm_params = list(ntrees=c(10,20), min_rows=1),
-                        #params = list(nbins = c(6), online = TRUE))))
-
-  #algos <- append(algos, list(list(algorithm = 'ML.H2O.randomForest',
-                        #algorithm_params = list(ntrees=c(10,20)),
-                        #params = list(nbins = c(6), online = TRUE))))
+                        algorithm_params = list(alpha = c(0.1, 0.5, 0.9)),
+                        params = list(nbins = c(6, 15), online = TRUE))))
 
   algos <- append(algos, list(list(algorithm = 'condensier::speedglmR6',
-                        #algorithm_params = list(),
-                        params = list(nbins = c(3,4, 5), online = FALSE))))
-
-  #algos <- append(algos, list(list(algorithm = 'condensier::glmR6',
-                        ##algorithm_params = list(),
-                        #params = list(nbins = c(16, 20, 24, 30, 34, 40), online = FALSE))))
+                        params = list(nbins = c(6, 15), online = FALSE))))
 ```
 
 The next step is to define our random variables. In this example we only consider the default variables $W$, $A$, and $Y$. Each of them is univariate, and the $A$ variable is a binary variable:
@@ -226,18 +223,20 @@ The next step is to define our random variables. In this example we only conside
 ```
 
 Note the special notation for the lagged variables and the running mean variables. In the background we use the so-called `SummaryMeasureGenerator`, a class that automatically parses these formulae and generates the data accordingly. The idea is that given the definition provided in the previous code block, we have to generate several variables (e.g. the lags). Currently several options are provided:
+
 - `*A*_lag_*B*`: The lag operator. This will generate a lagged version of random variable `*A*` (replace with your own variable name), of lag `*B*` (replace with an integer, specifying the lag to use).
 - `*A*_mean`: The running mean operator. This will generate a running mean version of random variable `*A*` (replace with your own variable name).
 
-The last step is to actually run and fit our SuperLearner and calculate its CV risk. We use the loglikelihood loss function as general loss function. Note that for this to work properly, we have to normalize our data. This is done by providing the `normalize = TRUE` argument to the `fit` function. 
+The last step is to actually run and fit our SuperLearner and calculate its cross-validated risk. We use the loglikelihood loss function as general loss function. Note that for this to work properly, we have to normalize our data. This is done by providing the `normalize = TRUE` argument to the `fit` function. 
 
 ``` R
-osl  <- OnlineSuperLearner::fit.OnlineSuperLearner(
+osl  <- fit(
   formulae = randomVariables,
   data = data.train,
   algorithms = algos, 
   verbose = log,
 
+  test_set_size = test_set_size,
   initial_data_size = training_set_size / 2,
   max_iterations = max_iterations,
   mini_batch_size = (training_set_size / 2) / max_iterations
@@ -250,8 +249,8 @@ In order to see how well it can estimate we first generate our data set we want 
 1. Input one of these observations in our algorithm.
 1. Sample iteratively, and set a treatment using a prespecified `variable`, `when`, and `then`.
 1. Record the outcome of our variable of interest ($Y$) at time tau and we denormalize it (converting it back to the original data format).
-1. Repeat this procedure a large number of B times
-1. Finally we take the average over all B observations, giving us our estimation of the parameter of interest.
+1. Repeat this procedure a large number of $B$ times
+1. Finally we take the average over all $B$ observations, giving us our estimation of the parameter of interest.
 
 ``` R
   datas <- summaryMeasureGenerator$getNext(n = B)
@@ -270,7 +269,7 @@ In order to see how well it can estimate we first generate our data set we want 
 
   interventionEffectCalculator$evaluate_single_intervention(
     osl = osl,
-    initial_data = DDDDDDDDDAAAAAAAAAAAATTTTTTTTTTTAAAAAAAAAAAA,
+    initial_data = Data.Static$new(dataset = data.test),
     intervention = intervention,
     tau = tau,
     discrete = discrete
@@ -304,7 +303,7 @@ Finally, we can see how well the algorithms converge and estimate the approximat
 
 The result should be something like:
 
-``` plain
+``` plaintext
 [1] "We have approximated psi as 19.9016316150146 our estimate is 19.9018591048906 which is a difference of: 0.000227489875989306"
 ```
 
@@ -314,14 +313,13 @@ Apart from calculating a variable of interest, the online superlearner package a
 Examples of both methods are listed below
 ``` R
   # Predict some variables for our Y outcome variable. The newdata can be a data.table:
-  newdata <- simulator$simulateWAY(100, qw=llW, ga=llA, Qy=llY, verbose=log)
-  predict(osl, newdata, Y = Y)
+  predict(osl, data.test, Y = Y)
 
   # Apart from predicting, we can also sample new values
-  initial_data <- simulator$simulateWAY(100, qw=llW, ga=llA, Qy=llY, verbose=log)
-  sampledata(osl, initial_data, Y = Y)
+  sampledata(osl, data.test, Y = Y)
 ```
 
-The result of these methods is a list with two entries: `normalized` and `denormalized`. The `normalized` entry contains the result normalized according to the preprocessor that had been defined based on the initial data frame. The `denormalized` entry contains the data in its original form (i.e., the normalization has been undone). Generally only the latter is of interest. These entries (the `normalized` and `denormalized` entry) again contain a number of lists, each with an outcome for each of the candidate estimators.
+These methods return the predicted probabilities and sampled data for each of the algorithms in a list (thus a list of `data.table` objects). If instead of these functions the actual R6 functions are used, the result is slightly different, and might be useful to discuss. The result of the R6 methods is a list with two entries: `normalized` and `denormalized`. The `normalized` entry contains the result normalized according to the preprocessor that had been defined based on the initial data frame. The `denormalized` entry contains the data in its original form (i.e., the normalization has been undone). Generally only the latter is of interest. These entries (the `normalized` and `denormalized` entry) again contain a number of lists, each with an outcome for each of the candidate estimators.
 
 ## Working with streaming data
+Not supported yet
