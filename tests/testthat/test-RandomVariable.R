@@ -1,6 +1,6 @@
-context("RandomVariable.R")
+context("RelevantVariable.R")
 #==========================================================
-described.class <- RandomVariable
+described.class <- RelevantVariable
 log <- Arguments$getVerbose(-8, timestamp=TRUE)
 log <- FALSE
 
@@ -58,7 +58,7 @@ test_that("it should throw if a provided family is not supported", {
   expect_error(described.class$new(formula = a ~ x + y , family='this-family'), 'Provided family this-family not supported')
 })
 test_that("it should not throw if a provided family is not supported", {
-  for (family in RandomVariable.get_supported_families()) {
+  for (family in RelevantVariable.get_supported_families()) {
     expect_error(described.class$new(formula = a ~ x + y , family=family), NA)
   }
 })
@@ -97,26 +97,26 @@ test_that("it should parse the provided formula in the correct (in)dependent var
 
 context(" Static functions")
 #==========================================================
-context("  RandomVariable.get_supported_families")
+context("  RelevantVariable.get_supported_families")
 #==========================================================
 test_that("it should return the family of the subject", {
-  families <- RandomVariable.get_supported_families()
+  families <- RelevantVariable.get_supported_families()
   expect_false(is.null(families))
   expect_length(families, 2)
   expect_equal(families, c('binomial', 'gaussian'))
 })
 
-context("  RandomVariable.find_ordering")
+context("  RelevantVariable.find_ordering")
 #==========================================================
 test_that("it should return the correct ordered list", {
   W <- described.class$new(formula = (W ~ W_lag_1), family = 'gaussian')
   A <- described.class$new(formula = (A ~ W), family = 'binomial')
   Y <- described.class$new(formula = (Y ~ A + W), family = 'gaussian')
-  randomVariables <- c(Y,A,W)
+  relevantVariables <- c(Y,A,W)
  
-  result <- RandomVariable.find_ordering(randomVariables, log)
+  result <- RelevantVariable.find_ordering(relevantVariables, log)
   expect_false(is.null(result))
-  expect_true(length(result) == length(randomVariables))
+  expect_true(length(result) == length(relevantVariables))
   expect_equal(result[[1]], W) 
   expect_equal(result[[2]], A) 
   expect_equal(result[[3]], Y) 
@@ -127,11 +127,11 @@ test_that("it should set the correct names on the array", {
   W <- described.class$new(formula = (W ~ W_lag_1), family = 'gaussian')
   A <- described.class$new(formula = (A ~ W), family = 'binomial')
   Y <- described.class$new(formula = (Y ~ A + W), family = 'gaussian')
-  randomVariables <- c(Y,A,W)
+  relevantVariables <- c(Y,A,W)
  
-  result <- RandomVariable.find_ordering(randomVariables, log)
+  result <- RelevantVariable.find_ordering(relevantVariables, log)
   expect_false(is.null(result))
-  expect_true(length(result) == length(randomVariables))
+  expect_true(length(result) == length(relevantVariables))
   expect_equal(names(result), c('W','A','Y'))
 })
 
@@ -139,17 +139,17 @@ test_that("it should throw if no ordering is avaiable", {
   W <- described.class$new(formula = (W ~ A), family = 'gaussian')
   A <- described.class$new(formula = (A ~ Y), family = 'binomial')
   Y <- described.class$new(formula = (Y ~ W), family = 'gaussian')
-  randomVariables <- c(Y,A,W)
-  expect_error(RandomVariable.find_ordering(randomVariables),
+  relevantVariables <- c(Y,A,W)
+  expect_error(RelevantVariable.find_ordering(relevantVariables),
                'Intractable problem! There are interdependencies that cannot be solved!')
 })
 
 test_that("it should also work if there are no inter dependencies", {
   W <- described.class$new(formula = (W ~ W_lag_1), family = 'gaussian')
-  randomVariables <- c(W)
+  relevantVariables <- c(W)
  
-  result <- RandomVariable.find_ordering(randomVariables)
+  result <- RelevantVariable.find_ordering(relevantVariables)
   expect_false(is.null(result))
-  expect_true(length(result) == length(randomVariables))
+  expect_true(length(result) == length(relevantVariables))
   expect_equal(result[[1]], W) 
 })

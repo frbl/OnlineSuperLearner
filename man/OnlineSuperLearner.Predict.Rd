@@ -30,7 +30,7 @@ predictions.
     @param verbose (default = FALSE) the verbosity of the prediction class.
   } 
 
-  \item{\code{predict(osl, data, randomVariables, all_estimators = TRUE}}{ 
+  \item{\code{predict(osl, data, relevantVariables, all_estimators = TRUE}}{ 
     Runs a prediction on the various estimators of the OSL. This means it
     runs the Discrete OSL, the cts OSL, and if specified, all separate
     learners.
@@ -41,7 +41,7 @@ predictions.
     @param data data.table the initial data to perform the prediction with.
      Note that this should be enough to provide values for all covariates.
 
-    @param randomVariables list a list of \code{RandomVariable} objects, the
+    @param relevantVariables list a list of \code{RelevantVariable} objects, the
      ones used in the training process.
 
     @param all_estimators boolean (default = TRUE) whether or not to include
@@ -66,7 +66,7 @@ predictions.
      transformed back to their original range.
   } 
 
-  \item{\code{predict_osl(data, osl_weights, current_result, sl_library, randomVariables}}{ 
+  \item{\code{predict_osl(data, osl_weights, current_result, sl_library, relevantVariables}}{ 
     Performs a prediction using the continuous OSL. It does so using a set
     of \code{osl_weights} that represent the alphas for each of the
     algorithms.
@@ -84,7 +84,7 @@ predictions.
 
     @param sl_library list a list of all machine learning estimators
 
-    @param randomVariables list a list of \code{RandomVariable} objects, the
+    @param relevantVariables list a list of \code{RelevantVariable} objects, the
      ones used in the training process.
 
     @return list a list with two entries; normalized and denormalized. The
@@ -93,7 +93,7 @@ predictions.
      transformed back to their original range.
   } 
 
-  \item{\code{predict_dosl(dosl, data, randomVariables, current_result, sample = FALSE}}{ 
+  \item{\code{predict_dosl(dosl, data, relevantVariables, current_result, sample = FALSE}}{ 
     Performs a prediction using the discrete OSL. It does so using the DOSL
     instance which can be retrieved from an OSL instance.
 
@@ -103,7 +103,7 @@ predictions.
     @param data data.table the initial data to perform the prediction with.
      Note that this should be enough to provide values for all covariates.
 
-    @param randomVariables list a list of \code{RandomVariable} objects, the
+    @param relevantVariables list a list of \code{RelevantVariable} objects, the
      ones used in the training process.
 
     @param current_result an earlier prediction of outcomes. We use the

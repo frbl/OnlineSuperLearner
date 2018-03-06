@@ -36,7 +36,7 @@ suppressWarnings(devtools::load_all()); OnlineSuperLearner.Simulation$new()
 
   \item{\code{configuration2(id) }}{ 
     Configuration 2 is slightly more complex than the first configuration.
-    In this configuration, we include more random variables (W2 and W3). We
+    In this configuration, we include more relevant variables (W2 and W3). We
     still don't have a time dependency in the system.
 
     @param id integer (default = 2) the id of the configuration. Used for
@@ -45,7 +45,7 @@ suppressWarnings(devtools::load_all()); OnlineSuperLearner.Simulation$new()
 
   \item{\code{configuration3(id) }}{ 
     Configuration 3 is the same configuration as configuration 1, in terms
-    of random variables. However, this implementation does include a time
+    of relevant variables. However, this implementation does include a time
     dependency. 
 
     @param id integer (default = 3) the id of the configuration. Used for
@@ -54,7 +54,7 @@ suppressWarnings(devtools::load_all()); OnlineSuperLearner.Simulation$new()
 
   \item{\code{configuration4(id) }}{ 
     Configuration 4 is the similar configuration to configuration 2, in terms
-    of random variables. However, this implementation does include a time
+    of relevant variables. However, this implementation does include a time
     dependency. 
 
     @param id integer (default = 4) the id of the configuration. Used for

@@ -7,7 +7,7 @@ Authors@R: c(person("Frank", "Blaauw", role=c("aut", "cre"), email="f.j.blaauw@r
              person("Antoine", "Chambaz", role=c("aut"), email="achambaz@u-paris10.fr"))
 Maintainer: Frank Blaauw <f.j.blaauw@rug.nl>
 Description: Package that enabling online super learning. This package runs a
-    set of estimators and tries to find the conditional densities of randomvariables
+    set of estimators and tries to find the conditional densities of relevantvariables
     provided to it. Then, using a set of machine learning algorithms, it will
     find the best convex combination of algorithms to predict these conditional
     densities.
@@ -80,7 +80,7 @@ Collate:
     'ML.H2O.glm.R'
     'ML.H2O.randomForest.R'
     'ML.Local.Speedlm.R'
-    'RandomVariable.R'
+    'RelevantVariable.R'
     'OneStepEstimator.R'
     'OnlineSuperLearner.Predict.R'
     'OnlineSuperLearner.S3.R'

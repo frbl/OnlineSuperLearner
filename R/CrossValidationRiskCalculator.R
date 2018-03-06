@@ -13,9 +13,9 @@
 #'     Creates a new cross validated risk calculator.
 #'   }
 #'
-#'   \item{\code{calculate_evaluation(predicted.outcome, observed.outcome, randomVariables, add_evaluation_measure_name=TRUE)}}{
+#'   \item{\code{calculate_evaluation(predicted.outcome, observed.outcome, relevantVariables, add_evaluation_measure_name=TRUE)}}{
 #'     Calculates an evaluation using the provided predicted and observed
-#'     outcomes. It uses a list of \code{RandomVariable} objects to loop
+#'     outcomes. It uses a list of \code{RelevantVariable} objects to loop
 #'     through all data provided to it. If the \code{predicted.outcome} list is
 #'     provided with both a normalized and denormalized entry, it will use the
 #'     normalized entry as the default. One can choose to add the evaluation
@@ -50,7 +50,7 @@
 #'
 #'     @param observed.outcome the actual data that was observed in the study.
 #'
-#'     @param randomVariables the randomvariables that are included in the
+#'     @param relevantVariables the relevantvariables that are included in the
 #'      prediction
 #'
 #'     @param add_evaluation_measure_name (default TRUE) should we add the name
@@ -72,14 +72,14 @@
 #'
 #'     @param observed.outcome the actual data that was observed in the study.
 #'
-#'     @param randomVariables the randomvariables that are included in the
+#'     @param relevantVariables the relevantvariables that are included in the
 #'      prediction.
 #'
 #'     @return a list with the evalutation of the algorithm.
 #'   }
 #'
-#'   \item{\code{calculate_risk(predicted.outcome, observed.outcome, randomVariables}}{
-#'     Calculate the CV risk for each of the random variables provided based on
+#'   \item{\code{calculate_risk(predicted.outcome, observed.outcome, relevantVariables}}{
+#'     Calculate the CV risk for each of the relevant variables provided based on
 #'     the predicted and observed outcomes. This function also expects a list
 #'     of predictions in a similar way as \code{calculate_evaluation} does. 
 #'
@@ -92,7 +92,7 @@
 #'     @param observed.outcome the actual data that was observed in the study
 #'      (emperically, or from a simulation).
 #'
-#'     @param randomVariables the randomvariables that are included in the
+#'     @param relevantVariables the relevantvariables that are included in the
 #'      prediction
 #'
 #'     @param add_evaluation_measure_name (default TRUE) should we add the name
@@ -100,10 +100,10 @@
 #'
 #'     @return a list of lists, in which each element is the risk for one
 #'      estimator. In each list per estimator, each element corresponds to one
-#'      of the random variables.
+#'      of the relevant variables.
 #'   }
 #'
-#'   \item{\code{update_risk(predicted.outcome, observed.outcome, randomVariables, current_count, current_risk) }}{
+#'   \item{\code{update_risk(predicted.outcome, observed.outcome, relevantVariables, current_count, current_risk) }}{
 #'     Function used by the OSL to update a previous risk. This function uses
 #'     the equation by Benkeser et al. (2017) to update a previous risk. What
 #'     it does is multiply a previous risk (\code{current_risk}) by the
@@ -121,7 +121,7 @@
 #'     @param observed.outcome the actual data that was observed in the study
 #'      (emperically, or from a simulation).
 #'
-#'     @param randomVariables the randomvariables for which the distributions
+#'     @param relevantVariables the relevantvariables for which the distributions
 #'      have been calculated
 #'
 #'     @param current_count the current number of evaluations performed for
@@ -132,10 +132,10 @@
 #'      evaluations).
 #'
 #'     @return a list of lists with the updated risk for each estimator, and
-#'      for each estimator an estimate of the risk for each random variable.
+#'      for each estimator an estimate of the risk for each relevant variable.
 #'   }
 #'
-#'   \item{\code{update_single_risk(old_risk, new_risks, current_count, randomVariables) }}{
+#'   \item{\code{update_single_risk(old_risk, new_risks, current_count, relevantVariables) }}{
 #'     Instaed of updating the risk for each of estimators, one can also update
 #'     a single risk. In this case the risks are updated using the
 #'     \code{old_risk} and \code{new_risks} variable. Essentially, this
@@ -152,7 +152,7 @@
 #'     @param old_risk the old risks, calculated in a previous iteration.
 #'     @param new_risks the new risks, calculated using the current machine learning estimators.
 #'     @param current_count the number of iterations used to calculate the old risk.
-#'     @param randomVariables the random variables for which the predictions have been created.
+#'     @param relevantVariables the relevant variables for which the predictions have been created.
 #'     @return the updated risk as a data.table. 
 #'   }
 #' }
@@ -164,7 +164,7 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
       },
 
       ## Output is a list of data.tables
-      calculate_evaluation = function(predicted.outcome, observed.outcome, randomVariables, add_evaluation_measure_name=TRUE) {
+      calculate_evaluation = function(predicted.outcome, observed.outcome, relevantVariables, add_evaluation_measure_name=TRUE) {
         ## predicted.outcome <- Arguments$getInstanceOf(predicted.outcome, 'list')
 
         ## If there is a normalized field, prefer the normalized outcomes
@@ -175,15 +175,15 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
           self$evaluate_single_outcome( 
             observed.outcome = observed.outcome,
             predicted.outcome = one.outcome,
-            randomVariables = randomVariables,
+            relevantVariables = relevantVariables,
             add_evaluation_measure_name = add_evaluation_measure_name
           )
         })
       },
 
       ## Evaluate should receive the outcome of 1 estimator
-      evaluate_single_outcome = function(observed.outcome, predicted.outcome, randomVariables, add_evaluation_measure_name) {
-        sapply(randomVariables, function(rv) {
+      evaluate_single_outcome = function(observed.outcome, predicted.outcome, relevantVariables, add_evaluation_measure_name) {
+        sapply(relevantVariables, function(rv) {
           current_outcome <- rv$getY
           lossFn <- Evaluation.get_evaluation_function(family = rv$getFamily, useAsLoss = FALSE)
           result <- lossFn(data.observed = observed.outcome[[current_outcome]],
@@ -199,9 +199,9 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
         }) %>% t %>% as.data.table
       },
 
-      ## Calculate the CV risk for each of the random variables provided
+      ## Calculate the CV risk for each of the relevant variables provided
       ## Output is a list of data.tables
-      calculate_risk = function(predicted.outcome, observed.outcome, randomVariables, check=FALSE){
+      calculate_risk = function(predicted.outcome, observed.outcome, relevantVariables, check=FALSE){
         if ('normalized' %in% names(predicted.outcome)) predicted.outcome = predicted.outcome$normalized
           
         if (check) {
@@ -213,15 +213,15 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
           self$calculate_risk_of_single_estimator(
             observed.outcome = observed.outcome,
             predicted.outcome = algorithm_outcome,
-            randomVariables = randomVariables
+            relevantVariables = relevantVariables
           )
         })
 
         return(cv_risk)
       },
 
-      calculate_risk_of_single_estimator = function(observed.outcome, predicted.outcome, randomVariables) {
-        result <- lapply(randomVariables, function(rv) {
+      calculate_risk_of_single_estimator = function(observed.outcome, predicted.outcome, relevantVariables) {
+        result <- lapply(relevantVariables, function(rv) {
           current_outcome <- rv$getY
 
           ## Retrieve the fitting loss function
@@ -244,7 +244,7 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
       },
 
       ## Outcome is a list of datatables
-      update_risk = function(predicted.outcome, observed.outcome, randomVariables, current_count, current_risk, check = FALSE) {
+      update_risk = function(predicted.outcome, observed.outcome, relevantVariables, current_count, current_risk, check = FALSE) {
         ## Note that we don't need to check whether data is normalized, as we
         ## are passing it to the calculate_risk function, which will pick the
         ## correct one.
@@ -260,7 +260,7 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
         updated_risk <- self$calculate_risk(
           predicted.outcome = predicted.outcome,
           observed.outcome = observed.outcome,
-          randomVariables = randomVariables
+          relevantVariables = relevantVariables
         )
 
         ## Note that we need to update the risk for every algorithm and every RV
@@ -274,7 +274,7 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
             old_risk = old_risk, 
             new_risks = new_risks, 
             current_count = current_count, 
-            randomVariables = randomVariables
+            relevantVariables = relevantVariables
           )
         })
 
@@ -282,8 +282,8 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
         return(current_risk)
       },
 
-      update_single_risk = function(old_risk, new_risks, current_count, randomVariables) {
-        result <- lapply(randomVariables, function(rv) {
+      update_single_risk = function(old_risk, new_risks, current_count, relevantVariables) {
+        result <- lapply(relevantVariables, function(rv) {
           current <- rv$getY
 
           ## The score up to now needs to be calculated current_count times, the other score 1 time.

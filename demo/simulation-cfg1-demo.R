@@ -34,10 +34,10 @@ llY <- list(rgen={function(AW){
 
 
 # We'd like to use the following features in our estimation:
-W <- RandomVariable$new(formula = Y ~ A + W, family = 'gaussian')
-A <- RandomVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
-Y <- RandomVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
-randomVariables <- c(W, A, Y)
+W <- RelevantVariable$new(formula = Y ~ A + W, family = 'gaussian')
+A <- RelevantVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
+Y <- RelevantVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
+relevantVariables <- c(W, A, Y)
 
 # Generate a dataset we will use for testing.
 margin <- 100
@@ -54,8 +54,8 @@ bounds <- PreProcessor.generate_bounds(data.train)
 # Create the measures we'd like to include in our model
 # In this simulation we will include 2 lags and the latest data (non lagged)
 # Define the variables in the initial dataset we'd like to use
-#private$train(data.test, data.train, bounds, randomVariables, 2)
+#private$train(data.test, data.train, bounds, relevantVariables, 2)
 
 intervention <- list(variable = 'A', when = c(2), what = c(1))
 tau = 2
-#train(data.test, data.train, bounds, randomVariables, Y,  max_iterations = 2, llW = llW, llA = llA, llY = llY)
+#train(data.test, data.train, bounds, relevantVariables, Y,  max_iterations = 2, llW = llW, llA = llA, llY = llY)

@@ -51,7 +51,7 @@ variables provided to it.
 
     @param data the data from which to predict the outcome. It depends on
      the goal of the prediction what this needs to be. If the goal is to
-     sample a new random variable, the value for the random variables to
+     sample a new relevant variable, the value for the relevant variables to
      sample does not need to be set in the data table (they can be NA).
      However, if one wants to know the probability of an instance of a random
      variable given the other variables, ($P(Y | X_1, X2_)$), then the random
@@ -68,18 +68,18 @@ variables provided to it.
      sampled distribution over the actual distribution.
 
     @return list a list containing the predictions, where each entry is one
-     of the randomvariables for which a conditional distribution was fit.
+     of the relevantvariables for which a conditional distribution was fit.
   } 
 
   \item{\code{predict_probability(datO, X, Y, plot = FALSE, check = FALSE) }}{ 
     Internal method used by the \code{predict} function. This function
     predicts a $P(Y | X)$. These arguments are therefore instances of the
-    RandomVariable class. The data of these random variables needs to be
+    RelevantVariable class. The data of these relevant variables needs to be
     included in the \code{datO} argument.
 
     @param datO the data from which to predict the probability.
      As we want to predict the probability of Y given a set of X, ($P(Y |
-     X_1, X2_)$), the random variable column in \code{datO} cannot be empty. 
+     X_1, X2_)$), the relevant variable column in \code{datO} cannot be empty. 
 
     @param sample (default = FALSE) boolean would we like to sample a value
      (true) or a probability (false) from the conditional density
@@ -92,13 +92,13 @@ variables provided to it.
      sampled distribution over the actual distribution.
 
     @return list a list containing the predictions, where each entry is one
-     of the randomvariables for which a conditional distribution was fit.
+     of the relevantvariables for which a conditional distribution was fit.
   } 
 
   \item{\code{getConditionalDensities(outcome = NULL) }}{ 
     Function to get all fitted conditional densities. By default it will
     return the full list of conditional densities (when \code{outcome =
-    NULL}).  One could also provide a subset of random variables to the
+    NULL}).  One could also provide a subset of relevant variables to the
     function.  Note that if only a single variable is returned (e.g.
     \code{outcome = 'Y'}), it will return a single conditional density
     (i.e., this outcome is not encapsulated in a list). If a vector of

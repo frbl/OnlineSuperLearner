@@ -41,12 +41,12 @@ super learner machine learning model.
     Removes all data in the SMG and resets it to a neutral state. 
   } 
 
-  \item{\code{check_enough_data_available(randomVariables) }}{ 
+  \item{\code{check_enough_data_available(relevantVariables) }}{ 
     This function asks each of the provided SMGs how much data they need to
     generate a new block. This function returns a boolean representing
     whether or not this condition is met.
 
-    @param randomVariables list the random variables for which we want to
+    @param relevantVariables list the relevant variables for which we want to
      check if enough data is available.
   } 
 

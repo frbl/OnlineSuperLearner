@@ -83,7 +83,7 @@ to the super learner machine learning model.
     @return data.table a data.table with the risks of each estimator.
   } 
 
-  \item{\code{predict(data, randomVariables = NULL, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE)}}{
+  \item{\code{predict(data, relevantVariables = NULL, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE)}}{
     Method to perform a prediction on the estimators. It can run in
     different configurations. It can be configured to predict the outcome
     using all estimators (the \code{all_estimators} flag), using the
@@ -95,7 +95,7 @@ to the super learner machine learning model.
      that this can be any instance of a \code{Data.Base} superclass, as long
      as it extends the correct functions.
 
-    @param randomVariables list (default = NULL) the random variables used
+    @param relevantVariables list (default = NULL) the relevant variables used
     for doing the predictions (these should be the same as the ones used for
     fitting). If \code{NULL}, we will use the list provided on
     initialization.
@@ -147,7 +147,7 @@ to the super learner machine learning model.
      outcomes. Check the \code{OnlineSuperlearner.SampleIteratively} class for more
      details.
 
-    @param start_from_variable RandomVariable (default = NULL) if we don't
+    @param start_from_variable RelevantVariable (default = NULL) if we don't
      start with sampling from the first argument in the sequence of
      variables, specify which one to start from.
 
@@ -191,23 +191,23 @@ to the super learner machine learning model.
     @return an overview of the CV risk of the different estimators
   }
 
-  \item{\code{set_random_variables(random_variables)}}{
-    Method to set the random_variables in the osl class. Generally not needed (apart from initialization).
+  \item{\code{set_relevant_variables(relevant_variables)}}{
+    Method to set the relevant_variables in the osl class. Generally not needed (apart from initialization).
   }
 
-  \item{\code{retrieve_list_of_random_variables(random_variables)}}{
-    Retrieves a list of random variables according to a specification. This
-    function allows for a more flexible way of retrieving random variables
+  \item{\code{retrieve_list_of_relevant_variables(relevant_variables)}}{
+    Retrieves a list of relevant variables according to a specification. This
+    function allows for a more flexible way of retrieving relevant variables
     from the OSL model.
-    @param random_variables the random_variables for which we want to
+    @param relevant_variables the relevant_variables for which we want to
      receive the list of variables, in a form that our model accepts. This
      can be specified as follows:
-     - List of \code{RandomVariable} objects to predict
-     - Single \code{RandomVariable} object to predict
+     - List of \code{RelevantVariable} objects to predict
+     - Single \code{RelevantVariable} object to predict
      - List of strings with the names of the outputs (\code{list('X','Y')})
      - Single string with the name of the output (\code{'Y'})
 
-    @return a list of \code{RandomVariable} objects to use in the prediction function.
+    @return a list of \code{RelevantVariable} objects to use in the prediction function.
   }
 
   \item{\code{is_fitted}}{
@@ -257,7 +257,7 @@ to the super learner machine learning model.
   \item{\code{get_dosl}}{
     Active method to retrieve the actual DOSL fit. this could be nil if no dosl has been fit yet.
 
-    @return list a list containing the best estimator for each of the random variables.
+    @return list a list containing the best estimator for each of the relevant variables.
   }
 
   \item{\code{get_cv_risk}}{
@@ -266,10 +266,10 @@ to the super learner machine learning model.
     @return list a list containing the risk estimates for each of hte estimators.
   }
 
-  \item{\code{get_random_variables}}{
-    Active method. Returns all \code{RandomVariables} in the OSL object.
+  \item{\code{get_relevant_variables}}{
+    Active method. Returns all \code{RelevantVariables} in the OSL object.
 
-    @return list a list containing all \code{RandomVariable}s
+    @return list a list containing all \code{RelevantVariable}s
   }
 
   \item{\code{get_valididy}}{

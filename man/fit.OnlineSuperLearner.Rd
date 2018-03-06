@@ -8,7 +8,7 @@
   bounds = FALSE, ...)
 }
 \arguments{
-\item{formulae}{list a list of all randomVariable objects that need to be fitted}
+\item{formulae}{list a list of all relevantVariable objects that need to be fitted}
 
 \item{data}{data.frame or list of data.frames the data set to use for fitting the OSL}
 
@@ -21,7 +21,7 @@ to normalize the data in the OSL procedure. This entails that the package
 will automatically select a set of bounds (min and max) based on the data
 set provided. After that it will only use the normalized features (all
 scaled between 0-1). The bounds should be specified as a list in which each
-element represents one of the \code{RandomVariable} objects. Each of these
+element represents one of the \code{RelevantVariable} objects. Each of these
 entries should contain another list with two elements: \code{min_bound} and
 \code{max_bound}, which represent the lower and upper bound of that
 variable in specific.}

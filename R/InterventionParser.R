@@ -19,7 +19,7 @@
 #'
 #' @param current_time integer with the current time
 #'
-#' @param current_outcome string the name of the current random variable
+#' @param current_outcome string the name of the current relevant variable
 #'
 #' @param check boolean perform checks on the input variables
 #'
@@ -123,7 +123,7 @@ InterventionParser.generate_intervention <- function(variables, variable_interve
 #'
 #' @param intervention the specified intervention
 #'
-#' @param current_rv_output the current randomvariable output
+#' @param current_rv_output the current relevantvariable output
 #'
 #' @return boolean, whether this is a treatment node
 #' @export

@@ -4,15 +4,15 @@
 \alias{OutputPlotGenerator.create_training_curve}
 \title{OutputPlotGenerator.create_training_curve}
 \usage{
-OutputPlotGenerator.create_training_curve(historical_cvs, randomVariables,
+OutputPlotGenerator.create_training_curve(historical_cvs, relevantVariables,
   output = "historical_cvs", dir = "~/tmp/osl/")
 }
 \arguments{
 \item{historical_cvs}{the historical CV risks. List of lists of datatables.
 First list is for each iteration, second for each learner, and the datatable
-has columns for each random variable.}
+has columns for each relevant variable.}
 
-\item{randomVariables}{list of randomvariables to use in the output}
+\item{relevantVariables}{list of relevantvariables to use in the output}
 
 \item{output}{string (default = 'historical_cvs') the filename to write the
 pdf to (without .pdf).}

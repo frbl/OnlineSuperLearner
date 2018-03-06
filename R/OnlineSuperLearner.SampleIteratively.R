@@ -9,7 +9,7 @@
 #' @importFrom R6 R6Class
 #' @section Methods: 
 #' \describe{  
-#'   \item{\code{initialize(osl, randomVariables, summary_measure_generator, remove_future_variables = FALSE, verbose = FALSE)}}{ 
+#'   \item{\code{initialize(osl, relevantVariables, summary_measure_generator, remove_future_variables = FALSE, verbose = FALSE)}}{ 
 #'     Creates a new instance of the OSL sampleiteratively class. When creating
 #'     a new instance, we expect to receive the fitted instance of the OSL, as
 #'     it is used to sample data from. This instance is stored so you don't
@@ -19,8 +19,8 @@
 #'     @param osl OnlineSuperLearner a fitted instance of the
 #'      \code{OnlineSuperLearner} class.
 #'
-#'     @param randomVariables list a list of \code{RandomVariable} objects.
-#'      These are the randomVariables we have fit a conditional density for.
+#'     @param relevantVariables list a list of \code{RelevantVariable} objects.
+#'      These are the relevantVariables we have fit a conditional density for.
 #'
 #'     @param summaryMeasureGenerator SummaryMeasureGenerator an object of the type
 #'      SummaryMeasureGenerator. This generator is used to get new observations
@@ -46,8 +46,8 @@
 #'     function is called from the sample functions whenever the corresponding
 #'     \code{check} parameters are \code{TRUE}.
 #'
-#'     @param start_from_variable RandomVariable should be an instance of a
-#'      \code{RandomVariable} class.
+#'     @param start_from_variable RelevantVariable should be an instance of a
+#'      \code{RelevantVariable} class.
 #'
 #'     @param start_from_time integer should be an integer value $x$ where
 #'      $1 <= x < tau$.
@@ -101,8 +101,8 @@
 #'     summary_measures, we only return the normalized summary_measured,
 #'     and when full, we return both (normalized and denormalized)
 #'
-#'     @param start_from_variable RandomVariable (default = NULL) the
-#'     randomvariable to start the sampling from. When \code{NULL}, we'll just
+#'     @param start_from_variable RelevantVariable (default = NULL) the
+#'     relevantvariable to start the sampling from. When \code{NULL}, we'll just
 #'     start from the first in the sequence.
 #'
 #'     @param start_from_time the start time to start from (default 1)
@@ -124,7 +124,7 @@
 #'      know where we are in the sampling process. This variable representes
 #'      the current time in the sampling process.
 #'
-#'     @param start_from_variable RandomVariable the \code{RandomVariable} from
+#'     @param start_from_variable RelevantVariable the \code{RelevantVariable} from
 #'      which we should start the sampling procedure.
 #'
 #'     @param data data.table the current data needed to initialize the
@@ -143,13 +143,13 @@
 #' 
 #'   \item{\code{sample_or_intervene_current_rv(data, intervention, current_time, current_rv, discrete)}}{ 
 #'     On an even lower level (a lower level than sampling a block), we need to
-#'     sample \code{RandomVariables}. This is the heart of the sampling
+#'     sample \code{RelevantVariables}. This is the heart of the sampling
 #'     procedure, and is used to sample (if the current time and RV are not an
 #'     intervention node) or intervene (if they are) and get a new value for
-#'     the next random variable in line.
+#'     the next relevant variable in line.
 #'
 #'     @param data data.table the current data needed to initialize the
-#'      sampling of the randomvariable.
+#'      sampling of the relevantvariable.
 #'
 #'     @param intervention list the intervention that might (or might not) be
 #'      used in the sampling of the present block. This takes into account the
@@ -162,7 +162,7 @@
 #'      know where we are in the sampling process. This variable representes
 #'      the current time in the sampling process.
 #'
-#'     @param current_rv RandomVariable the \code{RandomVariable} we are
+#'     @param current_rv RelevantVariable the \code{RelevantVariable} we are
 #'      currently working with.
 #'
 #'     @param discrete boolean (default = TRUE) should we run the discrete (=
@@ -183,9 +183,9 @@
 #'     Actually runs the prediction and performs the sample from the OSL.
 #'
 #'     @param data data.table the current data needed to initialize the
-#'      sampling of the randomvariable.
+#'      sampling of the relevantvariable.
 #'
-#'     @param current_rv RandomVariable the \code{RandomVariable} we are
+#'     @param current_rv RelevantVariable the \code{RelevantVariable} we are
 #'      currently working with.
 #'
 #'     @param discrete boolean (default = TRUE) should we run the discrete (=
@@ -217,11 +217,11 @@
 #'     \code{NULL}), we have to select the firest one. If one is provided, we
 #'     have to use that one. This is exactly what this function takes care of.
 #'
-#'     @param start_from_variable RandomVariable (default = NULL) the
-#'      \code{RandomVariable} to start from. If NULL, we return the first one.
+#'     @param start_from_variable RelevantVariable (default = NULL) the
+#'      \code{RelevantVariable} to start from. If NULL, we return the first one.
 #'
-#'     @return RandomVariable the actual start_from_variable which is a
-#'      \code{RandomVariable} to start from. If NULL is provided, we return the
+#'     @return RelevantVariable the actual start_from_variable which is a
+#'      \code{RelevantVariable} to start from. If NULL is provided, we return the
 #'      first one.
 #'   } 
 #' 
@@ -235,13 +235,13 @@
 #'     Active method. Is the current instance removing future variables?
 #'   } 
 #'
-#'   \item{\code{get_random_variables}}{ 
-#'     Active method. Returns the list of \code{RandomVariable} objects
+#'   \item{\code{get_relevant_variables}}{ 
+#'     Active method. Returns the list of \code{RelevantVariable} objects
 #'     provided on initialization.
 #'   } 
 #'
-#'   \item{\code{get_random_variable_names}}{ 
-#'     Active method. Returns a list with names of the \code{RandomVariable}s
+#'   \item{\code{get_relevant_variable_names}}{ 
+#'     Active method. Returns a list with names of the \code{RelevantVariable}s
 #'     provided on initialization.
 #'   } 
 #'
@@ -254,21 +254,21 @@
 OnlineSuperLearner.SampleIteratively <- R6Class("OnlineSuperLearner.SampleIteratively",
   public =
     list(
-      initialize = function(osl, randomVariables, summary_measure_generator, remove_future_variables = FALSE, verbose = FALSE) {
+      initialize = function(osl, relevantVariables, summary_measure_generator, remove_future_variables = FALSE, verbose = FALSE) {
         private$online_super_learner <- osl
 
         ## The variables need to be ordered when sampling from them
-        private$random_variables <- RandomVariable.find_ordering(randomVariables)
+        private$relevant_variables <- RelevantVariable.find_ordering(relevantVariables)
 
-        private$random_variable_names <- names(private$random_variables)
+        private$relevant_variable_names <- names(private$relevant_variables)
         private$summary_measure_generator <- summary_measure_generator
         private$remove_future_variables <- remove_future_variables
         private$verbose <- Arguments$getVerbose(verbose)
       },
 
       validate_parameters = function(start_from_variable, start_from_time, tau, discrete, return_type, intervention) {
-        start_from_variable <- Arguments$getInstanceOf(start_from_variable, 'RandomVariable')
-        randomVariables <- Arguments$getInstanceOf(self$get_random_variables, 'list')
+        start_from_variable <- Arguments$getInstanceOf(start_from_variable, 'RelevantVariable')
+        relevantVariables <- Arguments$getInstanceOf(self$get_relevant_variables, 'list')
         tau <- Arguments$getNumerics(tau, c(1,Inf))
         start_from_time <- Arguments$getNumerics(start_from_time, c(1,tau))
         discrete <- Arguments$getLogical(discrete)
@@ -293,7 +293,7 @@ OnlineSuperLearner.SampleIteratively <- R6Class("OnlineSuperLearner.SampleIterat
                                     start_from_variable = NULL,
                                     start_from_time = 1, check=TRUE) {
 
-        ## If no random variable to start from is provided, just start from
+        ## If no relevant variable to start from is provided, just start from
         ## the first one. Note the ordering which is done at the top of this
         ## function.
         start_from_variable <- self$set_start_from_variable(start_from_variable)
@@ -312,8 +312,8 @@ OnlineSuperLearner.SampleIteratively <- R6Class("OnlineSuperLearner.SampleIterat
 
         ## Initialize the tables in which we will store the results
         result <- data.table()
-        result_denormalized_observations <- data.table(matrix(nrow = 0, ncol = length(self$get_random_variables)))
-        colnames(result_denormalized_observations) <- names(self$get_random_variables)
+        result_denormalized_observations <- data.table(matrix(nrow = 0, ncol = length(self$get_relevant_variables)))
+        colnames(result_denormalized_observations) <- names(self$get_relevant_variables)
 
         ## We need to sample sequentially here, just so we can plugin the value everytime in the next evaluation
         private$verbose && enter(private$verbose, 'Started sampling procedure')
@@ -357,10 +357,10 @@ OnlineSuperLearner.SampleIteratively <- R6Class("OnlineSuperLearner.SampleIterat
         if(nrow(data) > 1) warning('[sample_single_block] Only using the first block of data!')
 
         ## Just to be certain we don't use future data, we remove a subset:
-        remove_vars <- self$get_random_variable_names
+        remove_vars <- self$get_relevant_variable_names
         started     <- FALSE
 
-        for (rv in self$get_random_variables) {
+        for (rv in self$get_relevant_variables) {
           current_outcome <- rv$getY
 
           ## We move forward through the ordering till we find the variable we want to start from
@@ -404,7 +404,7 @@ OnlineSuperLearner.SampleIteratively <- R6Class("OnlineSuperLearner.SampleIterat
         current_outcome <- current_rv$getY
         ## Here we select whether the current node is an intervention
         ## node.
-        private$verbose && enter(private$verbose, 'Working on randomvariable ', current_outcome)
+        private$verbose && enter(private$verbose, 'Working on relevantvariable ', current_outcome)
         parsed_intervention <- InterventionParser.parse_intervention(
           intervention = intervention,
           current_time = current_time,
@@ -432,7 +432,7 @@ OnlineSuperLearner.SampleIteratively <- R6Class("OnlineSuperLearner.SampleIterat
         osl <- self$get_online_super_learner
         outcome <- osl$predict(
           data = data,
-          randomVariables = c(current_rv),
+          relevantVariables = c(current_rv),
           discrete = discrete,
           continuous = !discrete,
           all_estimators = FALSE,
@@ -450,16 +450,16 @@ OnlineSuperLearner.SampleIteratively <- R6Class("OnlineSuperLearner.SampleIterat
       create_correct_result = function(result, result_denormalized_observations, return_type) {
         if (return_type == 'observations') {
           ## Return the denormalized observations?
-          result <- (result_denormalized_observations[, self$get_random_variable_names, with = FALSE])
+          result <- (result_denormalized_observations[, self$get_relevant_variable_names, with = FALSE])
         } else if (return_type == 'summary_measures') {
           ## Return the denormalized observations?
-          result <- (result[, !self$get_random_variable_names, with = FALSE])
+          result <- (result[, !self$get_relevant_variable_names, with = FALSE])
         }
         return(result)
       },
 
       set_start_from_variable = function(start_from_variable = NULL) {
-        if (is.null(start_from_variable)) start_from_variable <- self$get_random_variables[[1]]
+        if (is.null(start_from_variable)) start_from_variable <- self$get_relevant_variables[[1]]
         start_from_variable
       }
     ),
@@ -473,12 +473,12 @@ OnlineSuperLearner.SampleIteratively <- R6Class("OnlineSuperLearner.SampleIterat
         return(private$remove_future_variables)
       },
 
-      get_random_variables = function() {
-        private$random_variables
+      get_relevant_variables = function() {
+        private$relevant_variables
       },
 
-      get_random_variable_names = function() {
-        private$random_variable_names 
+      get_relevant_variable_names = function() {
+        private$relevant_variable_names 
       },
 
       get_summary_measure_generator = function() {
@@ -488,8 +488,8 @@ OnlineSuperLearner.SampleIteratively <- R6Class("OnlineSuperLearner.SampleIterat
   private =
     list(
       online_super_learner = NULL,
-      random_variables = NULL,
-      random_variable_names = NULL,
+      relevant_variables = NULL,
+      relevant_variable_names = NULL,
       remove_future_variables = NULL,
       summary_measure_generator = NULL,
       verbose = NULL,

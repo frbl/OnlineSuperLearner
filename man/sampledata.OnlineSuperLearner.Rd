@@ -17,8 +17,8 @@ include all necessary variables.}
 \item{Y}{the dependent variables for which we want to predict the outcome.
  The parameter is allowed to take several forms:
 
-  - List of \code{RandomVariable} objects to predict
-  - Single \code{RandomVariable} object to predict
+  - List of \code{RelevantVariable} objects to predict
+  - Single \code{RelevantVariable} object to predict
   - List of strings with the names of the outputs (\code{list('X','Y')})
   - Single string with the name of the output (\code{'Y'})}
 

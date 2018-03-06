@@ -1,7 +1,7 @@
 #' fit.OnlineSuperLearner
 #'
 #' Fits an online superlearner using a similar notation as a GLM.
-#' @param formulae list a list of all randomVariable objects that need to be fitted
+#' @param formulae list a list of all relevantVariable objects that need to be fitted
 #'
 #' @param data data.frame or list of data.frames the data set to use for fitting the OSL
 #'
@@ -14,7 +14,7 @@
 #'  will automatically select a set of bounds (min and max) based on the data
 #'  set provided. After that it will only use the normalized features (all
 #'  scaled between 0-1). The bounds should be specified as a list in which each
-#'  element represents one of the \code{RandomVariable} objects. Each of these
+#'  element represents one of the \code{RelevantVariable} objects. Each of these
 #'  entries should contain another list with two elements: \code{min_bound} and
 #'  \code{max_bound}, which represent the lower and upper bound of that
 #'  variable in specific.
@@ -41,7 +41,7 @@ fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, bounds = F
 
   ## Check if the provided formulae are indeed 
   formulae <- Arguments$getInstanceOf(formulae, 'list')
-  formulae <- lapply(formulae, function(rv) Arguments$getInstanceOf(rv, 'RandomVariable'))
+  formulae <- lapply(formulae, function(rv) Arguments$getInstanceOf(rv, 'RelevantVariable'))
 
   pre_processor <- NULL
   if (is.list(bounds) || bounds) {
@@ -56,7 +56,7 @@ fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, bounds = F
   )
 
   osl  <- OnlineSuperLearner$new(SL.library.definition = algorithms,
-                                 random_variables = formulae,
+                                 relevant_variables = formulae,
                                  summaryMeasureGenerator = smg,
                                  pre_processor = pre_processor,
                                  ...)
@@ -82,8 +82,8 @@ fit <- function(formulae, data, algorithms = NULL, bounds = FALSE, measurements_
 #' @param Y the dependent variables for which we want to predict the outcome.
 #'  The parameter is allowed to take several forms:
 #' 
-#'   - List of \code{RandomVariable} objects to predict
-#'   - Single \code{RandomVariable} object to predict
+#'   - List of \code{RelevantVariable} objects to predict
+#'   - Single \code{RelevantVariable} object to predict
 #'   - List of strings with the names of the outputs (\code{list('X','Y')})
 #'   - Single string with the name of the output (\code{'Y'})
 #'
@@ -106,8 +106,8 @@ sampledata.OnlineSuperLearner <- function(object, newdata, Y = NULL, ...) {
     newdata <- object$get_summary_measure_generator$getNext(nrow(newdata))[[1]]
   }
 
-  if (!is.null(Y)) Y <- object$retrieve_list_of_random_variables(random_variables = Y)
-  sampled <- object$predict(data = newdata, randomVariables = Y, sample = TRUE, ...)
+  if (!is.null(Y)) Y <- object$retrieve_list_of_relevant_variables(relevant_variables = Y)
+  sampled <- object$predict(data = newdata, relevantVariables = Y, sample = TRUE, ...)
   sampled$denormalized
 }
 
@@ -127,8 +127,8 @@ sampledata <- function(object, newdata, Y = NULL, ...) UseMethod("sampledata")
 #'  include all necessary variables.
 #' @param Y the dependent variables for which we want to predict the outcome.
 #'  The parameter is allowed to take several forms:
-#'   - List of \code{RandomVariable} objects to predict
-#'   - Single \code{RandomVariable} object to predict
+#'   - List of \code{RelevantVariable} objects to predict
+#'   - Single \code{RelevantVariable} object to predict
 #'   - List of strings with the names of the outputs (\code{list('X','Y')})
 #'   - Single string with the name of the output (\code{'Y'})
 #' @param ... other parameters directly passed to the predict function
@@ -150,8 +150,8 @@ predict.OnlineSuperLearner <- function(object, newdata, Y = NULL, ...) {
     newdata <- object$get_summary_measure_generator$getNext(nrow(newdata))[[1]]
   }
 
-  if (!is.null(Y)) Y <- object$retrieve_list_of_random_variables(random_variables = Y)
-  prediction <- object$predict(data = newdata, randomVariables = Y, sample = FALSE, ...)
+  if (!is.null(Y)) Y <- object$retrieve_list_of_relevant_variables(relevant_variables = Y)
+  prediction <- object$predict(data = newdata, relevantVariables = Y, sample = FALSE, ...)
   prediction$denormalized
 }
 

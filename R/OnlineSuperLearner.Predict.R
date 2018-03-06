@@ -22,7 +22,7 @@
 #'     @param verbose (default = FALSE) the verbosity of the prediction class.
 #'   } 
 #' 
-#'   \item{\code{predict(osl, data, randomVariables, all_estimators = TRUE}}{ 
+#'   \item{\code{predict(osl, data, relevantVariables, all_estimators = TRUE}}{ 
 #'     Runs a prediction on the various estimators of the OSL. This means it
 #'     runs the Discrete OSL, the cts OSL, and if specified, all separate
 #'     learners.
@@ -33,7 +33,7 @@
 #'     @param data data.table the initial data to perform the prediction with.
 #'      Note that this should be enough to provide values for all covariates.
 #'
-#'     @param randomVariables list a list of \code{RandomVariable} objects, the
+#'     @param relevantVariables list a list of \code{RelevantVariable} objects, the
 #'      ones used in the training process.
 #'
 #'     @param all_estimators boolean (default = TRUE) whether or not to include
@@ -58,7 +58,7 @@
 #'      transformed back to their original range.
 #'   } 
 #' 
-#'   \item{\code{predict_osl(data, osl_weights, current_result, sl_library, randomVariables}}{ 
+#'   \item{\code{predict_osl(data, osl_weights, current_result, sl_library, relevantVariables}}{ 
 #'     Performs a prediction using the continuous OSL. It does so using a set
 #'     of \code{osl_weights} that represent the alphas for each of the
 #'     algorithms.
@@ -76,7 +76,7 @@
 #'
 #'     @param sl_library list a list of all machine learning estimators
 #'
-#'     @param randomVariables list a list of \code{RandomVariable} objects, the
+#'     @param relevantVariables list a list of \code{RelevantVariable} objects, the
 #'      ones used in the training process.
 #'
 #'     @return list a list with two entries; normalized and denormalized. The
@@ -85,7 +85,7 @@
 #'      transformed back to their original range.
 #'   } 
 #' 
-#'   \item{\code{predict_dosl(dosl, data, randomVariables, current_result, sample = FALSE}}{ 
+#'   \item{\code{predict_dosl(dosl, data, relevantVariables, current_result, sample = FALSE}}{ 
 #'     Performs a prediction using the discrete OSL. It does so using the DOSL
 #'     instance which can be retrieved from an OSL instance.
 #'
@@ -95,7 +95,7 @@
 #'     @param data data.table the initial data to perform the prediction with.
 #'      Note that this should be enough to provide values for all covariates.
 #'
-#'     @param randomVariables list a list of \code{RandomVariable} objects, the
+#'     @param relevantVariables list a list of \code{RelevantVariable} objects, the
 #'      ones used in the training process.
 #'
 #'     @param current_result an earlier prediction of outcomes. We use the
@@ -146,7 +146,7 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
           }
       },
 
-      predict = function(osl, data, randomVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, 
+      predict = function(osl, data, relevantVariables, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, 
                          sample = FALSE, plot = FALSE) {
 
         if (!osl$is_fitted) {
@@ -187,7 +187,7 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
             current_result = result,
             sample = sample, 
             plot = plot,
-            randomVariables = randomVariables
+            relevantVariables = relevantVariables
           )
         }
 
@@ -195,7 +195,7 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
           result <- self$predict_dosl(
             dosl = osl$get_dosl,
             data = data, 
-            randomVariables = randomVariables,
+            relevantVariables = relevantVariables,
             sample = sample, 
             plot = plot,
             current_result = result
@@ -208,14 +208,14 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
         result
       },
 
-      predict_osl = function(data, osl_weights, current_result, sl_library, randomVariables, weight_threshold = 0, sample = FALSE, plot = FALSE) {
+      predict_osl = function(data, osl_weights, current_result, sl_library, relevantVariables, weight_threshold = 0, sample = FALSE, plot = FALSE) {
         private$verbose && cat(private$verbose, 'continuous SL')
         # TODO: What if A ends up not being binary?
         # TODO: More important, what if a variable is discrete?
 
         ## Using a for loop so we can add data to the predictions
         result <- list()
-        for (rv in randomVariables) {
+        for (rv in relevantVariables) {
           current_rv_name <- rv$getY
           filtered_weights <- subset(osl_weights, osl_weights[,current_rv_name] >= weight_threshold, select = current_rv_name)
           algorithm_names <- rownames(filtered_weights)
@@ -248,11 +248,11 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
         current_result
       },
 
-      predict_dosl = function(dosl, data, randomVariables, current_result, sample = FALSE, plot = FALSE) {
+      predict_dosl = function(dosl, data, relevantVariables, current_result, sample = FALSE, plot = FALSE) {
         private$verbose && cat(private$verbose, 'discrete SL')
 
         result <- list()
-        for (rv in randomVariables) {
+        for (rv in relevantVariables) {
           outcome_name <- rv$getY
 
           prediction <- c(outcome = NA)

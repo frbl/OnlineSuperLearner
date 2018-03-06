@@ -100,20 +100,20 @@ test_that("it should estimate the true treatment", {
   data.train <- Data.Static$new(dataset = data)
 
   # We use the following covariates in our estimators
-  W <- RandomVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
-  A <- RandomVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
-  Y <- RandomVariable$new(formula = Y ~ A + W, family = 'gaussian')
-  randomVariables <- c(W, A, Y)
+  W <- RelevantVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
+  A <- RelevantVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
+  Y <- RelevantVariable$new(formula = Y ~ A + W, family = 'gaussian')
+  relevantVariables <- c(W, A, Y)
 
   # Generate some bounds to use for the data (scale it between 0 and 1)
   bounds <- PreProcessor.generate_bounds(data)
   pre_processor <- PreProcessor$new(bounds)
 
   smg_factory <- SMGFactory$new()
-  summaryMeasureGenerator <- smg_factory$fabricate(randomVariables, pre_processor = pre_processor)
+  summaryMeasureGenerator <- smg_factory$fabricate(relevantVariables, pre_processor = pre_processor)
 
   osl <- OnlineSuperLearner$new(algos, summaryMeasureGenerator = summaryMeasureGenerator,
-                                random_variables = randomVariables,
+                                relevant_variables = relevantVariables,
                                 verbose = log, 
                                 should_fit_osl = TRUE,
                                 should_fit_dosl = FALSE,

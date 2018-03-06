@@ -12,18 +12,18 @@
 #' @docType class
 #' @include ConstrainedGlm.R
 #' @include DataCache.R
-#' @include RandomVariable.R
+#' @include RelevantVariable.R
 #' @import methods
 #' @importFrom R6 R6Class
 #' @section Methods: 
 #' \describe{  
-#'   \item{\code{initialize(osl, randomVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE, parallel= TRUE, online = FALSE, verbose = FALSE, minimal_measurements_needed = 1) }}{ 
+#'   \item{\code{initialize(osl, relevantVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE, parallel= TRUE, online = FALSE, verbose = FALSE, minimal_measurements_needed = 1) }}{ 
 #'     Initializes the online one step estimator. It uses an earlier fitted
 #'     online super learner to sample from the conditional densities.
 #'
 #'     @param osl the online superlearner, which was fitted earlier on the data
 #'
-#'     @param randomVariables a list of random variables used for fitting the OSL
+#'     @param relevantVariables a list of relevant variables used for fitting the OSL
 #'
 #'     @param N the number of measurements in a timeseries
 #'
@@ -40,7 +40,7 @@
 #'      \code{InterventionParser} for more details
 #'
 #'     @param variable_of_interest the variable we are interested in (e.g., the
-#'      Y random variable)
+#'      Y relevant variable)
 #'
 #'     @param discrete (default = TRUE) whether we should use the discrete (true) or
 #'      continuous (false) super learner 
@@ -101,7 +101,7 @@
 #'   }
 #'
 #'   \item{\code{get_h_ratio_estimators(data, last_h_ratio_estimators = NULL) } }{
-#'     Calculates a list of h-ratio estimators, one for each randomvariable.
+#'     Calculates a list of h-ratio estimators, one for each relevantvariable.
 #'     This function calls the \code{calculate_h_ratio_predictors}  and returns
 #'     the result (== actual estimators) in a list.
 #'
@@ -112,7 +112,7 @@
 #'
 #'     @return a list of H-ratio estimators. This list is 2 dimentional. THe
 #'      outer list is a list per time s. The inner list is a list with an
-#'      estimator for each randomVariable.
+#'      estimator for each relevantVariable.
 #'   }
 #'
 #'   \item{\code{evaluation_of_conditional_expectations(data, h_ratio_predictors}}{ 
@@ -141,7 +141,7 @@
 #'
 #'     @return a list of H-ratio estimators. This list is 2 dimentional. THe
 #'      outer list is a list per time s. The inner list is a list with an
-#'      estimator for each randomVariable.
+#'      estimator for each relevantVariable.
 #'   } 
 #'
 #'   \item{\code{calculate_h_ratio(h_ratio_predictors, s, formula, data) }}{
@@ -166,7 +166,7 @@
 #'     The efficient influence curve equation consists of two equations. One is
 #'     the h-ratio calculation, the other is the difference between two
 #'     expectations. In this function we calculate the difference in
-#'     expectations for a specified random variable.
+#'     expectations for a specified relevant variable.
 #'
 #'     @param s the time at which the difference in expectations needs to be
 #'      calculated.
@@ -174,7 +174,7 @@
 #'     @param dat data.table the initial data to use for estimating the
 #'      difference in expectations
 #'
-#'     @param current_rvs the current list of random variables
+#'     @param current_rvs the current list of relevant variables
 #'
 #'     @return the difference in expectations
 #'   }
@@ -196,7 +196,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
   portable = FALSE,
   public =
     list(
-      initialize = function(osl, randomVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE, parallel= TRUE, online = FALSE, verbose = FALSE, minimal_measurements_needed = 1) {
+      initialize = function(osl, relevantVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE, parallel= TRUE, online = FALSE, verbose = FALSE, minimal_measurements_needed = 1) {
         private$osl <- Arguments$getInstanceOf(osl, 'OnlineSuperLearner')
 
         private$last_oos_estimate <- 0
@@ -204,10 +204,10 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         private$B <- B# Arguments$getIngeger(B, c(1, Inf))
         private$discrete <- Arguments$getLogical(discrete)
 
-        private$randomVariables <- Arguments$getInstanceOf(randomVariables, 'list')
+        private$relevantVariables <- Arguments$getInstanceOf(relevantVariables, 'list')
 
         # Also order the variables for the sampling process (so we don't have to do this every time)
-        private$randomVariables <- RandomVariable.find_ordering(randomVariables = private$randomVariables)
+        private$relevantVariables <- RelevantVariable.find_ordering(relevantVariables = private$relevantVariables)
 
         private$pre_processor <- pre_processor
         private$tau <- tau
@@ -343,7 +343,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         self$print_parallel
 
         ## We have to create the conditional expectations using each of the
-        ## random variables as a start point
+        ## relevant variables as a start point
         influence_curve_for_each_rv <- c()
         N <- nrow(data)
 
@@ -357,10 +357,10 @@ OneStepEstimator <- R6Class("OneStepEstimator",
             ## This is the inner loop of the influence curve (for 1 to tau)
             foreach(time_s=seq(self$get_tau), .combine='sum') %:% 
               ## Then, we start on a given s, this is for each D_x in D
-              foreach(rv_id=seq_along(self$get_randomVariables), .combine='sum') %do% {
+              foreach(rv_id=seq_along(self$get_relevantVariables), .combine='sum') %do% {
                 private$verbose && cat(private$verbose, 'This is RV: ', rv_id, ' for s: ', time_s)
                 current_rvs <- self$get_next_and_current_rv(rv_id)
-                private$get_influence_curve_for_one_random_variable(
+                private$get_influence_curve_for_one_relevant_variable(
                   s = time_s,
                   dat = current_dat,
                   h_ratio_predictors = h_ratio_predictors,
@@ -512,10 +512,10 @@ OneStepEstimator <- R6Class("OneStepEstimator",
 
       ## Function is public so it can easiliy be tested
       get_next_and_current_rv = function(current_rv_index) {
-        ## Find the ID for the next random variable
-        next_rv_id <- (current_rv_index %% length(self$get_randomVariables)) + 1
-        rv <- self$get_randomVariables[[current_rv_index]]
-        next_rv <- self$get_randomVariables[[next_rv_id]]
+        ## Find the ID for the next relevant variable
+        next_rv_id <- (current_rv_index %% length(self$get_relevantVariables)) + 1
+        rv <- self$get_relevantVariables[[current_rv_index]]
+        next_rv <- self$get_relevantVariables[[next_rv_id]]
 
         ## We are actually in next time block if the modulo was applied. This should be reflected in the time s.
         s_offset <- ifelse(current_rv_index > next_rv_id, 1, 0)
@@ -546,7 +546,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       },
 
       get_formulae = function() {
-        lapply(self$get_randomVariables, function(rv) {
+        lapply(self$get_relevantVariables, function(rv) {
           formula <- rv$get_formula_string(Y = 'Delta')
         }) %>% unique
       },
@@ -555,8 +555,8 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         return(private$discrete)
       },
 
-      get_randomVariables = function() {
-        return(private$randomVariables)
+      get_relevantVariables = function() {
+        return(private$relevantVariables)
       },
 
       get_pre_processor = function() {
@@ -608,7 +608,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
       N = NULL,
       B = NULL,
       online = NULL,
-      randomVariables = NULL,
+      relevantVariables = NULL,
       variable_of_interest = NULL,
       discrete = NULL,
       pre_processor = NULL,
@@ -651,7 +651,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
           ## Sample minimal measurements needed blocks. This way we are certain
           ## that we actually sample the relevant historical measurements.
           current <- self$get_osl$sample_iteratively(data = start_data,
-                                                     randomVariables = self$get_randomVariables,
+                                                     relevantVariables = self$get_relevantVariables,
                                                      tau = sampling_iterations_needed,
                                                      discrete = self$get_discrete,
                                                      intervention = NULL,
@@ -672,7 +672,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         Osample_p_star <- foreach(b = seq(self$get_B * N), .combine = rbind) %looping_function% {
           private$verbose && cat(private$verbose, 'PN* sample - iteration ', b)
           current <- self$get_osl$sample_iteratively(data = start_data,
-                                                     randomVariables = self$get_randomVariables,
+                                                     relevantVariables = self$get_relevantVariables,
                                                      tau = self$get_tau,
                                                      discrete = self$get_discrete,
                                                      intervention = self$get_intervention,
@@ -726,11 +726,11 @@ OneStepEstimator <- R6Class("OneStepEstimator",
         return(`%do%`)
       },
 
-      get_influence_curve_for_one_random_variable = function(s, dat, h_ratio_predictors, current_rvs) {
+      get_influence_curve_for_one_relevant_variable = function(s, dat, h_ratio_predictors, current_rvs) {
         ## Get the formula ant output name so we can retrieve the prediction mechanism.
         formula    <- current_rvs$rv$get_formula_string(Y = 'Delta')
 
-        ## 1.  we have to estimate the h_ratio based on the C_rv, and the current s and random variable
+        ## 1.  we have to estimate the h_ratio based on the C_rv, and the current s and relevant variable
         h_ratio    <- self$calculate_h_ratio(h_ratio_predictors, s, formula, dat)
 
         ## We don't have to go through all the trouble if the h_ratio is 0 (0 * x = 0)
@@ -749,7 +749,7 @@ OneStepEstimator <- R6Class("OneStepEstimator",
           current <- self$get_osl$sample_iteratively(data = dat,
                                                      start_from_variable = start_from_variable,
                                                      start_from_time = start_from_time,
-                                                     randomVariables = self$get_randomVariables,
+                                                     relevantVariables = self$get_relevantVariables,
                                                      intervention = self$get_intervention,
                                                      tau = self$get_tau,
                                                      discrete = self$get_discrete,

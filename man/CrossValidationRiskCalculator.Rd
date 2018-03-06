@@ -19,9 +19,9 @@ of an estimator.
     Creates a new cross validated risk calculator.
   }
 
-  \item{\code{calculate_evaluation(predicted.outcome, observed.outcome, randomVariables, add_evaluation_measure_name=TRUE)}}{
+  \item{\code{calculate_evaluation(predicted.outcome, observed.outcome, relevantVariables, add_evaluation_measure_name=TRUE)}}{
     Calculates an evaluation using the provided predicted and observed
-    outcomes. It uses a list of \code{RandomVariable} objects to loop
+    outcomes. It uses a list of \code{RelevantVariable} objects to loop
     through all data provided to it. If the \code{predicted.outcome} list is
     provided with both a normalized and denormalized entry, it will use the
     normalized entry as the default. One can choose to add the evaluation
@@ -56,7 +56,7 @@ of an estimator.
 
     @param observed.outcome the actual data that was observed in the study.
 
-    @param randomVariables the randomvariables that are included in the
+    @param relevantVariables the relevantvariables that are included in the
      prediction
 
     @param add_evaluation_measure_name (default TRUE) should we add the name
@@ -78,14 +78,14 @@ of an estimator.
 
     @param observed.outcome the actual data that was observed in the study.
 
-    @param randomVariables the randomvariables that are included in the
+    @param relevantVariables the relevantvariables that are included in the
      prediction.
 
     @return a list with the evalutation of the algorithm.
   }
 
-  \item{\code{calculate_risk(predicted.outcome, observed.outcome, randomVariables}}{
-    Calculate the CV risk for each of the random variables provided based on
+  \item{\code{calculate_risk(predicted.outcome, observed.outcome, relevantVariables}}{
+    Calculate the CV risk for each of the relevant variables provided based on
     the predicted and observed outcomes. This function also expects a list
     of predictions in a similar way as \code{calculate_evaluation} does. 
 
@@ -98,7 +98,7 @@ of an estimator.
     @param observed.outcome the actual data that was observed in the study
      (emperically, or from a simulation).
 
-    @param randomVariables the randomvariables that are included in the
+    @param relevantVariables the relevantvariables that are included in the
      prediction
 
     @param add_evaluation_measure_name (default TRUE) should we add the name
@@ -106,10 +106,10 @@ of an estimator.
 
     @return a list of lists, in which each element is the risk for one
      estimator. In each list per estimator, each element corresponds to one
-     of the random variables.
+     of the relevant variables.
   }
 
-  \item{\code{update_risk(predicted.outcome, observed.outcome, randomVariables, current_count, current_risk) }}{
+  \item{\code{update_risk(predicted.outcome, observed.outcome, relevantVariables, current_count, current_risk) }}{
     Function used by the OSL to update a previous risk. This function uses
     the equation by Benkeser et al. (2017) to update a previous risk. What
     it does is multiply a previous risk (\code{current_risk}) by the
@@ -127,7 +127,7 @@ of an estimator.
     @param observed.outcome the actual data that was observed in the study
      (emperically, or from a simulation).
 
-    @param randomVariables the randomvariables for which the distributions
+    @param relevantVariables the relevantvariables for which the distributions
      have been calculated
 
     @param current_count the current number of evaluations performed for
@@ -138,10 +138,10 @@ of an estimator.
      evaluations).
 
     @return a list of lists with the updated risk for each estimator, and
-     for each estimator an estimate of the risk for each random variable.
+     for each estimator an estimate of the risk for each relevant variable.
   }
 
-  \item{\code{update_single_risk(old_risk, new_risks, current_count, randomVariables) }}{
+  \item{\code{update_single_risk(old_risk, new_risks, current_count, relevantVariables) }}{
     Instaed of updating the risk for each of estimators, one can also update
     a single risk. In this case the risks are updated using the
     \code{old_risk} and \code{new_risks} variable. Essentially, this
@@ -158,7 +158,7 @@ of an estimator.
     @param old_risk the old risks, calculated in a previous iteration.
     @param new_risks the new risks, calculated using the current machine learning estimators.
     @param current_count the number of iterations used to calculate the old risk.
-    @param randomVariables the random variables for which the predictions have been created.
+    @param relevantVariables the relevant variables for which the predictions have been created.
     @return the updated risk as a data.table. 
   }
 }

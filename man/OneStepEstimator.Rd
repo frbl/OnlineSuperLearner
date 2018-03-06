@@ -22,13 +22,13 @@ the \code{perform} method of an instance of this class.
 \section{Methods}{
  
 \describe{  
-  \item{\code{initialize(osl, randomVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE, parallel= TRUE, online = FALSE, verbose = FALSE, minimal_measurements_needed = 1) }}{ 
+  \item{\code{initialize(osl, relevantVariables, N, B, pre_processor, tau, intervention, variable_of_interest, discrete = TRUE, parallel= TRUE, online = FALSE, verbose = FALSE, minimal_measurements_needed = 1) }}{ 
     Initializes the online one step estimator. It uses an earlier fitted
     online super learner to sample from the conditional densities.
 
     @param osl the online superlearner, which was fitted earlier on the data
 
-    @param randomVariables a list of random variables used for fitting the OSL
+    @param relevantVariables a list of relevant variables used for fitting the OSL
 
     @param N the number of measurements in a timeseries
 
@@ -45,7 +45,7 @@ the \code{perform} method of an instance of this class.
      \code{InterventionParser} for more details
 
     @param variable_of_interest the variable we are interested in (e.g., the
-     Y random variable)
+     Y relevant variable)
 
     @param discrete (default = TRUE) whether we should use the discrete (true) or
      continuous (false) super learner 
@@ -106,7 +106,7 @@ the \code{perform} method of an instance of this class.
   }
 
   \item{\code{get_h_ratio_estimators(data, last_h_ratio_estimators = NULL) } }{
-    Calculates a list of h-ratio estimators, one for each randomvariable.
+    Calculates a list of h-ratio estimators, one for each relevantvariable.
     This function calls the \code{calculate_h_ratio_predictors}  and returns
     the result (== actual estimators) in a list.
 
@@ -117,7 +117,7 @@ the \code{perform} method of an instance of this class.
 
     @return a list of H-ratio estimators. This list is 2 dimentional. THe
      outer list is a list per time s. The inner list is a list with an
-     estimator for each randomVariable.
+     estimator for each relevantVariable.
   }
 
   \item{\code{evaluation_of_conditional_expectations(data, h_ratio_predictors}}{ 
@@ -146,7 +146,7 @@ the \code{perform} method of an instance of this class.
 
     @return a list of H-ratio estimators. This list is 2 dimentional. THe
      outer list is a list per time s. The inner list is a list with an
-     estimator for each randomVariable.
+     estimator for each relevantVariable.
   } 
 
   \item{\code{calculate_h_ratio(h_ratio_predictors, s, formula, data) }}{
@@ -171,7 +171,7 @@ the \code{perform} method of an instance of this class.
     The efficient influence curve equation consists of two equations. One is
     the h-ratio calculation, the other is the difference between two
     expectations. In this function we calculate the difference in
-    expectations for a specified random variable.
+    expectations for a specified relevant variable.
 
     @param s the time at which the difference in expectations needs to be
      calculated.
@@ -179,7 +179,7 @@ the \code{perform} method of an instance of this class.
     @param dat data.table the initial data to use for estimating the
      difference in expectations
 
-    @param current_rvs the current list of random variables
+    @param current_rvs the current list of relevant variables
 
     @return the difference in expectations
   }
