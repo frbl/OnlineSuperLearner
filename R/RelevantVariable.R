@@ -1,9 +1,9 @@
 #' RelevantVariable
 #'
-#' This class represents the structure we see as a relevant variable. A random
+#' This class represents the structure we see as a relevant variable. A relevant
 #' variable in our case is a variable for which we want to estimate its
 #' conditional distribution. This class helps organizing / creating its formula
-#' (the parametric form of the covariates that could predict this random
+#' (the parametric form of the covariates that could predict this relevant
 #' variable).
 #'
 #' @docType class
@@ -17,14 +17,14 @@
 #'     predict this relevant variable) and the family (gaussian if it is a double
 #'     / integer value, and binomial if it is a binary variable)
 #'
-#'     @param formula formula the formula to use for predicting this random
+#'     @param formula formula the formula to use for predicting this relevant
 #'      variable.
 #'     @param family string a string representing the type of relevant variable
 #'      this is.
 #'   } 
 #' 
 #'   \item{\code{get_formula_string(X = NULL, Y = NULL) }}{ 
-#'     Returns a string representation as a formula of the current random
+#'     Returns a string representation as a formula of the current relevant
 #'     variable and its predictors.
 #'
 #'     @param X string (default = NULL) the variables to use as the predicting

@@ -9,7 +9,7 @@
 DensityEstimation
 }
 \description{
-This class performs the actual density estimation for each of the random
+This class performs the actual density estimation for each of the relevant
 variables provided to it.
 }
 \section{Methods}{
@@ -42,7 +42,7 @@ variables provided to it.
   } 
 
   \item{\code{predict(data, sample = FALSE, subset = NULL, plot = FALSE, check = FALSE) }}{ 
-    Method to perform the prediction on all (or a subset of) the random
+    Method to perform the prediction on all (or a subset of) the relevant
     variables / conditional densities. One can provide the option to
     \code{sample}, which means that if this is set, the predict function
     will sample new values from the underlying distributions. If this
@@ -53,8 +53,8 @@ variables provided to it.
      the goal of the prediction what this needs to be. If the goal is to
      sample a new relevant variable, the value for the relevant variables to
      sample does not need to be set in the data table (they can be NA).
-     However, if one wants to know the probability of an instance of a random
-     variable given the other variables, ($P(Y | X_1, X2_)$), then the random
+     However, if one wants to know the probability of an instance of a relevant
+     variable given the other variables, ($P(Y | X_1, X2_)$), then the relevant
      variable cannot be empty. 
 
     @param sample (default = FALSE) boolean would we like to sample a value
