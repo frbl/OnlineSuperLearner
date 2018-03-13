@@ -18,6 +18,8 @@
 <!-- Font Awesome icons -->
 <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-T8Gy5hrqNKT+hzMclPo118YTQO6cYprQmhrYwIiQ/3axmI1hQomh7Ud2hPOy8SP1" crossorigin="anonymous">
 
+<!-- clipboard.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js" integrity="sha384-cV+rhyOuRHc9Ub/91rihWcGmMmCXDeksTtCihMupQHSsi8GIIRDG0ThDc3HGQFJ3" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
@@ -25,6 +27,7 @@
 <script src="../pkgdown.js"></script>
   
   
+<meta property="og:title" content="Function reference" />
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
 
@@ -102,20 +105,20 @@
         <tr>
           <!--  -->
           <td>
-            <p><code><a href="ConstrainedGlm.fit_new_glm.html">ConstrainedGlm.fit_new_glm</a></code> </p>
-          </td>
-          <td><p>Fit a new GLM
-In this function we create a new instance a (constrained)
-glm fit.</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
             <p><code><a href="ConstrainedGlm.fit.html">ConstrainedGlm.fit</a></code> </p>
           </td>
           <td><p>Constrained logistic regression
 In this function we create a regression for which the predicted
 probabilities are contstrained. That is, they can not be less than a minimum
 of delta, or a maxiumum of 1 - delta.</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
+            <p><code><a href="ConstrainedGlm.fit_new_glm.html">ConstrainedGlm.fit_new_glm</a></code> </p>
+          </td>
+          <td><p>Fit a new GLM
+In this function we create a new instance a (constrained)
+glm fit.</p></td>
         </tr><tr>
           <!--  -->
           <td>
@@ -177,17 +180,17 @@ glm fit.</p></td>
         </tr><tr>
           <!--  -->
           <td>
+            <p><code><a href="DensityEstimation.html">DensityEstimation</a></code> </p>
+          </td>
+          <td><p>DensityEstimation</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
             <p><code><a href="DensityEstimation.are_all_estimators_online.html">DensityEstimation.are_all_estimators_online</a></code> </p>
           </td>
           <td><p>Static method to check whether all included estimators are in fact specified
 as being online estimators. If this is not the case, we should keep a cache
 of all data somewhere.</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="DensityEstimation.html">DensityEstimation</a></code> </p>
-          </td>
-          <td><p>DensityEstimation</p></td>
         </tr><tr>
           <!--  -->
           <td>
@@ -230,18 +233,6 @@ of all data somewhere.</p></td>
             <p><code><a href="Evaluation.root_mean_squared_error.html">Evaluation.root_mean_squared_error</a></code> </p>
           </td>
           <td><p>Evaluation.root_mean_squared_error</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="fit.OnlineSuperLearner.html">fit</a></code> </p>
-          </td>
-          <td><p>fit.OnlineSuperLearner</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="generalImports.html">generalImports</a></code> </p>
-          </td>
-          <td><p>General packages used by all of the other classes</p></td>
         </tr><tr>
           <!--  -->
           <td>
@@ -299,12 +290,6 @@ of all data somewhere.</p></td>
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="is.a.html">is.a</a></code> </p>
-          </td>
-          <td><p>Checks whether an object is an instance of the provided class</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
             <p><code><a href="LibraryFactory.html">LibraryFactory</a></code> </p>
           </td>
           <td><p>LibraryFactory</p></td>
@@ -320,6 +305,12 @@ of all data somewhere.</p></td>
             <p><code><a href="ML.GLMnet.html">ML.GLMnet</a></code> </p>
           </td>
           <td><p>ML.GLMnet</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
+            <p><code><a href="ML.H2O.html">ML.H2O</a></code> </p>
+          </td>
+          <td><p>ML.H2O</p></td>
         </tr><tr>
           <!--  -->
           <td>
@@ -341,9 +332,9 @@ of all data somewhere.</p></td>
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="ML.H2O.html">ML.H2O</a></code> </p>
+            <p><code><a href="ML.Local.Speedlm.html">ML.Local.Speedlm</a></code> </p>
           </td>
-          <td><p>ML.H2O</p></td>
+          <td><p>ML.Local.Speedlm</p></td>
         </tr><tr>
           <!--  -->
           <td>
@@ -353,21 +344,9 @@ of all data somewhere.</p></td>
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="ML.Local.Speedlm.html">ML.Local.Speedlm</a></code> </p>
-          </td>
-          <td><p>ML.Local.Speedlm</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
             <p><code><a href="ML.NeuralNet.html">ML.NeuralNet</a></code> </p>
           </td>
           <td><p>ML.NeuralNet</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="ML.randomForest.html">ML.randomForest</a></code> </p>
-          </td>
-          <td><p>ML.randomForest</p></td>
         </tr><tr>
           <!--  -->
           <td>
@@ -380,6 +359,12 @@ of all data somewhere.</p></td>
             <p><code><a href="ML.XGBoost.html">ML.XGBoost</a></code> </p>
           </td>
           <td><p>ML.XGBoost</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
+            <p><code><a href="ML.randomForest.html">ML.randomForest</a></code> </p>
+          </td>
+          <td><p>ML.randomForest</p></td>
         </tr><tr>
           <!--  -->
           <td>
@@ -461,9 +446,9 @@ of all data somewhere.</p></td>
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="predict.OnlineSuperLearner.html">predict</a></code> </p>
+            <p><code><a href="PreProcessor.html">PreProcessor</a></code> </p>
           </td>
-          <td><p>predict.OnlineSuperLearner</p></td>
+          <td><p>PreProcessor</p></td>
         </tr><tr>
           <!--  -->
           <td>
@@ -473,9 +458,9 @@ of all data somewhere.</p></td>
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="PreProcessor.html">PreProcessor</a></code> </p>
+            <p><code><a href="RelevantVariable.html">RelevantVariable</a></code> </p>
           </td>
-          <td><p>PreProcessor</p></td>
+          <td><p>RelevantVariable</p></td>
         </tr><tr>
           <!--  -->
           <td>
@@ -484,37 +469,6 @@ of all data somewhere.</p></td>
           <td><p>Algorithm to find a possible ordering of the functions.
 The worst case run time of this algorithm is pretty bad, and can it
 probably done more efficiently</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="RelevantVariable.html">RelevantVariable</a></code> </p>
-          </td>
-          <td><p>RelevantVariable</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="sampledata.OnlineSuperLearner.html">sampledata</a></code> </p>
-          </td>
-          <td><p>sampledata.OnlineSuperLearner</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="Simulator.GAD.html">Simulator.GAD</a></code> </p>
-          </td>
-          <td><p>Simulator.GAD
-directed acyclic graph approach to simulation</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="Simulator.Simple.html">Simulator.Simple</a></code> </p>
-          </td>
-          <td><p>Very basic simulator to generate data from a simple binary model</p></td>
-        </tr><tr>
-          <!--  -->
-          <td>
-            <p><code><a href="Simulator.Slow.html">Simulator.Slow</a></code> </p>
-          </td>
-          <td><p>Simulator.Slow</p></td>
         </tr><tr>
           <!--  -->
           <td>
@@ -560,15 +514,35 @@ directed acyclic graph approach to simulation</p></td>
         </tr><tr>
           <!--  -->
           <td>
-            <p><code><a href="summary.OnlineSuperLearner.html">summary.OnlineSuperLearner</a></code> </p>
+            <p><code><a href="Simulator.GAD.html">Simulator.GAD</a></code> </p>
           </td>
-          <td><p>summary.OnlineSuperLearner</p></td>
+          <td><p>Simulator.GAD
+directed acyclic graph approach to simulation</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
+            <p><code><a href="Simulator.Simple.html">Simulator.Simple</a></code> </p>
+          </td>
+          <td><p>Very basic simulator to generate data from a simple binary model</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
+            <p><code><a href="Simulator.Slow.html">Simulator.Slow</a></code> </p>
+          </td>
+          <td><p>Simulator.Slow</p></td>
         </tr><tr>
           <!--  -->
           <td>
             <p><code><a href="SummaryMeasureGenerator.html">SummaryMeasureGenerator</a></code> </p>
           </td>
           <td><p>SummaryMeasureGenerator</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
+            <p><code><a href="WCC.CG.html">WCC.CG</a></code> </p>
+          </td>
+          <td><p>WCC.CG
+Constrained descent optimizer</p></td>
         </tr><tr>
           <!--  -->
           <td>
@@ -610,6 +584,42 @@ separate estimators.</p></td>
             <p><code><a href="WeightedCombinationComputer.html">WeightedCombinationComputer</a></code> </p>
           </td>
           <td><p>WeightedCombinationComputer</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
+            <p><code><a href="fit.OnlineSuperLearner.html">fit.OnlineSuperLearner</a></code> </p>
+          </td>
+          <td><p>fit.OnlineSuperLearner</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
+            <p><code><a href="generalImports.html">generalImports</a></code> </p>
+          </td>
+          <td><p>General packages used by all of the other classes</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
+            <p><code><a href="is.a.html">is.a</a></code> </p>
+          </td>
+          <td><p>Checks whether an object is an instance of the provided class</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
+            <p><code><a href="predict.OnlineSuperLearner.html">predict</a></code> </p>
+          </td>
+          <td><p>predict.OnlineSuperLearner</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
+            <p><code><a href="sampledata.OnlineSuperLearner.html">sampledata</a></code> </p>
+          </td>
+          <td><p>sampledata.OnlineSuperLearner</p></td>
+        </tr><tr>
+          <!--  -->
+          <td>
+            <p><code><a href="summary.OnlineSuperLearner.html">summary.OnlineSuperLearner</a></code> </p>
+          </td>
+          <td><p>summary.OnlineSuperLearner</p></td>
         </tr>
       </tbody>
       </table>
@@ -638,3 +648,4 @@ separate estimators.</p></td>
 
   </body>
 </html>
+

@@ -6,7 +6,9 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>OutputPlotGenerator.create_training_curve — OutputPlotGenerator.create_training_curve • OnlineSuperLearner</title>
+<title>Algorithm to find a possible ordering of the functions.
+The worst case run time of this algorithm is pretty bad, and can it
+probably done more efficiently — RelevantVariable.find_ordering • OnlineSuperLearner</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -27,9 +29,13 @@
 <script src="../pkgdown.js"></script>
   
   
-<meta property="og:title" content="OutputPlotGenerator.create_training_curve — OutputPlotGenerator.create_training_curve" />
+<meta property="og:title" content="Algorithm to find a possible ordering of the functions.
+The worst case run time of this algorithm is pretty bad, and can it
+probably done more efficiently — RelevantVariable.find_ordering" />
 
-<meta property="og:description" content="Function to plot the training curve given the number of iterations used" />
+<meta property="og:description" content="Algorithm to find a possible ordering of the functions.
+The worst case run time of this algorithm is pretty bad, and can it
+probably done more efficiently" />
 <meta name="twitter:card" content="summary" />
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
@@ -84,38 +90,29 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>OutputPlotGenerator.create_training_curve</h1>
+    <h1>Algorithm to find a possible ordering of the functions.
+The worst case run time of this algorithm is pretty bad, and can it
+probably done more efficiently</h1>
     </div>
 
     
-    <p>Function to plot the training curve given the number of iterations used</p>
+    <p>Algorithm to find a possible ordering of the functions.
+The worst case run time of this algorithm is pretty bad, and can it
+probably done more efficiently</p>
     
 
-    <pre class="usage"><span class='fu'>OutputPlotGenerator.create_training_curve</span>(<span class='no'>historical_cvs</span>, <span class='no'>relevantVariables</span>,
-  <span class='kw'>output</span> <span class='kw'>=</span> <span class='st'>"historical_cvs"</span>, <span class='kw'>dir</span> <span class='kw'>=</span> <span class='st'>"~/tmp/osl/"</span>)</pre>
+    <pre class="usage"><span class='fu'>RelevantVariable.find_ordering</span>(<span class='no'>relevantVariables</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>historical_cvs</th>
-      <td><p>the historical CV risks. List of lists of datatables.
-First list is for each iteration, second for each learner, and the datatable
-has columns for each relevant variable.</p></td>
-    </tr>
-    <tr>
       <th>relevantVariables</th>
-      <td><p>list of relevantvariables to use in the output</p></td>
+      <td><p>the relevant variables to sort</p></td>
     </tr>
     <tr>
-      <th>output</th>
-      <td><p>string (default = 'historical_cvs') the filename to write the
-pdf to (without .pdf).</p></td>
-    </tr>
-    <tr>
-      <th>dir</th>
-      <td><p>string (default = '~/tmp/osl/') the directory to write the file
-to.</p></td>
+      <th>verbose</th>
+      <td><p>(default false) whether or not to be verbose when sorting</p></td>
     </tr>
     </table>
     

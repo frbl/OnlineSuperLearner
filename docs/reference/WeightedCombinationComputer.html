@@ -18,6 +18,8 @@
 <!-- Font Awesome icons -->
 <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-T8Gy5hrqNKT+hzMclPo118YTQO6cYprQmhrYwIiQ/3axmI1hQomh7Ud2hPOy8SP1" crossorigin="anonymous">
 
+<!-- clipboard.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js" integrity="sha384-cV+rhyOuRHc9Ub/91rihWcGmMmCXDeksTtCihMupQHSsi8GIIRDG0ThDc3HGQFJ3" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
@@ -25,6 +27,10 @@
 <script src="../pkgdown.js"></script>
   
   
+<meta property="og:title" content="WeightedCombinationComputer — WeightedCombinationComputer" />
+
+<meta property="og:description" content="WeightedCombinationComputer" />
+<meta name="twitter:card" content="summary" />
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
 
@@ -95,13 +101,37 @@
 
     
     <dl class='dl-horizontal'>
-  <dt><code>new()</code></dt><dd><p>Creates a new computer for determining the best weighted combination of the ML libraries.
-   <code>weigths.initial</code> vector containing the initial weights</p></dd>
-  <dt><code>getWeigths()</code></dt><dd><p>Returns the current list of optimal weights (or the initial weights, if not yet fitted)</p></dd>
-  <dt><code>compute(Z, Y, libraryNames)</code></dt><dd><p>Method to compute the best weighted combination of the underlying estimators
-   <code>Z</code> matrix containing the outcomes of each of the estimators
-   <code>Y</code> vector containing the actual outcome
-   <code>libraryNames</code> vector containing the names of the estimators</p></dd>
+  <dt><code>initialize(weights.initial)</code></dt><dd><p>Creates a new computer for determining the best weighted combination of
+   the ML libraries.  <code>weigths.initial</code> vector containing the initial
+   weights.
+   @param weights.initial vector the initial vector of weights to use.</p></dd>
+    <dt><code>compute(Z, Y, libraryNames, ...)</code></dt><dd><p>Method to compute the best weighted combination in an underlying
+   optimizer. Note that by default this method is not implemented, and
+   should be implemented by one of the subclasses.
+    @param Z matrix containing the outcomes of each of the estimators.
+    @param Y vector containing the actual observed outcomes.
+    @param libraryNames vector containing the names of the estimators.
+    @param ... other parameters to pass to the underlying combination
+    computers.</p></dd>
+    <dt><code>process(Z, Y, libraryNames, ...)</code></dt><dd><p>Method to compute the best weighted combination of the underlying
+   optimizer. This function internally calls the extended <code>compute</code>
+   function.
+    @param Z matrix containing the outcomes of each of the estimators.
+    @param Y vector containing the actual observed outcome.
+    @param libraryNames vector containing the names of the estimators.
+    @param ... other parameters to pass to the underlying combination
+    computers.
+    @return vector of the trained / updated weights.</p></dd>
+    <dt><code>get_weights</code></dt><dd><p>Active Method. Returns the current vector of optimal weights (or the
+   initial weights, if not yet fitted)
+    @return vector the current vector of weights</p></dd>
+    <dt><code>get_historical_weights()</code></dt><dd><p>Active Method. Returns the history of the alphas, and shows how they were
+   updated over time.
+    @return data.frame a data.frame containing the alphas. One row for each
+   iteration, one column for each algorithm.</p></dd>
+    <dt><code>get_step_count</code></dt><dd><p>Active Method. Returns the current step count of the algorithm. This is
+   updated on every <code>process</code> call.
+    @return integer the current stepcount</p></dd>
 </dl>
     
 
@@ -132,3 +162,4 @@
 
   </body>
 </html>
+

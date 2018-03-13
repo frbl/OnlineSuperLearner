@@ -39,15 +39,16 @@ if (!("devtools" %in% rownames(installed.packages()))) { install.packages('devto
 An other option to install the dependencies is to install the `OnlineSuperLearner` package as a whole, installing all of its dependencies automatically. After installing the packages we then need to load them. We do not assume that you have installed the latest version of the OSL package, and as such will use the latest version from github:
 
 ``` {r setup the package, echo=FALSE, results='hide'}
-use_local <- FALSE
+use_local <- TRUE
 
 if ("package:OnlineSuperLearner" %in% search()) { detach("package:OnlineSuperLearner", unload=TRUE) }
 if ("OnlineSuperLearner" %in% rownames(installed.packages())) { remove.packages("OnlineSuperLearner") }
 if (use_local) {
-  install.packages('.', repos = NULL, type="source")
 } else {
   devtools::install_github('frbl/onlinesuperlearner')
 }
+install.packages('.', repos = NULL, type="source")
+
 library('OnlineSuperLearner')
 ```
 

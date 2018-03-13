@@ -186,13 +186,13 @@ InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
         ## The parallelization will fail.
         result <- foreach(i=seq(self$get_bootstrap_iterations), .combine=rbind) %looping_function% {
           private$verbose && cat(private$verbose, 'Approximation iteration for:', i)
-          sample <- osl$sample_iteratively(
+          drawn_sample <- osl$sample_iteratively(
             data = initial_data,
             intervention = intervention,
             discrete = discrete,
             tau = tau
           )
-          sample[tau, self$get_outcome_variable, with=FALSE]
+          drawn_sample[tau, self$get_outcome_variable, with=FALSE]
         } %>% unlist %>% unname
       },
 

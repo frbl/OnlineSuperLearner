@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>WCC.NNLS — WCC.NNLS • OnlineSuperLearner</title>
+<title>RelevantVariable — RelevantVariable • OnlineSuperLearner</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -27,9 +27,13 @@
 <script src="../pkgdown.js"></script>
   
   
-<meta property="og:title" content="WCC.NNLS — WCC.NNLS" />
+<meta property="og:title" content="RelevantVariable — RelevantVariable" />
 
-<meta property="og:description" content="WCC.NNLS" />
+<meta property="og:description" content="This class represents the structure we see as a relevant variable. A relevant
+variable in our case is a variable for which we want to estimate its
+conditional distribution. This class helps organizing / creating its formula
+(the parametric form of the covariates that could predict this relevant
+variable)." />
 <meta name="twitter:card" content="summary" />
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
@@ -84,14 +88,18 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>WCC.NNLS</h1>
+    <h1>RelevantVariable</h1>
     </div>
 
     
-    <p>WCC.NNLS</p>
+    <p>This class represents the structure we see as a relevant variable. A relevant
+variable in our case is a variable for which we want to estimate its
+conditional distribution. This class helps organizing / creating its formula
+(the parametric form of the covariates that could predict this relevant
+variable).</p>
     
 
-    <pre class="usage"><span class='no'>WCC.NNLS</span></pre>
+    <pre class="usage"><span class='no'>RelevantVariable</span></pre>
         
     <h2 class="hasAnchor" id="format"><a class="anchor" href="#format"></a>Format</h2>
 
@@ -101,16 +109,39 @@
 
     
     <dl class='dl-horizontal'>
-  <dt><code>new()</code></dt><dd><p>Creates a new computer for determining the best weighted combination of the ML libraries.
-   currently this is merely the NNLS version from the general superlearner, but in the future
-   it should be updated to be 1. online, and 2. using better algorithm (like NLopts)
-   <code>weights.initial</code> vector containing the initial weights</p></dd>
-  <dt><code>getWeigths()</code></dt><dd><p>Returns the current list of optimal weights (or the initial weights, if not yet fitted)</p></dd>
-  <dt><code>compute(Z, Y, libraryNames, weights.initial)</code></dt><dd><p>Method to compute the best weighted combination of the underlying estimators
-   <code>Z</code> matrix containing the outcomes of each of the estimators
-   <code>Y</code> vector containing the actual outcome
-   <code>libraryNames</code> vector containing the names of the estimators</p></dd>
-</dl>
+  <dt><code>initialize(formula, family) </code></dt><dd><p>Creates a new <code>RelevantVariable</code> object. It creates this object
+    according to a formula (the y ~ x1 + x2 representation we expect to
+    predict this relevant variable) and the family (gaussian if it is a double
+    / integer value, and binomial if it is a binary variable)
+    @param formula formula the formula to use for predicting this relevant
+     variable.
+    @param family string a string representing the type of relevant variable
+     this is.</p></dd>
+    <dt><code>get_formula_string(X = NULL, Y = NULL) </code></dt><dd><p>Returns a string representation as a formula of the current relevant
+    variable and its predictors.
+    @param X string (default = NULL) the variables to use as the predicting
+     variables in this formula. If <code>NULL</code>, it will use the X of the
+     current relevant variable.
+    @param Y string (default = NULL) the variables to use as the outcome
+     variable in this formula. If <code>NULL</code>, it will use the X of the
+     current relevant variable.</p></dd>
+    <dt><code>parse_formula(formula) </code></dt><dd><p>Converts a formula to its separate X and Y components.
+    @param formula formula the formula to convert.
+    @return list a list with two attributes: the <code>Y</code> which is the
+     output of the formula and the <code>X</code> the independent variables in
+     this formula.</p></dd>
+    <dt><code>getFamilty</code></dt><dd><p>Active method. Returns the family provided on initialization.
+    @return string the family.</p></dd>
+    <dt><code>getX</code></dt><dd><p>Active method. Returns the X component of the formula provided on
+    initialization.
+    @return list the X component of the formula</p></dd>
+    <dt><code>getY</code></dt><dd><p>Active method. Returns the Y component of the formula provided on
+    initialization.
+    @return string the outcome variable name</p></dd>
+    <dt><code>getValidity</code></dt><dd><p>Active method. Checks the validity of the <code>RelevantVariable</code>
+    instance. This method is called automatically on initialization.
+    @return boolean true if everything is valid, or it throws if not valid.</p></dd>
+    </dl>
     
 
   </div>
