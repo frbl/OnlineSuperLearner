@@ -4,8 +4,8 @@
 \alias{fit.OnlineSuperLearner}
 \title{fit.OnlineSuperLearner}
 \usage{
-\method{fit}{OnlineSuperLearner}(formulae, data, algorithms = NULL,
-  bounds = FALSE, ...)
+fit.OnlineSuperLearner(formulae, data, algorithms = NULL, bounds = FALSE,
+  ...)
 }
 \arguments{
 \item{formulae}{list a list of all relevantVariable objects that need to be fitted}

@@ -18,6 +18,8 @@
 <!-- Font Awesome icons -->
 <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-T8Gy5hrqNKT+hzMclPo118YTQO6cYprQmhrYwIiQ/3axmI1hQomh7Ud2hPOy8SP1" crossorigin="anonymous">
 
+<!-- clipboard.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js" integrity="sha384-cV+rhyOuRHc9Ub/91rihWcGmMmCXDeksTtCihMupQHSsi8GIIRDG0ThDc3HGQFJ3" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
@@ -25,6 +27,11 @@
 <script src="../pkgdown.js"></script>
   
   
+<meta property="og:title" content="DensityEstimation — DensityEstimation" />
+
+<meta property="og:description" content="This class performs the actual density estimation for each of the relevant
+variables provided to it." />
+<meta name="twitter:card" content="summary" />
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
 
@@ -82,7 +89,7 @@
     </div>
 
     
-    <p>This class performs the actual density estimation for each of the random
+    <p>This class performs the actual density estimation for each of the relevant
 variables provided to it.</p>
     
 
@@ -114,7 +121,7 @@ variables provided to it.</p>
     @param name (default = 'default') the name to use for the density
     estimator.
     @param verbose (default = FALSE) the verbosity (log level) to use while running.</p></dd>
-    <dt><code>predict(data, sample = FALSE, subset = NULL, plot = FALSE, check = FALSE) </code></dt><dd><p>Method to perform the prediction on all (or a subset of) the random
+    <dt><code>predict(data, sample = FALSE, subset = NULL, plot = FALSE, check = FALSE) </code></dt><dd><p>Method to perform the prediction on all (or a subset of) the relevant
     variables / conditional densities. One can provide the option to
     <code>sample</code>, which means that if this is set, the predict function
     will sample new values from the underlying distributions. If this
@@ -124,8 +131,8 @@ variables provided to it.</p>
      the goal of the prediction what this needs to be. If the goal is to
      sample a new relevant variable, the value for the relevant variables to
      sample does not need to be set in the data table (they can be NA).
-     However, if one wants to know the probability of an instance of a random
-     variable given the other variables, ($P(Y | X_1, X2_)$), then the random
+     However, if one wants to know the probability of an instance of a relevant
+     variable given the other variables, ($P(Y | X_1, X2_)$), then the relevant
      variable cannot be empty.
     @param sample (default = FALSE) boolean would we like to sample a value
      (true) or a probability (false) from the conditional density
@@ -213,3 +220,4 @@ variables provided to it.</p>
 
   </body>
 </html>
+

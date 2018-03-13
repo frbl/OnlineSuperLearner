@@ -18,6 +18,8 @@
 <!-- Font Awesome icons -->
 <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-T8Gy5hrqNKT+hzMclPo118YTQO6cYprQmhrYwIiQ/3axmI1hQomh7Ud2hPOy8SP1" crossorigin="anonymous">
 
+<!-- clipboard.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js" integrity="sha384-cV+rhyOuRHc9Ub/91rihWcGmMmCXDeksTtCihMupQHSsi8GIIRDG0ThDc3HGQFJ3" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
@@ -25,6 +27,23 @@
 <script src="../pkgdown.js"></script>
   
   
+<meta property="og:title" content="InterventionParser.parse_intervention — InterventionParser.parse_intervention" />
+
+<meta property="og:description" content="Function to select the current intervention from an intervention list. It
+will check whether the current timestamp is an intervention timestamp with
+respect to the current outcome. If it is, it will return the actual
+intervention. The intervention needs to be specified as follows. Each
+intervention is a list consisting of three attributes: variable,
+when, and what. The variable entry denotes the name of
+the variable on which the intervention is done. Usually this is the 'A'
+variable, but this could be tweaked. Secondly one has to specify the
+when variable. This variable denotes when the intervention should be
+performed. Lastly the what variable. This denotes the actual
+intervention to be performed. E.g., one could denote treatment as 1 and
+control as 0. Then an intervention could be to give everybody a treatment,
+forcing everyone to have a 1 as treatment variable. This would then boil
+down to a what of 1." />
+<meta name="twitter:card" content="summary" />
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
 
@@ -155,3 +174,4 @@ down to a <code>what</code> of 1.</p>
 
   </body>
 </html>
+

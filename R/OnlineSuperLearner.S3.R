@@ -64,9 +64,6 @@ fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, bounds = F
   return(osl)
 }
 
-#' @export
-fit <- function(formulae, data, algorithms = NULL, bounds = FALSE, measurements_per_obs = Inf, ...) UseMethod("fit")
-
 #' sampledata.OnlineSuperLearner
 #' 
 #' S3 prediction function for the online superlearner package. Can be used to

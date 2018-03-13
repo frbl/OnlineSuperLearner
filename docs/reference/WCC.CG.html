@@ -6,7 +6,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>OutputPlotGenerator.create_training_curve — OutputPlotGenerator.create_training_curve • OnlineSuperLearner</title>
+<title>WCC.CG
+Constrained descent optimizer — WCC.CG • OnlineSuperLearner</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -27,9 +28,11 @@
 <script src="../pkgdown.js"></script>
   
   
-<meta property="og:title" content="OutputPlotGenerator.create_training_curve — OutputPlotGenerator.create_training_curve" />
+<meta property="og:title" content="WCC.CG
+Constrained descent optimizer — WCC.CG" />
 
-<meta property="og:description" content="Function to plot the training curve given the number of iterations used" />
+<meta property="og:description" content="WCC.CG
+Constrained descent optimizer" />
 <meta name="twitter:card" content="summary" />
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
@@ -84,48 +87,55 @@
       <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>OutputPlotGenerator.create_training_curve</h1>
+    <h1>WCC.CG
+Constrained descent optimizer</h1>
     </div>
 
     
-    <p>Function to plot the training curve given the number of iterations used</p>
+    <p>WCC.CG
+Constrained descent optimizer</p>
     
 
-    <pre class="usage"><span class='fu'>OutputPlotGenerator.create_training_curve</span>(<span class='no'>historical_cvs</span>, <span class='no'>relevantVariables</span>,
-  <span class='kw'>output</span> <span class='kw'>=</span> <span class='st'>"historical_cvs"</span>, <span class='kw'>dir</span> <span class='kw'>=</span> <span class='st'>"~/tmp/osl/"</span>)</pre>
+    <pre class="usage"><span class='no'>WCC.CG</span></pre>
+        
+    <h2 class="hasAnchor" id="format"><a class="anchor" href="#format"></a>Format</h2>
+
+    <p>An object of class <code>R6ClassGenerator</code> of length 24.</p>
     
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>historical_cvs</th>
-      <td><p>the historical CV risks. List of lists of datatables.
-First list is for each iteration, second for each learner, and the datatable
-has columns for each relevant variable.</p></td>
-    </tr>
-    <tr>
-      <th>relevantVariables</th>
-      <td><p>list of relevantvariables to use in the output</p></td>
-    </tr>
-    <tr>
-      <th>output</th>
-      <td><p>string (default = 'historical_cvs') the filename to write the
-pdf to (without .pdf).</p></td>
-    </tr>
-    <tr>
-      <th>dir</th>
-      <td><p>string (default = '~/tmp/osl/') the directory to write the file
-to.</p></td>
-    </tr>
-    </table>
+    <h2 class="hasAnchor" id="methods"><a class="anchor" href="#methods"></a>Methods</h2>
+
+    
+    <dl class='dl-horizontal'>
+  <dt><code>initialize(weights.initial)</code></dt><dd><p>Creates a new computer for determining the best weighted combination of
+   the ML libraries based on stochastic gradient descent and simplex
+   projection.
+   @param weights.initial vector (default = NULL) the initial vector of
+    weights to use. Can be NULL if the number_of_algorithms is specified.
+    @param number_of_algorithms integer (default = NULL) the number of
+   algorithms to calculate the weights for. Is used to initialize the
+   weights. Can be NULL if the weights are provided</p></dd>
+    <dt><code>compute(Z, Y, libraryNames, ...)</code></dt><dd><p>Method to compute the best weighted combination for a set of estimators.
+   In this implementation we use a two-step approach, in which we first
+   estimate the weights based on a gradient descent procedure, and then
+   project these weights back to the L1 simplex, scaling them between 0-1.
+    @param Z matrix containing the outcomes of each of the estimators
+    @param Y vector containing the actual observed outcome.
+    @param libraryNames vector containing the names of the optimizer.
+    @param ... other parameters to pass to the underlying combination
+    computers.
+    @return vector of the trained / updated weights.</p></dd>
+</dl>
     
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
-      <li><a href="#arguments">Arguments</a></li>
-                </ul>
+      
+      <li><a href="#format">Format</a></li>
+
+      <li><a href="#methods">Methods</a></li>
+          </ul>
 
   </div>
 </div>

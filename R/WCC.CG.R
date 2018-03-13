@@ -64,7 +64,7 @@ WCC.CG <- R6Class("WCC.CG",
           prediction <- Z %*% current_alpha
 
           ## SGD Method
-          ## 2. yt+1 = xt −ηt∇ft(xt)
+          ## 2. yt+1 = xt - eta t nabla ft(xt)
           gradient <- -2 * t(Y - prediction) %*% Z 
           tentative_alpha <- current_alpha - eta * gradient %>% as.vector
 
