@@ -3,7 +3,7 @@
 #' Wrapper for an H2O gbm estimator. From their discription:
 #' Gradient Boosting Machine (for Regression and Classification) is a forward
 #' learning ensemble method. The guiding heuristic is that good predictive
-#' results can be obtained through increasingly refined approximations. H2O’s
+#' results can be obtained through increasingly refined approximations. H2O's
 #' GBM sequentially builds regression trees on all the features of the dataset
 #' in a fully distributed way - each tree is built in parallel.
 #'
