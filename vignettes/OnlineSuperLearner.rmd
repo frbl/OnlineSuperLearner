@@ -51,24 +51,10 @@ if (use_local) {
 library('OnlineSuperLearner')
 ```
 
-Quick check if the correct functions are exported.
+Quick check if the correct functions are exported:
 
 ``` {r inspect the setup}
 getNamespaceExports("OnlineSuperLearner")
-```
-
-This should return something like:
-
-``` plaintext 
-[1] "PreProcessor"
-[2] "Evaluation.log_likelihood_loss"
-[3] "PreProcessor.generate_bounds"
-[4] "Simulator.GAD"
-  ...
-[60] "InterventionParser.first_intervention"
-[61] "Evaluation.get_evaluation_function"
-[62] "InterventionParser.generate_intervention"
-[63] "OnlineSuperLearner.Simulation"
 ```
 
 ## Configuration
