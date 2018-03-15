@@ -39,7 +39,10 @@
 Simulator.GAD <- R6Class("Simulator.GAD",
   public =
     list(
-      initialize = function() {
+      initialize = function(qw = NULL, ga = NULL, Qy = NULL) {
+        private$qw <- qw
+        private$ga <- ga
+        private$Qy <- Qy
       },
 
       simulateWAY = function(numberOfBlocks = 1,
@@ -58,8 +61,18 @@ Simulator.GAD <- R6Class("Simulator.GAD",
                                rnorm(length(mu), mu, sd = 1)}}),
                              intervention = NULL,
                              verbose = FALSE) {
+
         # retrieving arguments
         numberOfTrajectories <- Arguments$getInteger(numberOfTrajectories, c(1, Inf))
+
+        if (!(is.null(private$qw) || is.null(private$ga) || is.null(private$Qy))) {
+          verbose && cat(verbose, 'Using the simulator settings provided at initialization')
+          qw = private$qw 
+          ga = private$ga 
+          Qy = private$Qy 
+        }
+
+
         if (numberOfTrajectories == 1) {
           return(private$simulateWAYOneTrajectory(numberOfBlocks = numberOfBlocks,
                                                   qw = qw, ga = ga, Qy = Qy,
@@ -83,6 +96,10 @@ Simulator.GAD <- R6Class("Simulator.GAD",
     ),
   private =
     list(
+      qw = NULL,
+      ga = NULL,
+      Qy = NULL,
+
       validateMechanism = function(ll, what = c("qw", "ga", "Qy")) {
         # TODO: Don't use the index, use the actual key to the value (that is what is used in the code)
         what <- match.arg(what)

@@ -90,6 +90,7 @@ fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, bounds = F
 #'  \code{data.table} of corresponding sampled values.
 #' @export
 sampledata.OnlineSuperLearner <- function(object, newdata, Y = NULL, ...) {
+  ## TODO: Add the option to provide N.
   ## Test if the provided object is actually a OnlineSuperlearner
   object <- Arguments$getInstanceOf(object, 'OnlineSuperLearner')
 
