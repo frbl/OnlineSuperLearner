@@ -32,9 +32,8 @@ glob_llA <- list(
 glob_llY <- list(rgen={function(AW){
     aa <- AW[, "A"]
     ww <- AW[, grep("[^A]", colnames(AW))]
-    mu <- aa*(0.9) + (1-aa)*(0.3) + rnorm(length(aa), 0, 1)
-    mu <- pmax(pmin(mu, 1),0)
-    rbinom(length(aa), 1, mu)
+    mu <- aa*(0.9) + (1-aa)*(0.3) + 0.6 * ww + rnorm(length(aa), 0, 0.1)
+    mu
   }}
 )
 
@@ -74,17 +73,17 @@ test_that("it should evaluate the learner", {
   log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
   nb_iter <- 10
   training_set_size <- 1000
-  data <- glob_simulator$simulateWAY(numberOfBlocks = training_set_size)
-  subject <- described.class$new()
+  data <- glob_simulator$simulateWAY(numberOfTrajectories = training_set_size)
+  subject <- described.class$new(log)
 
   algos <- list()
 
-  algos <- append(algos, list(list(algorithm = "ML.XGBoost",
-                                  algorithm_params = list(alpha = c(0.3, 0.4, 0.5)),
-                                  params = list(nbins = c(30, 40, 50), online = TRUE))))
+  #algos <- append(algos, list(list(algorithm = "ML.XGBoost",
+                                  #algorithm_params = list(alpha = c(0.3, 0.4, 0.5)),
+                                  #params = list(nbins = c(30, 40, 50), online = TRUE))))
 
   algos <- append(algos, list(list(algorithm = "condensier::speedglmR6",
-                                  params = list(nbins = c(5, 10, 15), online = FALSE))))
+                                  params = list(nbins = c(5, 10, 15, 20), online = FALSE))))
 
 
   relevant_variables <- list(RelevantVariable$new(formula = Y ~ A + W, family = 'gaussian'))
@@ -94,7 +93,8 @@ test_that("it should evaluate the learner", {
     formulae = relevant_variables,
     data = data,
     algorithms = algos, 
-    verbose = log,
+    bounds = TRUE,
+    verbose = FALSE,
     test_set_size = 5 + (3 * 3 + 3),
 
     initial_data_size = training_set_size / 2,
@@ -102,6 +102,17 @@ test_that("it should evaluate the learner", {
     mini_batch_size = (training_set_size / 2) / nb_iter
   )
 
-  result <- subject$evaluate(osl, glob_simulator, 100, 10000)
+  T_iter <- 10
+  B_iter <- 1000
+  nbins <- 5
+
+  result <- subject$evaluate(osl, glob_simulator, T_iter, B_iter, nbins= nbins)
+  print(result)
+  expect_is(result, 'list')
+  expect_length(result, T_iter)
+  expect_length(result[[1]], nbins)
+
+  # Check the middle result, it should have 2 outcomes, one for A=0, one for A=1
+  expect_length(result[[1]][[nbins/2]], 2)
 })
 

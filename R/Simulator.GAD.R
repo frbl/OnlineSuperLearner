@@ -81,15 +81,15 @@ Simulator.GAD <- R6Class("Simulator.GAD",
         }
 
         what <- paste(numberOfTrajectories, "trajectories")
-        WAYs <- lapply(rep(numberOfBlocks, numberOfTrajectories),
-                        private$simulateWAYOneTrajectory,
-                        qw = qw, ga = ga, Qy = Qy, intervention = intervention, verbose = verbose, msg = what)
+        WAYs <- foreach(x = rep(numberOfBlocks, numberOfTrajectories)) %dopar% {
+          private$simulateWAYOneTrajectory(x, qw = qw, ga = ga, Qy = Qy, intervention = intervention, verbose = verbose, msg = what)
+        }
 
         col.names <- colnames(WAYs[[1]])
         WAYs <- Reduce(rbind, WAYs)
-        WAYs <- matrix(unlist(WAYs), ncol = length(col.names)*numberOfTrajectories)
-        colnames(WAYs) <- paste(rep(col.names, each = numberOfTrajectories),
-                                1:numberOfTrajectories, sep = ".")
+        #WAYs <- matrix(unlist(WAYs), ncol = length(col.names)*numberOfTrajectories)
+        #colnames(WAYs) <- paste(rep(col.names, each = numberOfTrajectories),
+                                #1:numberOfTrajectories, sep = ".")
 
         return(WAYs)
       }
