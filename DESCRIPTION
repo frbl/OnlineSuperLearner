@@ -28,6 +28,7 @@ Imports:
     methods,
     magrittr,
     purrr,
+    pROC,
     assertthat,
     xgboost,
     speedglm,
