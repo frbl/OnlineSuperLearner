@@ -95,7 +95,7 @@ test_that("it should not normalize when bounds is FALSE", {
 
 context(" predict.OnlineSuperLearner")
 #==========================================================
-theresult <- 'theresult'
+theresult <- list(osl.estimator = data.table(Y = c(1,2,3)))
 expected_Y = 'therv_for_Y'
 expected_X = 'therv_for_X'
 subject <- list(get_relevant_variables = list('Y' = expected_Y, 'X' = expected_X))
