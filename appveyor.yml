@@ -58,7 +58,7 @@ notifications:
    to:
      - frank.blaauw@gmail.com
    subject: 'r-appveyor build {{status}}'
-   message: "https://ci.appveyor.com/project/frbl/OnlineSuperLearner"
+   message: "https://ci.appveyor.com/project/FrankBlaauw/onlinesuperlearner"
    on_build_success: false
    on_build_failure: true
    on_build_status_changed: true
