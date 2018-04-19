@@ -68,6 +68,7 @@ test_that("it should throw if the provided B_iter is not an int", {
 })
 
 test_that("it should implement a test from which we know the correct distribution, and we know it is the same as the simulator", {
+  if(TRUE) skip('Takes to long now')
   set.seed(1234)
   log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
   subject <- described.class$new(log)
@@ -113,8 +114,116 @@ test_that("it should implement a test from which we know the correct distributio
   expect_gte(percentage_significant, 0.95)
 })
 
+test_that("it should show when the two provided distributions are not the same", {
+  set.seed(1234)
+  log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
+  subject <- described.class$new(log)
+  doParallel::registerDoParallel(cores = parallel::detectCores())
+
+  ## Create a simulator
+  nobs <- 10
+  p_0 <<- function(nobs, newdata = NULL) {
+    if (is.null(newdata)) {
+      W <- rnorm(nobs, 0, 1)
+      A <- rbinom(nobs, 1, 0.8)
+    } else {
+      W <- newdata$W
+      A <- newdata$A
+    }
+    Y <- rnorm(nobs, A, 0.1)
+    data.table(W = W, A = A, Y=Y)
+  }
+
+  p_1 <<- function(nobs, newdata = NULL) {
+    W <- c(rnorm(nobs/2, -0.5, 1), rnorm(nobs/2, 0.5, 1))
+    Y <- c(rnorm(nobs/2, A + 0.3, 0.01), rnorm(nobs/2, A-0.3, 0.01))
+    data.table(W = W, A = A, Y=Y)
+  }
+
+  mock_simulator <- list(simulateWAY = function(numberOfTrajectories) {
+    p_0(nobs = numberOfTrajectories)
+  })
+
+  sampledata.MockOsl <<- function(object, newdata, Y = NULL, nobs = 1, ...) {
+    res <- p_1(nobs = nobs, newdata)
+    list(osl.estimator = res$Y,
+         dosl.estimator = res$Y)
+  }
+  mock_osl <- mock('osl')
+  class(mock_osl) <- 'MockOsl'
+
+  T_iter <- 10
+  B_iter <- 10000
+  nbins <- 5
+  n_A_bins <- 2
+
+  result <- subject$evaluate(
+    mock_osl,
+    mock_simulator,
+    T_iter, 
+    B_iter,
+    nbins= nbins
+  )
+
+  result %<>% unlist %>% unname
+  total_insignificant <- (result <= 0.05) %>% as.numeric %>% sum
+  percentage_insignificant <- total_insignificant / (T_iter * nbins * n_A_bins)
+  expect_gte(percentage_insignificant, 0.95)
+})
+
+test_that("it should implement a test from which we know the correct conditional distribution, and we know it is the same as the simulator", {
+  set.seed(1234)
+  log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
+  subject <- described.class$new(log)
+  doParallel::registerDoParallel(cores = parallel::detectCores())
+
+  ## Create a simulator
+  nobs <- 10
+  p_0 <<- function(nobs, newdata = NULL) {
+    if (is.null(newdata)) {
+      W <- rnorm(nobs, 0, 1)
+      A <- rbinom(nobs, 1, 0.8)
+    } else {
+      W <- newdata$W
+      A <- newdata$A
+    }
+    Y <- rnorm(nobs, A, 0.1)
+    data.table(W = W, A = A, Y=Y)
+  }
+
+  mock_simulator <- list(simulateWAY = function(numberOfTrajectories) {
+    p_0(nobs = numberOfTrajectories)
+  })
+
+  sampledata.MockOsl <<- function(object, newdata, Y = NULL, nobs = 1, ...) {
+    res <- p_0(nobs = nobs, newdata)
+    list(osl.estimator = res$Y,
+         dosl.estimator = res$Y)
+  }
+  mock_osl <- mock('osl')
+  class(mock_osl) <- 'MockOsl'
+
+  T_iter <- 10
+  B_iter <- 10000
+  nbins <- 5
+  n_A_bins <- 2
+
+  result <- subject$evaluate(
+    mock_osl,
+    mock_simulator,
+    T_iter, 
+    B_iter,
+    nbins= nbins
+  )
+
+  result %<>% unlist %>% unname
+  total_significant <- (result > 0.05) %>% as.numeric %>% sum
+  percentage_significant <- total_significant / (T_iter * nbins * n_A_bins)
+  expect_gte(percentage_significant, 0.95)
+})
+
 test_that("it should evaluate the learner", {
-  #if(TRUE) skip('Takes to long now')
+  if(TRUE) skip('Takes to long now')
   ## General settings
   doParallel::registerDoParallel(cores = parallel::detectCores())
   log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
