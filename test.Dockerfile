@@ -15,8 +15,11 @@ RUN apt-get update && apt-get -f install -t unstable --no-install-recommends -y 
     libxml2-dev \
     libssl-dev \
     libcairo-dev \ 
-    default-jre && \
+    openjk-8-jre \ 
     rm -rf /var/lib/apt/lists/*
+
+# Not using because of H2O incompatibility
+#default-jre && \
  
 RUN ./inst/bash/install-package-dependencies.sh
 

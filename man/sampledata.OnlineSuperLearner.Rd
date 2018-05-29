@@ -4,7 +4,8 @@
 \alias{sampledata.OnlineSuperLearner}
 \title{sampledata.OnlineSuperLearner}
 \usage{
-\method{sampledata}{OnlineSuperLearner}(object, newdata, Y = NULL, ...)
+\method{sampledata}{OnlineSuperLearner}(object, newdata, Y = NULL, nobs = 1,
+  ...)
 }
 \arguments{
 \item{object}{OnlineSuperLearner trained instance of an online superlearner class.}
@@ -21,6 +22,8 @@ include all necessary variables.}
   - Single \code{RelevantVariable} object to predict
   - List of strings with the names of the outputs (\code{list('X','Y')})
   - Single string with the name of the output (\code{'Y'})}
+
+\item{nobs}{the number of observations to sample}
 
 \item{...}{other parameters directly passed to the predict function}
 }
