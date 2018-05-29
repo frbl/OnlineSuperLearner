@@ -1,4 +1,4 @@
-#! /usr/bin/env Rscript
+#!/usr/bin/env Rscript
 # General packages
 options(repos = structure(c(CRAN = "http://cran-mirror.cs.uu.nl/")))
 

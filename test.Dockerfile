@@ -1,4 +1,4 @@
-FROM r-base:latest
+FROM r-base:3.4.3
 MAINTAINER Frank Blaauw <f.j.blaauw@rug.nl>
 
 WORKDIR /OnlineSuperLearner
