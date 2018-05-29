@@ -11,7 +11,7 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
-#' @importFrom neuralnet neuralnet
+#' @importFrom neuralnet neuralnet compute
 #' @section Methods: 
 #' \describe{  
 #'   \item{\code{initialize(hidden = c(1, 3)) }}{ 
@@ -35,31 +35,61 @@ ML.NeuralNet <- R6Class("ML.NeuralNet",
     ),
   active =
     list(
+      get_file_name = function() {
+        return(private$file_name)
+      }
     ),
   private =
     list(
       hidden = NULL,
-      do.fit = function(X_mat, Y_vals, coef = NULL) {
+      file_name = file.path('output', 'model_NN.rds'),
+
+      do.fit = function(X_mat, Y_vals, save_model = FALSE, coef = NULL) {
         formula <- self$create_formula(colnames(X_mat))
         data = cbind(X_mat, Y = Y_vals) 
-        neuralnet(formula, data = data, hidden = private$hidden, linear.output=FALSE, startweights = coef)
-      },
+        m.fit <- neuralnet(formula, data = data, hidden = private$hidden , linear.output=FALSE, startweights = coef)
 
-      do.update = function(X_mat, Y_vals, m.fit, ...) {
-        # By default the neuralnet function uses the old model as a parameter.
-        # Therefore we can just simply call the fit function
-        private$do.fit(X_mat, Y_vals, coef = m.fit$coef$weights)
-      },
-
-      do.predict = function(X_mat, m.fit) {
-        if (any(is.na(m.fit$coef))) {
-          result <- super$do.predict(X_mat, m.fit)
-        } else {
-          result <- compute(m.fit$coef, X_mat)
+        if (save_model) {
+          private$save_model(model = m.fit)
         }
-        if(any(is.na(result)) || any(is.null(result))) browser()
-        return(result)
+
+        return(m.fit)
+      },
+
+      do.update = function(X_mat, Y_vals, save_model = FALSE,  m.fit = NULL, ...) {
+        # By default the neuralnet function uses the old model as a parameter.
+        # Therefore we can just simply call the fit function,if m.fit is null
+        # then look for a saved model
+        if (!is.null(m.fit)){
+           m.fit=private$do.fit(X_mat, Y_vals,save_model, coef = m.fit$weights)
+        } else {
+          model <- private$read_model()
+          m.fit=private$do.fit(X_mat, Y_vals,save_model,coef = model$weights)
+        }
+
+        if (save_model) {
+          private$save_model(model = m.fit)
+        }
+
+        return(m.fit)
+      },
+
+      do.predict = function(X_mat, m.fit = NULL) {
+        if (is.null(m.fit)){
+          # X_mat should have the same shape as the saved model...
+          m.fit<-private$read_model()
+        }
+
+        result <- compute(m.fit, X_mat)
+        return(result$net.result)
+      },
+
+      save_model = function(model) {
+        saveRDS(model, self$get_file_name)
+      },
+
+      read_model = function() {
+        readRDS(self$get_file_name)
       }
     )
 )
-
