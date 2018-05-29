@@ -276,7 +276,7 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
             ## Only store the present outcome
             prediction <- prediction[[outcome_name]]
           }
-          prediction %<>% as.matrix(prediction)
+          prediction %<>% as.matrix
           colnames(prediction) <- outcome_name
         
           result <- append(result, list(prediction))
