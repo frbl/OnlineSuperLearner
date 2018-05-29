@@ -94,6 +94,7 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
               #if(pval <= 0.05) browser()
               pval
             }
+
             names(res_under_a) <- A_bins
             private$verbose && exit(private$verbose)
             res_under_a
@@ -107,7 +108,7 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
         dev.off()
 
         ## TODO: We still need to perform the bonferoni correction.
-        sampled_p_values
+        return(sampled_p_values)
       }
     ),
   active =
