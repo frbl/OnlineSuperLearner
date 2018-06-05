@@ -12,6 +12,7 @@ packages <- c(
 "R.utils",
 "R.methodsS3",
 "R.oo",
+"Rcpp",
 "pROC",
 "testthat",
 "xgboost",

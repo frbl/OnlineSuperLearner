@@ -136,6 +136,7 @@ test_that("it should show when the two provided distributions are not the same",
 
   p_1 <<- function(nobs, newdata = NULL) {
     W <- c(rnorm(nobs/2, -0.5, 1), rnorm(nobs/2, 0.5, 1))
+    A <- c(rbinom(nobs, 1, 0.5))
     Y <- c(rnorm(nobs/2, A + 0.3, 0.01), rnorm(nobs/2, A-0.3, 0.01))
     data.table(W = W, A = A, Y=Y)
   }
@@ -162,7 +163,7 @@ test_that("it should show when the two provided distributions are not the same",
     mock_simulator,
     T_iter, 
     B_iter,
-    nbins= nbins
+    nbins = nbins
   )
 
   result %<>% unlist %>% unname
@@ -223,7 +224,7 @@ test_that("it should implement a test from which we know the correct conditional
 })
 
 test_that("it should evaluate the learner", {
-  if(TRUE) skip('Takes to long now')
+  if(FALSE) skip('Takes to long now')
   ## General settings
   doParallel::registerDoParallel(cores = parallel::detectCores())
   log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
