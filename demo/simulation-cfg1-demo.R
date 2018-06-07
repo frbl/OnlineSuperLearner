@@ -48,7 +48,7 @@ test_set_size <- 100
 
 sim  <- Simulator.GAD$new()
 
-log = FALSE
+log = R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
 
 ## What is the maximum number of iterations the OSL can use while going over the data?
 ## Note that in this case we split the data in equal parts with this number of iterations
@@ -60,11 +60,11 @@ data.test <- sim$simulateWAY(test_set_size, qw=llW, ga=llA, Qy=llY, verbose=log)
 
 ## Define a list of algorithms to use
 algos <- list()
-algos <- append(algos, list(list(algorithm = "ML.XGBoost",
-                                 params = list(nbins = c(5, 10, 15), online = TRUE))))
+#algos <- append(algos, list(list(algorithm = "ML.XGBoost",
+                                 #params = list(nbins = c(5, 10, 15), online = TRUE))))
 
 algos <- append(algos, list(list(algorithm = "ML.NeuralNet",
-                                 params = list(nbins = c(5, 10, 15), online = TRUE))))
+                                 params = list(nbins = c(5), online = TRUE))))
 
 ## Specify the intervention we'd like to test, and also specify when we want to
 ## test this interventsion

@@ -109,7 +109,8 @@ sampledata.OnlineSuperLearner <- function(object, newdata, Y = NULL, nobs=1, ...
 
   if (!is.null(Y)) Y <- object$retrieve_list_of_relevant_variables(relevant_variables = Y)
 
-  res <- foreach(seq(1,nobs)) %dopar% {
+  flag <<- TRUE
+  res <- foreach(seq(1,nobs)) %do% {
     sampled <- object$predict(data = newdata, relevantVariables = Y, sample = TRUE, ...)
     sampled$denormalized
   }

@@ -217,28 +217,44 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
         result <- list()
         for (rv in relevantVariables) {
           current_rv_name <- rv$getY
-          filtered_weights <- subset(osl_weights, osl_weights[,current_rv_name] >= weight_threshold, select = current_rv_name)
-          algorithm_names <- rownames(filtered_weights)
 
-          ## Create new predictions that are not yet in the data set, but are needed
-          current_result <- private$predict_missing_predictions(
-            sl_library = sl_library,
-            data = data,
-            sample = sample, 
-            plot = plot,
-            algorithm_names = algorithm_names,
-            predictions = current_result
-          )
+          if(is.null(dim(osl_weights))) {
+            ## This if is called whenever we only have 1 algorithm in the OSL
+            current_result <- private$predict_missing_predictions(
+              sl_library = sl_library,
+              data = data,
+              sample = sample, 
+              plot = plot,
+              algorithm_names = NULL,
+              predictions = current_result
+            )
+            outcomes <- lapply(current_result$normalized[1], function(x) x[[current_rv_name]])
+          } else {
+            filtered_weights <- subset(osl_weights, osl_weights[,current_rv_name] >= weight_threshold, select = current_rv_name)
+            algorithm_names <- rownames(filtered_weights)
 
-          outcomes <- lapply(current_result$normalized[algorithm_names], function(x) x[[current_rv_name]])
+            ## Create new predictions that are not yet in the data set, but are needed
+            current_result <- private$predict_missing_predictions(
+              sl_library = sl_library,
+              data = data,
+              sample = sample, 
+              plot = plot,
+              algorithm_names = algorithm_names,
+              predictions = current_result
+            )
 
-          ## Convert the outcomes from a list to  a matrix
-          outcomes <- matrix(unlist(outcomes, use.names = FALSE), ncol = length(outcomes), byrow = FALSE)
+            outcomes <- lapply(current_result$normalized[algorithm_names], function(x) x[[current_rv_name]])
 
-          ## Store the names
-          colnames(outcomes) <- algorithm_names
-          
-          result <- append(result, list(outcomes %*% filtered_weights))
+            ## Convert the outcomes from a list to  a matrix
+            outcomes <- matrix(unlist(outcomes, use.names = FALSE), ncol = length(outcomes), byrow = FALSE)
+
+            ## Apply the weights
+            outcones <- outcomes %*% filtered_weights
+
+            ## Store the names
+            colnames(outcomes) <- algorithm_names
+          }
+          result <- append(result, list(outcomes))
         }
         normalized_result <- as.data.table(do.call(cbind, result))
         denormalized_result <- private$denormalize(copy(normalized_result))
