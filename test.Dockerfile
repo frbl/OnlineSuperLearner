@@ -7,7 +7,7 @@ COPY ./inst/bash/install-package-dependencies.sh /OnlineSuperLearner/inst/bash/i
 # The unstable flag was needed to install the correct curl libraries.
 # See https://github.com/rocker-org/rocker/issues/232.
 #RUN apt-get update && apt-get -f install -t unstable --no-install-recommends -y \
-RUN apt update && apt install --no-install-recommends -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
     libnlopt0 \
     openssl \
     libcurl4-openssl-dev \
