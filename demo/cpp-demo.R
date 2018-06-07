@@ -1,4 +1,3 @@
-
 ## Following the guide of the SL3 package
 ## Requires:
 ## - tidyverse
