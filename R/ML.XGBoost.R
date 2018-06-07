@@ -4,7 +4,8 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
-#' @importFrom xgboost xgb.dump xgb.train xgb.DMatrix getinfo
+#' @importFrom xgboost xgb.dump xgb.train xgb.DMatrix getinfo xgb.save.raw xgb.load
+#' @importFrom Metrics mse
 #' @include ML.Base.R
 #' @section Methods:
 #' \describe{
@@ -61,11 +62,9 @@ ML.XGBoost <- R6Class("ML.XGBoost",
     list(
       fitfunname='xgboost',
       lmclass='xgboostR6',
-      initialize = function(booster = 'gblinear', max_depth = 6, nthread = 1, alpha = 0, lambda = 0, rounds = 200, gamma = 0, eta = 0.3, objective = 'binary:logistic', verbose = FALSE) {
-
+      initialize = function(booster = 'gbtree', max_depth = 6, nthread = 1, alpha = 0, lambda = 0, rounds = 200, gamma = 0, eta = 0.3, objective = 'binary:logistic', verbose = FALSE) {
         if (nthread == -1) nthread <- parallel::detectCores()
         private$nthread <- nthread
-
         private$rounds <- Arguments$getInteger(rounds, c(1, Inf))
         private$params <- list(objective = Arguments$getCharacter(objective),
           booster = Arguments$getCharacter(booster),
@@ -76,7 +75,6 @@ ML.XGBoost <- R6Class("ML.XGBoost",
           eta     = Arguments$getNumeric(eta, c(1e-10, Inf)),
           lambda  = Arguments$getNumeric(lambda, c(0, 1))
         )
-
         private$verbosity <- Arguments$getVerbose(verbose)
         self$get_validity
         super$initialize()
@@ -112,9 +110,7 @@ ML.XGBoost <- R6Class("ML.XGBoost",
       rounds = NULL,
       verbosity = NULL,
       nthread = NULL,
-
       do.predict = function(X_mat, m.fit) {
-
         #if(!('Intercept' %in% colnames(X_mat))) browser()
         if (any(is.na(m.fit$coef))) {
           result <- super$do.predict(X_mat, m.fit)
@@ -124,12 +120,12 @@ ML.XGBoost <- R6Class("ML.XGBoost",
         if(any(is.na(result))) browser()
         return(result)
       },
-
       do.update = function(X_mat, Y_vals, m.fit, ...) {
         # By default the xgbtrain function uses the old model as a parameter.
         # Therefore we can just simply call the fit function
         if (self$get_params$booster != 'gblinear') {
-          private$params <- modifyList(self$get_params, list(process_type = 'update', updater = 'refresh', refresh_leaf = FALSE))
+          private$params <- modifyList(self$get_params, list(process_type = 'update', updater = 'refresh', refresh_leaf = TRUE))
+          #browser()
         }
         private$do.fit(X_mat = X_mat, Y_vals = Y_vals, coef = m.fit$coef)
       },
@@ -141,21 +137,21 @@ ML.XGBoost <- R6Class("ML.XGBoost",
         # this set.
         # Set the test set we used now as the trainingset for the next iteration.
         # This could probably be done more general, by giving it as input everytime (all ML models need this)
-
         # Create train and test matrices
         dtrain <- xgb.DMatrix(data = X_mat,
                               label = Y_vals)
-
         #dtest <- xgb.DMatrix(data = as.matrix(test[, X, with = FALSE]),
         #label = test[, Y, with = FALSE][[Y]])
-
         #watchlist <- list(eval = dtest, train = dtrain)
-
         # Fit the model, giving the previously fitted model as a parameter
         if (any(is.null(coef) || is.na(coef))) {
           coef <- NULL
         }
-
+        if (!is.null(coef)){
+          # load binary model to R
+          coef <- xgb.load(coef)
+        
+        }
         estimator <- xgb.train(
           data = dtrain,
           params     = self$get_params,
@@ -164,9 +160,7 @@ ML.XGBoost <- R6Class("ML.XGBoost",
           xgb_model  = coef,
           verbose    = 0
         ) #private$verbosity)
-
         if(any(is.na(estimator))) browser()
-
         return(estimator)
     }
     )

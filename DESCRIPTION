@@ -27,6 +27,7 @@ Imports:
     condensier,
     methods,
     magrittr,
+    Metrics,
     purrr,
     pROC,
     assertthat,
@@ -81,7 +82,6 @@ Collate:
     'ML.H2O.gbm.R'
     'ML.H2O.glm.R'
     'ML.H2O.randomForest.R'
-    'ML.Local.Speedlm.R'
     'RelevantVariable.R'
     'OneStepEstimator.R'
     'OnlineSuperLearner.Predict.R'
