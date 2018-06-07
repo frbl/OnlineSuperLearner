@@ -4,7 +4,7 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
-#' @importFrom xgboost xgb.dump xgb.train xgb.DMatrix getinfo
+#' @importFrom xgboost xgb.dump xgb.train xgb.DMatrix getinfo xgb.save.raw xgb.load
 #' @importFrom Metrics mse
 #' @include ML.Base.R
 #' @section Methods:
