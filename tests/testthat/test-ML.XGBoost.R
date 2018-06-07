@@ -134,103 +134,74 @@ test_that("it should be able to do a prediction", {
 
 context(" update")
 #===================================================
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
-# NOT YET WORKING, SEE https://github.com/dmlc/xgboost/issues/2545 #
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
-
 test_that("it should call the do.fit function with the provided model", {
   subject <- described.class$new(rounds=1, booster='gblinear')
   nobs <- 20
   delta <- 0.05
   X_mat <- data.table(A = rnorm(nobs, 0,1), B = rnorm(nobs, 0,1))
   probs <- pmax(as.numeric(X_mat$A > 0) - 2*delta, 0) + delta
-
   X_mat <- as.matrix(X_mat)
   Y_vals <- rbinom(nobs, 1, probs)
-
   initial_model <- subject$perform_fit(X_mat = X_mat, Y_vals = Y_vals)
-
+  # save model to R's raw vector otherwise an handle error occurs and no update will take place.
+  raw = xgb.save.raw(initial_model)
+  
   expect_equal(initial_model$niter, 1)
-  updated_model <- subject$perform_update(X_mat, Y_vals, m.fit = list(coef = initial_model))
-  (updated_model)
-
+  updated_model <- subject$perform_update(X_mat, Y_vals, m.fit = list(coef = raw))
+  
+  
   expect_is(updated_model, 'xgb.Booster')
-
   ## Test if it was updated
   expect_equal(updated_model$niter, 2)
 })
 
-#test_that("it should improve the fit if we update the model", {
-  #set.seed(12345)
-  ##subject <- described.class$new()
-  #nobs <- 5
-  #niter <- 1000
-  #nrounds <- 1 
-  #test_nobs <- 200
-  #delta <- 0.05
-  #misclassifications <- 0
+test_that("it should improve the fit if we update the model", {
+  set.seed(12345)
+  subject <- described.class$new()
+  nobs <- 5
+  niter <- 1000
+  nrounds <- 1 
+  test_nobs <- 200
+  delta <- 0.05
+  misclassifications <- 0
 
-
-  ### Create a test set
-  #test_X_mat <- data.table(A = rnorm(test_nobs, 0,1), B = rnorm(test_nobs, 0,1))
-  #test_probs <- pmax(as.numeric(test_X_mat$A > 0) - 2*delta, 0) + delta
-  #test_X_mat <- as.matrix(test_X_mat)
-  #test_Y_vals <- rbinom(test_nobs, 1, test_probs)
-
-  #params <- list(
-    #objective = Arguments$getCharacter('binary:logistic'),
-    #booster = 'gblinear',
-    #lambda = 0.2,
-    #max_depth = 18,
-    #eta = 1,
-    #nthread = 1
-  #)
-
-  ##for (i in 1:niter) {
-    #nobs <- nobs + 1 
-    #X_mat <- data.table(A = rnorm(nobs, 0,1), B = rnorm(nobs, 5,10))
-    #probs <- pmax(as.numeric(X_mat$A > 0) - 2*delta, 0) + delta
-    #X_mat <- as.matrix(X_mat)
-    #Y_vals <- rbinom(nobs, 1, probs)
-
-
-    #dtrain <- xgb.DMatrix(data = X_mat,
-                          #label = Y_vals)
-
-    #data <- data.frame(cbind(X_mat, Y = Y_vals))
-    ##previous_model <- glm(Y ~ A + B, data, family = binomial())
-    #previous_model <- xgb.train(
-      #data = dtrain,
-      #params     = params,
-      #nrounds    = nrounds,
-      ##watchlist = watchlist,
-      #xgb_model  = NULL,
-      #verbose    = 0
-    #) #private$verbosity)
-
-    #test_X_mat
-    #result <- predict(previous_model, newdata = test_X_mat, type='response')
-
-    #prev_misclassifications <- sum(abs(as.numeric(result > 0.5) - test_Y_vals) / test_nobs * 100)
-    #misclassifications <- c(misclassifications, prev_misclassifications)
-  ##}
-  #for (i in 1:niter) {
-    #X_mat <- data.table(A = rnorm(nobs, 0, 1), B = rnorm(nobs, 0, 1))
-    #probs <- pmax(as.numeric(X_mat$A > 0) - 2*delta, 0) + delta
-    #X_mat <- as.matrix(X_mat)
-    #Y_vals <- rbinom(nobs, 1, probs)
-    
-
-    #dtrain <- xgb.DMatrix(data = X_mat,
-                          #label = Y_vals)
-    #### Update the fit
-    #previous_model <- subject$perform_update(X_mat = X_mat, Y_vals = Y_vals, m.fit = list(coef = previous_model))
-    #result <- subject$perform_prediction(X_mat = test_X_mat, m.fit = list(coef = previous_model))
-
-    #misclassifications <- c(misclassifications, sum(abs(as.numeric(result > 0.5) - test_Y_vals)))
-  #}
+  ## Create a test set
+  test_X_mat <- data.table(A = rnorm(test_nobs, 5,20), B = rnorm(test_nobs, 5,20))
+  test_probs <- pmax(as.numeric(test_X_mat$A > 0) - 2*delta, 0) + delta
+  test_X_mat <- as.matrix(test_X_mat)
+  test_Y_vals <- rbinom(test_nobs, 1, test_probs)
+  dtest_1 <- xgb.DMatrix(data = test_X_mat,
+                        label = test_Y_vals)
   
-  #plotme(misclassifications)
-  #expect_lte(misclassifications[length(misclassifications)], prev_misclassifications)
-  ##expect_lte(misclassifications, 10)
-#})
+	nobs <- nobs + 1 
+
+	## Create a train set  
+	X_mat_1 <- data.table(A = rnorm(nobs, 5,10), B = rnorm(nobs, 5,10))
+	probs_1 <- pmax(as.numeric(X_mat_1$A > 0) - 2*delta, 0) + delta
+	X_mat_1 <- as.matrix(X_mat_1)
+	Y_vals_1 <- rbinom(nobs, 1, probs_1)
+	
+	model_1 <-  subject$perform_fit(X_mat = X_mat_1, Y_vals = Y_vals_1)
+
+	## save model to R's raw vector otherwise an handle error occurs and no update will take place.
+	raw <- xgb.save.raw(model_1)
+	
+	mse_model_1 <- mse(subject$perform_prediction( X_mat = test_X_mat, m.fit = list(coef = model_1)), test_Y_vals)  
+	
+
+	###create new dataset
+	X_mat <- data.table(A = rnorm(nobs, 0, 1), B = rnorm(nobs, 0, 1))
+	probs <- pmax(as.numeric(X_mat$A > 0) - 2*delta, 0) + delta
+	X_mat <- as.matrix(X_mat)
+	Y_vals <- rbinom(nobs, 1, probs)
+	
+	dtrain <- xgb.DMatrix(data = X_mat,
+												label = Y_vals)
+
+	## Update the fit
+	## use the raw model
+	model_2 <- subject$perform_update(X_mat = X_mat, Y_vals = Y_vals, m.fit = list(coef = raw))
+	mse_model_2 <-mse(subject$perform_prediction( X_mat = test_X_mat, m.fit = list(coef = model_2)), test_Y_vals)  
+	expect_that(mse_model_2,is_less_than(mse_model_1))
+})
+
