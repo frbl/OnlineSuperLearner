@@ -68,7 +68,7 @@ test_that("it should throw if the provided B_iter is not an int", {
 })
 
 test_that("it should implement a test from which we know the correct distribution, and we know it is the same as the simulator", {
-  if(Sys.getenv('CI')) skip('Takes to long now')
+  if(Sys.getenv('CI') != "") skip('Takes to long now')
   set.seed(1234)
   log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
   subject <- described.class$new(log)
