@@ -43,23 +43,28 @@ Y <- RelevantVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, 
 relevantVariables <- c(W, A, Y)
 
 ## Generate a dataset we will use for testing.
-margin <- 100
 training_set_size <- 1e3
 test_set_size <- 100
-sim  <- Simulator.GAD$new()
-log = FALSE
-nb_iter <- 10
 
-data.test <- sim$simulateWAY(test_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=log)
-data.train <- sim$simulateWAY(training_set_size + margin, qw=llW, ga=llA, Qy=llY, verbose=log)
+sim  <- Simulator.GAD$new()
+
+log = FALSE
+
+## What is the maximum number of iterations the OSL can use while going over the data?
+## Note that in this case we split the data in equal parts with this number of iterations
+max_iterations <- 10
+
+## Generate some fake data for testing and training
+data.train <- sim$simulateWAY(training_set_size, qw=llW, ga=llA, Qy=llY, verbose=log)
+data.test <- sim$simulateWAY(test_set_size, qw=llW, ga=llA, Qy=llY, verbose=log)
 
 ## Define a list of algorithms to use
 algos <- list()
-algos <- append(algos, list(list(algorithm = "condensier::speedglmR6",
-                                 params = list(nbins = c(5, 10, 15), online = FALSE))))
+algos <- append(algos, list(list(algorithm = "ML.XGBoost",
+                                 params = list(nbins = c(5, 10, 15), online = TRUE))))
 
-## Create the bounds
-bounds <- PreProcessor.generate_bounds(data.train)
+algos <- append(algos, list(list(algorithm = "ML.NeuralNet",
+                                 params = list(nbins = c(5, 10, 15), online = TRUE))))
 
 ## Specify the intervention we'd like to test, and also specify when we want to
 ## test this interventsion
@@ -68,15 +73,16 @@ tau = 2
 
 ## Fit the actual OSL
 osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
-  formulae = relevantVariables,
-  data = data.train,
-  algorithms = algos, 
-  verbose = log,
-  test_set_size = 5 + (3 * 3 + 3),
+  formulae = relevantVariables, ## Specify which are the formulae we expet
+  data = data.train, ## Specify the data to train on
+  algorithms = algos, ## SPecify the correct algorithms
+  verbose = log, ## Logging information
+  bounds = TRUE, ## Let the OSL generate the bounds based on the data it gets
+  test_set_size = 5 + (3 * 3 + 3), ## The size of the minibatch test size
 
-  initial_data_size = training_set_size / 2,
-  max_iterations = nb_iter,
-  mini_batch_size = (training_set_size / 2) / nb_iter
+  initial_data_size = training_set_size / 2, ## Train the first iteration (Nl) on this part of the data
+  max_iterations = max_iterations, ## Use at most max_iterations over the data
+  mini_batch_size = (training_set_size / 2) / max_iterations ## Split the rememaining data into N-Nl/max_iterations equal blocks of data
 )
 
 ## Sample data from it
