@@ -14,7 +14,7 @@ This is the current version of the Online SuperLearner for Time-Series data R pa
 * Has several pre-defined summary measures
 
 ### Install the development version from GitHub:
-
+##
 ```r
 # install.packages("devtools")
 devtools::install_github("frbl/OnlineSuperLearner")
