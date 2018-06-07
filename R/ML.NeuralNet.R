@@ -29,8 +29,9 @@ ML.NeuralNet <- R6Class("ML.NeuralNet",
     list(
       fitfunname='neural-net',
       lmclass='neural-net',
-      initialize = function(hidden=c(1,3)) {
+      initialize = function(hidden=c(1,3), stepmax=1e6) {
         private$hidden <- hidden
+        private$stepmax <- stepmax
       }
     ),
   active =
@@ -41,46 +42,56 @@ ML.NeuralNet <- R6Class("ML.NeuralNet",
     ),
   private =
     list(
+      stepmax = NULL,
       hidden = NULL,
       file_name = file.path('output', 'model_NN.rds'),
 
       do.fit = function(X_mat, Y_vals, save_model = FALSE, coef = NULL) {
         formula <- self$create_formula(colnames(X_mat))
         data = cbind(X_mat, Y = Y_vals) 
-        m.fit <- neuralnet(formula, data = data, hidden = private$hidden , linear.output=FALSE, startweights = coef)
+        fitted_model <- neuralnet(formula, data = data, hidden = private$hidden,
+                                  linear.output=FALSE,
+                                  startweights = coef,
+                                  stepmax = private$stepmax)
 
         if (save_model) {
-          private$save_model(model = m.fit)
+          private$save_model(model = fitted_model)
         }
 
-        return(m.fit)
+        return(fitted_model)
       },
 
       do.update = function(X_mat, Y_vals, save_model = FALSE,  m.fit = NULL, ...) {
         # By default the neuralnet function uses the old model as a parameter.
         # Therefore we can just simply call the fit function,if m.fit is null
         # then look for a saved model
-        if (!is.null(m.fit)){
-           m.fit=private$do.fit(X_mat, Y_vals,save_model, coef = m.fit$weights)
-        } else {
-          model <- private$read_model()
-          m.fit=private$do.fit(X_mat, Y_vals,save_model,coef = model$weights)
+        if (is.null(m.fit)){
+          m.fit <- private$read_model()
         }
+
+        fitted_model <- private$do.fit(X_mat, Y_vals, 
+                                      save_model = save_model,
+                                      coef = m.fit$coef$weights)
 
         if (save_model) {
-          private$save_model(model = m.fit)
+          private$save_model(model = fitted_model)
         }
 
-        return(m.fit)
+        if(is.null(fitted_model$weights)){
+          browser()
+        }
+
+        
+        return(fitted_model)
       },
 
       do.predict = function(X_mat, m.fit = NULL) {
         if (is.null(m.fit)){
-          # X_mat should have the same shape as the saved model...
-          m.fit<-private$read_model()
+          m.fit <- private$read_model()
         }
+          
+        result <- compute(m.fit$coef, X_mat)
 
-        result <- compute(m.fit, X_mat)
         return(result$net.result)
       },
 
