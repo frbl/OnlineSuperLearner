@@ -80,6 +80,7 @@ Collate:
     'ML.H2O.glm.R'
     'ML.H2O.randomForest.R'
     'ML.Local.Speedlm.R'
+    'ML.SpeedGLMSGD.R'
     'RelevantVariable.R'
     'OneStepEstimator.R'
     'OnlineSuperLearner.Predict.R'
