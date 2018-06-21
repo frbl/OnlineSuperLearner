@@ -248,11 +248,11 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
             ## Convert the outcomes from a list to  a matrix
             outcomes <- matrix(unlist(outcomes, use.names = FALSE), ncol = length(outcomes), byrow = FALSE)
 
-            ## Apply the weights
-            outcones <- outcomes %*% filtered_weights
-
             ## Store the names
             colnames(outcomes) <- algorithm_names
+
+            ## Apply the weights
+            outcomes <- outcomes %*% filtered_weights
           }
           result <- append(result, list(outcomes))
         }

@@ -1,6 +1,6 @@
 #! /usr/bin/env Rscript
 # General packages
-options(repos = structure(c(CRAN = "http://cran-mirror.cs.uu.nl/")))
+options(repos = structure(c(CRAN = "https://cran.cnr.berkeley.edu/")))
 
 packages <- c(
 "devtools",

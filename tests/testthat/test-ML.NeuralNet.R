@@ -42,7 +42,7 @@ test_that("it should update the model and return the updated version",{
   )
   y <- c(0,0,0,0,0,0,1,0,1,1)
   subject <- described.class$new()
-  model<-subject$perform_fit(X_mat = data, Y_vals = y)
+  model <- subject$perform_fit(X_mat = data, Y_vals = y)
 
   data <- data.table(
     x1=c(1,2,3,4,5,6,7,8,9,10),
@@ -51,7 +51,7 @@ test_that("it should update the model and return the updated version",{
 
   y <- c(0,0,0,0,0,0,1,0,1,1)
   subject <- described.class$new()
-  testfit<-subject$perform_update(X_mat = data, Y_vals = y, m.fit = model)
+  testfit <- subject$perform_update(X_mat = data, Y_vals = y, m.fit = model)
   expect_is(testfit, 'nn')
   expect_false(equals(testfit, model))
   # TODO: Actually perform the test here
@@ -93,14 +93,14 @@ test_that("this should make a prediction with a new model",{
   )
   y <- c(0,0,0,0,0,0,1,0,1,1)
   subject <- described.class$new()
-  model<-subject$perform_fit(X_mat = data, Y_vals = y)
+  model <- subject$perform_fit(X_mat = data, Y_vals = y)
   #then predict
   data <- data.table(
     x1=c(1,2,3,4,5,6,7,8,9,10),
     x2=c(1,2,3,4,5,6,7,8,9,10)
   )
   subject <- described.class$new()
-  prob<-subject$perform_prediction(X_mat = data, m.fit=model)
+  prob <- subject$perform_prediction(X_mat = data, m.fit=list(coef=model))
   # TODO: Actually perform the test here
 })
 
@@ -109,7 +109,7 @@ test_that("this should make a prediction using a saved model",{
     x1=c(1,2,3,4,5,6,7,8,9,10)
   )
   subject <- described.class$new()
-  prob<-subject$perform_prediction(X_mat = data,m.fit=NULL)
+  prob <- subject$perform_prediction(X_mat = data,m.fit=NULL)
   # TODO: Actually perform the test here
 })
 

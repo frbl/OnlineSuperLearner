@@ -172,7 +172,7 @@ test_that("it should update the predictions according to the osl_weights", {
   expect_false(should_not_be_called)
   expected = as.numeric(c(1,2,3) %*% weights) 
   expect_true(all(result$normalized$osl.estimator == expected))
-  expect_true(all(result$denormalized$osl.estimator== expected))
+  expect_true(all(result$denormalized$osl.estimator == expected))
 })
 
 test_that("it should calculate new predictions if not all are available", {

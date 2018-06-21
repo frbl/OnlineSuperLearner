@@ -77,10 +77,6 @@ ML.NeuralNet <- R6Class("ML.NeuralNet",
           private$save_model(model = fitted_model)
         }
 
-        if(is.null(fitted_model$weights)){
-          browser()
-        }
-
         
         return(fitted_model)
       },
@@ -90,6 +86,7 @@ ML.NeuralNet <- R6Class("ML.NeuralNet",
           m.fit <- private$read_model()
         }
           
+        private$validate_mfit(m.fit)
         result <- compute(m.fit$coef, X_mat)
 
         return(result$net.result)
@@ -100,7 +97,14 @@ ML.NeuralNet <- R6Class("ML.NeuralNet",
       },
 
       read_model = function() {
-        readRDS(self$get_file_name)
+        # Comply to the condensier api
+        list(coef = readRDS(self$get_file_name))
+      },
+
+      validate_mfit = function(m.fit) {
+        if (!is(m.fit$coef, 'nn')) {
+          stop('Either built a check for this, or make sure we are returning m.fit itself or if it is contained in the $coef variable')
+        }
       }
     )
 )
