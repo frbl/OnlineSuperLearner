@@ -64,7 +64,7 @@ ML.SpeedGLMSGD <- R6Class("ML.SpeedGLMSGD",
         }
 
         result <- private$predict_lr(X_mat, m.fit)
-        private$conditionally_save_model(model = coef(m.fit))
+        private$conditionally_save_model(model = m.fit)
 
         return(result)
       },
@@ -135,16 +135,13 @@ ML.SpeedGLMSGD <- R6Class("ML.SpeedGLMSGD",
 
       predict_lr = function(X_mat, coef){
         #prediction of the Y
-        X_mat_mtx = as.matrix(X_mat)
-        intercept_row = cbind(intercept = 1, X_mat_mtx)
-        coef_mtx = as.matrix(coef)
-        y_pred = 0
+        X_mat_mtx <- as.matrix(X_mat)
+        intercept_row <- cbind(intercept = 1, X_mat_mtx)
+        coef_mtx <- as.matrix(coef)
+        y_pred <- intercept_row %*% coef_mtx
 
-        y_pred <- intercept_row%*% coef_mtx
         #convert the result into a logit function
-        yhat_return = plogis(y_pred)
-
-        return(yhat_return)
+        return(plogis(y_pred))
       },
 
       gradient_descent = function(X_mat, Y_vals, coef) {
@@ -153,7 +150,6 @@ ML.SpeedGLMSGD <- R6Class("ML.SpeedGLMSGD",
         X_mat <- cbind(intercept = 1, X_mat)
 
         m = nrow(X_mat)
-        theta %<>% as.matrix
         X_mat %<>% as.matrix        
         Y_vals %<>% as.matrix        
 

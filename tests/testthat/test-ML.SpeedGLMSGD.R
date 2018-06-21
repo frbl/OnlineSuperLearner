@@ -69,8 +69,10 @@ test_that("it should fit the model and save the coefficients and return the upda
   
   Y_vals <- c(0,1,0,1,0,1,1,0,1,1)
   subject <- described.class$new()
-  testfit<-subject$perform_update(X_mat = X_mat, Y_vals = Y_vals, m.fit = NULL)
-  expect_is(testfit, 'matrix')
+  testfit <- subject$perform_update(X_mat = X_mat, Y_vals = Y_vals, m.fit = NULL)
+
+  # We are returning a list of coefficients, hence numeric
+  expect_is(testfit, 'numeric')
   expect_false(equals(testfit, coef(model)))
 })
 
