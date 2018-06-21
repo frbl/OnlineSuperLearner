@@ -13,8 +13,8 @@ test_that("it should fit a basic model", {
   Y_vals <- c(0,1,1,1,0,0,0,0,1,1,1,1,0,0,0,1,0,1,0)
   X_mat <- data.table(x1 =	c(3,1,3,1,3,3,1,3,3,2,3,1,3,3,3,2,3,2,3),
                       x2 =	c(1,0,0,0,1,1,1,1,0,0,0,0,1,1,0,0,1,1,0))
-  subject <- described.class$new()
-  model <- subject$perform_fit(X_mat = X_mat, Y_vals = Y_vals, save_model = FALSE)
+  subject <- described.class$new(save_model = FALSE)
+  model <- subject$perform_fit(X_mat = X_mat, Y_vals = Y_vals)
   expect_is(model, 'speedlm')
 })
 
@@ -24,9 +24,9 @@ test_that("it should store the coef of the speedGLMSGD", {
     x2=c(0,0,1,1,0,1,1,0,1,0)
   )
   Y_vals <- c(0,1,0,1,0,1,1,0,1,1)
-  subject <- described.class$new()
+  subject <- described.class$new(save_model = TRUE)
   #file.remove(subject$get_file_name)
-  model <- subject$perform_fit(X_mat = X_mat, Y_vals = Y_vals, save_model = TRUE)
+  model <- subject$perform_fit(X_mat = X_mat, Y_vals = Y_vals)
   expect_true(file.exists(subject$get_file_name))
 })
 
@@ -37,8 +37,8 @@ test_that("it should update the model and return the updated version",{
   Y_vals <- c(0,1,1,1,0,0,0,0,1,1,1,1,0,0,0,1,0,1,0)
   X_mat <- data.table(x1 =	c(3,1,3,1,3,3,1,3,3,2,3,1,3,3,3,2,3,2,3),
                       x2 =	c(1,0,0,0,1,1,1,1,0,0,0,0,1,1,0,0,1,1,0))
-  subject <- described.class$new()
-  model<-subject$perform_fit(X_mat =X_mat, Y_vals = Y_vals, save_model = FALSE)
+  subject <- described.class$new(save_model = FALSE)
+  model<-subject$perform_fit(X_mat =X_mat, Y_vals = Y_vals)
   
   X_mat <- data.table(
     x1=c(1,2,3,1,2,3,1,2,3,1),
@@ -59,8 +59,8 @@ test_that("it should fit the model and save the coefficients and return the upda
   Y_vals <- c(0,1,1,1,0,0,0,0,1,1,1,1,0,0,0,1,0,1,0)
   X_mat <- data.table(x1 =	c(3,1,3,1,3,3,1,3,3,2,3,1,3,3,3,2,3,2,3),
                       x2 =	c(1,0,0,0,1,1,1,1,0,0,0,0,1,1,0,0,1,1,0))
-  subject <- described.class$new()
-  model<-subject$perform_fit(X_mat = X_mat, Y_vals = Y_vals, save_model = TRUE )
+  subject <- described.class$new(save_model = TRUE )
+  model<-subject$perform_fit(X_mat = X_mat, Y_vals = Y_vals)
   
   X_mat <- data.table(
     x1=c(1,2,3,1,2,3,1,2,3,1),
@@ -72,7 +72,6 @@ test_that("it should fit the model and save the coefficients and return the upda
   testfit<-subject$perform_update(X_mat = X_mat, Y_vals = Y_vals, m.fit = NULL)
   expect_is(testfit, 'matrix')
   expect_false(equals(testfit, coef(model)))
-  
 })
 
 context(" do.update")
@@ -82,8 +81,8 @@ test_that("it should fit the model twice and not save the coefficients and retur
   Y_vals <- c(0,1,1,1,0,0,0,0,1,1,1,1,0,0,0,1,0,1,0)
   X_mat <- data.table(x1 =	c(3,1,3,1,3,3,1,3,3,2,3,1,3,3,3,2,3,2,3),
                       x2 =	c(1,0,0,0,1,1,1,1,0,0,0,0,1,1,0,0,1,1,0))
-  subject <- described.class$new()
-  model<-subject$perform_fit(X_mat = X_mat, Y_vals = Y_vals, save_model = FALSE )
+  subject <- described.class$new(save_model = FALSE )
+  model<-subject$perform_fit(X_mat = X_mat, Y_vals = Y_vals)
   
  X_mat <- data.table(
     x1=c(1,2,3,1,2,3,1,2,3,1),
@@ -120,16 +119,14 @@ test_that("it should be able to do a prediction", {
 context(" do.predict")
 #==========================================================
 test_that("it should be able to do a prediction with a saved model", {
-  subject <- described.class$new()
+  subject <- described.class$new(save_model = TRUE)
   Y_vals <- c(0,1,1,1,0,0,0,0,1,1,1,1,0,0,0,1,0,1,0)
   X_mat <- data.table(x1 =	c(3,1,3,1,3,3,1,3,3,2,3,1,3,3,3,2,3,2,3),
                       x2 =	c(1,0,0,0,1,1,1,1,0,0,0,0,1,1,0,0,1,1,0))
   
-  initial_model <- subject$perform_fit(X_mat = X_mat, Y_vals = Y_vals, save_model = TRUE)
+  initial_model <- subject$perform_fit(X_mat = X_mat, Y_vals = Y_vals)
   
   result <- subject$perform_prediction(X_mat = X_mat, Y_vals = Y_vals, m.fit = NULL)
-  
-  
   mse <- mean((result-Y_vals)^2)
   
   expect_lt(mse,0.2)
