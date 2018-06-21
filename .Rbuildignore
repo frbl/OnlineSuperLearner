@@ -51,3 +51,4 @@ test.Dockerfile
 #^.*\.Rproj$
 #^\.Rproj\.user$
 ^docs$
+^\.travis\.yml$

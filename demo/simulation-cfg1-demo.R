@@ -33,7 +33,8 @@ llY <- list(rgen={function(AW){
   mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
     (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
   mu <- aa*(0.9) + (1-aa)*(0.3)
-  rnorm(length(mu), mu, sd=0.1)}})
+  rnorm(length(mu), mu, sd=0.1)}}
+)
 
 
 ## We'd like to use the following features in our estimation:
@@ -88,7 +89,6 @@ osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
 ## Sample data from it
 preds <- sampledata(osl, newdata = data.test, relevantVariables, plot = TRUE)
 preds
-
 
 ## Define kolmogorov-smirnov test
 T_iter <- 10

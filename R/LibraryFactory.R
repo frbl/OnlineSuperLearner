@@ -151,7 +151,6 @@ LibraryFactory <- R6Class("LibraryFactory",
                                                     'ML.H2O.randomForest',
                                                     'ML.randomForest',
                                                     'ML.SVM',
-                                                    'ML.Local.Speedlm',
                                                     'ML.Local.lm',
                                                     'ML.NeuralNet',
                                                     'ML.XGBoost'), verbose = FALSE) {
