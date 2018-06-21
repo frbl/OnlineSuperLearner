@@ -1,8 +1,7 @@
 FROM r-base:3.4.3
 MAINTAINER Frank Blaauw <f.j.blaauw@rug.nl>
 
-WORKDIR /OnlineSuperLearner
-COPY ./inst/bash/install-package-dependencies.sh /OnlineSuperLearner/inst/bash/install-package-dependencies.sh
+WORKDIR /app
 
 # The unstable flag was needed to install the correct curl libraries.
 # See https://github.com/rocker-org/rocker/issues/232.
@@ -22,16 +21,18 @@ RUN apt update && apt install --no-install-recommends -y \
 # Not using because of H2O incompatibility
 #default-jre && \
  
+COPY ./inst/bash/install-package-dependencies.sh /app/inst/bash/install-package-dependencies.sh
 RUN ./inst/bash/install-package-dependencies.sh
+RUN mkdir -p /app/OnlineSuperLearner.Rcheck/tests/ && ln -sf /proc/self/fd/1 /app/OnlineSuperLearner.Rcheck/tests/testthat.Rout
 
-RUN Rscript -e 'install.packages(c("covr"));if (!all(c("covr") %in% installed.packages())) { q(status = 1, save = "no")}'
-RUN Rscript -e 'install.packages(c("devtools"));if (!all(c("devtools") %in% installed.packages())) { q(status = 1, save = "no")}'
-RUN Rscript -e 'install.packages(c("roxygen2"));if (!all(c("roxygen2") %in% installed.packages())) { q(status = 1, save = "no")}'
+#RUN Rscript -e 'install.packages(c("covr"));if (!all(c("covr") %in% installed.packages())) { q(status = 1, save = "no")}'
+#RUN Rscript -e 'install.packages(c("devtools"));if (!all(c("devtools") %in% installed.packages())) { q(status = 1, save = "no")}'
+#RUN Rscript -e 'install.packages(c("roxygen2"));if (!all(c("roxygen2") %in% installed.packages())) { q(status = 1, save = "no")}'
 
-COPY ./ /OnlineSuperLearner
+COPY ./ /app
 #RUN Rscript -e 'devtools::install_deps("/OnlineSuperLearner")'
 
 RUN R --no-save --quiet -e 'devtools::document()'
-RUN R CMD INSTALL --no-multiarch --with-keep.source /OnlineSuperLearner
-RUN R CMD build /OnlineSuperLearner
-CMD R CMD check /OnlineSuperLearner/`ls *.gz | tail -1` --no-manual --no-build-vignettes
+RUN R CMD INSTALL --no-multiarch --with-keep.source /app
+RUN R CMD build /app
+CMD R CMD check /app/`ls *.gz | tail -1` --no-manual --no-build-vignettes
