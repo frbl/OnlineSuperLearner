@@ -190,7 +190,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
               aa <- AW[, "A"]
               ww <- AW[, grep("[^A]", colnames(AW))]
               mu <- aa*(0.9) + (1-aa)*(0.3) + rnorm(length(aa), 0, 1)
-              mu <- lapply(mu, function(x) max(min(x, 1),0)) %>% unlist
+              mu <- pmax(pmin(mu, 1),0)
               rbinom(length(aa), 1, mu)
             }}
           )
@@ -332,7 +332,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
               aa <- AW[, "A"]
               ww <- AW[, grep("[^A]", colnames(AW))]
               mu <- aa*(0.9) + (1-aa)*(0.3) + rnorm(length(aa), 0, 1)
-              mu <- lapply(mu, function(x) max(min(x, 1),0)) %>% unlist
+              mu <- pmax(pmin(mu, 1),0)
               rbinom(length(aa), 1, mu)
             }}
           )
@@ -404,7 +404,7 @@ OnlineSuperLearner.Simulation <- R6Class("OnlineSuperLearner.Simulation",
               aa <- AW[, "A"]
               ww <- AW[, grep("[^A]", colnames(AW))]
               mu <- aa*(0.9) + (1-aa)*(0.3) + rnorm(length(aa), 0, 0.01)
-              mu <- lapply(mu, function(x) max(min(x, 1),0)) %>% unlist
+              mu <- pmax(pmin(mu, 1),0)
             }}
           )
 

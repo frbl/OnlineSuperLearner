@@ -84,14 +84,18 @@ fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, bounds = F
 #'   - List of strings with the names of the outputs (\code{list('X','Y')})
 #'   - Single string with the name of the output (\code{'Y'})
 #'
+#' @param nobs the number of observations to sample
+#'
 #' @param ... other parameters directly passed to the predict function
 #'
 #' @return \code{list} a list of estimator entries, each of which has a
 #'  \code{data.table} of corresponding sampled values.
 #' @export
-sampledata.OnlineSuperLearner <- function(object, newdata, Y = NULL, ...) {
+sampledata.OnlineSuperLearner <- function(object, newdata, Y = NULL, nobs=1, ...) {
+  ## TODO: Add the option to provide N.
   ## Test if the provided object is actually a OnlineSuperlearner
   object <- Arguments$getInstanceOf(object, 'OnlineSuperLearner')
+  nobs <- Arguments$getNumerics(nobs, c(1,Inf))
 
   ## Convert newdata to data.static
   if(!is(newdata, 'Data.Base')) {
@@ -104,8 +108,22 @@ sampledata.OnlineSuperLearner <- function(object, newdata, Y = NULL, ...) {
   }
 
   if (!is.null(Y)) Y <- object$retrieve_list_of_relevant_variables(relevant_variables = Y)
-  sampled <- object$predict(data = newdata, relevantVariables = Y, sample = TRUE, ...)
-  sampled$denormalized
+
+  flag <<- TRUE
+  res <- foreach(seq(1,nobs)) %do% {
+    sampled <- object$predict(data = newdata, relevantVariables = Y, sample = TRUE, ...)
+    sampled$denormalized
+  }
+
+  ## This loop is probably not needed, and can be solved
+  ## more elegantly. The result in res is a list of lists
+  ## of data.tables. Here we combine them in a list of
+  ## data.tables, where one entry corresponds to one
+  ## estimator.
+  algo_names <- names(res[[1]])
+  res <- lapply(algo_names, function(name) rbindlist(lapply(res, function(x) x[[name]])))
+  names(res) <- algo_names
+  res
 }
 
 ## NOTE: This function is not named sample to avoid namespace collisions.

@@ -59,7 +59,7 @@ test_that("it should not throw when the provided bounds are a boolean or a list"
 test_that("it should not throw if all arguments are correct", {
   data <- data.frame(W = seq(10), A=rbinom(10,1,0.5), Y = seq(10))
   algorithms <- list()
-  algorithms <- append(algorithms, list(list(algorithm = 'ML.Local.Speedlm',
+  algorithms <- append(algorithms, list(list(algorithm = 'ML.NeuralNet',
                        params = list(nbins = c(10, 20) , online = FALSE))))
 
   W <- RelevantVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
@@ -95,7 +95,7 @@ test_that("it should not normalize when bounds is FALSE", {
 
 context(" predict.OnlineSuperLearner")
 #==========================================================
-theresult <- 'theresult'
+theresult <- list(osl.estimator = data.table(Y = c(1,2,3)))
 expected_Y = 'therv_for_Y'
 expected_X = 'therv_for_X'
 subject <- list(get_relevant_variables = list('Y' = expected_Y, 'X' = expected_X))

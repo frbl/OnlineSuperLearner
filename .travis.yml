@@ -1,52 +1,5 @@
-#----------------------------------------------------------------
-# Travis-CI configuration for R packages
-#
-# REFERENCES:
-# * Travis CI: https://docs.travis-ci.com/user/languages/r
-# * covr: https://github.com/jimhester/covr
-#
-# Validate your .travis.yml file at http://lint.travis-ci.org/
-#----------------------------------------------------------------
+# R for travis: see documentation at https://docs.travis-ci.com/user/languages/r
 
-language: r
-#dist: trusty
-# Sudo is disabled for the package cache, see https://docs.travis-ci.com/user/languages/r/
+language: R
 sudo: false
 cache: packages
-warnings_are_errors: false
-latex: false
-os:
-  - linux
-r_build_args: "--no-build-vignettes --no-manual"
-env:
-  - CI=travis
-
-#before_install:
-  #- Rscript -e 'update.packages(ask = FALSE)'
-
-addons:
-  apt:
-    packages:
-      - libnlopt0
-
-r_packages:
-  - covr
-
-r:
-  - release
-
-r_github_packages:
-  - jimhester/covr
-  - schloerke/travisDrat
-
-after_success:
-  - Rscript -e 'covr::codecov()'
-
-on_failure:
-  - ./travis-tool.sh dump_logs
-
-notifications:
-  email:
-    on_success: change
-    on_failure: change
-

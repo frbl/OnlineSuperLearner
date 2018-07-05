@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # General packages
-options(repos = structure(c(CRAN = "http://cran-mirror.cs.uu.nl/")))
+options(repos = structure(c(CRAN = "https://cran.cnr.berkeley.edu/")))
 
 packages <- c(
 "devtools",
@@ -12,6 +12,8 @@ packages <- c(
 "R.utils",
 "R.methodsS3",
 "R.oo",
+"Rcpp",
+"pROC",
 "testthat",
 "xgboost",
 "glmnet",
@@ -25,6 +27,7 @@ packages <- c(
 "magrittr",
 "assertthat",
 "optimr",
+"Metrics",
 "nloptr",
 "purrr",
 "doParallel",

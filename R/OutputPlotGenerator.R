@@ -151,7 +151,7 @@ OutputPlotGenerator.create_training_curve = function(historical_cvs, relevantVar
     }
     
     colnames(dt) <- name_list
-    dt= tryCatch({
+    dt = tryCatch({
       data.table(dt)
     }, error = function(e) {
       browser()

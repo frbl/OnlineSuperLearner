@@ -2,62 +2,54 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
+#' @include InterventionParser.R
 Simulator.Slow <- R6Class("Simulator.Slow",
-  private =
-    list(
-        validateMechanism = function(fun) {
-          if (!mode(fun)=="function") {
-            throw("A mechanism should be of mode 'function', not, ", mode(fun))
-          }
-          if (is.null(attr(fun, "memory"))) {
-            throw("Attribute 'memory' is missing, this is not a valid mechanism")
-          }
-          if (is.null(attr(fun, "family"))) {
-            throw("Attribute 'family' is missing, this is not a valid mechanism")
-          }
-          return(fun)
-        },
-
-        validateIntervention = function(ll) {
-          ## ...
-          return(ll)
-        }
-        ),
   public =
     list(
-        initialize = function() {
+        initialize = function(qw=self$generateMechanism(0, family="gaussian"),
+                              ga=self$generateMechanism(0, family="bernoulli"),
+                              Qy=self$generateMechanism(0, family="bernoulli")) {
+
+          private$rgen <- list(bernoulli=function(xx, yy){as.integer(xx <= yy)},
+                        gaussian=function(xx, yy){xx+yy})
+
+          private$qw <- qw %>% private$validateMechanism(.)
+          private$ga <- ga %>% private$validateMechanism(.)
+          private$Qy <- Qy %>% private$validateMechanism(.)
+
+          private$families <- c(W=attr(private$qw, "family"),
+                                A=attr(private$ga, "family"),
+                                Y=attr(private$Qy, "family"))
+
+          private$memories <- c(W=attr(private$qw, "memory"),
+                                A=attr(private$ga, "memory"),
+                                Y=attr(private$Qy, "memory"))
         },
 
-        simulateWAY = function(by=1,
-                                qw=self$generateMechanism(0, family="gaussian"),
-                                ga=self$generateMechanism(0, family="bernoulli"),
-                                Qy=self$generateMechanism(0, family="bernoulli"),
-                                intervention=NULL,
-                                verbose=FALSE,
-                                version="slow") {
+        simulateWAY = function(numberOfBlocks=1,
+                               numberOfTrajectories = 1,
+                               qw = NULL,
+                               ga = NULL,
+                               Qy = NULL,
+                               intervention=NULL,
+                               verbose=FALSE,
+                               version="slow") {
           ## Retrieving arguments
-          by <- Arguments$getInteger(by, c(1, Inf))
-          qw <- private$validateMechanism(qw)
-          ga <- private$validateMechanism(ga)
-          Qy <- private$validateMechanism(Qy)
+          numberOfBlocks <- Arguments$getInteger(numberOfBlocks, c(1, Inf))
+
+          if (is.null(qw)) qw <- private$qw
+          if (is.null(ga)) ga <- private$ga
+          if (is.null(Qy)) Qy <- private$Qy
+
           if (!is.null(intervention)) {
-            intervention <- private$validateIntervention(intervention)
+            InterventionParser.valid_intervention(intervention)
           }
           verbose <- Arguments$getVerbose(verbose)
 
-          families <- c(W=attr(qw, "family"),
-                        A=attr(ga, "family"),
-                        Y=attr(Qy, "family"))
-
-          memories <- c(W=attr(qw, "memory"),
-                        A=attr(ga, "memory"),
-                        Y=attr(Qy, "memory"))
 
           rsource <- list(bernoulli=runif,
                           gaussian=rnorm)
 
-          rgen <- list(bernoulli=function(xx, yy){as.integer(xx <= yy)},
-                        gaussian=function(xx, yy){xx+yy})
 
           ## verbose
           if (is.null(intervention)) {
@@ -67,36 +59,29 @@ Simulator.Slow <- R6Class("Simulator.Slow",
           }
           verbose && cat(verbose, msg)
 
-          init <- rep(NA, by)
+          init <- rep(NA, numberOfBlocks)
           ## sources of randomness
           UU <- cbind(W=init, A=init, Y=init)
           for (ii in 1:3) {
-            UU[, ii] <- rsource[[families[ii]]](by)
+            UU[, ii] <- rsource[[self$get_families[ii]]](numberOfBlocks)
           }
 
-          WAY <- rep(init, 3)
+          #WAY <- rep(init, 3)
+          WAY <- matrix(rep(init, 3), ncol=3, dimnames=list(NULL, c("W", "A", "Y")))
           if (version=="slow") {
             ## -------------
             ## first version ## must be very slow
             ## -------------
-            for (ii in 1:by) {
-              past.idx <- self$retrieveRelevantPastWAYScenarioOne("W", ii, memories["W"])
-              which.pos <- which(past.idx>0)
-              past <- rep(0, memories["W"])
-              past[which.pos] <- WAY[past.idx[which.pos]]
-              WAY[(ii-1)*3+1] <- rgen[[families[1]]](UU[ii, 1], qw(past))
-              ##
-              past.idx <- self$retrieveRelevantPastWAYScenarioOne("A", ii, memories["A"])
-              which.pos <- which(past.idx>0)
-              past <- rep(0, memories["A"])
-              past[which.pos] <- WAY[past.idx[which.pos]]
-              WAY[(ii-1)*3+2] <- rgen[[families[2]]](UU[ii, 2], ga(past))
-              ##
-              past.idx <- self$retrieveRelevantPastWAYScenarioOne("Y", ii, memories["Y"])
-              which.pos <- which(past.idx>0)
-              past <- rep(0, memories["Y"])
-              past[which.pos] <- WAY[past.idx[which.pos]]
-              WAY[(ii-1)*3+3] <- rgen[[families[3]]](UU[ii, 3], Qy(past))
+            functions = list(list(name = 'W', fun = private$qw),
+                             list(name = 'A', fun = private$ga),
+                             list(name = 'Y', fun = private$Qy))
+            for (ii in 1:numberOfBlocks) {
+              for (j in seq_along(functions)) {
+                fun <- functions[[j]]
+                variable = fun$name
+                past <- private$get_past(variable, ii, WAY)
+                WAY[ii, variable] <- private$get_rgen(variable)(UU[ii, j], fun$fun(past))
+              }
             }
           } else if (version=="faster") {
             ## --------------
@@ -136,7 +121,9 @@ Simulator.Slow <- R6Class("Simulator.Slow",
             ##              return out;",
             ##              plugin="Rcpp")
           }
-          WAY <- t(matrix(WAY, nrow=3, dimnames=list(c("W", "A", "Y"), NULL)))
+          WAY <- t(matrix(WAY, nrow=3, dimnames=list(c("W", "A", "Y"), NULL))) %>%
+            as.data.table
+
           return(WAY)
         },
 
@@ -146,8 +133,8 @@ Simulator.Slow <- R6Class("Simulator.Slow",
           memory <- length(param)-1
           family <- match.arg(family)
           link <- switch(family,
-                          bernoulli=expit,
-                          gaussian=identity)
+                         bernoulli = expit,
+                         gaussian = identity)
 
           if (length(param)==1) {
             mechanism <- function(xx=numeric(0), par=param, lnk=link, verbose=FALSE) {
@@ -178,9 +165,9 @@ Simulator.Slow <- R6Class("Simulator.Slow",
               }
               ##
               if (FALSE) {
-                link(param[1] + param[-1]%*%xx)
+                link(par[1] + par[-1] %*% xx)
               } else {
-                link(param[1] + sum(param[-1]*xx))
+                link(par[1] + sum(par[-1] * xx))
               }
             }
           }
@@ -190,7 +177,7 @@ Simulator.Slow <- R6Class("Simulator.Slow",
         },
 
 
-        retrieveRelevantPastWAYScenarioOne = function(of, at, mem) {
+        retrieve_relevant_past = function(of, at, mem) {
           ## Retrieving arguments
           of <- Arguments$getCharacter(of)
           at <- Arguments$getInteger(at, c(1, Inf))
@@ -208,5 +195,53 @@ Simulator.Slow <- R6Class("Simulator.Slow",
           }
           return(idx)
         }
+    ),
+  active = 
+    list(
+      get_families = function(){
+        return(private$families)
+      },
+
+      get_memories = function(){
+        return(private$memories)
+      }
+    ),
+  private =
+    list(
+      qw = NULL,
+      ga = NULL,
+      Qy = NULL,
+      rgen = NULL,
+      memories = NULL,
+      families = NULL,
+
+      get_rgen = function(variable) {
+        private$rgen[[self$get_families[variable]]]
+      },
+
+      validateMechanism = function(fun) {
+        if (!mode(fun)=="function") {
+          throw("A mechanism should be of mode 'function', not, ", mode(fun))
+        }
+        if (is.null(attr(fun, "memory"))) {
+          throw("Attribute 'memory' is missing, this is not a valid mechanism")
+        }
+        if (is.null(attr(fun, "family"))) {
+          throw("Attribute 'family' is missing, this is not a valid mechanism")
+        }
+        return(fun)
+      },
+
+      validateIntervention = function(ll) {
+        ## ...
+        return(ll)
+      },
+
+      get_past = function(variable, ii, WAY){
+        past.idx <- self$retrieve_relevant_past(variable, ii, self$get_memories[variable])
+        which.pos <- which(past.idx > 0)
+        past <- rep(0, self$get_memories[variable])
+        past[which.pos] <- WAY[past.idx[which.pos]]
+      }
     )
 )

@@ -39,7 +39,10 @@
 Simulator.GAD <- R6Class("Simulator.GAD",
   public =
     list(
-      initialize = function() {
+      initialize = function(qw = NULL, ga = NULL, Qy = NULL) {
+        private$qw <- qw
+        private$ga <- ga
+        private$Qy <- Qy
       },
 
       simulateWAY = function(numberOfBlocks = 1,
@@ -58,8 +61,18 @@ Simulator.GAD <- R6Class("Simulator.GAD",
                                rnorm(length(mu), mu, sd = 1)}}),
                              intervention = NULL,
                              verbose = FALSE) {
+
         # retrieving arguments
         numberOfTrajectories <- Arguments$getInteger(numberOfTrajectories, c(1, Inf))
+
+        if (!(is.null(private$qw) || is.null(private$ga) || is.null(private$Qy))) {
+          verbose && cat(verbose, 'Using the simulator settings provided at initialization')
+          qw = private$qw 
+          ga = private$ga 
+          Qy = private$Qy 
+        }
+
+
         if (numberOfTrajectories == 1) {
           return(private$simulateWAYOneTrajectory(numberOfBlocks = numberOfBlocks,
                                                   qw = qw, ga = ga, Qy = Qy,
@@ -68,21 +81,25 @@ Simulator.GAD <- R6Class("Simulator.GAD",
         }
 
         what <- paste(numberOfTrajectories, "trajectories")
-        WAYs <- lapply(rep(numberOfBlocks, numberOfTrajectories),
-                        private$simulateWAYOneTrajectory,
-                        qw = qw, ga = ga, Qy = Qy, intervention = intervention, verbose = verbose, msg = what)
+        WAYs <- foreach(x = rep(numberOfBlocks, numberOfTrajectories)) %dopar% {
+          private$simulateWAYOneTrajectory(x, qw = qw, ga = ga, Qy = Qy, intervention = intervention, verbose = verbose, msg = what)
+        }
 
         col.names <- colnames(WAYs[[1]])
         WAYs <- Reduce(rbind, WAYs)
-        WAYs <- matrix(unlist(WAYs), ncol = length(col.names)*numberOfTrajectories)
-        colnames(WAYs) <- paste(rep(col.names, each = numberOfTrajectories),
-                                1:numberOfTrajectories, sep = ".")
+        #WAYs <- matrix(unlist(WAYs), ncol = length(col.names)*numberOfTrajectories)
+        #colnames(WAYs) <- paste(rep(col.names, each = numberOfTrajectories),
+                                #1:numberOfTrajectories, sep = ".")
 
         return(WAYs)
       }
     ),
   private =
     list(
+      qw = NULL,
+      ga = NULL,
+      Qy = NULL,
+
       validateMechanism = function(ll, what = c("qw", "ga", "Qy")) {
         # TODO: Don't use the index, use the actual key to the value (that is what is used in the code)
         what <- match.arg(what)

@@ -1,4 +1,3 @@
-
 ## Following the guide of the SL3 package
 ## Requires:
 ## - tidyverse
@@ -46,6 +45,10 @@ generate_formulae <- function(W, A, Y){
 
 
 set.seed(49753)
+
+if (!("devtools" %in% rownames(installed.packages()))) { install.packages('devtools') }
+if (!("sl3" %in% rownames(installed.packages()))) { install.packages('sl3') }
+
 library(sl3)
 library(tidyverse)
 
