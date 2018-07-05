@@ -13,9 +13,9 @@ Simulator.Slow <- R6Class("Simulator.Slow",
           private$rgen <- list(bernoulli=function(xx, yy){as.integer(xx <= yy)},
                         gaussian=function(xx, yy){xx+yy})
 
-          private$qw %<>% private$validateMechanism
-          private$ga %<>% private$validateMechanism
-          private$Qy %<>% private$validateMechanism
+          private$qw <- qw %>% private$validateMechanism(.)
+          private$ga <- ga %>% private$validateMechanism(.)
+          private$Qy <- Qy %>% private$validateMechanism(.)
 
           private$families <- c(W=attr(private$qw, "family"),
                                 A=attr(private$ga, "family"),
@@ -28,12 +28,18 @@ Simulator.Slow <- R6Class("Simulator.Slow",
 
         simulateWAY = function(numberOfBlocks=1,
                                numberOfTrajectories = 1,
+                               qw = NULL,
+                               ga = NULL,
+                               Qy = NULL,
                                intervention=NULL,
                                verbose=FALSE,
                                version="slow") {
           ## Retrieving arguments
           numberOfBlocks <- Arguments$getInteger(numberOfBlocks, c(1, Inf))
 
+          if (is.null(qw)) qw <- private$qw
+          if (is.null(ga)) ga <- private$ga
+          if (is.null(Qy)) Qy <- private$Qy
 
           if (!is.null(intervention)) {
             InterventionParser.valid_intervention(intervention)
@@ -73,8 +79,8 @@ Simulator.Slow <- R6Class("Simulator.Slow",
               for (j in seq_along(functions)) {
                 fun <- functions[[j]]
                 variable = fun$name
-                past <- self$get_past(variable, ii, WAY)
-                WAY[ii, variable] <- self$get_rgen(variable)(UU[ii, j], fun$fun(past))
+                past <- private$get_past(variable, ii, WAY)
+                WAY[ii, variable] <- private$get_rgen(variable)(UU[ii, j], fun$fun(past))
               }
             }
           } else if (version=="faster") {
@@ -115,7 +121,9 @@ Simulator.Slow <- R6Class("Simulator.Slow",
             ##              return out;",
             ##              plugin="Rcpp")
           }
-          WAY <- t(matrix(WAY, nrow=3, dimnames=list(c("W", "A", "Y"), NULL)))
+          WAY <- t(matrix(WAY, nrow=3, dimnames=list(c("W", "A", "Y"), NULL))) %>%
+            as.data.table
+
           return(WAY)
         },
 
