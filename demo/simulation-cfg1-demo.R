@@ -67,6 +67,9 @@ algos <- list()
 algos <- append(algos, list(list(algorithm = "ML.NeuralNet",
                                  params = list(nbins = c(5), online = TRUE))))
 
+algos <- append(algos, list(list(algorithm = "ML.NeuralNet",
+                                 params = list(nbins = c(5), online = TRUE))))
+
 ## Specify the intervention we'd like to test, and also specify when we want to
 ## test this interventsion
 intervention <- list(variable = 'A', when = c(2), what = c(1))
