@@ -175,7 +175,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
 
       check_enough_data_available = function(relevantVariables) {
         ## Currently we do not support interactions
-        needed <- unique(unlist(lapply(relevantVariables, function(rv) rv$getX)))
+        needed <- self$get_needed_data(relevantVariables)
         available <- unlist(lapply(private$SMG.list, function(smg) smg$exposedVariables))
         diff <- setdiff(needed, available)
 
@@ -185,6 +185,10 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
           throw('Not all provided variables (', missing, ') are included in the SMGs, include the correct SMGs')
         }
         TRUE
+      },
+
+      get_needed_data = function(relevantVariables) {
+        unique(unlist(lapply(relevantVariables, function(rv) rv$getX)))
       },
 
       set_trajectories = function(data) {

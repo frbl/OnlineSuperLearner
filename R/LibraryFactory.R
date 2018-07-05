@@ -152,6 +152,7 @@ LibraryFactory <- R6Class("LibraryFactory",
                                                     'ML.randomForest',
                                                     'ML.SVM',
                                                     'ML.Local.lm',
+                                                    'ML.SpeedGLMSGD',
                                                     'ML.NeuralNet',
                                                     'ML.XGBoost'), verbose = FALSE) {
           private$allowed_ml_models = ML.models.allowed

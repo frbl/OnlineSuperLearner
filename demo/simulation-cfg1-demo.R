@@ -67,7 +67,7 @@ algos <- list()
 algos <- append(algos, list(list(algorithm = "ML.NeuralNet",
                                  params = list(nbins = c(5), online = TRUE))))
 
-algos <- append(algos, list(list(algorithm = "ML.NeuralNet",
+algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
                                  params = list(nbins = c(5), online = TRUE))))
 
 ## Specify the intervention we'd like to test, and also specify when we want to
@@ -93,6 +93,9 @@ osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
 preds <- sampledata(osl, newdata = data.test, relevantVariables, plot = TRUE)
 preds
 
+sampledata(osl, newdata = data.test[1:3,], relevantVariables, plot = FALSE)
+
+
 ## Define kolmogorov-smirnov test
 T_iter <- 10
 B_iter <- 100
@@ -105,6 +108,6 @@ result <- subject$evaluate(
   sim,
   T_iter, 
   B_iter,
-  nbins= nbins
+  nbins = nbins
 )
 
