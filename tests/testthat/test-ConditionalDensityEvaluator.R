@@ -1,4 +1,5 @@
 library(mockery)
+run_slow_specs <- FALSE
 
 context("ConditionalDensityEvaluator.R")
 described.class <- ConditionalDensityEvaluator
@@ -68,7 +69,7 @@ test_that("it should throw if the provided B_iter is not an int", {
 })
 
 test_that("it should implement a test from which we know the correct distribution, and we know it is the same as the simulator", {
-  if(Sys.getenv('CI') != "") skip('Takes to long now')
+  if(Sys.getenv('CI') != "" || !run_slow_specs) skip('Takes to long now')
   set.seed(1234)
   log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
   subject <- described.class$new(log)
@@ -224,7 +225,7 @@ test_that("it should implement a test from which we know the correct conditional
 })
 
 test_that("it should evaluate the learner", {
-  if(FALSE) skip('Takes to long now')
+  if(Sys.getenv('CI') != "" || !run_slow_specs) skip('Takes to long now')
   ## General settings
   doParallel::registerDoParallel(cores = parallel::detectCores())
   log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
