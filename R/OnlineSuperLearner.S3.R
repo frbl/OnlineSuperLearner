@@ -91,14 +91,14 @@ fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, bounds = F
 #' @return \code{list} a list of estimator entries, each of which has a
 #'  \code{data.table} of corresponding sampled values.
 #' @export
-sampledata.OnlineSuperLearner <- function(object, newdata, Y = NULL, nobs=1, ...) {
+sampledata.OnlineSuperLearner <- function(object, newdata, Y = NULL, nobs=1, summarize=TRUE, ...) {
   ## TODO: Add the option to provide N.
   ## Test if the provided object is actually a OnlineSuperlearner
   object <- Arguments$getInstanceOf(object, 'OnlineSuperLearner')
   nobs <- Arguments$getNumerics(nobs, c(1,Inf))
 
   ## Convert newdata to data.static
-  if(!is(newdata, 'Data.Base')) {
+  if(!is(newdata, 'Data.Base') && summarize) {
     Data.Static$new(dataset = newdata) %>%
       object$get_summary_measure_generator$set_trajectories(.)
 

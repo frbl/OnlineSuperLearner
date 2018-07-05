@@ -46,25 +46,25 @@ ML.SpeedGLMSGD <- R6Class("ML.SpeedGLMSGD",
       should_save_model = NULL,
       file_name = file.path('output', 'coef.prn'),
 
-      do.predict = function(X_mat, Y_vals, m.fit = NULL) {
+      do.predict = function(X_mat, m.fit = NULL) {
+        #browser()
         X_mat <- data.frame(X_mat)
-        Y_vals <- data.frame(Y_vals)
-        data <- cbind.data.frame(Y_vals, X_mat)
+        #data <- cbind.data.frame(Y_vals, X_mat)
 
         #rename colums to standardize depending on the number of columns
-        data <- private$rename_columns(data)
+        #data <- private$rename_columns(data)
 
         if(is.null(m.fit)){
           m.fit <- private$read_model()
         }
 
-        if (is.null(m.fit)){
-          ## fit the model
-          m.fit <- coef(private$do.fit(X_mat = X_mat, Y_vals = Y_vals))
-        }
+        #if (is.null(m.fit)){
+          ### fit the model
+          #m.fit <- coef(private$do.fit(X_mat = X_mat, Y_vals = Y_vals))
+        #}
 
-        result <- private$predict_lr(X_mat, m.fit)
-        private$conditionally_save_model(model = m.fit)
+        result <- private$predict_lr(X_mat, m.fit$coef)
+        private$conditionally_save_model(model = m.fit$coef)
 
         return(result)
       },
@@ -77,7 +77,7 @@ ML.SpeedGLMSGD <- R6Class("ML.SpeedGLMSGD",
 
 
         #rename colums to standardize depending on the number of columns
-        data <- private$rename_columns(data)
+        #data <- private$rename_columns(data)
 
         if(is.null(m.fit)){
           m.fit <- private$read_model()
@@ -104,7 +104,7 @@ ML.SpeedGLMSGD <- R6Class("ML.SpeedGLMSGD",
         data <- cbind.data.frame(Y_vals, X_mat)
 
         #rename colums to standardize depending on the number of columns
-        data <- private$rename_columns(data)
+        #data <- private$rename_columns(data)
         x_names <- colnames(data[2:ncol(data)])
         formula <- self$create_formula(x_names)
 
@@ -133,12 +133,15 @@ ML.SpeedGLMSGD <- R6Class("ML.SpeedGLMSGD",
           as.matrix
       },
 
-      predict_lr = function(X_mat, coef){
+      predict_lr = function(X_mat, model){
         #prediction of the Y
         X_mat_mtx <- as.matrix(X_mat)
-        intercept_row <- cbind(intercept = 1, X_mat_mtx)
+        #intercept_row <- cbind(intercept = 1, X_mat_mtx)
+        model <- Arguments$getInstanceOf(model, 'speedlm')
+        coef <- model$coef
         coef_mtx <- as.matrix(coef)
-        y_pred <- intercept_row %*% coef_mtx
+        browser()
+        y_pred <- X_mat_mtx %*% coef_mtx
 
         #convert the result into a logit function
         return(plogis(y_pred))

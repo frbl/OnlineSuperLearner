@@ -367,10 +367,10 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
 
       predict_with_one_estimator = function(estimator, data, sample, plot) {
         # TODO: Unity in export formats. Probably the best is to enforce a data.table output
+
         normalized_result <- estimator$predict(data, 
                           sample = sample, 
-                          plot = plot) %>%
-          as.data.table
+                          plot = plot) %>% as.data.table
         denormalized_result <- private$denormalize(copy(normalized_result))
 
         list(normalized = normalized_result,
