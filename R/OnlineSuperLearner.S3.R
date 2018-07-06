@@ -109,7 +109,6 @@ sampledata.OnlineSuperLearner <- function(object, newdata, Y = NULL, nobs=1, sum
 
   if (!is.null(Y)) Y <- object$retrieve_list_of_relevant_variables(relevant_variables = Y)
 
-  flag <<- TRUE
   res <- foreach(seq(1,nobs)) %do% {
     sampled <- object$predict(data = newdata, relevantVariables = Y, sample = TRUE, ...)
     sampled$denormalized
@@ -123,7 +122,7 @@ sampledata.OnlineSuperLearner <- function(object, newdata, Y = NULL, nobs=1, sum
   algo_names <- names(res[[1]])
   res <- lapply(algo_names, function(name) rbindlist(lapply(res, function(x) x[[name]])))
   names(res) <- algo_names
-  res
+  return(res)
 }
 
 ## NOTE: This function is not named sample to avoid namespace collisions.

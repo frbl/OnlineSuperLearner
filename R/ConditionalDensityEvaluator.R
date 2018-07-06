@@ -86,28 +86,26 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
               }
 
               newdata <- (dataset = a_subset[sample(nrow(a_subset), 1),])
-              #nsamples <- (B_iter/nbins)/n_A_bins
-              browser()
-              #########################################################
-              # HIER BEN JE, HET SAMPLEN GAAT NOG NIET GOED, MISSCHIEN 
-              # MOET HET EEN DATA>BASE WORDEN? DE OUTPUT HIER IS IIG FOUT!
-              # ER KOMT IETS ALS :
-                        #Y1             Y2             Y3             Y4             A1             A2             A3             A4
-              #1.1029613590   1.1086898586   0.9687962040   0.9106088438   0.0000000000   0.0000000000   0.4660021778   0.4660021778
-                          #W1             W2             W3             W4
-              #-12.1057488572 -14.7417268800  -9.4160285071 -10.7245902185
+
               res <- sampledata(osl, newdata, 
                                 nobs = available_subset_size,
-                                summarize = FALSE)$osl.estimator %>% unlist
+                                summarize = FALSE)$osl.estimator
+
+              names <- colnames(res)
 
               ## Plot some debugging distributions
-              plot(density(a_subset$Y))
-              lines(density(res), col='red')
+              predicted_densities <- apply(res, 2, density)
+              true_densities <- lapply(names, function(name) density(a_subset[[name]]))
+              names(true_densities) <- names
+
+              ##################
+              ## Only go for Y now
+              plot(true_densities$Y)
+              lines(predicted_densities$Y, col='red')
               private$verbose && exit(private$verbose)
 
               ## Calculate kolmogorov smirnov test here.
-              pval <- private$test_difference(res, a_subset$Y)
-
+              pval <- private$test_difference(res$Y, a_subset$Y)
               #if(pval <= 0.05) browser()
               pval
             }
@@ -117,6 +115,7 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
             res_under_a
           }
           private$verbose && exit(private$verbose)
+
           names(estimated_data) <- apply(W_bins, 2, function(x) paste(x, collapse=' to '))
 
           estimated_data
