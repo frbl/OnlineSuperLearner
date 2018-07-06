@@ -111,3 +111,9 @@ result <- subject$evaluate(
   nbins = nbins
 )
 
+flat_result <- result %>% unlist %>% unname
+flat_result <- flat_result[!is.na(flat_result)]
+perc_significant <- sum(flat_result >= 0.95) / length(flat_result) * 100 %>% round(., 2)
+perc_significant <- perc_significant %>% round(., 2)
+paste(perc_significant,'% significant in the KS-test')
+
