@@ -47,15 +47,20 @@ ML.SpeedGLMSGD <- R6Class("ML.SpeedGLMSGD",
       file_name = file.path('output', 'coef.prn'),
 
       do.predict = function(X_mat, m.fit = NULL) {
-        #browser()
-        X_mat <- data.frame(X_mat)
+        X_mat <- Arguments$getInstanceOf(X_mat, 'data.table')
         #data <- cbind.data.frame(Y_vals, X_mat)
 
         #rename colums to standardize depending on the number of columns
         #data <- private$rename_columns(data)
 
         if(is.null(m.fit)){
-          m.fit <- private$read_model()
+          # Nasty: Wrapping it in a double list so we essentially adhere to
+          # the speedlm api
+          m.fit <- list(coef = list(coef = private$read_model()))
+        }
+
+        if (!is(m.fit, 'list')) {
+         browser() 
         }
 
         #if (is.null(m.fit)){
@@ -71,8 +76,9 @@ ML.SpeedGLMSGD <- R6Class("ML.SpeedGLMSGD",
 
       do.update = function(X_mat, Y_vals, m.fit = NULL, ...) {
         # speedlm uses the coefficients of the last model to update with more data.
-        X_mat <- data.frame(X_mat)
-        Y_vals <- data.frame(Y_vals)
+        X_mat <- Arguments$getInstanceOf(X_mat, 'data.table')
+        #X_mat <- data.frame(X_mat)
+        #Y_vals <- data.frame(Y_vals)
         data <- cbind.data.frame(Y_vals, X_mat)
 
 
@@ -99,9 +105,12 @@ ML.SpeedGLMSGD <- R6Class("ML.SpeedGLMSGD",
       do.fit = function (X_mat, Y_vals, coef = NULL) {
         # If we have not yet fit a model, we are using the first n observations as the training set,
         # Create dataframe
-        X_mat <- data.frame(X_mat)
-        Y_vals <- data.frame(Y_vals)
-        data <- cbind.data.frame(Y_vals, X_mat)
+        #X_mat <- data.frame(X_mat)
+        #Y_vals <- data.frame(Y_vals)
+        #data <- cbind.data.frame(Y_vals, X_mat)
+        #Y_vals
+        X_mat <- Arguments$getInstanceOf(X_mat, 'data.table')
+        data <- cbind(Y = Y_vals, X_mat)
 
         #rename colums to standardize depending on the number of columns
         #data <- private$rename_columns(data)
@@ -134,16 +143,15 @@ ML.SpeedGLMSGD <- R6Class("ML.SpeedGLMSGD",
       },
 
       predict_lr = function(X_mat, model){
-        #prediction of the Y
-        X_mat_mtx <- as.matrix(X_mat)
-        #intercept_row <- cbind(intercept = 1, X_mat_mtx)
-        model <- Arguments$getInstanceOf(model, 'speedlm')
+        # model <- Arguments$getInstanceOf(model, 'speedlm')
         coef <- model$coef
         coef_mtx <- as.matrix(coef)
-        browser()
-        y_pred <- X_mat_mtx %*% coef_mtx
 
-        #convert the result into a logit function
+        X_mat_mtx <- as.matrix(X_mat)
+        X_mat_with_intercept <- cbind(intercept = 1, X_mat_mtx)
+        y_pred <- X_mat_with_intercept %*% coef_mtx
+
+        ## Convert the result into a logit function
         return(plogis(y_pred))
       },
 

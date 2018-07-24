@@ -84,9 +84,9 @@ test_that("it should fit the model twice and not save the coefficients and retur
   X_mat <- data.table(x1 =	c(3,1,3,1,3,3,1,3,3,2,3,1,3,3,3,2,3,2,3),
                       x2 =	c(1,0,0,0,1,1,1,1,0,0,0,0,1,1,0,0,1,1,0))
   subject <- described.class$new(save_model = FALSE )
-  model<-subject$perform_fit(X_mat = X_mat, Y_vals = Y_vals)
+  model <- subject$perform_fit(X_mat = X_mat, Y_vals = Y_vals)
   
- X_mat <- data.table(
+  X_mat <- data.table(
     x1=c(1,2,3,1,2,3,1,2,3,1),
     x2=c(0,0,1,1,0,1,1,0,1,0)
   )
@@ -109,7 +109,7 @@ test_that("it should be able to do a prediction", {
     
     initial_model <- subject$perform_fit(X_mat = X_mat, Y_vals = Y_vals)
     
-    result <- subject$perform_prediction(X_mat = X_mat, Y_vals = Y_vals, m.fit = coef(initial_model))
+    result <- subject$perform_prediction(X_mat = X_mat, m.fit = list(coef = initial_model))
     
     
     mse <- mean((result-Y_vals)^2)
@@ -118,8 +118,6 @@ test_that("it should be able to do a prediction", {
    
 })
 
-context(" do.predict")
-#==========================================================
 test_that("it should be able to do a prediction with a saved model", {
   subject <- described.class$new(save_model = TRUE)
   Y_vals <- c(0,1,1,1,0,0,0,0,1,1,1,1,0,0,0,1,0,1,0)
@@ -128,7 +126,7 @@ test_that("it should be able to do a prediction with a saved model", {
   
   initial_model <- subject$perform_fit(X_mat = X_mat, Y_vals = Y_vals)
   
-  result <- subject$perform_prediction(X_mat = X_mat, Y_vals = Y_vals, m.fit = NULL)
+  result <- subject$perform_prediction(X_mat = X_mat, m.fit = NULL)
   mse <- mean((result-Y_vals)^2)
   
   expect_lt(mse,0.2)
