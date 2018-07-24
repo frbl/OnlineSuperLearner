@@ -49,7 +49,6 @@ glob_simulator  <- Simulator.GAD$new(qw = glob_llW,
 context(" initialize")
 ##=====================================================================
 test_that("it should initialize without problems", {
-  #browser()
   expect_error(described.class$new(osl = glob_osl_mock, 
                                  summary_measure_generator = glob_smg_mock), NA)
   subject <- described.class$new(osl = glob_osl_mock, 
@@ -126,63 +125,73 @@ test_that("it should throw if the provided B_iter is not an int", {
   #expect_gte(percentage_significant, 0.95)
 #})
 
-#test_that("it should show when the two provided distributions are not the same", {
-  #set.seed(1234)
-  #log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
-  #subject <- described.class$new(log)
-  #doParallel::registerDoParallel(cores = parallel::detectCores())
+test_that("it should show when the two provided distributions are not the same", {
+  set.seed(1234)
+  log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
+  doParallel::registerDoParallel(cores = parallel::detectCores())
 
-  ### Create a simulator
-  #nobs <- 10
-  #p_0 <<- function(nobs, newdata = NULL) {
-    #if (is.null(newdata)) {
-      #W <- rnorm(nobs, 0, 1)
-      #A <- rbinom(nobs, 1, 0.8)
-    #} else {
-      #W <- newdata$W
-      #A <- newdata$A
-    #}
-    #Y <- rnorm(nobs, A, 0.1)
-    #data.table(W = W, A = A, Y=Y)
-  #}
+  ## Create a simulator
+  nobs <- 10
+  p_0 <<- function(nobs, newdata = NULL) {
+    if (is.null(newdata)) {
+      W <- rnorm(nobs, 0, 1)
+      A <- rbinom(nobs, 1, 0.8)
+    } else {
+      W <- newdata$W
+      A <- newdata$A
+    }
+    Y <- rnorm(nobs, A, 0.1)
+    data.table(W = W, A = A, Y=Y)
+  }
 
-  #p_1 <<- function(nobs, newdata = NULL) {
-    #W <- c(rnorm(nobs/2, -0.5, 1), rnorm(nobs/2, 0.5, 1))
-    #A <- c(rbinom(nobs, 1, 0.5))
-    #Y <- c(rnorm(nobs/2, A + 0.3, 0.01), rnorm(nobs/2, A-0.3, 0.01))
-    #data.table(W = W, A = A, Y=Y)
-  #}
+  p_1 <<- function(nobs, newdata = NULL) {
+    W <- c(rnorm(nobs/2, -0.5, 1), rnorm(nobs/2, 0.5, 1))
+    A <- c(rbinom(nobs, 1, 0.5))
+    Y <- c(rnorm(nobs/2, A + 0.3, 0.01), rnorm(nobs/2, A-0.3, 0.01))
+    data.table(W = W, A = A, Y=Y)
+  }
 
-  #mock_simulator <- list(simulateWAY = function(numberOfTrajectories) {
-    #p_0(nobs = numberOfTrajectories)
-  #})
+  mock_simulator <- list(simulateWAY = function(numberOfTrajectories) {
+    p_0(nobs = numberOfTrajectories)
+  })
 
-  #sampledata.MockOsl <<- function(object, newdata, Y = NULL, nobs = 1, ...) {
-    #res <- p_1(nobs = nobs, newdata)
-    #list(osl.estimator = res$Y,
-         #dosl.estimator = res$Y)
-  #}
-  #mock_osl <- mock('osl')
-  #class(mock_osl) <- 'MockOsl'
+  sampledata.MockOsl <<- function(object, newdata, Y = NULL, nobs = 1, ...) {
+    res <- p_1(nobs = nobs, newdata)
+    list(osl.estimator = res,
+         dosl.estimator = res)
+  }
 
-  #T_iter <- 10
-  #B_iter <- 10000
-  #nbins <- 5
-  #n_A_bins <- 2
+  mock_osl <- mock('osl')
+  class(mock_osl) <- 'MockOsl'
 
-  #result <- subject$evaluate(
-    #mock_osl,
-    #mock_simulator,
-    #T_iter, 
-    #B_iter,
-    #nbins = nbins
-  #)
+  mock_smg <- list(
+    set_trajectories = function(data) { },
+    get_minimal_measurements_needed = 1234,
+    getNext = function(n) {
+      list(p_0(n))
+    } 
+  )
 
-  #result %<>% unlist %>% unname
-  #total_insignificant <- (result <= 0.05) %>% as.numeric %>% sum
-  #percentage_insignificant <- total_insignificant / (T_iter * nbins * n_A_bins)
-  #expect_gte(percentage_insignificant, 0.95)
-#})
+  class(mock_smg) <- 'SummaryMeasureGenerator'
+
+  T_iter <- 10
+  B_iter <- 10000
+  nbins <- 5
+  n_A_bins <- 2
+
+  subject <- described.class$new(log, osl = mock_osl, summary_measure_generator = mock_smg)
+  result <- subject$evaluate(
+    mock_simulator,
+    T_iter, 
+    B_iter,
+    nbins = nbins
+  )
+
+  result %<>% unlist %>% unname
+  total_insignificant <- (result <= 0.05) %>% as.numeric %>% sum
+  percentage_insignificant <- total_insignificant / (T_iter * nbins * n_A_bins)
+  expect_gte(percentage_insignificant, 0.95)
+})
 
 #test_that("it should implement a test from which we know the correct conditional distribution, and we know it is the same as the simulator", {
   #set.seed(1234)

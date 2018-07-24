@@ -20,8 +20,9 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
     list(
       initialize = function(verbose = FALSE, osl, summary_measure_generator) {
         private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
-        private$osl <- Arguments$getInstanceOf(osl, 'OnlineSuperLearner')
-        private$summary_measure_generator <- Arguments$getInstanceOf(summary_measure_generator, 'SummaryMeasureGenerator')
+        # We dont type check here to support mocks
+        private$osl <- osl #Arguments$getInstanceOf(osl, 'OnlineSuperLearner')
+        private$summary_measure_generator <- summary_measure_generator #Arguments$getInstanceOf(summary_measure_generator, 'SummaryMeasureGenerator')
       },
 
       evaluate = function(simulator, T_iter, B_iter, nbins = (5)) {
@@ -87,9 +88,9 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
                 return(NULL)
               }
 
-              newdata <- (dataset = a_subset[sample(nrow(a_subset), 1),])
+              newdata <- a_subset[sample(nrow(a_subset), 1),]
 
-              res <- sampledata(osl, newdata, 
+              res <- sampledata(private$osl, newdata, 
                                 nobs = available_subset_size,
                                 summarize = FALSE)$osl.estimator
 
@@ -142,11 +143,10 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
       summary_measure_generator = NULL,
 
       convert_observations = function(observed_data) {
-        browser()
         data <- Data.Static$new(dataset = observed_data)
         private$summary_measure_generator$set_trajectories(data = data)
         needed_for_history <- private$summary_measure_generator$get_minimal_measurements_needed
-        data <- oslprivate$summary_measure_generator$getNext(n = nrow(observed_data)- needed_for_history)
+        data <- private$summary_measure_generator$getNext(n = nrow(observed_data) - needed_for_history)
 
         ## Only use the first trajectory
         data[[1]]
