@@ -6,6 +6,8 @@ OnlineSuperLearner_example\.ipynb
 application-roadmap.md
 application-roadmap.pdf
 circle.yml
+.circle
+.codacy.yml
 CONTRIBUTING.md
 OnlineSuperLearner.Rproj
 run.R

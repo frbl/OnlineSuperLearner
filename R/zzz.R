@@ -25,6 +25,14 @@ is.a <- function(obj, obj.class) {
   obj.class %in% class(obj)
 }
 
+#' Returns the looping function to use
+get_looping_function <- function(parallel) {
+  if(parallel) {
+    return(`%dopar%`)
+  }
+  return(`%do%`)
+}
+
 create_object_from_string <- function(string_object_name, args=list()) {
   return(do.call(eval(parse(text=string_object_name))$new, args = args))
 }
