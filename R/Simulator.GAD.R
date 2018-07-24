@@ -39,10 +39,11 @@
 Simulator.GAD <- R6Class("Simulator.GAD",
   public =
     list(
-      initialize = function(qw = NULL, ga = NULL, Qy = NULL) {
+      initialize = function(qw = NULL, ga = NULL, Qy = NULL, parallel = TRUE) {
         private$qw <- qw
         private$ga <- ga
         private$Qy <- Qy
+        private$parallel <- parallel
       },
 
       simulateWAY = function(numberOfBlocks = 1,
@@ -81,7 +82,8 @@ Simulator.GAD <- R6Class("Simulator.GAD",
         }
 
         what <- paste(numberOfTrajectories, "trajectories")
-        WAYs <- foreach(x = rep(numberOfBlocks, numberOfTrajectories)) %dopar% {
+        `%looping_function%` <- get_looping_function(private$parallel)
+        WAYs <- foreach(x = rep(numberOfBlocks, numberOfTrajectories)) %looping_function% {
           private$simulateWAYOneTrajectory(x, qw = qw, ga = ga, Qy = Qy, intervention = intervention, verbose = verbose, msg = what)
         }
 
@@ -96,6 +98,7 @@ Simulator.GAD <- R6Class("Simulator.GAD",
     ),
   private =
     list(
+      parallel = NULL,   
       qw = NULL,
       ga = NULL,
       Qy = NULL,

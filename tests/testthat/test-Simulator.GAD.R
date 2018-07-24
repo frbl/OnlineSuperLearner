@@ -23,7 +23,7 @@ test_that("it should be tested properly", {
   log <- Arguments$getVerbose(-8, timestamp = TRUE)
   log <- FALSE
 
-  sim <- described.class$new()
+  sim <- described.class$new(parallel = FALSE)
 
   ## -----------------
   ## W one-dimensional
