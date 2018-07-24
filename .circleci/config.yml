@@ -1,17 +1,21 @@
+defaults: &defaults
+  working_directory: /app
+  docker:
+    - image: docker:17.05.0-ce-git
+      environment:
+        R_LIBS_USER: ~/lib/R/library
+        _R_CHECK_FORCE_SUGGESTS_: FALSE
+        _R_CHECK_ASCII_DATA_: FALSE
+
 version: 2
 jobs:
-  build:
-    working_directory: /app
-    docker:
-      - image: docker:17.05.0-ce-git
+  run_tests:
+    <<: *defaults
     steps:
+      - restore_cache:
+          key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
       - checkout
       - setup_remote_docker
-      - restore_cache:
-          keys:
-            - v1-{{ .Branch }}
-          paths:
-            - /caches/app.tar
       - run:
           name: Load Docker image layer cache
           command: |
@@ -20,7 +24,7 @@ jobs:
       - run:
           name: Build application Docker image
           command: |
-            docker build --cache-from=app -t app -f test.Dockerfile .
+            docker build --cache-from=app -t app -f Dockerfile .
       - run:
           name: Save Docker image layer cache
           command: |
@@ -29,8 +33,71 @@ jobs:
       - run:
           name: Test the app
           command: |
-            docker run app R CMD check /OnlineSuperLearner/OnlineSuperLearner_0.0.1.tar.gz --no-manual --no-build-vignettes
+            docker run app R CMD check /app/OnlineSuperLearner_0.0.1.tar.gz --no-manual --no-build-vignettes
+      - save_cache:
+          key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - /caches
+
+  coverage:
+    <<: *defaults
+    steps:
+      - restore_cache:
+          key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Load Docker image layer cache
+          command: |
+            set +o pipefail
+            docker load -i /caches/app.tar | true
+      - run:
+          name: Build application Docker image
+          command: |
+            docker build --cache-from=app -t app -f Dockerfile .
+      - run:
+          name: Save Docker image layer cache
+          command: |
+            mkdir -p /caches
+            docker save -o /caches/app.tar app
       - run:
           name: Codecov the app
           command: |
-            docker run -e CODECOV_TOKEN frbl/onlinesuperlearner-test Rscript -e 'covr::codecov()'
+            docker run -e CODECOV_TOKEN app Rscript -e 'covr::codecov()'
+
+  deploy_to_docker:
+    <<: *defaults
+    steps:
+      - restore_cache:
+          key: v1-repo-{{ .Environment.CIRCLE_SHA1 }}
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Load Docker image layer cache
+          command: |
+            set +o pipefail
+            docker load -i /caches/app.tar | true
+      - run:
+          name: Build application Docker image
+          command: |
+            docker build --cache-from=app -t app -f Dockerfile .
+      - run: docker tag app roqua/OnlineSuperLearner:staging
+      - run: docker tag app roqua/OnlineSuperLearner:production
+      - run: docker tag app roqua/OnlineSuperLearner:$(echo "$CIRCLE_TAG" | sed -e 's/v//g')
+      - run: docker login --email=$DOCKER_EMAIL -u "$DOCKER_USER" -p "$DOCKER_PASS"
+      - run: docker push compsy/onlinesuperlearner
+
+workflows:
+  version: 2
+  commit:
+    jobs:
+      - run_tests
+      - coverage
+  deploy:
+    jobs:
+      - deploy_to_docker:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v[0-9]+(\.[0-9]+)*/
