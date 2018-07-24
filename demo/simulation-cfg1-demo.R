@@ -102,9 +102,8 @@ B_iter <- 100
 nbins <- 5
 n_A_bins <- 2
 
-subject <- ConditionalDensityEvaluator$new(log)
+subject <- ConditionalDensityEvaluator$new(log, osl = osl, summary_measure_generator = osl$get_summary_measure_generator)
 result <- subject$evaluate(
-  osl,
   sim,
   T_iter, 
   B_iter,

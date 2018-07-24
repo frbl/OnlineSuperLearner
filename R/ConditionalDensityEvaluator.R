@@ -18,11 +18,13 @@
 ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
   public =
     list(
-      initialize = function(verbose = FALSE) {
+      initialize = function(verbose = FALSE, osl, summary_measure_generator) {
         private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
+        private$osl <- Arguments$getInstanceOf(osl, 'OnlineSuperLearner')
+        private$summary_measure_generator <- Arguments$getInstanceOf(summary_measure_generator, 'SummaryMeasureGenerator')
       },
 
-      evaluate = function(osl, simulator, T_iter, B_iter, nbins = (5)) {
+      evaluate = function(simulator, T_iter, B_iter, nbins = (5)) {
         T_iter <- Arguments$getInteger(T_iter, c(1, Inf))
         B_iter <- Arguments$getInteger(B_iter, c(1, Inf))
 
@@ -39,7 +41,7 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
 
           # 1. Split the dataframe into seperate sections.
           # 2. Make the slicing into each of the different lagged / other vars.
-          data <- private$convert_observations(observed_data = observed_data, osl = osl)
+          data <- private$convert_observations(observed_data = observed_data)
 
           cluster_bins <- private$create_cluster_bins(data, nbins = nbins)
 
@@ -136,12 +138,15 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
   private =
     list(
       verbose = NULL,
+      osl = NULL,
+      summary_measure_generator = NULL,
 
-      convert_observations = function(observed_data, osl) {
+      convert_observations = function(observed_data) {
+        browser()
         data <- Data.Static$new(dataset = observed_data)
-        osl$get_summary_measure_generator$set_trajectories(data = data)
-        needed_for_history <- osl$get_summary_measure_generator$get_minimal_measurements_needed
-        data <- osl$get_summary_measure_generator$getNext(n = nrow(observed_data)- needed_for_history)
+        private$summary_measure_generator$set_trajectories(data = data)
+        needed_for_history <- private$summary_measure_generator$get_minimal_measurements_needed
+        data <- oslprivate$summary_measure_generator$getNext(n = nrow(observed_data)- needed_for_history)
 
         ## Only use the first trajectory
         data[[1]]

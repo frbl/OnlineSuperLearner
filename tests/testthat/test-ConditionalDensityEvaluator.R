@@ -1,79 +1,83 @@
-#library(mockery)
-#run_slow_specs <- FALSE
+library(mockery)
+run_slow_specs <- FALSE
 
-#context("ConditionalDensityEvaluator.R")
-#described.class <- ConditionalDensityEvaluator
-#glob_osl_mock <- mock('osl')
-#class(glob_osl_mock) <- 'OnlineSuperLearner'
+context("ConditionalDensityEvaluator.R")
+described.class <- ConditionalDensityEvaluator
+glob_osl_mock <- mock('osl')
+class(glob_osl_mock) <- 'OnlineSuperLearner'
 
-#glob_simulator_mock <- mock('simulator')
-#class(glob_simulator_mock) <- 'Simulator.GAD'
-#glob_T_iter <- 10
-#glob_B_iter <- 10
+glob_smg_mock <- mock('summary_measure_generator')
+class(glob_smg_mock) <- 'SummaryMeasureGenerator'
 
-
-#glob_llW <- list(stochMech=function(numberOfBlocks) {
-    #rnorm(numberOfBlocks, 0, 1)
-  #},
-  #param=c(1),
-  #rgen=identity
-#)
-
-#glob_llA <- list(
-  #stochMech=function(ww) {
-    #rbinom(length(ww), 1, expit(ww))
-  #},
-  #param=c(0.5),
-  #rgen=function(xx, delta=0.05){
-    #probability <- delta+(1-2*delta)*expit(xx)
-    #rbinom(length(xx), 1, probability)
-  #}
-#)
-
-#glob_llY <- list(rgen={function(AW){
-    #aa <- AW[, "A"]
-    #ww <- AW[, grep("[^A]", colnames(AW))]
-    #mu <- aa*(0.9) + (1-aa)*(0.3) + 0.6 * ww + rnorm(length(aa), 0, 0.1)
-    #mu
-  #}}
-#)
-
-#glob_simulator  <- Simulator.GAD$new(qw = glob_llW,
-                                     #ga = glob_llA,
-                                     #Qy = glob_llY)
+glob_simulator_mock <- mock('simulator')
+class(glob_simulator_mock) <- 'Simulator.GAD'
+glob_T_iter <- 10
+glob_B_iter <- 10
 
 
-#context(" initialize")
-###=====================================================================
-#test_that("it should initialize without problems", {
-  ##browser()
-  #expect_error(described.class$new(), NA)
-  #subject <- described.class$new()
-  #expect_is(subject, 'ConditionalDensityEvaluator')
-#})
+glob_llW <- list(stochMech=function(numberOfBlocks) {
+    rnorm(numberOfBlocks, 0, 1)
+  },
+  param=c(1),
+  rgen=identity
+)
 
-#context(" evaluate")
-###=====================================================================
-#test_that("it should throw if the provided T_iter is not an int", {
-  #subject <- described.class$new()
-  #T_iter <- print
-  #expect_error(subject$evaluate(glob_osl_mock, glob_simulator_mock, T_iter, glob_B_iter),
-               #"Argument 'T_iter' is not a vector: function", fixed = TRUE)
-#})
+glob_llA <- list(
+  stochMech=function(ww) {
+    rbinom(length(ww), 1, expit(ww))
+  },
+  param=c(0.5),
+  rgen=function(xx, delta=0.05){
+    probability <- delta+(1-2*delta)*expit(xx)
+    rbinom(length(xx), 1, probability)
+  }
+)
 
-#test_that("it should throw if the provided B_iter is not an int", {
-  #subject <- described.class$new()
-  #B_iter <- print
-  #expect_error(subject$evaluate(glob_osl_mock, glob_simulator_mock, glob_T_iter, B_iter),
-               #"Argument 'B_iter' is not a vector: function", fixed = TRUE)
-#})
+glob_llY <- list(rgen={function(AW){
+    aa <- AW[, "A"]
+    ww <- AW[, grep("[^A]", colnames(AW))]
+    mu <- aa*(0.9) + (1-aa)*(0.3) + 0.6 * ww + rnorm(length(aa), 0, 0.1)
+    mu
+  }}
+)
+
+glob_simulator  <- Simulator.GAD$new(qw = glob_llW,
+                                     ga = glob_llA,
+                                     Qy = glob_llY)
+
+
+context(" initialize")
+##=====================================================================
+test_that("it should initialize without problems", {
+  #browser()
+  expect_error(described.class$new(osl = glob_osl_mock, 
+                                 summary_measure_generator = glob_smg_mock), NA)
+  subject <- described.class$new(osl = glob_osl_mock, 
+                                 summary_measure_generator = glob_smg_mock)
+  expect_is(subject, 'ConditionalDensityEvaluator')
+})
+
+context(" evaluate")
+##=====================================================================
+test_that("it should throw if the provided T_iter is not an int", {
+  subject <- described.class$new(osl = glob_osl_mock, 
+                                 summary_measure_generator = glob_smg_mock)
+  T_iter <- print
+  expect_error(subject$evaluate(glob_osl_mock, glob_simulator_mock, T_iter, glob_B_iter),
+               "Argument 'T_iter' is not a vector: function", fixed = TRUE)
+})
+
+test_that("it should throw if the provided B_iter is not an int", {
+  subject <- described.class$new(osl = glob_osl_mock, 
+                                 summary_measure_generator = glob_smg_mock)
+  B_iter <- print
+  expect_error(subject$evaluate(glob_simulator_mock, glob_T_iter, B_iter),
+               "Argument 'B_iter' is not a vector: function", fixed = TRUE)
+})
 
 #test_that("it should implement a test from which we know the correct distribution, and we know it is the same as the simulator", {
-  #if(Sys.getenv('CI') != "" || !run_slow_specs) skip('Takes to long now')
+  ##if(Sys.getenv('CI') != "" || !run_slow_specs) skip('Takes to long now')
   #set.seed(1234)
-  #log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
-  #subject <- described.class$new(log)
-  #doParallel::registerDoParallel(cores = parallel::detectCores())
 
   ### Create a simulator
   #nobs <- 10
@@ -94,7 +98,15 @@
          #dosl.estimator = res$Y)
   #}
   #mock_osl <- mock('osl')
-  #class(mock_osl) <- 'MockOsl'
+  #class(mock_osl) <- 'OnlineSuperLearner'
+
+  #mock_smg <- mock('summary_measure_generator')
+  #class(mock_smg) <- 'SummaryMeasureGenerator'
+
+  #log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
+  #subject <- described.class$new(log, osl = mock_osl,
+                                 #summary_measure_generator = mock_smg)
+  #doParallel::registerDoParallel(cores = parallel::detectCores())
 
   #T_iter <- 10
   #B_iter <- 10000
@@ -102,7 +114,6 @@
   #n_A_bins <- 2
 
   #result <- subject$evaluate(
-    #mock_osl,
     #mock_simulator,
     #T_iter, 
     #B_iter,
