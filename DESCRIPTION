@@ -27,6 +27,7 @@ Imports:
     condensier,
     methods,
     magrittr,
+    MASS,
     Metrics,
     purrr,
     pROC,
