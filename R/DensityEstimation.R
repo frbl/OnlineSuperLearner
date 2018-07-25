@@ -57,7 +57,7 @@
 #'      variables? (NULL), or just a subset thereof?
 #'
 #'     @param plot (default = FALSE) boolean plot the predicted outcomes to a
-#'      file in /tmp/osl. This can be used for debugging (i.e., it shows the
+#'      file in tmp. This can be used for debugging (i.e., it shows the
 #'      sampled distribution over the actual distribution.
 #'
 #'     @return list a list containing the predictions, where each entry is one
@@ -81,7 +81,7 @@
 #'      variables? (NULL), or just a subset thereof?
 #'
 #'     @param plot (default = FALSE) boolean plot the predicted outcomes to a
-#'      file in /tmp/osl. This can be used for debugging (i.e., it shows the
+#'      file in tmp. This can be used for debugging (i.e., it shows the
 #'      sampled distribution over the actual distribution.
 #'
 #'     @return list a list containing the predictions, where each entry is one
@@ -412,7 +412,6 @@ DensityEstimation <- R6Class ("DensityEstimation",
         create_data_store = function(newdata, Y, X) {
           condensier::DataStore$new(input_data = newdata, Y = Y, X = X, auto_typing = FALSE)
         }
-
   )
 )
 

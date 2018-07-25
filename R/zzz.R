@@ -25,6 +25,37 @@ is.a <- function(obj, obj.class) {
   obj.class %in% class(obj)
 }
 
+#' Returns the file location for both windows and linux
+#' @param name the file name to store
+#' @param extension the extension of the file
+#' @param dir (default = 'tmp') the directory to store the file in
+#' @param subdir (default = '') the directory to store the file in
+#' @param add_date_to_dir (default = FALSE) add a subdir with a date?
+#' @param create_dirs (default = TRUE) create the dirs specified?
+#' @return the location of the file, with the extension and the subdirs
+get_file_location <- function(name, extension, dir = 'tmp', subdir = '', add_date_to_dir = FALSE, create_dirs = TRUE) {
+  #if(.Platform$OS.type == "unix") {
+    ## Linux
+  #} else {
+    ## Windows
+  #}
+
+  if (subdir != '') {
+    dir <- file.path(dir, subdir)
+  }
+
+  if (add_date_to_dir) {
+    date <- format(Sys.time(), "%y%m%d%H%M")
+    dir <- file.path(dir, date)
+  }
+
+  dir.create(dir, showWarnings = FALSE, recursive = TRUE)
+
+  filename <- file.path(dir, name)
+  filename <- paste(filename, '.', extension, sep = '')
+  return(filename)
+}
+
 #' Returns the looping function to use
 get_looping_function <- function(parallel) {
   if(parallel) {

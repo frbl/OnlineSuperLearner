@@ -32,6 +32,22 @@ You can also run the demos for the project. Run:
 demo('cpp-demo', package = 'OnlineSuperLearner')
 ```
 
+## The algorithm syntax
+- Each entry should have an `algorithm` entry with the name of the algorithm (i.e., the class name), and could have `algorithm_params` which is a list of hyperparameters for the specific algorithm. Furthermore, it could have a `params` entry with two entries: `nbins` specifying the number of bins to use for the discretization step, and `online` a boolean specifying whether the algorithm should be treated as an online one.
+``` R
+algos <- append(algos, list(list(algorithm = 'ML.SVM',
+                        algorithm_params = list(),
+                        params = list(nbins = nbins, online = FALSE))))
+```
+
+## The intervention syntax
+You can specify interventions as follows:
+
+``` R
+intervention <- list(variable = 'A', when = c(2), what = c(1))
+```
+where `variable` is the variable to perform the intervention on, `when` is when the intervention should take place (at `t= 2` in this example) and `what` what the intervention should be (1 in this case, but this could e.g. also be 0).
+
 ## TODO
 
 * View the issues page

@@ -36,20 +36,19 @@ llY <- list(rgen={function(AW){
   rnorm(length(mu), mu, sd=0.1)}}
 )
 
-
 ## We'd like to use the following features in our estimation:
-W <- RelevantVariable$new(formula = Y ~ A + W, family = 'gaussian')
+W <- RelevantVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
 A <- RelevantVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
-Y <- RelevantVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
+Y <- RelevantVariable$new(formula = Y ~ A + W, family = 'gaussian')
 relevantVariables <- c(W, A, Y)
 
 ## Generate a dataset we will use for testing.
 training_set_size <- 1e3
 test_set_size <- 100
 
-sim  <- Simulator.GAD$new()
+sim <- Simulator.GAD$new()
 
-log = R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
+log <- R.utils::Arguments$getVerbose(-8, timestamp=TRUE)
 
 ## What is the maximum number of iterations the OSL can use while going over the data?
 ## Note that in this case we split the data in equal parts with this number of iterations
@@ -73,7 +72,7 @@ algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
 ## Specify the intervention we'd like to test, and also specify when we want to
 ## test this interventsion
 intervention <- list(variable = 'A', when = c(2), what = c(1))
-tau = 2
+tau <- 2
 
 ## Fit the actual OSL
 osl <- OnlineSuperLearner::fit.OnlineSuperLearner(

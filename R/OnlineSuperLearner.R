@@ -572,7 +572,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             }
 
             output = paste('performance_iteration', t, sep='_')
-            OutputPlotGenerator.create_risk_plot(self$get_cv_risk(), output, '/tmp/osl/')
+            OutputPlotGenerator.create_risk_plot(self$get_cv_risk(), output)
             t <- t + 1
           }
           private$verbose && exit(private$verbose)

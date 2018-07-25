@@ -47,7 +47,7 @@ fit.OnlineSuperLearner <- function(formulae, data, algorithms = NULL, bounds = F
   if (is.list(bounds) || bounds) {
     ## The provided bounds can be either a list of bounds or a boolean (in that case we'll define it ourselves)
     ## TODO: Move this checking to the preprocessor itself / the generate bounds function?
-    if(is.logical(bounds)) { bounds <- PreProcessor.generate_bounds(data)}
+    if(is.logical(bounds)) { bounds <- PreProcessor.generate_bounds(data) }
     pre_processor <- PreProcessor$new(bounds = bounds)
   }
 
