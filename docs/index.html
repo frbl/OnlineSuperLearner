@@ -94,13 +94,25 @@
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="co"># install.packages("devtools")</span></a>
 <a class="sourceLine" id="cb1-2" data-line-number="2">devtools<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/devtools/topics/install_github">install_github</a></span>(<span class="st">"frbl/OnlineSuperLearner"</span>)</a></code></pre></div>
 </div>
+<div id="rebuilding-the-documentation-and-webpage" class="section level3">
+<h3 class="hasAnchor">
+<a href="#rebuilding-the-documentation-and-webpage" class="anchor"></a>Rebuilding the documentation and webpage:</h3>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="co"># Generate documentation</span></a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">devtools<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/devtools/topics/document">document</a></span>()</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4"><span class="co"># Build vignettes</span></a>
+<a class="sourceLine" id="cb2-5" data-line-number="5">devtools<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/devtools/topics/build_vignettes">build_vignettes</a></span>()</a>
+<a class="sourceLine" id="cb2-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb2-7" data-line-number="7"><span class="co"># Rebuild webpage</span></a>
+<a class="sourceLine" id="cb2-8" data-line-number="8">pkgdown<span class="op">::</span><span class="kw"><a href="http://pkgdown.r-lib.org/reference/build_site.html">build_site</a></span>()</a></code></pre></div>
+</div>
 </div>
 <div id="examples" class="section level2">
 <h2 class="hasAnchor">
 <a href="#examples" class="anchor"></a>Examples</h2>
 <p>For an example on how to run the OnlineSuperLearner, view the Jupyter notebook, or the <code>R/OnlineSuperLearner.Simulation.R</code> file. For a complete guide see <a href="https://frbl.eu/OnlineSuperLearner">the documentation</a>.</p>
 <p>You can also run the demos for the project. Run:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw">demo</span>(<span class="st">'cpp-demo'</span>, <span class="dt">package =</span> <span class="st">'OnlineSuperLearner'</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">demo</span>(<span class="st">'cpp-demo'</span>, <span class="dt">package =</span> <span class="st">'OnlineSuperLearner'</span>)</a></code></pre></div>
 </div>
 <div id="the-algorithm-syntax" class="section level2">
 <h2 class="hasAnchor">
@@ -108,15 +120,15 @@
 <ul>
 <li>Each entry should have an <code>algorithm</code> entry with the name of the algorithm (i.e., the class name), and could have <code>algorithm_params</code> which is a list of hyperparameters for the specific algorithm. Furthermore, it could have a <code>params</code> entry with two entries: <code>nbins</code> specifying the number of bins to use for the discretization step, and <code>online</code> a boolean specifying whether the algorithm should be treated as an online one.</li>
 </ul>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">algos &lt;-<span class="st"> </span><span class="kw">append</span>(algos, <span class="kw">list</span>(<span class="kw">list</span>(<span class="dt">algorithm =</span> <span class="st">'ML.SVM'</span>,</a>
-<a class="sourceLine" id="cb3-2" data-line-number="2">                        <span class="dt">algorithm_params =</span> <span class="kw">list</span>(),</a>
-<a class="sourceLine" id="cb3-3" data-line-number="3">                        <span class="dt">params =</span> <span class="kw">list</span>(<span class="dt">nbins =</span> nbins, <span class="dt">online =</span> <span class="ot">FALSE</span>))))</a></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1">algos &lt;-<span class="st"> </span><span class="kw">append</span>(algos, <span class="kw">list</span>(<span class="kw">list</span>(<span class="dt">algorithm =</span> <span class="st">'ML.SVM'</span>,</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">                        <span class="dt">algorithm_params =</span> <span class="kw">list</span>(),</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">                        <span class="dt">params =</span> <span class="kw">list</span>(<span class="dt">nbins =</span> nbins, <span class="dt">online =</span> <span class="ot">FALSE</span>))))</a></code></pre></div>
 </div>
 <div id="the-intervention-syntax" class="section level2">
 <h2 class="hasAnchor">
 <a href="#the-intervention-syntax" class="anchor"></a>The intervention syntax</h2>
 <p>You can specify interventions as follows:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1">intervention &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">variable =</span> <span class="st">'A'</span>, <span class="dt">when =</span> <span class="kw">c</span>(<span class="dv">2</span>), <span class="dt">what =</span> <span class="kw">c</span>(<span class="dv">1</span>))</a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1">intervention &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">variable =</span> <span class="st">'A'</span>, <span class="dt">when =</span> <span class="kw">c</span>(<span class="dv">2</span>), <span class="dt">what =</span> <span class="kw">c</span>(<span class="dv">1</span>))</a></code></pre></div>
 <p>where <code>variable</code> is the variable to perform the intervention on, <code>when</code> is when the intervention should take place (at <code>t= 2</code> in this example) and <code>what</code> what the intervention should be (1 in this case, but this could e.g. also be 0).</p>
 </div>
 <div id="todo" class="section level2">
