@@ -304,22 +304,22 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         initialize = function(SL.library.definition = c('ML.Local.lm', 'ML.H2O.glm'),
                               summaryMeasureGenerator, relevant_variables, should_fit_osl = TRUE,
                               should_fit_dosl = TRUE, pre_processor = NULL,
-                              test_set_size = 1, verbose = FALSE, ...) {
+                              test_set_size = 1, verbose = FALSE, parallel = FALSE, ...) {
 
           self$set_verbosity(Arguments$getVerbose(verbose, timestamp = TRUE))
 
           ## Initialize the relevant_variables early, as we use them in many places
           self$set_relevant_variables(relevant_variables)
 
-          private$fitted = FALSE
+          private$fitted <- FALSE
           private$summary_measure_generator <- Arguments$getInstanceOf(summaryMeasureGenerator, 'SummaryMeasureGenerator')
           private$should_fit_dosl <- Arguments$getLogical(should_fit_dosl)
           private$should_fit_osl <- Arguments$getLogical(should_fit_osl)
 
           ## Cross validation initialization
-          private$cv_risk = list()
-          private$cv_risk_count = 0
-          private$cv_risk_calculator = CrossValidationRiskCalculator$new()
+          private$cv_risk <- list()
+          private$cv_risk_count <- 0
+          private$cv_risk_calculator <- CrossValidationRiskCalculator$new()
           private$data_splitter <- DataSplitter$new(test_set_size = test_set_size)
 
           ## Initialization, Fabricate the various models
@@ -341,7 +341,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           ## We initialize the WCC's
           private$initialize_weighted_combination_calculators()
 
-          private$is_parallel = FALSE
+          private$is_parallel <- parallel
 
           private$osl_sampler <- OnlineSuperLearner.SampleIteratively$new(
             osl = self,

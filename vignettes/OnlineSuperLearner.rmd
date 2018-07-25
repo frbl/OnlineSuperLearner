@@ -213,12 +213,11 @@ Now everything is set-up, we can start our super learner procedure. First let's 
 ``` {r initialize the list of algorithms to use}
   algos <- list()
 
-  algos <- append(algos, list(list(algorithm = 'ML.XGBoost',
-                        algorithm_params = list(alpha = c(0.1, 0.5, 0.9)),
-                        params = list(nbins = c(6, 15), online = TRUE))))
+  algos <- append(algos, list(list(algorithm = "ML.NeuralNet",
+                                  params = list(nbins = c(5), online = TRUE))))
 
-  algos <- append(algos, list(list(algorithm = 'condensier::speedglmR6',
-                        params = list(nbins = c(6, 15), online = FALSE))))
+  algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
+                                  params = list(nbins = c(5), online = TRUE))))
 ```
 
 The next step is to define our relevant variables. In this example we only consider the default variables $W$, $A$, and $Y$. Each of them is univariate, and the $A$ variable is a binary variable:

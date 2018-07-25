@@ -44,7 +44,7 @@ OutputPlotGenerator.create_density_plot = function(yValues, estimated_probabilit
 
   ## Save the output in a dir so we can access it later
   full_file_name <- get_file_location(name = output,
-                                      filetype = 'pdf',
+                                      extension = 'pdf',
                                       dir = dir,
                                       add_date_to_dir=TRUE)
 
@@ -80,7 +80,7 @@ OutputPlotGenerator.create_convergence_plot = function(data, output, dir = 'tmp'
   colors <- OutputPlotGenerator.get_colors(length(labels))
 
   full_file_name <- get_file_location(name = output,
-                                      filetype = 'pdf',
+                                      extension = 'pdf',
                                       subdir = 'convergence',
                                       dir = dir)
 
@@ -180,7 +180,7 @@ OutputPlotGenerator.create_training_curve = function(historical_cvs, relevantVar
   })
   
   full_file_name <- get_file_location(name = output,
-                                      filetype = 'pdf',
+                                      extension = 'pdf',
                                       dir = dir)
   
   pdf(full_file_name)
@@ -249,7 +249,7 @@ OutputPlotGenerator.create_risk_plot = function(performance, output, dir = 'tmp'
   outcomes <- head(colnames(performance_dt), -1)
 
   full_file_name <- get_file_location(name = output,
-                                      filetype = 'pdf',
+                                      extension = 'pdf',
                                       dir = dir)
   pdf(full_file_name)
   p <- ggplot(performance_dt)
@@ -348,7 +348,7 @@ OutputPlotGenerator.export_key_value = function(key, value, output='variables.da
   line <- paste(key,'=',value)
 
   full_file_name <- get_file_location(name = output,
-                                      filetype = 'pdf',
+                                      extension = 'pdf',
                                       dir = dir)
 
   if (!file.exists(full_file_name)) {

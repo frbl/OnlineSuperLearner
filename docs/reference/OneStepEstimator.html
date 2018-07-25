@@ -21,12 +21,15 @@
 <!-- clipboard.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js" integrity="sha384-cV+rhyOuRHc9Ub/91rihWcGmMmCXDeksTtCihMupQHSsi8GIIRDG0ThDc3HGQFJ3" crossorigin="anonymous"></script>
 
+<!-- sticky kit -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script>
+
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
-<script src="../jquery.sticky-kit.min.js"></script>
 <script src="../pkgdown.js"></script>
-  
-  
+
+
+
 <meta property="og:title" content="OneStepEstimator — OneStepEstimator" />
 
 <meta property="og:description" content="The one step estimator (OOS) is a technique that improves our initial
@@ -39,6 +42,9 @@ influence curve consists of two main steps: (i) compute the so-called
 This procedure is implemented in this class and can be started by calling
 the perform method of an instance of this class." />
 <meta name="twitter:card" content="summary" />
+
+
+
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
 
@@ -61,8 +67,12 @@ the perform method of an instance of this class." />
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="../index.html">OnlineSuperLearner</a>
+      <span class="navbar-brand">
+        <a class="navbar-link" href="../index.html">OnlineSuperLearner</a>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.0.1</span>
+      </span>
     </div>
+
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
@@ -72,16 +82,29 @@ the perform method of an instance of this class." />
   </a>
 </li>
 <li>
-  <a href="../articles/OnlineSuperLearner.html">Get Started</a>
+  <a href="../articles/OnlineSuperLearner.html">Get started</a>
 </li>
 <li>
   <a href="../reference/index.html">Reference</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Articles
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/architecture.html">Architecture</a>
+    </li>
+  </ul>
 </li>
       </ul>
       
       <ul class="nav navbar-nav navbar-right">
         
       </ul>
+      
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
@@ -89,12 +112,15 @@ the perform method of an instance of this class." />
       
       </header>
 
-      <div class="row">
+<div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>OneStepEstimator</h1>
+    
+    <div class="hidden name"><code>OneStepEstimator.Rd</code></div>
     </div>
 
+    <div class="ref-description">
     
     <p>The one step estimator (OOS) is a technique that improves our initial
 estimates of the parameter of interest and targets them towards this
@@ -106,6 +132,7 @@ influence curve consists of two main steps: (i) compute the so-called
 This procedure is implemented in this class and can be started by calling
 the <code>perform</code> method of an instance of this class.</p>
     
+    </div>
 
     <pre class="usage"><span class='no'>OneStepEstimator</span></pre>
         
@@ -245,6 +272,8 @@ the <code>perform</code> method of an instance of this class.</p>
 
       </footer>
    </div>
+
+  
 
   </body>
 </html>

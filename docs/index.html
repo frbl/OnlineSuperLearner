@@ -8,8 +8,8 @@
 <title>Online SuperLearner package • OnlineSuperLearner</title>
 <!-- jquery --><script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script><!-- Font Awesome icons --><link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-T8Gy5hrqNKT+hzMclPo118YTQO6cYprQmhrYwIiQ/3axmI1hQomh7Ud2hPOy8SP1" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js" integrity="sha384-cV+rhyOuRHc9Ub/91rihWcGmMmCXDeksTtCihMupQHSsi8GIIRDG0ThDc3HGQFJ3" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
-<script src="jquery.sticky-kit.min.js"></script><script src="pkgdown.js"></script><meta property="og:title" content="Online SuperLearner package">
+<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js" integrity="sha384-cV+rhyOuRHc9Ub/91rihWcGmMmCXDeksTtCihMupQHSsi8GIIRDG0ThDc3HGQFJ3" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
+<script src="pkgdown.js"></script><meta property="og:title" content="Online SuperLearner package">
 <meta property="og:description" content="Package that enabling online super learning. This package runs a
     set of estimators and tries to find the conditional densities of relevantvariables
     provided to it. Then, using a set of machine learning algorithms, it will
@@ -31,8 +31,12 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="index.html">OnlineSuperLearner</a>
+      <span class="navbar-brand">
+        <a class="navbar-link" href="index.html">OnlineSuperLearner</a>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.0.1</span>
+      </span>
     </div>
+
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li>
@@ -42,10 +46,22 @@
   </a>
 </li>
 <li>
-  <a href="articles/OnlineSuperLearner.html">Get Started</a>
+  <a href="articles/OnlineSuperLearner.html">Get started</a>
 </li>
 <li>
   <a href="reference/index.html">Reference</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Articles
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+<li>
+      <a href="articles/architecture.html">Architecture</a>
+    </li>
+  </ul>
 </li>
       </ul>
 <ul class="nav navbar-nav navbar-right"></ul>
@@ -75,8 +91,8 @@
 <div id="install-the-development-version-from-github" class="section level3">
 <h3 class="hasAnchor">
 <a href="#install-the-development-version-from-github" class="anchor"></a>Install the development version from GitHub:</h3>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># install.packages("devtools")</span>
-devtools::<span class="kw">install_github</span>(<span class="st">"frbl/OnlineSuperLearner"</span>)</code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="co"># install.packages("devtools")</span></a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">devtools<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/devtools/topics/install_github">install_github</a></span>(<span class="st">"frbl/OnlineSuperLearner"</span>)</a></code></pre></div>
 </div>
 </div>
 <div id="examples" class="section level2">
@@ -84,7 +100,24 @@ devtools::<span class="kw">install_github</span>(<span class="st">"frbl/OnlineSu
 <a href="#examples" class="anchor"></a>Examples</h2>
 <p>For an example on how to run the OnlineSuperLearner, view the Jupyter notebook, or the <code>R/OnlineSuperLearner.Simulation.R</code> file. For a complete guide see <a href="https://frbl.eu/OnlineSuperLearner">the documentation</a>.</p>
 <p>You can also run the demos for the project. Run:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">demo</span>(<span class="st">'cpp-demo'</span>, <span class="dt">package =</span> <span class="st">'OnlineSuperLearner'</span>)</code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw">demo</span>(<span class="st">'cpp-demo'</span>, <span class="dt">package =</span> <span class="st">'OnlineSuperLearner'</span>)</a></code></pre></div>
+</div>
+<div id="the-algorithm-syntax" class="section level2">
+<h2 class="hasAnchor">
+<a href="#the-algorithm-syntax" class="anchor"></a>The algorithm syntax</h2>
+<ul>
+<li>Each entry should have an <code>algorithm</code> entry with the name of the algorithm (i.e., the class name), and could have <code>algorithm_params</code> which is a list of hyperparameters for the specific algorithm. Furthermore, it could have a <code>params</code> entry with two entries: <code>nbins</code> specifying the number of bins to use for the discretization step, and <code>online</code> a boolean specifying whether the algorithm should be treated as an online one.</li>
+</ul>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">algos &lt;-<span class="st"> </span><span class="kw">append</span>(algos, <span class="kw">list</span>(<span class="kw">list</span>(<span class="dt">algorithm =</span> <span class="st">'ML.SVM'</span>,</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">                        <span class="dt">algorithm_params =</span> <span class="kw">list</span>(),</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">                        <span class="dt">params =</span> <span class="kw">list</span>(<span class="dt">nbins =</span> nbins, <span class="dt">online =</span> <span class="ot">FALSE</span>))))</a></code></pre></div>
+</div>
+<div id="the-intervention-syntax" class="section level2">
+<h2 class="hasAnchor">
+<a href="#the-intervention-syntax" class="anchor"></a>The intervention syntax</h2>
+<p>You can specify interventions as follows:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1">intervention &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">variable =</span> <span class="st">'A'</span>, <span class="dt">when =</span> <span class="kw">c</span>(<span class="dv">2</span>), <span class="dt">what =</span> <span class="kw">c</span>(<span class="dv">1</span>))</a></code></pre></div>
+<p>where <code>variable</code> is the variable to perform the intervention on, <code>when</code> is when the intervention should take place (at <code>t= 2</code> in this example) and <code>what</code> what the intervention should be (1 in this case, but this could e.g. also be 0).</p>
 </div>
 <div id="todo" class="section level2">
 <h2 class="hasAnchor">
@@ -105,13 +138,30 @@ devtools::<span class="kw">install_github</span>(<span class="st">"frbl/OnlineSu
   </div>
 
   <div class="col-md-3" id="sidebar">
-    <h2>License</h2>
-<p><a href="https://opensource.org/licenses/mit-license.php">MIT</a> + file <a href="LICENSE.html">LICENSE</a></p>
+    <div class="links">
+<h2>Links</h2>
+<ul class="list-unstyled">
+<li>Report a bug at <br><a href="NA">NA</a>
+</li>
+</ul>
+</div>
+<div class="license">
+<h2>License</h2>
+<ul class="list-unstyled">
+<li>
+<a href="https://opensource.org/licenses/mit-license.php">MIT</a> + file <a href="LICENSE-text.html">LICENSE</a>
+</li>
+</ul>
+</div>
+<div class="developers">
 <h2>Developers</h2>
 <ul class="list-unstyled">
 <li>Frank Blaauw <br><small class="roles"> Author, maintainer </small>  </li>
 <li>Antoine Chambaz <br><small class="roles"> Author </small>  </li>
 </ul>
+</div>
+
+  <div class="dev-status">
 <h2>Dev status</h2>
 <ul class="list-unstyled">
 <li><a href="https://travis-ci.org/frbl/OnlineSuperLearner"><img src="https://travis-ci.org/frbl/OnlineSuperLearner.svg?branch=master" alt="TravisCI"></a></li>
@@ -119,6 +169,7 @@ devtools::<span class="kw">install_github</span>(<span class="st">"frbl/OnlineSu
 <li><a href="https://codecov.io/gh/frbl/OnlineSuperLearner"><img src="https://codecov.io/gh/frbl/OnlineSuperLearner/branch/master/graph/badge.svg?token=1s11gjN38m" alt="codecov"></a></li>
 <li><a href="https://www.codacy.com/app/frbl/OnlineSuperLearner?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=frbl/OnlineSuperLearner&amp;utm_campaign=Badge_Grade"><img src="https://api.codacy.com/project/badge/Grade/adb6ba75281742f59ff610611cfad947" alt="Codacy Badge"></a></li>
 </ul>
+</div>
 </div>
 </div>
 
@@ -133,6 +184,8 @@ devtools::<span class="kw">install_github</span>(<span class="st">"frbl/OnlineSu
 
       </footer>
 </div>
+
+  
 
   </body>
 </html>

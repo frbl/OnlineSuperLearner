@@ -21,12 +21,15 @@
 <!-- clipboard.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js" integrity="sha384-cV+rhyOuRHc9Ub/91rihWcGmMmCXDeksTtCihMupQHSsi8GIIRDG0ThDc3HGQFJ3" crossorigin="anonymous"></script>
 
+<!-- sticky kit -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script>
+
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
-<script src="../jquery.sticky-kit.min.js"></script>
 <script src="../pkgdown.js"></script>
-  
-  
+
+
+
 <meta property="og:title" content="InterventionParser.parse_intervention — InterventionParser.parse_intervention" />
 
 <meta property="og:description" content="Function to select the current intervention from an intervention list. It
@@ -44,6 +47,9 @@ control as 0. Then an intervention could be to give everybody a treatment,
 forcing everyone to have a 1 as treatment variable. This would then boil
 down to a what of 1." />
 <meta name="twitter:card" content="summary" />
+
+
+
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
 
@@ -66,8 +72,12 @@ down to a what of 1." />
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="../index.html">OnlineSuperLearner</a>
+      <span class="navbar-brand">
+        <a class="navbar-link" href="../index.html">OnlineSuperLearner</a>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.0.1</span>
+      </span>
     </div>
+
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
@@ -77,16 +87,29 @@ down to a what of 1." />
   </a>
 </li>
 <li>
-  <a href="../articles/OnlineSuperLearner.html">Get Started</a>
+  <a href="../articles/OnlineSuperLearner.html">Get started</a>
 </li>
 <li>
   <a href="../reference/index.html">Reference</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Articles
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/architecture.html">Architecture</a>
+    </li>
+  </ul>
 </li>
       </ul>
       
       <ul class="nav navbar-nav navbar-right">
         
       </ul>
+      
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
@@ -94,12 +117,15 @@ down to a what of 1." />
       
       </header>
 
-      <div class="row">
+<div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>InterventionParser.parse_intervention</h1>
+    
+    <div class="hidden name"><code>InterventionParser.parse_intervention.Rd</code></div>
     </div>
 
+    <div class="ref-description">
     
     <p>Function to select the current intervention from an intervention list. It
 will check whether the current timestamp is an intervention timestamp with
@@ -116,11 +142,12 @@ control as 0. Then an intervention could be to give everybody a treatment,
 forcing everyone to have a 1 as treatment variable. This would then boil
 down to a <code>what</code> of 1.</p>
     
+    </div>
 
     <pre class="usage"><span class='fu'>InterventionParser.parse_intervention</span>(<span class='no'>intervention</span>, <span class='no'>current_time</span>,
   <span class='no'>current_outcome</span>, <span class='kw'>check</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
     
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a> Arguments</h2>
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
@@ -171,6 +198,8 @@ down to a <code>what</code> of 1.</p>
 
       </footer>
    </div>
+
+  
 
   </body>
 </html>
