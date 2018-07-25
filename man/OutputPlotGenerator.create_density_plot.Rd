@@ -5,7 +5,7 @@
 \title{OutputPlotGenerator.create_density_plot}
 \usage{
 OutputPlotGenerator.create_density_plot(yValues, estimated_probabilities,
-  estimated_y_values = NULL, output, dir = "~/tmp/osl/")
+  estimated_y_values = NULL, output, dir = "tmp")
 }
 \arguments{
 \item{yValues}{vector a vector of the true outcome values.}
@@ -18,7 +18,7 @@ y_values (i.e., sampled values).}
 
 \item{output}{string the filename to use.}
 
-\item{dir}{string (default = '~/tmp/osl/')the directory to plot to.}
+\item{dir}{string (default = 'tmp')the directory to plot to.}
 }
 \description{
 Function to plot the true and predicted densities in one plot.

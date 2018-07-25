@@ -5,7 +5,7 @@
 \title{sampledata.OnlineSuperLearner}
 \usage{
 \method{sampledata}{OnlineSuperLearner}(object, newdata, Y = NULL, nobs = 1,
-  ...)
+  summarize = TRUE, ...)
 }
 \arguments{
 \item{object}{OnlineSuperLearner trained instance of an online superlearner class.}

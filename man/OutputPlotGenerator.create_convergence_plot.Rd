@@ -4,15 +4,14 @@
 \alias{OutputPlotGenerator.create_convergence_plot}
 \title{OutputPlotGenerator.create_convergence_plot}
 \usage{
-OutputPlotGenerator.create_convergence_plot(data, output,
-  dir = "~/tmp/osl/convergence")
+OutputPlotGenerator.create_convergence_plot(data, output, dir = "tmp")
 }
 \arguments{
 \item{data}{the truth and apporoximations to plot.}
 
 \item{output}{string the filename of the output.}
 
-\item{dir}{string (default = '~/tmp/osl/convergence') the directory name to
+\item{dir}{string (default = 'tmp') the directory name to
 store the output in.}
 }
 \description{
