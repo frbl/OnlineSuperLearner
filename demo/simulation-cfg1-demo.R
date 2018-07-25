@@ -1,5 +1,5 @@
+#devtools::install_deps(dependencies = TRUE)
 devtools::load_all(".")
-
 #' @importFrom condensier condensier_options
 #' @importFrom doParallel registerDoParallel
 #' @importFrom foreach foreach
@@ -38,9 +38,10 @@ llY <- list(rgen={function(AW){
 
 
 ## We'd like to use the following features in our estimation:
-W <- RelevantVariable$new(formula = Y ~ A + W, family = 'gaussian')
+W <- RelevantVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
 A <- RelevantVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
-Y <- RelevantVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
+Y <- RelevantVariable$new(formula = Y ~ A + W, family = 'gaussian')
+
 relevantVariables <- c(W, A, Y)
 
 ## Generate a dataset we will use for testing.
@@ -70,10 +71,7 @@ algos <- append(algos, list(list(algorithm = "ML.NeuralNet",
 algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
                                  params = list(nbins = c(5), online = TRUE))))
 
-## Specify the intervention we'd like to test, and also specify when we want to
-## test this interventsion
-intervention <- list(variable = 'A', when = c(2), what = c(1))
-tau = 2
+
 
 ## Fit the actual OSL
 osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
@@ -89,11 +87,30 @@ osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
   mini_batch_size = (training_set_size / 2) / max_iterations ## Split the rememaining data into N-Nl/max_iterations equal blocks of data
 )
 
-## Sample data from it
-preds <- sampledata(osl, newdata = data.test, relevantVariables, plot = TRUE)
-preds
+## Specify the intervention we'd like to test, and also specify when we want to
+## test this intervention
 
-sampledata(osl, newdata = data.test[1:3,], relevantVariables, plot = FALSE)
+intervention <- list(variable = 'A', when = c(2), what = c(1))
+tau = 2
+
+cat('Approximating truth...\n')
+result.approx <- foreach(i=seq(B)) %dopar% {
+  cat('Approximating truth in iteration (under intervention): ', i, '\n')
+  data.int <- sim$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
+                                  intervention = intervention, verbose = FALSE)
+  data.int$Y[tau]
+} %>% unlist
+interventions<-list(intervention=intervention)
+result <- lapply(c(TRUE,FALSE), function(discrete) {
+   intervention_effect_caluculator$calculate_intervention_effect(
+    osl = osl,
+    interventions = interventions, 
+    discrete = discrete, 
+    initial_data = data.train.set[1,],
+    tau = tau
+  )
+})
+
 
 
 ## Define kolmogorov-smirnov test
