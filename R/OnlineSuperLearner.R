@@ -101,6 +101,9 @@
 #'     continuous online superlearner (the \code{continous} flag). At least one
 #'     of these three flags must be true.
 #'
+#'     Note that the predict function in this case yields the predicted probability of an outome.
+#'     That is, it does NOT predict an actual outcome, just the probability.
+#'
 #'     @param data Data.Base the data to use to train the instance on. Note
 #'      that this can be any instance of a \code{Data.Base} superclass, as long
 #'      as it extends the correct functions.
@@ -359,11 +362,10 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         ## Data = the data object from which the data can be retrieved
         ## initial_data_size = the number of observations needed to fit the initial estimator
-        fit = function(data, initial_data_size = 5,
-                       max_iterations = 20,
-                       mini_batch_size = 20, ...) {
+        fit = function(data, initial_data_size = 5, max_iterations = 20, mini_batch_size = 20, ...) {
           tic <- Sys.time()
 
+          data <- Arguments$getInstanceOf(data, 'Data.Base')
           initial_data_size <- Arguments$getInteger(initial_data_size, c(1,Inf))
           max_iterations <- Arguments$getInteger(max_iterations, c(0,Inf))
           mini_batch_size <- Arguments$getInteger(mini_batch_size, c(1,Inf))
@@ -378,13 +380,16 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                   self$get_data_splitter$get_test_set_size + 1)
           }
 
-          data <- Arguments$getInstanceOf(data, 'Data.Base')
-
+          ## Initialize the summary measure generator with the correct trajectories
           self$get_summary_measure_generator$set_trajectories(data = data)
-          self$get_summary_measure_generator$check_enough_data_available(relevantVariables = self$get_relevant_variables)
+
+          ## Check whether enough data is available to supply all relevant variables with data
+          if(!self$get_summary_measure_generator$check_enough_data_available(relevantVariables = self$get_relevant_variables)) {
+            stop('For some reason, there is not enough data available for all relevant variables.')
+          }
 
           private$verbose && cat(private$verbose, 
-            'Fitting OnlineSuperLearner with a library: ', paste(self$get_estimator_descriptions, collapse = ', '),
+            'Starting fitting the OnlineSuperLearner with a library: ', paste(self$get_estimator_descriptions, collapse = ', '),
             ' and we use an initial data size of ', initial_data_size,
             ' with ',max_iterations,' iterations,',
             ' and a minibatch of ',mini_batch_size
@@ -400,7 +405,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             self$train_library(data_current = next_data)
             private$verbose && exit(private$verbose)
           }
-
 
           ## Update the library of models using a given number of max_iterations
           private$verbose && enter(private$verbose, 'Updating estimators')
@@ -456,8 +460,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         },
 
         ## XXX: Move function to separate file?
+        ## Fit or update the estimators
         train_library = function(data_current) {
-          ## Fit or update the estimators
+          data_table <- Arguments$getInstanceOf(data_current, 'data.table')
 
           ## 0. Split data in test and training set
           data.splitted <- self$get_data_splitter$split(data_current)
@@ -474,11 +479,32 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                                             continuous = FALSE, all_estimators = TRUE)
           observed.outcome <- data.splitted$test[, outcome.variables, with=FALSE]
 
+          if (FALSE) {
+            # This is a piece of testing code that calculates the loss for each
+            # entry
+            sampled.outcome <- self$predict(data = data.splitted$test, discrete = FALSE,
+                                              continuous = FALSE, all_estimators = TRUE, sample = TRUE)
+
+            loss <- Evaluation.get_evaluation_function('binomial',FALSE)(data.observed = observed.outcome,
+                                                                data.predicted = sampled.outcome$denormalized)
+
+            private$verbose && cat(private$verbose, 'Loss:')
+            private$verbose && cat(private$verbose, loss)
+          }
+
+
           ## Extract the level 1 data and use it to fit the osl
           private$fit_osl(predicted.outcome = predicted.outcome, observed.outcome = observed.outcome)
 
-          ## 3. Update the CV risk of each of the algorithms (based on test set), except for dosl
+          ## TODO: We essentially use the training data to test the online super learner
+          ## We want to change this so we get a more honest guess of the preformance of
+          ## the osl itself.
+          ## Moreover, the way the predictions are created now is a bit inefficient, as we 
+          ## are running many of the same predictions twice.
+          predicted.outcome <- self$predict(data = data.splitted$test, discrete = FALSE,
+                                            continuous = TRUE, all_estimators = TRUE)
 
+          ## 3. Update the CV risk of each of the algorithms (based on test set), except for dosl
           ## We need to store the dosl risk, as we will update it later.
           pre_dosl_risk <- private$cv_risk$dosl.estimator
 

@@ -2,7 +2,7 @@ context("Evaluation.R")
 
 context(" Evaluation.get_evaluation_function")
 #==========================================================
-test_that("it should always return the log loss", {
+test_that("it should always return the log_loss for a loss function", {
   fn <- Evaluation.get_evaluation_function('gaussian', TRUE)
   expect_false(is.null(fn))
   expect_equal(fn, Evaluation.log_likelihood_loss)
@@ -31,7 +31,7 @@ test_that("it should always return the log loss", {
   #expect_equal(fn, Evaluation.root_mean_squared_error)
 #})
 
-test_that("it should give a log_loss function whenever a binomial performance measure is requested", {
+test_that("it should give a log_likelihood_loss function whenever a performance measure is requested", {
   fn <- Evaluation.get_evaluation_function('binomial', FALSE)
   expect_false(is.null(fn))
   expect_equal(fn, Evaluation.log_loss)
@@ -69,6 +69,15 @@ test_that("it should return the a correct log loss and not go to infinity", {
   expect_gt(loss, 0)
 })
 
+test_that("it should throw if the provided eps is too large", {
+  nobs <- 100
+  eps = 1
+  observed  <- rep(1, nobs)
+  predicted <- rep(0, nobs) 
+  expect_error(Evaluation.log_loss(data.observed = observed, data.predicted = predicted, eps = eps),
+        "Argument 'eps' is out of range [1e-15,0.1]: 1", fixed = TRUE)
+})
+
 context(" Evaluation.log_likelihood_loss")
 #==========================================================
 test_that("it should should return the correct log likelihood loss", {
@@ -88,7 +97,7 @@ test_that("it should should return the correct log likelihood loss", {
     loss <- new_loss
   }
 
-  expect_true(loss == 0)
+  expect_true(loss < 1e-10)
 })
 
 test_that("it should work with single and multiple observations", {
@@ -143,7 +152,24 @@ test_that("it should also work with non binary values, and should be minimized w
   }
 
   # Loss should go to zero
-  expect_true(loss == 0)
+  expect_true(loss < 1e-10)
+})
+
+test_that("it should throw if the provided eps is to small or too large", {
+  set.seed(12345)
+  nobs <- 10
+  observed  <- rep(1, nobs)
+  predicted <- rnorm(nobs, 0, 1)
+  eps = 1
+  expect_error(Evaluation.log_likelihood_loss(data.observed = observed, data.predicted = predicted, eps = eps),
+        "Argument 'eps' is out of range [1e-15,0.1]: 1", fixed = TRUE)
+  eps = 1e-16
+  expect_error(Evaluation.log_likelihood_loss(data.observed = observed, data.predicted = predicted, eps = eps),
+        "Argument 'eps' is out of range [1e-15,0.1]: 1", fixed = TRUE)
+  eps = 1e-15
+  expect_error(Evaluation.log_likelihood_loss(data.observed = observed, data.predicted = predicted, eps = eps),
+        NA)
+  
 })
 
 context(" Evaluation.mse_loss")
