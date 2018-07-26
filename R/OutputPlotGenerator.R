@@ -344,14 +344,14 @@ OutputPlotGenerator.get_simple_colors = function(number_of_variables) {
 #'
 #' @param dir string (default = 'tmp') the dir to write the file to.
 #' @export
-OutputPlotGenerator.export_key_value = function(key, value, output='variables.dat', dir = 'tmp') {
+OutputPlotGenerator.export_key_value = function(key, value, output='variables', dir = 'tmp') {
   if (is.numeric(value)) {
     value <- round(value, 3)
   }
   line <- paste(key,'=',value)
 
   full_file_name <- get_file_location(name = output,
-                                      extension = 'pdf',
+                                      extension = 'dat',
                                       dir = dir)
 
   if (!file.exists(full_file_name)) {

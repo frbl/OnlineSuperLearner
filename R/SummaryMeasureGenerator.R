@@ -272,8 +272,16 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
           })
         })
 
+        ## Perform an extra check to make sure all SMGs give enough data
+        lapply(summarized_trajectories, function(trajectory) lapply(trajectory, function(out){
+          if(nrow(out) != n) stop('The output of all summary measures should be equal to n. The colnames of the failing entry: ', colnames(out)) 
+        }))
+
         names(summarized_trajectories) <- self$get_trajectory_names
-        lapply(summarized_trajectories, function(trajectory) Reduce(cbind, trajectory))
+        lapply(summarized_trajectories, function(trajectory) {
+          tmp <- Reduce(cbind, trajectory)
+          tmp[complete.cases(tmp), ]
+        })
       },
 
       getNext = function(n = 1) {

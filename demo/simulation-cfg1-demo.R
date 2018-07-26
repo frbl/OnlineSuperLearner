@@ -71,6 +71,9 @@ algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
                                  params = list(nbins = c(15), online = TRUE))))
 algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
                                  params = list(nbins = c(5), online = TRUE))))
+algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
+                                 algorithm_params = list(alpha = seq(0,1,0.2)),
+                                 params = list(nbins = c(5), online = TRUE))))
 
 ## Specify the intervention we'd like to test, and also specify when we want to
 ## test this interventsion
