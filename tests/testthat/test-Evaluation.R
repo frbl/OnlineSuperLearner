@@ -75,7 +75,7 @@ test_that("it should throw if the provided eps is too large", {
   observed  <- rep(1, nobs)
   predicted <- rep(0, nobs) 
   expect_error(Evaluation.log_loss(data.observed = observed, data.predicted = predicted, eps = eps),
-        "Argument 'eps' is out of range [1e-15,0.1]: 1", fixed = TRUE)
+        "Argument 'eps' is out of range")
 })
 
 context(" Evaluation.log_likelihood_loss")
@@ -162,10 +162,10 @@ test_that("it should throw if the provided eps is to small or too large", {
   predicted <- rnorm(nobs, 0, 1)
   eps = 1
   expect_error(Evaluation.log_likelihood_loss(data.observed = observed, data.predicted = predicted, eps = eps),
-        "Argument 'eps' is out of range [1e-15,0.1]: 1", fixed = TRUE)
+        "Argument 'eps' is out of range")
   eps = 1e-16
   expect_error(Evaluation.log_likelihood_loss(data.observed = observed, data.predicted = predicted, eps = eps),
-        "Argument 'eps' is out of range [1e-15,0.1]: 1", fixed = TRUE)
+        "Argument 'eps' is out of range")
   eps = 1e-15
   expect_error(Evaluation.log_likelihood_loss(data.observed = observed, data.predicted = predicted, eps = eps),
         NA)

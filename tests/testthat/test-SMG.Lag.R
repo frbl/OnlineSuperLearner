@@ -86,8 +86,9 @@ subject <- SMG.Lag$new(lags = lags, colnames.to.lag = colnames)
 data <- data.table(x1=c(0,1,2,3),x2=c(1000,900,800,700), x3=c(9,7,5,3), y=c(1,0,1,0))
 result <-  subject$process(data)
 
-test_that("it should only return a single row of data", {
-  expect_equal(nrow(result), 1)
+test_that("it should only return not just return a single row of data", {
+  number_of_rows = lags + 1
+  expect_equal(nrow(result), number_of_rows )
 })
 
 test_that("it should return a dataframe", {
@@ -104,11 +105,17 @@ test_that("it should create a lagged DT with the correct column names ", {
 })
 
 test_that("it should create a lagged DT with the correct data", {
+  cleaned_data <- data[complete.cases(data)]
+  expect_equal(nrow(cleaned_data), nrow(data) - lags)
+
+  cleaned_result <- result[complete.cases(result)]
+  expect_equal(nrow(cleaned_result), nrow(result) - lags)
+
   for (var in colnames) {
     for(lag in 1:lags) {
       correct.index <- nrow(data) - lag
       lagcol <- paste(var, 'lag', lag, sep='_')
-      res <- result[,lagcol, with=FALSE]
+      res <- cleaned_result[,lagcol, with=FALSE]
       expected <- data[correct.index, var, with=FALSE]
       diff <- (res - expected)
       expect_true(diff == 0)

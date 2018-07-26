@@ -365,7 +365,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         fit = function(data, initial_data_size = 5, max_iterations = 20, mini_batch_size = 20, ...) {
           tic <- Sys.time()
 
-          data <- Arguments$getInstanceOf(data, 'Data.Base')
           initial_data_size <- Arguments$getInteger(initial_data_size, c(1,Inf))
           max_iterations <- Arguments$getInteger(max_iterations, c(0,Inf))
           mini_batch_size <- Arguments$getInteger(mini_batch_size, c(1,Inf))
@@ -380,6 +379,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                   self$get_data_splitter$get_test_set_size + 1)
           }
 
+          data <- Arguments$getInstanceOf(data, 'Data.Base')
           ## Initialize the summary measure generator with the correct trajectories
           self$get_summary_measure_generator$set_trajectories(data = data)
 
@@ -405,6 +405,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             self$train_library(data_current = next_data)
             private$verbose && exit(private$verbose)
           }
+
 
           ## Update the library of models using a given number of max_iterations
           private$verbose && enter(private$verbose, 'Updating estimators')
