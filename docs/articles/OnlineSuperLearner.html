@@ -101,7 +101,7 @@
 <pre><code>## Installing OnlineSuperLearner</code></pre>
 <pre><code>## '/usr/local/Cellar/r/3.5.1/lib/R/bin/R' --no-site-file --no-environ  \
 ##   --no-save --no-restore --quiet CMD INSTALL  \
-##   '/private/var/folders/zv/lxh6xlh11ng1dnm476qc_jtw0000gn/T/Rtmp1IOiHe/devtools1927578a2df4/frbl-OnlineSuperLearner-e9a8bf5'  \
+##   '/private/var/folders/zv/lxh6xlh11ng1dnm476qc_jtw0000gn/T/Rtmpcma0wl/devtoolsa3903f766840/frbl-OnlineSuperLearner-b837d4d'  \
 ##   --library='/usr/local/lib/R/3.5/site-library' --install-tests</code></pre>
 <pre><code>## </code></pre>
 <pre><code>## Loading required package: R6</code></pre>
@@ -312,7 +312,7 @@
 <a class="sourceLine" id="cb16-20" data-line-number="20">  psi.approx &lt;-<span class="st"> </span><span class="kw">mean</span>(result.approx)</a>
 <a class="sourceLine" id="cb16-21" data-line-number="21"></a>
 <a class="sourceLine" id="cb16-22" data-line-number="22">  <span class="kw">print</span>(psi.approx)</a></code></pre></div>
-<pre><code>## [1] 19.89055</code></pre>
+<pre><code>## [1] 19.9032</code></pre>
 <p>The next step is to use the mechanisms to create a test set of data. Store the result so we can use it later</p>
 <div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" data-line-number="1">  data.train &lt;-<span class="st"> </span>simulator<span class="op">$</span><span class="kw">simulateWAY</span>(training_set_size <span class="op">+</span><span class="st"> </span>B <span class="op">+</span><span class="st"> </span><span class="dv">100</span>, <span class="dt">qw=</span>llW, <span class="dt">ga=</span>llA, <span class="dt">Qy=</span>llY, <span class="dt">verbose=</span>log)</a>
 <a class="sourceLine" id="cb18-2" data-line-number="2">  data.test &lt;-<span class="st"> </span>simulator<span class="op">$</span><span class="kw">simulateWAY</span>(<span class="dv">1000</span>, <span class="dt">qw=</span>llW, <span class="dt">ga=</span>llA, <span class="dt">Qy=</span>llY, <span class="dt">verbose=</span>log)</a></code></pre></div>
@@ -424,7 +424,7 @@
 <a class="sourceLine" id="cb26-5" data-line-number="5">    <span class="st">'which is a difference of:'</span>, <span class="kw">abs</span>(psi.approx <span class="op">-</span><span class="st"> </span>psi.estimation)</a>
 <a class="sourceLine" id="cb26-6" data-line-number="6">  )</a>
 <a class="sourceLine" id="cb26-7" data-line-number="7">  <span class="kw">print</span>(outcome)</a></code></pre></div>
-<pre><code>## [1] "We have approximated psi as 19.890548578524 our estimate is 19.8762323582572 which is a difference of: 0.0143162202668279"</code></pre>
+<pre><code>## [1] "We have approximated psi as 19.9032007190195 our estimate is 19.8762323582572 which is a difference of: 0.026968360762357"</code></pre>
 <p>The result should be something like:</p>
 <pre class="plaintext"><code>[1] "We have approximated psi as 19.9016316150146 our estimate is 19.9018591048906 which is a difference of: 0.000227489875989306"</code></pre>
 </section><section id="prediction-and-sampling" class="level2"><h2>Prediction and sampling</h2>
@@ -450,16 +450,16 @@
 ## 
 ## $`ML.SpeedGLMSGD-vanilla.nbins-5_online-TRUE`
 ##                      W            A            Y
-##    1: 0.16466684828990 0.4895371872 4.5690128337
+##    1: 0.16466684828988 0.4895371872 4.5690128337
 ##    2: 0.01357978869124 0.6463890005 1.2126330980
 ##    3: 0.13370219532506 0.3286657138 3.1019177980
 ##    4: 0.00118533076560 0.2843972319 1.1707741285
 ##    5: 0.00489771011548 0.2830476630 2.5925366166
 ##   ---                                           
-##  996: 0.00782501536392 0.7117269188 0.4695156837
+##  996: 0.00782501536393 0.7117269188 0.4695156837
 ##  997: 0.03292833877762 0.7127734626 0.5629124447
 ##  998: 0.00008078884144 0.3237159561 1.2294078480
-##  999: 0.02459064014376 0.6451443900 1.2820427338
+##  999: 0.02459064014377 0.6451443900 1.2820427338
 ## 1000: 0.00341310565792 0.7187441184 1.2406165215
 ## 
 ## $osl.estimator
