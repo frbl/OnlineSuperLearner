@@ -4,7 +4,7 @@
 \alias{OutputPlotGenerator.export_key_value}
 \title{OutputPlotGenerator.export_key_value}
 \usage{
-OutputPlotGenerator.export_key_value(key, value, output = "variables.dat",
+OutputPlotGenerator.export_key_value(key, value, output = "variables",
   dir = "tmp")
 }
 \arguments{
