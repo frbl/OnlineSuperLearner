@@ -134,41 +134,41 @@ OutputPlotGenerator.create_convergence_plot = function(data, output, dir = 'tmp'
 #' @export
 OutputPlotGenerator.create_training_curve = function(historical_cvs, relevantVariables, output = 'historical_cvs', dir = 'tmp') {
   # historical_cvs is a list of lists of datatables
-  #                     - each iteration
-  #                             - each learner
-  #                                      - each RV
+  #  - each iteration
+  #    - each learner
+  #      - each RV
   result <- lapply(relevantVariables, function(rv){
     lapply (historical_cvs, function(epoch) {
       lapply(epoch, function(algorithm_outcome) algorithm_outcome[, rv$getY, with=FALSE]) %>% unlist
     })
   })
+  names(result) <- lapply(relevantVariables, function(rv) rv$getY)
 
   plots <- lapply(seq_along(result), function(rv_id) {
     rv_result <- result[[rv_id]]
     dt <- as.data.table(rv_result)%>% t
 
-    name_list <- c()
     the_names <- names(rv_result[[1]])
     for (name_id in seq_along(the_names)) {
       name <- the_names[[name_id]]
-      name_list <- c(name_list, name_id)
       the_key <- paste('algorithm', name_id, sep='_') 
       OutputPlotGenerator.export_key_value(the_key, name)
     }
     
-    colnames(dt) <- name_list
+    colnames(dt) <- the_names
     dt = tryCatch({
       data.table(dt)
     }, error = function(e) {
       browser()
     })
-    dt[, id := seq(1, length(rv_result))]
+    dt[, epoch := seq(1, length(rv_result))]
 
-    test_data_long <- reshape2::melt(dt, id='id')
+    test_data_long <- reshape2::melt(dt, id='epoch')
     test_data_long
     names(test_data_long)
-    ggplot(data=test_data_long, aes(x=id, y=value, colour=variable)) +
+    ggplot(data=test_data_long, aes(x=epoch, y=value, colour=variable)) +
         geom_line()+
+        ggtitle(names(result)[rv_id])+
         theme(axis.text.y = element_text(colour = "black") ) +
         theme(axis.text.x = element_text(colour = "black") ) +
         theme(axis.title.x = element_text(vjust = -0.5)) +
@@ -183,8 +183,11 @@ OutputPlotGenerator.create_training_curve = function(historical_cvs, relevantVar
                                       extension = 'pdf',
                                       dir = dir)
   
+
   pdf(full_file_name)
-  lapply(plots, plot)
+  for (i in seq_along(plots)) {
+    plot(plots[[i]])
+  }
   dev.off()
 
 
@@ -355,7 +358,7 @@ OutputPlotGenerator.export_key_value = function(key, value, output='variables.da
     file.create(full_file_name)
   }
 
-  write(line,file=the_file,append=TRUE)
+  write(line,file=full_file_name,append=TRUE)
 }
 
 #' OutputPlotGenerator.store_oos_osl_difference
