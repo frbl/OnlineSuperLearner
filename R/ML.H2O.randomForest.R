@@ -65,13 +65,13 @@ ML.H2O.randomForest <- R6Class("ML.H2O.randomForest",
       min_rows = NULL,
       verbose = NULL,
 
-      do.predict = function(X_mat, m.fit) {
+      do.predict = function(X_mat, m.fit, ...) {
       },
 
-      do.update = function(X_mat, Y_vals, m.fit) {
+      do.update = function(X_mat, Y_vals, m.fit, ...) {
       },
 
-      do.fit = function (X_mat, Y_vals, checkpoint = NULL) {
+      do.fit = function (X_mat, Y_vals, checkpoint = NULL, ...) {
 
         # TODO: this is probably a bug
         unique_val <- unique(Y_vals)

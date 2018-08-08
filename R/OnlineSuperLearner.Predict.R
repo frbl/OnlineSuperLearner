@@ -228,7 +228,10 @@ OnlineSuperLearner.Predict <- R6Class("OnlineSuperLearner.Predict",
               algorithm_names = NULL,
               predictions = current_result
             )
-            outcomes <- lapply(current_result$normalized[1], function(x) x[[current_rv_name]])
+            ## We can always select the first element here (so the next lapply is not needed)
+            #outcomes <- lapply(current_result$normalized[1], function(x) x[[current_rv_name]])
+            ## Also note that the above lapply does not return a matrix, but actually a list
+            outcomes <- current_result$normalized[1][[1]][,current_rv_name, with=FALSE]
           } else {
             filtered_weights <- subset(osl_weights, osl_weights[,current_rv_name] >= weight_threshold, select = current_rv_name)
             algorithm_names <- rownames(filtered_weights)
