@@ -1,5 +1,8 @@
 #devtools::install_deps(dependencies = TRUE)
 devtools::load_all(".")
+library('magrittr')
+library('doParallel')
+library('foreach')
 #' @importFrom condensier condensier_options
 #' @importFrom doParallel registerDoParallel
 #' @importFrom foreach foreachs
@@ -89,10 +92,11 @@ osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
 
 ## Specify the intervention we'd like to test, and also specify when we want to
 ## test this intervention
-
 intervention <- list(variable = 'A', when = c(2), what = c(1))
-tau = 2
-B<-100
+## Tau is the time at which we want to test the intervention
+tau <-  2
+## B is the number of iterations we'll run before we hope to converge
+B <- 100
 
 cat('Approximating truth...\n')
 result.approx <- foreach(i=seq(B)) %do% {
@@ -102,18 +106,29 @@ result.approx <- foreach(i=seq(B)) %do% {
   data.int$Y[tau]
 } %>% unlist
 
-interventions<-list(intervention=intervention)
-result <- lapply(c(TRUE,FALSE), function(discrete) {
-   intervention_effect_caluculator$calculate_intervention_effect(
-    osl = osl,
-    interventions = interventions, 
-    discrete = discrete, 
-    initial_data = data.train.set[1,],
-    tau = tau
-  )
-})
 
+## Create the calculator to determine the intervention effects with
+intervention_effect_caluculator = InterventionEffectCalculator$new(
+  bootstrap_iterations = B, 
+  outcome_variable = Y$getY,
+  verbose = log,
+  parallel = TRUE
+)
 
+## We need to have data that includes the summary measures for the evaluation
+## generate them here
+data.train <- Data.Static$new(dataset = data.train)
+osl$get_summary_measure_generator$set_trajectories(data.train)
+data.train.set <- osl$get_summary_measure_generator$getNext(2)
+
+## Actually evaluate the intervention for the discrete superlearner
+intervention_effect_caluculator$evaluate_single_intervention(
+  osl = osl,
+  intervention = intervention, 
+  discrete = TRUE, 
+  initial_data = data.train.set$traj_1[1,],
+  tau = tau
+)
 
 ## Define kolmogorov-smirnov test
 T_iter <- 10
