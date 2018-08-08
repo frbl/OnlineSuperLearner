@@ -1,10 +1,10 @@
-library(mockery)
+#library(mockery)
 
-context("CrossValidationRiskCalculator.R")
+#context("CrossValidationRiskCalculator.R")
 described.class <- CrossValidationRiskCalculator
 subject <- described.class$new()
 
-## Initialize some variables
+### Initialize some variables
 glob_relevantVariables <- list(list(getY='A', getFamily='binomial'),
                         list(getY='W', getFamily='gaussian'),
                         list(getY='Y', getFamily='gaussian')
@@ -355,7 +355,7 @@ test_that("it should throw if the predicted outcomes are not a list", {
                                     current_risk = 0, current_count = 0, check = TRUE), expected_msg, fixed = TRUE)
 })
 
-test_that("it should throw if the observed outcomes are empty and check is true", {
+test_that("it should throw if the observed outcomes are not a datatable", {
   erroneous_inputs <- list(NULL, list(), 'hoi')
   expected_msg <- "Argument 'observed.outcome' is neither of nor inherits class data.table:"
   for (input in erroneous_inputs) {
@@ -364,6 +364,24 @@ test_that("it should throw if the observed outcomes are empty and check is true"
                                      relevantVariables = glob_relevantVariables,
                                      current_risk = 0, current_count = 0, check = TRUE), expected_msg)
   }
+})
+
+test_that("it should throw if the observed outcomes are empty and check is true", {
+  expected_msg <- "Predicted outcome is empty!"
+  expect_error(subject$update_risk(
+    predicted.outcome = list(),
+    observed.outcome = glob_observed.outcome,
+    relevantVariables = glob_relevantVariables,
+    current_risk = 0, current_count = 0, check = TRUE), expected_msg)
+})
+
+test_that("it should throw if the observed outcomes are empty and check is true", {
+  expected_msg <- "Observed outcome is empty!"
+  expect_error(subject$update_risk(
+    predicted.outcome = glob_predicted.outcome,
+    observed.outcome = data.table(),
+    relevantVariables = glob_relevantVariables,
+    current_risk = 0, current_count = 0, check = TRUE), expected_msg)
 })
 
 test_that("it should should call the update_single_risk function with the correct parameters when a risk is not available", {
@@ -505,6 +523,24 @@ test_that("it should update the risk properly when there already was a risk", {
 test_that("it should update (set) the risk properly when there is no current risk", {
   subject <- described.class$new()
   cur.current_risk <- NULL
+  cur.new_risks <- data.table(A = 8, W = 9, Y = 10)
+  cur.current_count <- 0
+
+  expected_risk <- cur.new_risks
+
+  updated_risk <- subject$update_single_risk(
+    old_risk = cur.current_risk,
+    new_risks = cur.new_risks,
+    current_count = cur.current_count,
+    relevantVariables = glob_relevantVariables
+  )
+
+  expect_equivalent(updated_risk, expected_risk)
+})
+
+test_that("it should update (set) the risk properly when there is current risk but nothing in it", {
+  subject <- described.class$new()
+  cur.current_risk <- list(W= NA, A=NA, Y=NA)
   cur.new_risks <- data.table(A = 8, W = 9, Y = 10)
   cur.current_count <- 0
 
