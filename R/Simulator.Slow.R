@@ -10,9 +10,6 @@ Simulator.Slow <- R6Class("Simulator.Slow",
                               ga=self$generateMechanism(0, family="bernoulli"),
                               Qy=self$generateMechanism(0, family="bernoulli")) {
 
-          private$rgen <- list(bernoulli=function(xx, yy){as.integer(xx <= yy)},
-                        gaussian=function(xx, yy){xx+yy})
-
           private$qw <- qw %>% private$validateMechanism(.)
           private$ga <- ga %>% private$validateMechanism(.)
           private$Qy <- Qy %>% private$validateMechanism(.)
@@ -47,8 +44,6 @@ Simulator.Slow <- R6Class("Simulator.Slow",
           verbose <- Arguments$getVerbose(verbose)
 
 
-          rsource <- list(bernoulli=runif,
-                          gaussian=rnorm)
 
 
           ## verbose
@@ -60,67 +55,16 @@ Simulator.Slow <- R6Class("Simulator.Slow",
           verbose && cat(verbose, msg)
 
           init <- rep(NA, numberOfBlocks)
+
           ## sources of randomness
           UU <- cbind(W=init, A=init, Y=init)
           for (ii in 1:3) {
-            UU[, ii] <- rsource[[self$get_families[ii]]](numberOfBlocks)
+            UU[, ii] <- private$randomness_source[[self$get_families[ii]]](numberOfBlocks)
           }
 
           #WAY <- rep(init, 3)
           WAY <- matrix(rep(init, 3), ncol=3, dimnames=list(NULL, c("W", "A", "Y")))
-          if (version=="slow") {
-            ## -------------
-            ## first version ## must be very slow
-            ## -------------
-            functions = list(list(name = 'W', fun = private$qw),
-                             list(name = 'A', fun = private$ga),
-                             list(name = 'Y', fun = private$Qy))
-            for (ii in 1:numberOfBlocks) {
-              for (j in seq_along(functions)) {
-                fun <- functions[[j]]
-                variable = fun$name
-                past <- private$get_past(variable, ii, WAY)
-                WAY[ii, variable] <- private$get_rgen(variable)(UU[ii, j], fun$fun(past))
-              }
-            }
-          } else if (version=="faster") {
-            ## --------------
-            ## second version ## significantly faster than previous one?
-            ## --------------
-
-            #### check how to require libraries 'inline' and 'Rcpp'...
-
-            throw("'Rcpp' version not implemented yet...")
-
-            ## #############
-            ## A TEMPLATE...
-            ## #############
-            ##
-            ## generateWAY <- cxxfunction(signature(x="numeric", y="numeric", wt="numeric", param="numeric"),
-            ##                            body="
-            ##              Rcpp::NumericVector xx(x);
-            ##              Rcpp::NumericVector yy(y);
-            ##              /*Rcpp::NumericVector aa(alpha);*/
-            ##              Rcpp::NumericVector wwtt(wt);
-            ##              Rcpp::NumericVector bb(param);
-            ##              int n=xx.size();
-            ##              Rcpp::NumericVector out(1);
-            ##              Rcpp::NumericVector Nb(1);
-
-            ##              Nb[0]=0;
-            ##              out[0]=0;
-            ##              for(int i=0; i < n; i++){
-            ##                Nb[0] +=wwtt[i];
-            ##                for(int j=0; j<n; j++){
-            ##                  out[0] = out[0] + (1/(1+exp(bb[0]*(xx[i]-xx[j])*(yy[i]-yy[j]))))*wwtt[i]*wwtt[j];
-            ##                }
-            ##               }
-            ##              out[0] = out[0]/(Nb[0]*Nb[0]);
-
-
-            ##              return out;",
-            ##              plugin="Rcpp")
-          }
+          WAY <- private$run(numberOfBlocks,  WAY, UU, version)
           WAY <- t(matrix(WAY, nrow=3, dimnames=list(c("W", "A", "Y"), NULL))) %>%
             as.data.table
 
@@ -204,16 +148,91 @@ Simulator.Slow <- R6Class("Simulator.Slow",
 
       get_memories = function(){
         return(private$memories)
+      },
+
+      rgen = function() {
+       list(
+        bernoulli = function(xx, yy){ as.integer(xx <= yy) }, 
+        gaussian = function(xx, yy){ xx+yy })
       }
     ),
   private =
     list(
+
       qw = NULL,
       ga = NULL,
       Qy = NULL,
       rgen = NULL,
       memories = NULL,
       families = NULL,
+      randomness_source = list(bernoulli=runif, gaussian=rnorm),
+
+      run = function(numberOfBlocks, WAY, UU, version) {
+        if (version=="slow") {
+          private$slow_implementation(numberOfBlocks, WAY, UU)
+        } else if (version=="faster") {
+          private$fast_implementation(numberOfBlocks, WAY, UU)
+        }
+      },
+
+
+      slow_implementation = function(numberOfBlocks, WAY, UU) {
+        ## -------------
+        ## first version ## must be very slow
+        ## -------------
+        functions = list(list(name = 'W', fun = private$qw),
+                          list(name = 'A', fun = private$ga),
+                          list(name = 'Y', fun = private$Qy))
+        for (ii in 1:numberOfBlocks) {
+          for (j in seq_along(functions)) {
+            fun <- functions[[j]]
+            variable = fun$name
+            past <- private$get_past(variable, ii, WAY)
+            WAY[ii, variable] <- private$get_rgen(variable)(UU[ii, j], fun$fun(past))
+          }
+        }
+        WAY
+      },
+
+      fast_implementation = function(numberOfBlocks, WAY, UU) {
+        ## --------------
+        ## second version ## significantly faster than previous one?
+        ## --------------
+
+        #### check how to require libraries 'inline' and 'Rcpp'...
+
+        throw("'Rcpp' version not implemented yet...")
+
+        ## #############
+        ## A TEMPLATE...
+        ## #############
+        ##
+        ## generateWAY <- cxxfunction(signature(x="numeric", y="numeric", wt="numeric", param="numeric"),
+        ##                            body="
+        ##              Rcpp::NumericVector xx(x);
+        ##              Rcpp::NumericVector yy(y);
+        ##              /*Rcpp::NumericVector aa(alpha);*/
+        ##              Rcpp::NumericVector wwtt(wt);
+        ##              Rcpp::NumericVector bb(param);
+        ##              int n=xx.size();
+        ##              Rcpp::NumericVector out(1);
+        ##              Rcpp::NumericVector Nb(1);
+
+        ##              Nb[0]=0;
+        ##              out[0]=0;
+        ##              for(int i=0; i < n; i++){
+        ##                Nb[0] +=wwtt[i];
+        ##                for(int j=0; j<n; j++){
+        ##                  out[0] = out[0] + (1/(1+exp(bb[0]*(xx[i]-xx[j])*(yy[i]-yy[j]))))*wwtt[i]*wwtt[j];
+        ##                }
+        ##               }
+        ##              out[0] = out[0]/(Nb[0]*Nb[0]);
+
+
+        ##              return out;",
+        ##              plugin="Rcpp")
+        WAY
+      },
 
       get_rgen = function(variable) {
         private$rgen[[self$get_families[variable]]]
