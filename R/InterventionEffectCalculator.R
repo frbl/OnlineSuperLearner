@@ -185,7 +185,7 @@ InterventionEffectCalculator <- R6Class("InterventionEffectCalculator",
         ## Note that this won't work when we have an H2O estimator in the set.
         ## The parallelization will fail.
         result <- foreach(i=seq(self$get_bootstrap_iterations), .combine=rbind) %looping_function% {
-          private$verbose && cat(private$verbose, 'Approximation iteration for:', i)
+          #private$verbose && cat(private$verbose, 'Approximation iteration for:', i)
           drawn_sample <- osl$sample_iteratively(
             data = initial_data,
             intervention = intervention,

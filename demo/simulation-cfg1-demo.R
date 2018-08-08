@@ -2,7 +2,8 @@
 devtools::load_all(".")
 #' @importFrom condensier condensier_options
 #' @importFrom doParallel registerDoParallel
-#' @importFrom foreach foreach
+#' @importFrom foreach foreachs
+#' 
 
 set.seed(12345)
 
@@ -81,10 +82,9 @@ osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
   verbose = log, ## Logging information
   bounds = TRUE, ## Let the OSL generate the bounds based on the data it gets
   test_set_size = 5 + (3 * 3 + 3), ## The size of the minibatch test size
-
   initial_data_size = training_set_size / 2, ## Train the first iteration (Nl) on this part of the data
   max_iterations = max_iterations, ## Use at most max_iterations over the data
-  mini_batch_size = (training_set_size / 2) / max_iterations ## Split the rememaining data into N-Nl/max_iterations equal blocks of data
+  mini_batch_size = (training_set_size / 2) / max_iterations ## Split the remaining data into N-Nl/max_iterations equal blocks of data
 )
 
 ## Specify the intervention we'd like to test, and also specify when we want to
@@ -92,14 +92,16 @@ osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
 
 intervention <- list(variable = 'A', when = c(2), what = c(1))
 tau = 2
+B<-100
 
 cat('Approximating truth...\n')
-result.approx <- foreach(i=seq(B)) %dopar% {
+result.approx <- foreach(i=seq(B)) %do% {
   cat('Approximating truth in iteration (under intervention): ', i, '\n')
   data.int <- sim$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
                                   intervention = intervention, verbose = FALSE)
   data.int$Y[tau]
 } %>% unlist
+
 interventions<-list(intervention=intervention)
 result <- lapply(c(TRUE,FALSE), function(discrete) {
    intervention_effect_caluculator$calculate_intervention_effect(

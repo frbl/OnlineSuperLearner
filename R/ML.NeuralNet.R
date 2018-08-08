@@ -29,7 +29,7 @@ ML.NeuralNet <- R6Class("ML.NeuralNet",
     list(
       fitfunname='neural-net',
       lmclass='neural-net',
-      initialize = function(hidden=c(1,3), stepmax=1e6) {
+      initialize = function(hidden=c(1,3),threshold=0.02, stepmax=1e7) {
         private$hidden <- hidden
         private$stepmax <- stepmax
       }
@@ -49,15 +49,18 @@ ML.NeuralNet <- R6Class("ML.NeuralNet",
       do.fit = function(X_mat, Y_vals, save_model = FALSE, coef = NULL) {
         formula <- self$create_formula(colnames(X_mat))
         data = cbind(X_mat, Y = Y_vals) 
-        fitted_model <- neuralnet(formula, data = data, hidden = private$hidden,
-                                  linear.output=FALSE,
-                                  startweights = coef,
-                                  stepmax = private$stepmax)
+        fitted_model<- neuralnet(formula, data = data, 
+                                           hidden = private$hidden,
+                                           threshold =private$threshold,
+                                           linear.output=FALSE,
+                                           startweights = coef,
+                                           stepmax = private$stepmax)
+        
 
         if (save_model) {
           private$save_model(model = fitted_model)
         }
-
+        #private$stepmax=1
         return(fitted_model)
       },
 
@@ -68,11 +71,20 @@ ML.NeuralNet <- R6Class("ML.NeuralNet",
         if (is.null(m.fit)){
           m.fit <- private$read_model()
         }
-
-        fitted_model <- private$do.fit(X_mat, Y_vals, 
-                                      save_model = save_model,
-                                      coef = m.fit$coef$weights)
-
+        
+        fitted_model = tryCatch({
+            private$do.fit(X_mat, Y_vals, 
+                         save_model = save_model,
+                         coef = m.fit$coef$weights)
+          }, warning = function(w) {
+            if (w$message == 'algorithm did not converge in 1 of 1 repetition(s) within the stepmax') {
+              warning(w$message)
+              return(m.fit$coef)
+              
+            }
+        }) 
+        
+         
         if (save_model) {
           private$save_model(model = fitted_model)
         }
@@ -87,7 +99,20 @@ ML.NeuralNet <- R6Class("ML.NeuralNet",
         }
           
         private$validate_mfit(m.fit)
-        result <- compute(m.fit$coef, X_mat)
+         result= tryCatch({
+           if (is.null(m.fit$coef$result.matrix["reached.threshold",])){
+                   browser()
+           }
+           compute(m.fit$coef, X_mat)
+        }, warning = function(w) {
+          
+          browser()
+          },
+           error = function(e){
+             browser()
+           }
+        ) 
+        
 
         return(result$net.result)
       },

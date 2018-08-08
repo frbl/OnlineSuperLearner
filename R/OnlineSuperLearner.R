@@ -367,7 +367,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           initial_data_size <- Arguments$getInteger(initial_data_size, c(1,Inf))
           max_iterations <- Arguments$getInteger(max_iterations, c(0,Inf))
           mini_batch_size <- Arguments$getInteger(mini_batch_size, c(1,Inf))
-
+   
           ## We are taking part of the minibatch away to do the testing of the
           ## algorithm. As such, the specified minibatch size should be more
           ## than the specified test size.
@@ -379,6 +379,8 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           }
 
           data <- Arguments$getInstanceOf(data, 'Data.Base')
+        
+          
 
           self$get_summary_measure_generator$set_trajectories(data = data)
           self$get_summary_measure_generator$check_enough_data_available(relevantVariables = self$get_relevant_variables)
