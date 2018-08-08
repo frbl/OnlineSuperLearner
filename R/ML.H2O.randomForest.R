@@ -43,12 +43,33 @@ ML.H2O.randomForest <- R6Class("ML.H2O.randomForest",
         private$verbose <- verbose
       }
     ),
+  active = 
+    list(
+      get_nfolds = function() {
+        return(private$nfolds)
+      },
+      get_ntrees = function() {
+        return(private$ntrees)
+      },
+      get_min_rows = function() {
+        return(private$min_rows)
+      },
+      get_verbose = function() {
+        return(private$verbose)
+      }
+    ),
   private =
     list(
       nfolds = NULL,
       ntrees = NULL,
       min_rows = NULL,
       verbose = NULL,
+
+      do.predict = function(X_mat, m.fit) {
+      },
+
+      do.update = function(X_mat, Y_vals, m.fit) {
+      },
 
       do.fit = function (X_mat, Y_vals, checkpoint = NULL) {
 
