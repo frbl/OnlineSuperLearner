@@ -63,7 +63,11 @@ generateLagData<-function (n,prob_w2) {
       if (row_dag$w2==0){w2_0=-0.01
       } else{w2=0.01}
       row_dag$w2<-rbinom(1,size=1,prob=prob_w2+Y_w2+w2)
+      if (row_dag$w2==0){
+        row_dag$w3<-row_dag$w3}
       
+      
+      row_dag$w3<-
       simData_t<-data.frame(row_dag)
     }
   
@@ -82,7 +86,7 @@ generateDAG<-function(n){
 
 generateDAG(3)
 
-
+w3<-round(runif(1, min=0, max=4), digits =3)
 
 True_Psi <- mean(simData$YA1-simData$YA0);
 cat(" True_Psi:", True_Psi)
