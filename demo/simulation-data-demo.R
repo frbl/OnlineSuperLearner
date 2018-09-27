@@ -5,7 +5,7 @@
  
 #w1 gender 0/1
 #w2 quality of sleep 0/1
-#w3 level of activity (PAL value) between 1.2 and 4
+#w3 level of activity (PAL value) between 1.4 and 2.4
 #A antidepressant = 1 no antdepressant = 0
 #Y IDS (Inventory of Depressive Symptomatology)
 #Block time block
@@ -14,25 +14,50 @@
 #Y_A influence of Y on A in the next block
 #Y_w2 influence of Y on w2 in the next blok
 
-rm(simData_t)
-rm(simData_t_df)
-rm(simData_t0)
+
 library("dplyr")
 generateData0<-function (n,prob_w2) {
   Block<-0
   Patient_id<- seq.int(nrow(n))
-  w1<-rbinom(n,size=1,prob=0.5)
-  w2<-rbinom(n,size=1,prob=prob_w2)
-  w3<-round(runif(n, min=1.2, max=4.0), digits =2)
-  A<-rbinom(n, size=1, prob=plogis(-0.4+2*w2+0.15*w3+0.15*w2*w3))
+  #man = 1 or woman =0
+  w1<-rbinom(n,size=1,prob = 0.5)
+  # level of sleep good = 1 bad = 0
+  w2<-rbinom(n,size=1,prob = prob_w2)
+  
+  # level of activity PAL <1.4 is almost doing nothing PAL > 2.4 is very active
+  #Extremely inactive	Cerebral Palsy patient	<1.40
+  #Sedentary	Office worker getting little or no exercise	1.40-1.69
+  #Moderately active	Construction worker or person running one hour daily	1.70-1.99
+  #Vigorously active	Agricultural worker (non mechanized) or person swimming two hours daily	2.00-2.40
+  #Extremely active	Competitive cyclist	>2.40
+  # bad sleep is reducing the level of activity
+  Getw3 <- function (w2){
+    if (w2 == 1) {
+       min_val = 1.7
+       max_val = 2.4
+     }
+  else {
+       min_val = 1.4
+       max_val = 2.0
+     }
+  w3<-runif(1,min = min_val,max = max_val)
+  return(w3)
+  }  
+  
+  wv<-Vectorize(Getw3)
+  w3<-wv(w2)
+  
+  
+  A<-rbinom(n, size=1, prob=plogis(-0.4+0.1*w2+0.15*w3+0.15*w2*w3))
   
   distribution_x<-function(x,max_val, minx, maxx){round((x-minx)/(maxx-minx)*max_val)}
   
   noise<-rnorm(n,mean=0, sd=0.1)
  
-  Y <- (-1+-A-0.1*w1+0.3*w2+0.25*w3)+noise
-  YA0 <-(-1+0-0.1*w1+0.3*w2+0.25*w3)+noise
-  YA1 <-(-1+1-0.1*w1+0.3*w2+0.25*w3)+noise
+  Y <- (-1+-A-0.1*w1+0.4*w2+0.3*w3)+noise
+  #counterfactual
+  YA0 <-(-1-0-0.1*w1+0.4*w2+0.3*w3)+noise
+  YA1 <-(-1-1-0.1*w1+0.4*w2+0.3*w3)+noise
   
   minx<- min(c(Y, YA0, YA1))
   maxx<- max(c(Y, YA0,YA1))
@@ -51,9 +76,10 @@ generateData0<-function (n,prob_w2) {
 generateLagData<-function (simData_t0,ptn_id,from_block,to_block,prob_w2,n) {
     for(j in from_block:to_block) {
       if (j == 1){
+        
          row_dag_df_0<-data.frame(filter(simData_t0,Patient_id==ptn_id))
          row_dag<-row_dag_df_0
-      } else { row_dag <- row_dag_df_t}
+      } else {row_dag <- row_dag_df_t}
       
       row_dag$Block<-row_dag$Block+1
       row_dag$w1<-row_dag$w1
@@ -72,25 +98,37 @@ generateLagData<-function (simData_t0,ptn_id,from_block,to_block,prob_w2,n) {
       
       row_dag$w2<-rbinom(n,size=1,prob=prob_w2+delta_prob_w2)
       ##calculate w3 depending on w2
-      ##take the previous w3 if w2 = 1 add 0.1 if w2=0 subtract 0.1
-      ## add noise to everything
+      ## categorize using the PAL scale
+      ## function is neat, vectorization as in the first function is only needed when vectors are used
+      Getw3 <- function (w2){
+        if (w2 == 1) {
+          min_val = 1.7
+          max_val = 2.4
+        }
+        else {
+          min_val = 1.4
+          max_val = 2.0
+        }
+        w3<-runif(1,min = min_val,max = max_val)
+        return(w3)
+      }  
+      
+      row_dag$w3<-Getw3(row_dag$w2)
+      
+      #The use of A
       noise<-rnorm(n,mean=0, sd=0.1)
       
-      
-      if (row_dag$w2 == 1){row_dag$w3=row_dag$w3+0.1+noise
-      } else {row_dag$w3=row_dag$w3-0.1+noise}
-      
-      noise<-rnorm(n,mean=0, sd=0.1)
       if (Y_w2<50){
-          A<-rbinom(n, size=1, prob=plogis(-0.4+2*row_dag$w2+0.15*row_dag$w3+0.15*row_dag$w2*row_dag$w3+noise))
-      } else { A<-rbinom(n, size=1, prob=plogis(-0.1+2*row_dag$w2+0.15*row_dag$w3+0.15*row_dag$w2*row_dag$w3+noise))}
+          A<-rbinom(n, size=1, prob=plogis(-0.4+0.1*row_dag$w2+0.15*row_dag$w3+0.15*row_dag$w2*row_dag$w3+noise))
+      } else { A<-rbinom(n, size=1, prob=plogis(-0.4+0.1*row_dag$w2+0.15*row_dag$w3+0.15*row_dag$w2*row_dag$w3+noise))}
      
       #n=1 when single patient_id is used
       noise<-rnorm(n,mean=0, sd=0.1)
       
-      row_dag$Y <- (-1+row_dag$A-0.1*row_dag$w1+0.3*row_dag$w2+0.25*row_dag$w3+Y_w2/100)+noise
-      row_dag$YA0 <- (-1+0-0.1*row_dag$w1+0.3*row_dag$w2+0.25*row_dag$w3+Y_w2/100)+noise
-      row_dag$YA1 <- (-1+1-0.1*row_dag$w1+0.3*row_dag$w2+0.25*row_dag$w3+Y_w2/100)+noise
+      row_dag$Y <- (-1-row_dag$A-0.1*row_dag$w1+0.4*row_dag$w2+0.3*row_dag$w3+Y_w2/100)+noise
+      #counter factual
+      row_dag$YA0 <- (-1-0-0.1*row_dag$w1+0.4*row_dag$w2+0.3*row_dag$w3+Y_w2/100)+noise
+      row_dag$YA1 <- (-1-1-0.1*row_dag$w1+0.4*row_dag$w2+0.3*row_dag$w3+Y_w2/100)+noise
       
       
       row_dag_df_t<-data.frame(row_dag)
@@ -115,17 +153,50 @@ generateLagData<-function (simData_t0,ptn_id,from_block,to_block,prob_w2,n) {
   
 
 
-set.seed(1234)
 
-generateDAG<-function(n){
-  simData_t0 <- generateData0(100,0.65)
-  patient_id <- unique(simData_t0$Patient_id)
-  #simData_t <- generateLagData(simData_t0,patient_id,1,40,0.65)
+
+generateDAG<-function(n,prob_w2){
+  simData_t0 <- generateData0(n,prob_w2)
   df <- data.frame(simData_t0)
   return(df)
 }
 
-simData_t0<-generateDAG()
+calc_blocks<-function(n,from_block_val,to_block_val,prob_w2_val){ 
+for (ptn_id_value in 1:n) {
+  simData_t_df <- generateLagData(simData_t0 = simData_t0,
+                                  ptn_id = ptn_id_value,
+                                  from_block = from_block_val,
+                                  to_block = to_block_val,
+                                  prob_w2 =prob_w2_val,
+                                  n = 1)
+  
+  }
+
+return(simData_t_df)
+}
+
+#call functions
+set.seed(1234)
+library(doParallel) 
+registerDoParallel(cores=4) 
+## remove previous dataframes
+
+rm(simData_t)
+rm(simData_t_df)
+rm(simData_t0)
+
+#calculate block zero
+#n is number of participants
+n<-10
+#p_w2 is the probability of good sleep
+p_w2<-0.65
+## b_b is begin_block
+b_b<-1
+## e_b is end_block
+e_b<-40
+
+simData_t0<-generateDAG(n,p_w2)
+#calculate following blocks
 simData_t<-data.frame(Block = numeric(),
                       w1 = integer(),
                       w2 = integer(),
@@ -136,19 +207,13 @@ simData_t<-data.frame(Block = numeric(),
                       YA1 = numeric(),
                       Patient_id = integer())
 
-library(doParallel) 
-registerDoParallel(cores=8) 
-for (ptn_id_value in 1:1) {
-      simData_t_df <- generateLagData(simData_t0 = simData_t0,
-                                ptn_id = ptn_id_value,
-                                from_block = 1,
-                                to_block = 40,
-                                prob_w2 =0.65,
-                                n = 1)
-      print(ptn_id_value)
-      }
 
+simData_t_df<-calc_blocks(n,b_b,e_b,p_w2)
+#combine block zero and the following blocks
 simData_t_df<<- rbind(simData_t0,simData_t_df)
+
+# Write CSV 
+#write.csv(simData_t_df, file = "simData.csv",row.names=FALSE)
 
 True_Psi <- mean(simData_t_df$YA1-simData_t_df$YA0);
 cat(" True_Psi:", True_Psi)
