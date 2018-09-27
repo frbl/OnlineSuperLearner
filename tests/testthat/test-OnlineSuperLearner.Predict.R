@@ -37,7 +37,13 @@ test_that("it should return NA if no estimators were fit", {
   cur.data <- data.frame(a=c(1,2,3),b= c(3,2,1))
   OnlineSuperLearner_mock <- list(is_fitted=FALSE)
   subject <- described.class$new(pre_processor = NULL)
-  expect_equal(subject$predict(osl = OnlineSuperLearner_mock, cur.data, relevantVariables = c('a')), NA)
+  
+  result = tryCatch({
+    expect_equal(subject$predict(osl = OnlineSuperLearner_mock, cur.data, relevantVariables = c('a')), NA)
+  }, warning = function(w) {
+    # Remove the warning 
+  })
+  expect_warning(subject$predict(osl = OnlineSuperLearner_mock, cur.data, relevantVariables = c('a')), 'Predicting before fitting. Returning NA')
 })
 
 test_that("it should throw if all estimators are disabled", {

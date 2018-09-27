@@ -614,7 +614,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$dosl.estimators <- rbindlist(current_risk) %>%
             ## Get the first if there are multiple best ones
             sapply(., function(algorithm_scores) {
-              ids <- sort(algorithm_scores, index.return=TRUE, na.last = NA)$ix
+              ids <- sort(algorithm_scores, index.return=TRUE, na.last = TRUE)$ix
               ## We do it this way as the OSL might also get selected. This
               ## might be something we want, but for now the discrete SL can
               ## only be one of the candidates, and not the OSL.

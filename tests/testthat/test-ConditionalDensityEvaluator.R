@@ -127,7 +127,7 @@ test_that("it should throw if the provided B_iter is not an int", {
 
 test_that("it should show when the two provided distributions are not the same", {
   set.seed(1234)
-  log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
+  log <- FALSE #R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
   doParallel::registerDoParallel(cores = parallel::detectCores())
 
   ## Create a simulator

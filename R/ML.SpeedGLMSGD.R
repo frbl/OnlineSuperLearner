@@ -110,18 +110,19 @@ ML.SpeedGLMSGD <- R6Class("ML.SpeedGLMSGD",
         #data <- cbind.data.frame(Y_vals, X_mat)
         #Y_vals
         X_mat <- Arguments$getInstanceOf(X_mat, 'data.table')
+          
         data <- cbind(Y = Y_vals, X_mat)
+
 
         #rename colums to standardize depending on the number of columns
         #data <- private$rename_columns(data)
-        x_names <- colnames(data[2:ncol(data)])
+        x_names <- colnames(data[,2:ncol(data)])
         formula <- self$create_formula(x_names)
 
         # We use speedglm to fit the initial coefficients of the model
         model <- speedglm(formula, data = data, family = binomial(logit))
 
         private$conditionally_save_model(model = coef(model))
-
         return(model)
       },
 
