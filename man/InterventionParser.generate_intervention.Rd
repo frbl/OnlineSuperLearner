@@ -4,8 +4,8 @@
 \alias{InterventionParser.generate_intervention}
 \title{InterventionParser.generate_intervention}
 \usage{
-InterventionParser.generate_intervention(variables, variable_intervened, when,
-  what)
+InterventionParser.generate_intervention(variables, variable_intervened,
+  when, what)
 }
 \arguments{
 \item{variables}{the variables to create the intervention for (a list of all intervention nodes)}

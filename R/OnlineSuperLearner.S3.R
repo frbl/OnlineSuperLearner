@@ -113,6 +113,7 @@ sampledata.OnlineSuperLearner <- function(object, newdata, Y = NULL, nobs=1, sum
     sampled <- object$predict(data = newdata, relevantVariables = Y, sample = TRUE, ...)
     sampled$denormalized
   }
+    
 
   ## This loop is probably not needed, and can be solved
   ## more elegantly. The result in res is a list of lists

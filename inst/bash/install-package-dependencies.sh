@@ -29,7 +29,7 @@ packages <- c(
 "assertthat",
 "optimr",
 "Metrics",
-"nloptr",
+#"nloptr",
 "purrr",
 "doParallel",
 "foreach",
@@ -47,6 +47,7 @@ packages <- c(
 
 gh_packages <- list(
   list(repo = "jeroenooms/jsonlite", branch = 'master'),
+  list(repo = "osofr/simcausal", branch = 'master'),
   list(repo = "osofr/condensier", branch = 'fb-add-update'),
   list(repo = "jimhester/covr", branch = 'master'),
   list(repo = "n-s-f/mockery", branch = 'master'),

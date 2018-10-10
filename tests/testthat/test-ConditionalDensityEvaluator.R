@@ -127,7 +127,7 @@ test_that("it should throw if the provided B_iter is not an int", {
 
 test_that("it should show when the two provided distributions are not the same", {
   set.seed(1234)
-  log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
+  log <- FALSE #R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
   doParallel::registerDoParallel(cores = parallel::detectCores())
 
   ## Create a simulator
@@ -145,10 +145,12 @@ test_that("it should show when the two provided distributions are not the same",
   }
 
   p_1 <<- function(nobs, newdata = NULL) {
-    W <- c(rnorm(nobs/2, -0.5, 1), rnorm(nobs/2, 0.5, 1))
+    half_nobs = round(nobs/2)
+    W <- c(rnorm(half_nobs, -0.5, 1), rnorm(nobs - half_nobs, 0.5, 1))
     A <- c(rbinom(nobs, 1, 0.5))
-    Y <- c(rnorm(nobs/2, A + 0.3, 0.01), rnorm(nobs/2, A-0.3, 0.01))
-    data.table(W = W, A = A, Y=Y)
+    Y <- c(rnorm(half_nobs, A + 0.3, 0.01), rnorm(nobs - half_nobs, A-0.3, 0.01))
+      
+    return(data.table(W = W, A = A, Y=Y))
   }
 
   mock_simulator <- list(simulateWAY = function(numberOfTrajectories) {
@@ -186,7 +188,6 @@ test_that("it should show when the two provided distributions are not the same",
     B_iter,
     nbins = nbins
   )
-
   result %<>% unlist %>% unname
   total_insignificant <- (result <= 0.05) %>% as.numeric %>% sum
   percentage_insignificant <- total_insignificant / (T_iter * nbins * n_A_bins)

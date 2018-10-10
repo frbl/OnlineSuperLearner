@@ -44,8 +44,8 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
 
           # 1. Split the dataframe into seperate sections.
           # 2. Make the slicing into each of the different lagged / other vars.
-          data <- private$convert_observations(observed_data = observed_data)
 
+          data <- private$convert_observations(observed_data = observed_data)
           cluster_bins <- private$create_cluster_bins(data, nbins = nbins)
 
           ## We assume a discrete or binary treatment variable. Hence, just select
@@ -71,6 +71,7 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
             w_subset <- data[W >= from & W < to,]
 
             res_under_a <- foreach(a = A_bins) %do% {
+                
               private$verbose && enter(private$verbose, 'New A bin')
 
               ## Create a new subset from the W subset in which A = a
@@ -91,11 +92,11 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
               }
 
               newdata <- a_subset[sample(available_subset_size, 1),]
-
+                
               res <- sampledata(private$osl, newdata, 
                                 nobs = available_subset_size,
                                 summarize = FALSE)$osl.estimator
-
+                
               names <- colnames(res)
 
               ## Plot some debugging distributions
@@ -114,6 +115,7 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
               #if(pval <= 0.05) browser()
               pval
             }
+
 
             names(res_under_a) <- A_bins
             private$verbose && exit(private$verbose)

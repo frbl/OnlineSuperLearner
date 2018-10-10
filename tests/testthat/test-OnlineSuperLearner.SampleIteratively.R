@@ -16,7 +16,7 @@ rv.Y <- RelevantVariable$new(formula = Y ~ W, family = 'gaussian')
 glob_relevant_variables <- list(W = rv.W, Y = rv.Y)
 
 
-glob_data <- data.table(W = seq(1,10), Y = seq(10,20))
+glob_data <- data.table(W = seq(1,10), Y = seq(11,20))
 glob_tau <- mock('tau')
 glob_intervention <- mock('intervention')
 glob_discrete <- TRUE
