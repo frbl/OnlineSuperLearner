@@ -4,8 +4,8 @@
 \alias{OutputPlotGenerator.create_training_curve}
 \title{OutputPlotGenerator.create_training_curve}
 \usage{
-OutputPlotGenerator.create_training_curve(historical_cvs, relevantVariables,
-  output = "historical_cvs", dir = "tmp")
+OutputPlotGenerator.create_training_curve(historical_cvs,
+  relevantVariables, output = "historical_cvs", dir = "tmp")
 }
 \arguments{
 \item{historical_cvs}{the historical CV risks. List of lists of datatables.

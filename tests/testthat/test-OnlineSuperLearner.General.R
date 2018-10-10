@@ -548,7 +548,6 @@ test_that("it should not pick the osl", {
 test_that("it should work with an NA dosl.estimator", {
   SL.Library <- c('ML.Local.lm', 'ML.XGBoost', 'ML.SVM', 'ML.NeuralNet', 'ML.randomForest')
   subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, relevant_variables = relevant_variables)
-
   cv_risk <- list(
     dosl.estimator = data.table(W = NA, A = NA, Y = NA),
     ML.XGBoost = data.table(W = 0.1, A = 0.9, Y = 0.3),
@@ -556,7 +555,6 @@ test_that("it should work with an NA dosl.estimator", {
     ML.NeuralNet = data.table(W = 0.3, A = 0.9, Y = 0.1),
     ML.RandomForest = data.table(W = 0.9, A = 0.9, Y = 0.9)
   )
-  ## w is best for w, a for A, y for Y
 
   stub(subject$fit_dosl, 'self$get_cv_risk',  function() { return(cv_risk)})
   expect_true(subject$fit_dosl())

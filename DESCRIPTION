@@ -38,7 +38,6 @@ Imports:
     neuralnet,
     e1071,
     glmnet,
-    nloptr,
     future,
     RColorBrewer,
     foreach,
@@ -55,7 +54,7 @@ Suggests:
     mockery,
     knitr,
     rmarkdown
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
 Collate:
     'ConditionalDensityEvaluator.R'
     'ConstrainedGlm.R'
