@@ -131,9 +131,9 @@ SMG.Lag <- R6Class("SMG.Lag",
         data.current[, (private$colnames.lagged) := shift(.SD, private$lags.vector, NA),
                       .SDcols = private$colnames]
 
-        # This will return the lagged dataset, and only the complete cases
-        # which boils down to a single measurement.
-        data.current[complete.cases(data.current), private$colnames.lagged, with=FALSE]
+
+        # This will return the lagged dataset, and NOT only the complete cases.
+        data.current[, private$colnames.lagged, with=FALSE]
       }
     ),
   active =

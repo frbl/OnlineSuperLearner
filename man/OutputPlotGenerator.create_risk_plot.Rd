@@ -4,7 +4,7 @@
 \alias{OutputPlotGenerator.create_risk_plot}
 \title{OutputPlotGenerator.create_risk_plot}
 \usage{
-OutputPlotGenerator.create_risk_plot(performance, output, dir = "~/tmp/osl",
+OutputPlotGenerator.create_risk_plot(performance, output, dir = "tmp",
   make_summary = FALSE, label = "total.risk")
 }
 \arguments{
@@ -13,7 +13,7 @@ used, list 2 the relevant variables predicted.}
 
 \item{output}{string the filename to use for the plot (without .pdf).}
 
-\item{dir}{string (default = '~/tmp/osl') the directory to store the results
+\item{dir}{string (default = 'tmp') the directory to store the results
 in.}
 
 \item{make_summary}{boolean (default = FALSE) whether or not to sum all error terms to give a

@@ -23,13 +23,15 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
         # We dont type check here to support mocks
         private$osl <- osl #Arguments$getInstanceOf(osl, 'OnlineSuperLearner')
         private$summary_measure_generator <- summary_measure_generator #Arguments$getInstanceOf(summary_measure_generator, 'SummaryMeasureGenerator')
+        private$evaluation_path <- get_file_location(name = 'density_evaluation', 
+                                                     extension = 'pdf')
       },
 
       evaluate = function(simulator, T_iter, B_iter, nbins = (5)) {
         T_iter <- Arguments$getInteger(T_iter, c(1, Inf))
         B_iter <- Arguments$getInteger(B_iter, c(1, Inf))
 
-        pdf('/tmp/density_evaluation.pdf')
+        pdf(private$evaluation_path)
         ## For all t in T_iter,
         ## And for all gamma in Gamma,
         sampled_p_values <- foreach(t = 1:T_iter) %do% {
@@ -88,7 +90,7 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
                 return(NULL)
               }
 
-              newdata <- a_subset[sample(nrow(a_subset), 1),]
+              newdata <- a_subset[sample(available_subset_size, 1),]
 
               res <- sampledata(private$osl, newdata, 
                                 nobs = available_subset_size,
@@ -138,6 +140,7 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
     ),
   private =
     list(
+      evaluation_path = NULL,
       verbose = NULL,
       osl = NULL,
       summary_measure_generator = NULL,

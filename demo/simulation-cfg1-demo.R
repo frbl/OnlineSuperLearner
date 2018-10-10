@@ -44,23 +44,25 @@ llY <- list(rgen={function(AW){
   rnorm(length(mu), mu, sd=0.1)}}
 )
 
-
 ## We'd like to use the following features in our estimation:
 W <- RelevantVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
 A <- RelevantVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
 Y <- RelevantVariable$new(formula = Y ~ A + W, family = 'gaussian')
 relevantVariables <- c(W, A, Y)
 
-## Specify the size of our data set for training and testing
-training_set_size <- 1e3
+## Generate a dataset we will use for testing.
+training_set_size <- 1e6
+initial_data_size <- 500 #training_set_size / 2
 test_set_size <- 100
 
 ## Create a new simulator
 sim <- Simulator.GAD$new()
 
+log <- R.utils::Arguments$getVerbose(-8, timestamp=TRUE)
+
 ## What is the maximum number of iterations the OSL can use while going over the data?
 ## Note that in this case we split the data in equal parts with this number of iterations
-max_iterations <- 10
+max_iterations <- 50
 
 ## Generate some fake data for testing and training
 data.train <- sim$simulateWAY(training_set_size, qw=llW, ga=llA, Qy=llY, verbose=log)
@@ -71,12 +73,21 @@ algos <- list()
 #algos <- append(algos, list(list(algorithm = "ML.XGBoost",
                                  #params = list(nbins = c(5, 10, 15), online = TRUE))))
 
-algos <- append(algos, list(list(algorithm = "ML.NeuralNet",
-                                 params = list(nbins = c(5), online = TRUE))))
+#algos <- append(algos, list(list(algorithm = "ML.NeuralNet",
+                                 #params = list(nbins = c(5), online = TRUE))))
 
 algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
+                                 params = list(nbins = c(15), online = TRUE))))
+algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
+                                 params = list(nbins = c(5), online = TRUE))))
+algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
+                                 algorithm_params = list(alpha = seq(0,1,0.2)),
                                  params = list(nbins = c(5), online = TRUE))))
 
+## Specify the intervention we'd like to test, and also specify when we want to
+## test this intervension
+intervention <- list(variable = 'A', when = c(2), what = c(1))
+tau <- 2
 ## Fit the actual OSL
 osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
   formulae = relevantVariables, ## Specify which are the formulae we expet
@@ -89,6 +100,10 @@ osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
   max_iterations = max_iterations, ## Use at most max_iterations over the data
   mini_batch_size = (training_set_size / 2) / max_iterations ## Split the remaining data into N-Nl/max_iterations equal blocks of data
 )
+
+OutputPlotGenerator.create_training_curve(osl$get_historical_cv_risk, 
+                                          relevantVariables = relevantVariables,
+                                          output = 'curve')
 
 ## Specify the intervention we'd like to test, and also specify when we want to
 ## test this intervention
@@ -143,8 +158,9 @@ intervention_effects <- lapply(c(TRUE, FALSE), function(discrete) {
   paste(the_osl,":", intervention_effect, '\n')
 })
 
-## Finally we run our kolmogorov smirnov test example to check whether we
+
 ## actually do a good job estimating the true conditional distributions.
+## Finally we run our kolmogorov smirnov test example to check whether we
 ## Define kolmogorov-smirnov test
 T_iter <- 10
 B_iter <- 100

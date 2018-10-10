@@ -101,6 +101,9 @@
 #'     continuous online superlearner (the \code{continous} flag). At least one
 #'     of these three flags must be true.
 #'
+#'     Note that the predict function in this case yields the predicted probability of an outome.
+#'     That is, it does NOT predict an actual outcome, just the probability.
+#'
 #'     @param data Data.Base the data to use to train the instance on. Note
 #'      that this can be any instance of a \code{Data.Base} superclass, as long
 #'      as it extends the correct functions.
@@ -304,22 +307,22 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         initialize = function(SL.library.definition = c('ML.Local.lm', 'ML.H2O.glm'),
                               summaryMeasureGenerator, relevant_variables, should_fit_osl = TRUE,
                               should_fit_dosl = TRUE, pre_processor = NULL,
-                              test_set_size = 1, verbose = FALSE, ...) {
+                              test_set_size = 1, verbose = FALSE, parallel = FALSE, ...) {
 
           self$set_verbosity(Arguments$getVerbose(verbose, timestamp = TRUE))
 
           ## Initialize the relevant_variables early, as we use them in many places
           self$set_relevant_variables(relevant_variables)
 
-          private$fitted = FALSE
+          private$fitted <- FALSE
           private$summary_measure_generator <- Arguments$getInstanceOf(summaryMeasureGenerator, 'SummaryMeasureGenerator')
           private$should_fit_dosl <- Arguments$getLogical(should_fit_dosl)
           private$should_fit_osl <- Arguments$getLogical(should_fit_osl)
 
           ## Cross validation initialization
-          private$cv_risk = list()
-          private$cv_risk_count = 0
-          private$cv_risk_calculator = CrossValidationRiskCalculator$new()
+          private$cv_risk <- list()
+          private$cv_risk_count <- 0
+          private$cv_risk_calculator <- CrossValidationRiskCalculator$new()
           private$data_splitter <- DataSplitter$new(test_set_size = test_set_size)
 
           ## Initialization, Fabricate the various models
@@ -341,7 +344,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           ## We initialize the WCC's
           private$initialize_weighted_combination_calculators()
 
-          private$is_parallel = FALSE
+          private$is_parallel <- parallel
 
           private$osl_sampler <- OnlineSuperLearner.SampleIteratively$new(
             osl = self,
@@ -359,9 +362,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
         ## Data = the data object from which the data can be retrieved
         ## initial_data_size = the number of observations needed to fit the initial estimator
-        fit = function(data, initial_data_size = 5,
-                       max_iterations = 20,
-                       mini_batch_size = 20, ...) {
+        fit = function(data, initial_data_size = 5, max_iterations = 20, mini_batch_size = 20, ...) {
           tic <- Sys.time()
 
           initial_data_size <- Arguments$getInteger(initial_data_size, c(1,Inf))
@@ -379,14 +380,16 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           }
 
           data <- Arguments$getInstanceOf(data, 'Data.Base')
-        
-          
-
+          ## Initialize the summary measure generator with the correct trajectories
           self$get_summary_measure_generator$set_trajectories(data = data)
-          self$get_summary_measure_generator$check_enough_data_available(relevantVariables = self$get_relevant_variables)
+
+          ## Check whether enough data is available to supply all relevant variables with data
+          if(!self$get_summary_measure_generator$check_enough_data_available(relevantVariables = self$get_relevant_variables)) {
+            stop('For some reason, there is not enough data available for all relevant variables.')
+          }
 
           private$verbose && cat(private$verbose, 
-            'Fitting OnlineSuperLearner with a library: ', paste(self$get_estimator_descriptions, collapse = ', '),
+            'Starting fitting the OnlineSuperLearner with a library: ', paste(self$get_estimator_descriptions, collapse = ', '),
             ' and we use an initial data size of ', initial_data_size,
             ' with ',max_iterations,' iterations,',
             ' and a minibatch of ',mini_batch_size
@@ -458,8 +461,9 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
         },
 
         ## XXX: Move function to separate file?
+        ## Fit or update the estimators
         train_library = function(data_current) {
-          ## Fit or update the estimators
+          data_table <- Arguments$getInstanceOf(data_current, 'data.table')
 
           ## 0. Split data in test and training set
           data.splitted <- self$get_data_splitter$split(data_current)
@@ -476,11 +480,32 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                                             continuous = FALSE, all_estimators = TRUE)
           observed.outcome <- data.splitted$test[, outcome.variables, with=FALSE]
 
+          if (FALSE) {
+            # This is a piece of testing code that calculates the loss for each
+            # entry
+            sampled.outcome <- self$predict(data = data.splitted$test, discrete = FALSE,
+                                              continuous = FALSE, all_estimators = TRUE, sample = TRUE)
+
+            loss <- Evaluation.get_evaluation_function('binomial',FALSE)(data.observed = observed.outcome,
+                                                                data.predicted = sampled.outcome$denormalized)
+
+            private$verbose && cat(private$verbose, 'Loss:')
+            private$verbose && cat(private$verbose, loss)
+          }
+
+
           ## Extract the level 1 data and use it to fit the osl
           private$fit_osl(predicted.outcome = predicted.outcome, observed.outcome = observed.outcome)
 
-          ## 3. Update the CV risk of each of the algorithms (based on test set), except for dosl
+          ## TODO: We essentially use the training data to test the online super learner
+          ## We want to change this so we get a more honest guess of the preformance of
+          ## the osl itself.
+          ## Moreover, the way the predictions are created now is a bit inefficient, as we 
+          ## are running many of the same predictions twice.
+          predicted.outcome <- self$predict(data = data.splitted$test, discrete = FALSE,
+                                            continuous = TRUE, all_estimators = TRUE)
 
+          ## 3. Update the CV risk of each of the algorithms (based on test set), except for dosl
           ## We need to store the dosl risk, as we will update it later.
           pre_dosl_risk <- private$cv_risk$dosl.estimator
 
@@ -574,7 +599,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
             }
 
             output = paste('performance_iteration', t, sep='_')
-            OutputPlotGenerator.create_risk_plot(self$get_cv_risk(), output, '/tmp/osl/')
+            OutputPlotGenerator.create_risk_plot(self$get_cv_risk(), output)
             t <- t + 1
           }
           private$verbose && exit(private$verbose)

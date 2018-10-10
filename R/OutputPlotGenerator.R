@@ -16,9 +16,9 @@
 #'
 #' @param output string the filename to use.
 #'
-#' @param dir string (default = '~/tmp/osl/')the directory to plot to.
+#' @param dir string (default = 'tmp')the directory to plot to.
 #' @export
-OutputPlotGenerator.create_density_plot = function(yValues, estimated_probabilities, estimated_y_values = NULL, output, dir = '~/tmp/osl/') {
+OutputPlotGenerator.create_density_plot = function(yValues, estimated_probabilities, estimated_y_values = NULL, output, dir = 'tmp') {
   ## plot densitity first:
   vals <- unique(yValues)
   if(length(vals) == 2 ) {
@@ -43,10 +43,11 @@ OutputPlotGenerator.create_density_plot = function(yValues, estimated_probabilit
   ## Normalize to sum to one, to make it an actual density
 
   ## Save the output in a dir so we can access it later
-  date <- format(Sys.time(), "%y%m%d%H%M")
-  full_dir <- paste(dir, date, '/', sep ='')
-  dir.create(full_dir, showWarnings = FALSE, recursive = TRUE)
-  full_file_name <- paste(full_dir,output,'.pdf',sep = '')
+  full_file_name <- get_file_location(name = output,
+                                      extension = 'pdf',
+                                      dir = dir,
+                                      add_date_to_dir=TRUE)
+
   ylim <- c(0,max(c(estimated_probabilities, true_density$y), na.rm=TRUE))
 
   pdf(full_file_name)
@@ -71,14 +72,19 @@ OutputPlotGenerator.create_density_plot = function(yValues, estimated_probabilit
 #'
 #' @param output string the filename of the output.
 #'
-#' @param dir string (default = '~/tmp/osl/convergence') the directory name to
+#' @param dir string (default = 'tmp') the directory name to
 #'  store the output in.
 #' @export
-OutputPlotGenerator.create_convergence_plot = function(data, output, dir = '~/tmp/osl/convergence') {
+OutputPlotGenerator.create_convergence_plot = function(data, output, dir = 'tmp') {
   labels = names(data)
   colors <- OutputPlotGenerator.get_colors(length(labels))
-  dir.create(dir, showWarnings = FALSE, recursive = TRUE)
-  pdf(paste(dir,'/',output,'.pdf',sep = ''))
+
+  full_file_name <- get_file_location(name = output,
+                                      extension = 'pdf',
+                                      subdir = 'convergence',
+                                      dir = dir)
+
+  pdf(full_file_name)
 
   data <- lapply(data, function(dat) cumsum(dat)/seq(along=dat)) %>%
     as.data.frame
@@ -123,46 +129,46 @@ OutputPlotGenerator.create_convergence_plot = function(data, output, dir = '~/tm
 #' @param output string (default = 'historical_cvs') the filename to write the
 #'  pdf to (without .pdf).
 #'
-#' @param dir string (default = '~/tmp/osl/') the directory to write the file
+#' @param dir string (default = 'tmp') the directory to write the file
 #'  to.
 #' @export
-OutputPlotGenerator.create_training_curve = function(historical_cvs, relevantVariables, output = 'historical_cvs', dir = '~/tmp/osl/') {
+OutputPlotGenerator.create_training_curve = function(historical_cvs, relevantVariables, output = 'historical_cvs', dir = 'tmp') {
   # historical_cvs is a list of lists of datatables
-  #                     - each iteration
-  #                             - each learner
-  #                                      - each RV
+  #  - each iteration
+  #    - each learner
+  #      - each RV
   result <- lapply(relevantVariables, function(rv){
     lapply (historical_cvs, function(epoch) {
       lapply(epoch, function(algorithm_outcome) algorithm_outcome[, rv$getY, with=FALSE]) %>% unlist
     })
   })
+  names(result) <- lapply(relevantVariables, function(rv) rv$getY)
 
   plots <- lapply(seq_along(result), function(rv_id) {
     rv_result <- result[[rv_id]]
     dt <- as.data.table(rv_result)%>% t
 
-    name_list <- c()
     the_names <- names(rv_result[[1]])
     for (name_id in seq_along(the_names)) {
       name <- the_names[[name_id]]
-      name_list <- c(name_list, name_id)
       the_key <- paste('algorithm', name_id, sep='_') 
       OutputPlotGenerator.export_key_value(the_key, name)
     }
     
-    colnames(dt) <- name_list
+    colnames(dt) <- the_names
     dt = tryCatch({
       data.table(dt)
     }, error = function(e) {
       browser()
     })
-    dt[, id := seq(1, length(rv_result))]
+    dt[, epoch := seq(1, length(rv_result))]
 
-    test_data_long <- reshape2::melt(dt, id='id')
+    test_data_long <- reshape2::melt(dt, id='epoch')
     test_data_long
     names(test_data_long)
-    ggplot(data=test_data_long, aes(x=id, y=value, colour=variable)) +
+    ggplot(data=test_data_long, aes(x=epoch, y=value, colour=variable)) +
         geom_line()+
+        ggtitle(names(result)[rv_id])+
         theme(axis.text.y = element_text(colour = "black") ) +
         theme(axis.text.x = element_text(colour = "black") ) +
         theme(axis.title.x = element_text(vjust = -0.5)) +
@@ -173,8 +179,15 @@ OutputPlotGenerator.create_training_curve = function(historical_cvs, relevantVar
 
   })
   
-  pdf(paste(dir,'/',output,'.pdf',sep = ''))
-  lapply(plots, plot)
+  full_file_name <- get_file_location(name = output,
+                                      extension = 'pdf',
+                                      dir = dir)
+  
+
+  pdf(full_file_name)
+  for (i in seq_along(plots)) {
+    plot(plots[[i]])
+  }
   dev.off()
 
 
@@ -209,7 +222,7 @@ OutputPlotGenerator.create_training_curve = function(historical_cvs, relevantVar
 #'
 #' @param output string the filename to use for the plot (without .pdf).
 #'
-#' @param dir string (default = '~/tmp/osl') the directory to store the results
+#' @param dir string (default = 'tmp') the directory to store the results
 #'  in.
 #'
 #' @param make_summary boolean (default = FALSE) whether or not to sum all error terms to give a
@@ -219,7 +232,7 @@ OutputPlotGenerator.create_training_curve = function(historical_cvs, relevantVar
 #'  summary plot
 #'
 #' @export
-OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tmp/osl', make_summary=FALSE, label='total.risk') {
+OutputPlotGenerator.create_risk_plot = function(performance, output, dir = 'tmp', make_summary=FALSE, label='total.risk') {
   # Performance should be a list of data.tables:
   # List: the estimator used
   # Datatable: the relevant variable predicted
@@ -238,8 +251,10 @@ OutputPlotGenerator.create_risk_plot = function(performance, output, dir = '~/tm
   ## Retrieve the names of the outcomes, -1 because the names column does not need a color
   outcomes <- head(colnames(performance_dt), -1)
 
-  dir.create(dir, showWarnings = FALSE, recursive = TRUE)
-  pdf(paste(dir, '/', output,'.pdf',sep = ''))
+  full_file_name <- get_file_location(name = output,
+                                      extension = 'pdf',
+                                      dir = dir)
+  pdf(full_file_name)
   p <- ggplot(performance_dt)
 
   colors <- OutputPlotGenerator.get_simple_colors(length(outcomes))
@@ -327,20 +342,23 @@ OutputPlotGenerator.get_simple_colors = function(number_of_variables) {
 #' @param output string (default = 'variables.dat') the filename to store the
 #'  data in.
 #'
-#' @param dir string (default = '~/tmp/osl') the dir to write the file to.
+#' @param dir string (default = 'tmp') the dir to write the file to.
 #' @export
-OutputPlotGenerator.export_key_value = function(key, value, output='variables.dat', dir = '~/tmp/osl') {
+OutputPlotGenerator.export_key_value = function(key, value, output='variables', dir = 'tmp') {
   if (is.numeric(value)) {
     value <- round(value, 3)
   }
   line <- paste(key,'=',value)
-  the_file = paste(dir,output, sep='/')
-  if (!file.exists(the_file)) {
-    dir.create(dir, showWarnings = FALSE, recursive = TRUE)
-    file.create(the_file)
+
+  full_file_name <- get_file_location(name = output,
+                                      extension = 'dat',
+                                      dir = dir)
+
+  if (!file.exists(full_file_name)) {
+    file.create(full_file_name)
   }
 
-  write(line,file=the_file,append=TRUE)
+  write(line,file=full_file_name,append=TRUE)
 }
 
 #' OutputPlotGenerator.store_oos_osl_difference

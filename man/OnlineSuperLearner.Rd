@@ -91,6 +91,9 @@ to the super learner machine learning model.
     continuous online superlearner (the \code{continous} flag). At least one
     of these three flags must be true.
 
+    Note that the predict function in this case yields the predicted probability of an outome.
+    That is, it does NOT predict an actual outcome, just the probability.
+
     @param data Data.Base the data to use to train the instance on. Note
      that this can be any instance of a \code{Data.Base} superclass, as long
      as it extends the correct functions.

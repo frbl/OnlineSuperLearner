@@ -1,0 +1,18 @@
+---
+title: "Architecture"
+author: "Frank Blaauw and Talko Dijkhuis"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{architecture}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+This guide describes the general architecture of the Online SuperLearner. 
+
+# Data
+In order to be able to deal with both static data (i.e., data that is available upfront, `data.tables` or `data.frames`) and to be able to deal with streaming data (i.e., data that comes in as a stream, for example from kafka), a small architecture of wrapping objects is created. This architecture looks as follows:
+
+IMAGE HERE, see the `vignettes/onlineSuperLearner-data.pdf` file.
+
+The reason for this abstraction is to allow the same methods (`getNext` and `getNextN`) to be used for both `data.frames` (or `data.tables`) and data streams. What the Online SuperLearner does is treat both instances of data as streaming data.

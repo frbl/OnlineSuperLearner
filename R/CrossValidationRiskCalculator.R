@@ -252,8 +252,8 @@ CrossValidationRiskCalculator <- R6Class("CrossValidationRiskCalculator",
           current_count <- Arguments$getInteger(current_count, c(0, Inf))
           predicted.outcome <- Arguments$getInstanceOf(predicted.outcome, 'list')
           observed.outcome <- Arguments$getInstanceOf(observed.outcome, 'data.table')
-          if(is.null(predicted.outcome) || length(predicted.outcome) == 0) throw('Predicted outcome is empty!')
-          if(is.null(observed.outcome) || all(dim(observed.outcome) == c(0,0))) throw('Observed outcome is empty!')
+          if(length(predicted.outcome) == 0) throw('Predicted outcome is empty!')
+          if(all(dim(observed.outcome) == c(0,0))) throw('Observed outcome is empty!')
         }
 
         ## Calculate the risk for the current observations / predictions

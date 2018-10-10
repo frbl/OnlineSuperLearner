@@ -21,21 +21,27 @@
 <!-- clipboard.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js" integrity="sha384-cV+rhyOuRHc9Ub/91rihWcGmMmCXDeksTtCihMupQHSsi8GIIRDG0ThDc3HGQFJ3" crossorigin="anonymous"></script>
 
+<!-- sticky kit -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script>
+
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
-<script src="../jquery.sticky-kit.min.js"></script>
 <script src="../pkgdown.js"></script>
-  
-  
+
+
+
 <meta property="og:title" content="ML.H2O.gbm — ML.H2O.gbm" />
 
 <meta property="og:description" content="Wrapper for an H2O gbm estimator. From their discription:
 Gradient Boosting Machine (for Regression and Classification) is a forward
 learning ensemble method. The guiding heuristic is that good predictive
-results can be obtained through increasingly refined approximations. H2O’s
+results can be obtained through increasingly refined approximations. H2O's
 GBM sequentially builds regression trees on all the features of the dataset
 in a fully distributed way - each tree is built in parallel." />
 <meta name="twitter:card" content="summary" />
+
+
+
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
 
@@ -58,8 +64,12 @@ in a fully distributed way - each tree is built in parallel." />
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="../index.html">OnlineSuperLearner</a>
+      <span class="navbar-brand">
+        <a class="navbar-link" href="../index.html">OnlineSuperLearner</a>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.0.1</span>
+      </span>
     </div>
+
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
@@ -69,16 +79,29 @@ in a fully distributed way - each tree is built in parallel." />
   </a>
 </li>
 <li>
-  <a href="../articles/OnlineSuperLearner.html">Get Started</a>
+  <a href="../articles/OnlineSuperLearner.html">Get started</a>
 </li>
 <li>
   <a href="../reference/index.html">Reference</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Articles
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/architecture.html">Architecture</a>
+    </li>
+  </ul>
 </li>
       </ul>
       
       <ul class="nav navbar-nav navbar-right">
         
       </ul>
+      
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
@@ -86,20 +109,24 @@ in a fully distributed way - each tree is built in parallel." />
       
       </header>
 
-      <div class="row">
+<div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>ML.H2O.gbm</h1>
+    
+    <div class="hidden name"><code>ML.H2O.gbm.Rd</code></div>
     </div>
 
+    <div class="ref-description">
     
     <p>Wrapper for an H2O gbm estimator. From their discription:
 Gradient Boosting Machine (for Regression and Classification) is a forward
 learning ensemble method. The guiding heuristic is that good predictive
-results can be obtained through increasingly refined approximations. H2O’s
+results can be obtained through increasingly refined approximations. H2O's
 GBM sequentially builds regression trees on all the features of the dataset
 in a fully distributed way - each tree is built in parallel.</p>
     
+    </div>
 
     <pre class="usage"><span class='no'>ML.H2O.gbm</span></pre>
         
@@ -144,6 +171,8 @@ in a fully distributed way - each tree is built in parallel.</p>
 
       </footer>
    </div>
+
+  
 
   </body>
 </html>

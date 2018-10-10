@@ -52,9 +52,11 @@ Imports:
 Suggests:
     roxygen2,
     testthat,
-    mockery
+    mockery,
+    knitr,
+    rmarkdown
 RoxygenNote: 6.0.1
-Collate: 
+Collate:
     'ConditionalDensityEvaluator.R'
     'ConstrainedGlm.R'
     'Evaluation.R'
@@ -111,9 +113,10 @@ Collate:
     'WCC.NLopt.R'
     'WCC.NNLS.R'
     'WCC.SGD.R'
-Remotes: 
+Remotes:
     github::osofr/condensier@fb-add-update,
     github::jeroenooms/jsonlite,
     github::jimhester/covr,
     github::airoldilab/sgd,
     github::n-s-f/mockery@master
+VignetteBuilder: knitr

@@ -5,7 +5,7 @@
 \title{Evaluation.log_likelihood_loss}
 \usage{
 Evaluation.log_likelihood_loss(data.observed = NULL, data.predicted,
-  eps = 0.000000000000001)
+  eps = 1e-15)
 }
 \arguments{
 \item{data.observed}{is unused. It is included in the function to comply to
