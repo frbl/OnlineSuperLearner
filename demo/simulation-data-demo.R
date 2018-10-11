@@ -108,9 +108,12 @@ generateLagData <- function(simData_t0, ptn_id, to_block, prob_w2, n) {
 
     ## calculate w2 depending on Y and previous W2
     ## if Y> 50 increase if Y<50 decrease probability
-    delta_prob_w2 <- ifelse(prev_Y < 50, prev_Y/250, prev_Y/500)
+    delta_prob_w2 <- ifelse(prev_Y < 50, (prev_Y+1)/250, (prev_Y+1)/500)
     noise <- rnorm(n, mean = NOISE_MEAN, sd = NOISE_SD)
-    row_dag$w2 <- rbinom(n, size = 1, prob = prob_w2 + delta_prob_w2 + noise)
+    prob_w2_max_1 <- prob_w2 + delta_prob_w2 + noise
+    prob_w2_new <- ifelse(prob_w2_max_1 >0.99,1,prob_w2_max_1)
+    
+    row_dag$w2 <- rbinom(n, size = 1, prob = prob_w2_new)
 
     ## calculate w3 depending on w2
     ## categorize using the PAL scale
@@ -187,11 +190,11 @@ registerDoParallel(cores = parallel::detectCores())
 
 ## Calculate block zero
 ## N is number of participants
-n <- 2
+n <- 10
 ## probability_w2 is the probability of good sleep
 probability_w2 <-0.65
 ## The number of blocks we'd like
-nblocks <- 50
+nblocks <- 180
 
 # Calculate the first block
 simData_t0 <- generateData0(n, probability_w2)
