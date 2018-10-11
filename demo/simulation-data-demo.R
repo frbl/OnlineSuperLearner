@@ -21,6 +21,7 @@ NOISE_SD <<- 0.1
 NOISE_MEAN <<- 0
 
 Getw3 <- function(w2){
+  #if w2 = 1 (good sleep) the activity level will be higher then when w2 = 0 (bad sleep)
   if (w2 == 1) {
     min_val = 1.7
     max_val = 2.4
@@ -101,14 +102,12 @@ generateLagData <- function(simData_t0, ptn_id, to_block, prob_w2, n) {
     row_dag$Block <- row_dag$Block + 1
     row_dag$w1 <- row_dag$w1
     row_dag$Y <- row_dag$Y
-    Y_w2 <- row_dag$Y
+    prev_A <- row_dag$A
+    prev_Y <- row_dag$Y
 
     ## calculate w2 depending on Y and previous W2
     ## if Y> 50 increase if Y<50 decrease probability
-    ## if w2 = 0 decrease if w2= 1 increase probability
     delta_prob_w2 <- ifelse(Y_w2 < 50, Y_w2/250, Y_w2/500)
-
-    delta_prob_w2 <- ifelse(row_dag$w2 == 0, delta_prob_w2 - 0.10, delta_prob_w2 + 0.10)
 
     row_dag$w2 <- rbinom(n, size = 1, prob = prob_w2 + delta_prob_w2)
 
@@ -118,26 +117,31 @@ generateLagData <- function(simData_t0, ptn_id, to_block, prob_w2, n) {
     row_dag$w3 <- Getw3(row_dag$w2)
 
     ## The use of A
+    ## When A is 1 the chances increase that A will become 1 again
+    ## after a period of A = 1 the chances increase that A will become 0 
+    ## After a period of an average happiness of Y > 70 the change of A = 0 increases
     noise <- rnorm(n, mean = NOISE_MEAN, sd = NOISE_SD)
-
-    if (Y_w2 < 50){
-      A_prob <- -0.4 + 0.1 * row_dag$w2 + 0.15 * row_dag$w3 + 0.15 * row_dag$w2 * row_dag$w3 + noise
+    if 
+    if (prev_Y < 50){
+      A_prob <- -0.4 + 0.1*row_dag$w1 + 0.15 * row_dag$w3 + noise
     } else { 
-      A_prob <- -0.4 + 0.1 * row_dag$w2 + 0.15 * row_dag$w3 + 0.15 * row_dag$w2 * row_dag$w3 + noise
+      A_prob <- -0.4 + 0.1 * row_dag$w1 + 0.20 * row_dag$w3  + noise
     }
-    A <- rbinom(n, size = 1, prob = plogis(A_prob))
-
+    print(A_prob)
+    row_dag$A <- rbinom(n, size = 1, prob = plogis(A_prob))
+    print(row_dag$A)
     #n=1 when single patient_id is used
     noise <- rnorm(n, mean = NOISE_MEAN, sd = NOISE_SD)
 
     #counter factual
-    Y_main <- -0.1 * row_dag$w1 + 0.4 * row_dag$w2 + 0.3 * row_dag$w3 + Y_w2 / 100 + noise
+    Y_main <- -0.1 * row_dag$w1 + 0.2*row_dag$A+ 0.3 * row_dag$w3 + Y_w2 / 100 + noise
     row_dag$Y   <- -1 - row_dag$A + Y_main
     row_dag$YA0 <- -1 - 0 + Y_main
     row_dag$YA1 <- -1 - 1 + Y_main
 
     #row_dag<-data.frame(row_dag)
     simData_t <- rbind(simData_t, row_dag)
+    print(simData_t)
   }
 
 
@@ -173,14 +177,14 @@ registerDoParallel(cores = parallel::detectCores())
 
 ## Calculate block zero
 ## N is number of participants
-n <- 10
+n <- 2
 ## probability_w2 is the probability of good sleep
 probability_w2 <-0.65
 ## The number of blocks we'd like
-nblocks <- 40
+nblocks <- 5
 
 # Calculate the first block
-simDatr_t0 <- generateData0(n, probability_w2)
+simData_t0 <- generateData0(n, probability_w2)
 
 # Calculate the lagged blocks blocks
 simData_t_df <- calc_blocks(n, nblocks, probability_w2)
