@@ -33,7 +33,7 @@ Getw3 <- function(w2){
 }
 
 min_max_scale <- function(x, max_val, minx, maxx){
-  round((x - minx) / (maxx - minx) * max_val)
+   round((x - minx) / (maxx - minx) * max_val)
 }
 
 
@@ -58,7 +58,7 @@ generateData0<-function (n,prob_w2) {
   Getw3Vectorized <- Vectorize(Getw3)
   w3 <- Getw3Vectorized(w2)
 
-  A <- rbinom(n, size = 1, prob=plogis(-0.4 + 0.1 * w2 + 0.15 * w3 + 0.15 * w2 * w3))
+  A <- rbinom(n, size = 1, prob=plogis(-0.4 + 0.1 * w1 + 0.1 * w2 + 0.15 * w3 + 0.15 * w2 * w3))
 
   noise <- rnorm(n, mean = NOISE_MEAN, sd = NOISE_SD)
 
@@ -109,48 +109,50 @@ generateLagData <- function(simData_t0, ptn_id, to_block, prob_w2, n) {
     ## calculate w2 depending on Y and previous W2
     ## if Y> 50 increase if Y<50 decrease probability
     delta_prob_w2 <- ifelse(prev_Y < 50, prev_Y/250, prev_Y/500)
-
-    row_dag$w2 <- rbinom(n, size = 1, prob = prob_w2 + delta_prob_w2)
+    noise <- rnorm(n, mean = NOISE_MEAN, sd = NOISE_SD)
+    row_dag$w2 <- rbinom(n, size = 1, prob = prob_w2 + delta_prob_w2 + noise)
 
     ## calculate w3 depending on w2
     ## categorize using the PAL scale
     ## function is neat, vectorization as in the first function is only needed when vectors are used
     row_dag$w3 <- Getw3(row_dag$w2)
-
+    noise <- rnorm(n, mean = NOISE_MEAN, sd = NOISE_SD)
+    row_dag$w3 <- row_dag$w3 + noise/10
     ## The use of A
     ## When A is 1 the chances increase that A will become 1 again
     ## after a period of A = 1 the chances increase that A will become 0 
-    ## After a period of an average happiness of Y > 70 the change of A = 0 increases
+    
     noise <- rnorm(n, mean = NOISE_MEAN, sd = NOISE_SD)
     if (prev_A == 1){
-       if (length_A_1 < 20) {
+       if (length_A_1 < 10) {
        row_dag$A <- 1
        length_A_1 <- length_A_1+1
        } else{
-         A_prob <- 0.1 * row_dag$w1 + 0.20 * row_dag$w3  + noise
+         A_prob <- 0.1 * row_dag$w1+ 0.1 * row_dag$w2 + 0.15 * row_dag$w3 + 0.15 * row_dag$w2 * row_dag$w3 + noise
+         print(A_prob)
          row_dag$A <- rbinom(n, size = 1, prob = plogis(A_prob))
          length_A_1 <- 0
        }
     } else { 
-      A_prob <- -0.4 + 0.1 * row_dag$w1 + 0.20 * row_dag$w3  + noise
+      A_prob <- -0.3 + 0.1 * row_dag$w1+0.1 * row_dag$w2 + 0.15 * row_dag$w3 + 0.15 * row_dag$w2 * row_dag$w3 + noise
       row_dag$A <- rbinom(n, size = 1, prob = plogis(A_prob))
     }
    
     
-    #n=1 when single patient_id is used
+    ##n=1 when single patient_id is used
     noise <- rnorm(n, mean = NOISE_MEAN, sd = NOISE_SD)
 
-    #counter factual
-    #the longer A is used the higher Y becomes
-    Y_main <-  (-0.1 * row_dag$w1 + 0.7 * row_dag$w3+noise) + length_A_1/100+ prev_Y / 100 
-    row_dag$Y   <- 1 - row_dag$A + Y_main
-    row_dag$YA0 <- 1 - 0 + Y_main
-    row_dag$YA1 <- 1 - 1 + Y_main
-
+    ##counter factual
+    ##the longer A is used the higher Y becomes
+    ##
+    Y_main <- (-0.1 * row_dag$w1 + 0.4 * row_dag$w2 + 0.3 * row_dag$w3) + noise
+    row_dag$Y   <- 1 + row_dag$A + Y_main+length_A_1/10+prev_Y/100
+    row_dag$YA0 <- 1 + 0 + Y_main+length_A_1/10+prev_Y/100
+    row_dag$YA1 <- 1 + 1 + Y_main+length_A_1/10+prev_Y/100
+    #browser()
     #row_dag<-data.frame(row_dag)
     simData_t <- rbind(simData_t, row_dag)
-    print(simData_t)
-  }
+ }
 
 
   ## Perform the min-max scaling at the end so we have all values,
