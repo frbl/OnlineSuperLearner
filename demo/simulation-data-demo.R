@@ -131,13 +131,13 @@ generateLagData <- function(simData_t0, ptn_id, to_block, prob_w2, n) {
        row_dag$A <- 1
        length_A_1 <- length_A_1+1
        } else{
-         A_prob <- 0.1 * row_dag$w1+ 0.1 * row_dag$w2 + 0.15 * row_dag$w3 + 0.15 * row_dag$w2 * row_dag$w3 + noise
-         print(A_prob)
+         A_prob <- 0.1 * row_dag$w1+ 0.1 * row_dag$w2 + 0.15 * row_dag$w3 + 0.15 * row_dag$w2 * row_dag$w3 + prev_Y/100+noise
+         ##print(A_prob)
          row_dag$A <- rbinom(n, size = 1, prob = plogis(A_prob))
          length_A_1 <- 0
        }
     } else { 
-      A_prob <- -0.3 + 0.1 * row_dag$w1+0.1 * row_dag$w2 + 0.15 * row_dag$w3 + 0.15 * row_dag$w2 * row_dag$w3 + noise
+      A_prob <- -0.3 + 0.1 * row_dag$w1+0.1 * row_dag$w2 + 0.15 * row_dag$w3 + 0.15 * row_dag$w2 * row_dag$w3 - prev_Y + noise
       row_dag$A <- rbinom(n, size = 1, prob = plogis(A_prob))
     }
    
