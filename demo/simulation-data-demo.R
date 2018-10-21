@@ -15,7 +15,15 @@
 #Y_w2 influence of Y on w2 in the next blok
 
 
+devtools::load_all(".")
+library('magrittr')
+library('foreach')
 library("dplyr")
+library(doParallel)
+
+set.seed(1234)
+registerDoParallel(cores = parallel::detectCores())
+
 
 NOISE_SD <<- 0.1
 NOISE_MEAN <<- 0
@@ -152,7 +160,7 @@ generateLagData <- function(simData_t0, ptn_id, to_block, prob_w2, n) {
   return (simData_t)
 }
 
-calc_blocks<-function(n,to_block_val,prob_w2_val){
+calc_blocks<-function(n,to_block_val,prob_w2_val, simData_t0){
   simData_t_df <- data.frame()
   for (ptn_id_value in 1:n) {
     temp <- generateLagData(simData_t0 = simData_t0,
@@ -167,26 +175,22 @@ calc_blocks<-function(n,to_block_val,prob_w2_val){
 }
 
 # call functions
-set.seed(1234)
-library(doParallel)
-registerDoParallel(cores = parallel::detectCores())
-
 ## Calculate block zero
 ## N is number of participants
-n <- 10
+n <- 1
 ## probability_w2 is the probability of good sleep
 probability_w2 <-0.65
 ## The number of blocks we'd like
-nblocks <- 40
+nblocks <- 1000
 
 # Calculate the first block
-simDatr_t0 <- generateData0(n, probability_w2)
+simData_t0 <- generateData0(n, probability_w2)
 
 # Calculate the lagged blocks blocks
-simData_t_df <- calc_blocks(n, nblocks, probability_w2)
+simData_t_df <- calc_blocks(n, nblocks, probability_w2, simData_t0)
 
 # Combine block zero and the following blocks
-simData_t_df <- rbind(simData_t0,simData_t_df)
+data.train <- rbind(simData_t0,simData_t_df)
 
 # Write CSV
 #write.csv(simData_t_df, file = "simData.csv",row.names=FALSE)
@@ -194,3 +198,141 @@ simData_t_df <- rbind(simData_t0,simData_t_df)
 True_Psi <- mean(simData_t_df$YA1 - simData_t_df$YA0)
 cat(" True_Psi:", True_Psi, "\n")
 
+## We'd like to use the following features in our estimation:
+# TODO: When adding multiple people, include w1
+w2 <- RelevantVariable$new(formula = w2 ~ Y_lag_1 + A_lag_1 + w2_lag_1 + w3_lag_1,  family = 'gaussian')
+w3 <- RelevantVariable$new(formula = w3 ~ w2 + Y_lag_1 + A_lag_1 +  w2_lag_1 + w3_lag_1,  family = 'gaussian')
+A <- RelevantVariable$new(formula = A ~ w3 + w2 + Y_lag_1 + A_lag_1 +  w2_lag_1 + w3_lag_1, family = 'binomial')
+Y <- RelevantVariable$new(formula = Y ~ A + w3 + w2 + w1 + Y_lag_1 + A_lag_1 +  w2_lag_1 + w3_lag_1, family = 'gaussian')
+relevantVariables <- c(w2, w3, A, Y)
+
+log <- R.utils::Arguments$getVerbose(-8, timestamp=TRUE)
+
+## What is the maximum number of iterations the OSL can use while going over the data?
+## Note that in this case we split the data in equal parts with this number of iterations
+max_iterations <- 10
+
+## Define a list of algorithms to use
+algos <- list()
+#algos <- append(algos, list(list(algorithm = "ML.XGBoost",
+                                 #params = list(nbins = c(5, 10, 15), online = TRUE))))
+
+#algos <- append(algos, list(list(algorithm = "ML.NeuralNet",
+                                 #params = list(nbins = c(5), online = TRUE))))
+
+algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
+                                 params = list(nbins = c(15), online = TRUE))))
+algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
+                                 params = list(nbins = c(5), online = TRUE))))
+algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
+                                 algorithm_params = list(alpha = seq(0,1,0.2)),
+                                 params = list(nbins = c(5), online = TRUE))))
+
+## Specify the intervention we'd like to test, and also specify when we want to
+## test this intervension
+intervention <- list(variable = 'A', when = c(1), what = c(1))
+tau <- 2
+training_set_size <- nrow(data.train) / 2
+
+## Fit the actual OSL
+osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
+  formulae = relevantVariables, ## Specify which are the formulae we expet
+  data = data.train, ## Specify the data to train on
+  algorithms = algos, ## SPecify the correct algorithms
+  verbose = log, ## Logging information
+  bounds = TRUE, ## Let the OSL generate the bounds based on the data it gets
+  test_set_size = 5 + (3 * 3 + 3), ## The size of the minibatch test size. Note that for this test set size it is super important that at least enough observations are available as 
+  initial_data_size = training_set_size / 2, ## Train the first iteration (Nl) on this part of the data
+  max_iterations = max_iterations, ## Use at most max_iterations over the data
+  mini_batch_size = floor((training_set_size / 2) / max_iterations) ## Split the remaining data into N-Nl/max_iterations equal blocks of data
+)
+
+OutputPlotGenerator.create_training_curve(osl$get_historical_cv_risk, 
+                                          relevantVariables = relevantVariables,
+                                          output = 'curve')
+
+if (FALSE) {
+  
+## Specify the intervention we'd like to test, and also specify when we want to
+## test this intervention
+intervention <- list(variable = 'A', when = c(2), what = c(1))
+## Tau is the time at which we want to test the intervention
+tau <-  2
+## B is the number of iterations we'll run before we hope to converge
+B <- 100
+
+## First we simulate data given the intervention. That is, we specify in our
+## simulation that we want to sample data when this intervention would be
+## applied. After that we take the mean at tau, and as such approximate our
+## treatment effect in the true population.
+cat('Approximating truth...\n')
+result.approx <- foreach(i=seq(B)) %do% {
+  cat('Approximating truth in iteration (under intervention): ', i, '\n')
+  data.int <- sim$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
+                                  intervention = intervention, verbose = FALSE)
+  data.int$Y[tau]
+} %>% unlist %>% mean
+
+
+## The next step is to actually calculate the same intervention using the
+## superlearner. We use a similar technique for this, as we try to calculate
+## the mean of the intervention effects.
+
+## We need to have data that includes the summary measures for the evaluation
+## generate them here
+data.train <- Data.Static$new(dataset = data.train)
+osl$get_summary_measure_generator$set_trajectories(data.train)
+data.train.set <- osl$get_summary_measure_generator$getNext(2)
+
+intervention_effects <- lapply(c(TRUE, FALSE), function(discrete) {
+  ## First we create the calculator to determine the intervention effects with.
+  intervention_effect_caluculator = InterventionEffectCalculator$new(
+    bootstrap_iterations = B, 
+    outcome_variable = Y$getY,
+    verbose = log,
+    parallel = TRUE
+  )
+
+
+  ## Actually evaluate the intervention for the discrete superlearner
+  intervention_effect <- intervention_effect_caluculator$evaluate_single_intervention(
+    osl = osl,
+    intervention = intervention, 
+    discrete = TRUE, 
+    initial_data = data.train.set$traj_1[1,],
+    tau = tau
+  ) %>% unlist %>% mean
+  the_osl = ifelse(discrete, 'discrete osl', 'continuous osl')
+  paste(the_osl,":", intervention_effect, '\n')
+})
+
+
+## actually do a good job estimating the true conditional distributions.
+## Finally we run our kolmogorov smirnov test example to check whether we
+## Define kolmogorov-smirnov test
+T_iter <- 10
+B_iter <- 100
+nbins <- 5
+n_A_bins <- 2
+
+## Define the object that will be used to run the evalutation, and run the actual evaluations.
+subject <- ConditionalDensityEvaluator$new(log, osl = osl, summary_measure_generator = osl$get_summary_measure_generator)
+result <- subject$evaluate(
+  sim,
+  T_iter, 
+  B_iter,
+  nbins = nbins
+)
+
+## Output the evaluation.
+flat_result <- result %>% unlist %>% unname
+flat_result <- flat_result[!is.na(flat_result)]
+perc_significant <- sum(flat_result >= 0.95) / length(flat_result) * 100 %>% round(., 2)
+perc_significant <- perc_significant %>% round(., 2)
+paste(perc_significant,'% significant in the KS-test')
+
+cat('The effects of the interventions were:')
+cat(paste('approx',':', result.approx)) 
+for(result in intervention_effects) { cat(result) }
+
+}

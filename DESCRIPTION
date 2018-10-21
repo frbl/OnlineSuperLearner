@@ -114,6 +114,7 @@ Collate:
     'WCC.SGD.R'
 Remotes:
     github::osofr/condensier@fb-add-update,
+    github::osofr/simcausal,
     github::jeroenooms/jsonlite,
     github::jimhester/covr,
     github::airoldilab/sgd,
