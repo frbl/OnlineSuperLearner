@@ -147,7 +147,7 @@ generateLagData <- function(simData_t0, ptn_id, to_block, prob_w2, n) {
     ##counter factual
     ##the longer A is used the higher Y becomes
     ##
-    Y_main <- (-0.1 * row_dag$w1 + 0.4 * row_dag$w2 + 0.3 * row_dag$w3) + noise
+    Y_main <- (-0.1 * row_dag$w1 + 0.4 * row_dag$w2 + 0.3 * row_dag$w3) +length_A_1/10+prev_Y/100 + noise
     row_dag$Y   <- 1 + row_dag$A + Y_main
     row_dag$YA0 <- 1 + 0 + Y_main
     row_dag$YA1 <- 1 + 1 + Y_main
