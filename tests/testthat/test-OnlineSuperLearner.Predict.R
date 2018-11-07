@@ -37,7 +37,13 @@ test_that("it should return NA if no estimators were fit", {
   cur.data <- data.frame(a=c(1,2,3),b= c(3,2,1))
   OnlineSuperLearner_mock <- list(is_fitted=FALSE)
   subject <- described.class$new(pre_processor = NULL)
-  expect_equal(subject$predict(osl = OnlineSuperLearner_mock, cur.data, relevantVariables = c('a')), NA)
+  
+  result = tryCatch({
+    expect_equal(subject$predict(osl = OnlineSuperLearner_mock, cur.data, relevantVariables = c('a')), NA)
+  }, warning = function(w) {
+    # Remove the warning 
+  })
+  expect_warning(subject$predict(osl = OnlineSuperLearner_mock, cur.data, relevantVariables = c('a')), 'Predicting before fitting. Returning NA')
 })
 
 test_that("it should throw if all estimators are disabled", {
@@ -173,6 +179,41 @@ test_that("it should update the predictions according to the osl_weights", {
   expected = as.numeric(c(1,2,3) %*% weights) 
   expect_true(all(result$normalized$osl.estimator == expected))
   expect_true(all(result$denormalized$osl.estimator == expected))
+})
+
+test_that("it should not update the predictions with a single algorithm", {
+  nobs <- 10
+  subject <- described.class$new(pre_processor = NULL)
+  cur.sl_library <- list()
+
+  df <- data.table(
+    W=rep(1, nobs),
+    A=rep(1, nobs),
+    Y=rep(1, nobs)
+  ) 
+
+  ## Each entry is an algorithm
+  predictions <- list(
+    normalized = list(a=df),
+    denormalized = list(a=df)
+  )
+
+  weights <- c(a = 0.2)
+  osl_weights <- NULL 
+  should_not_be_called <<- FALSE
+  result <- subject$predict_osl(
+    data = data, 
+    osl_weights = osl_weights,
+    current_result = predictions, 
+    sl_library = cur.sl_library, 
+    relevantVariables = glob_relevantVariables,
+    weight_threshold = 0.01,
+    sample = FALSE,
+    plot = FALSE
+  )
+  
+  expect_true(all(result$normalized$osl.estimator == df))
+  expect_true(all(result$denormalized$osl.estimator == df))
 })
 
 test_that("it should calculate new predictions if not all are available", {

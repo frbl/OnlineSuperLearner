@@ -38,7 +38,6 @@ Imports:
     neuralnet,
     e1071,
     glmnet,
-    nloptr,
     future,
     RColorBrewer,
     foreach,
@@ -52,9 +51,11 @@ Imports:
 Suggests:
     roxygen2,
     testthat,
-    mockery
-RoxygenNote: 6.0.1
-Collate: 
+    mockery,
+    knitr,
+    rmarkdown
+RoxygenNote: 6.1.0
+Collate:
     'ConditionalDensityEvaluator.R'
     'ConstrainedGlm.R'
     'Evaluation.R'
@@ -111,9 +112,10 @@ Collate:
     'WCC.NLopt.R'
     'WCC.NNLS.R'
     'WCC.SGD.R'
-Remotes: 
+Remotes:
     github::osofr/condensier@fb-add-update,
     github::jeroenooms/jsonlite,
     github::jimhester/covr,
     github::airoldilab/sgd,
     github::n-s-f/mockery@master
+VignetteBuilder: knitr

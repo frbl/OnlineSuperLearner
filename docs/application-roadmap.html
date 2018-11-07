@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>/home/frbl/Workspace/frbl/onlinesuperlearner/application-roadmap.md • OnlineSuperLearner</title>
+<title>Steps: • OnlineSuperLearner</title>
 
 <!-- jquery -->
 <script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha384-nrOSfDHtoPMzJHjVTdCopGqIqeYETSXhZDFyniQ8ZHcVy08QesyHcnOUpMpqnmWq" crossorigin="anonymous"></script>
@@ -21,13 +21,19 @@
 <!-- clipboard.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js" integrity="sha384-cV+rhyOuRHc9Ub/91rihWcGmMmCXDeksTtCihMupQHSsi8GIIRDG0ThDc3HGQFJ3" crossorigin="anonymous"></script>
 
+<!-- sticky kit -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script>
+
 <!-- pkgdown -->
 <link href="pkgdown.css" rel="stylesheet">
-<script src="jquery.sticky-kit.min.js"></script>
 <script src="pkgdown.js"></script>
-  
-  
-<meta property="og:title" content="/home/frbl/Workspace/frbl/onlinesuperlearner/application-roadmap.md" />
+
+
+
+<meta property="og:title" content="Steps:" />
+
+
+
 <!-- mathjax -->
 <script src='https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
 
@@ -50,8 +56,12 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="index.html">OnlineSuperLearner</a>
+      <span class="navbar-brand">
+        <a class="navbar-link" href="index.html">OnlineSuperLearner</a>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.0.1</span>
+      </span>
     </div>
+
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
@@ -61,16 +71,29 @@
   </a>
 </li>
 <li>
-  <a href="articles/OnlineSuperLearner.html">Get Started</a>
+  <a href="articles/OnlineSuperLearner.html">Get started</a>
 </li>
 <li>
   <a href="reference/index.html">Reference</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Articles
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="articles/architecture.html">Architecture</a>
+    </li>
+  </ul>
 </li>
       </ul>
       
       <ul class="nav navbar-nav navbar-right">
         
       </ul>
+      
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
@@ -78,48 +101,48 @@
       
       </header>
 
-      <div class="row">
-  <div class="contents col-md-12">
+<div class="row">
+  <div class="contents col-md-9">
     <div class="page-header">
-      <h1>/home/frbl/Workspace/frbl/onlinesuperlearner/application-roadmap.md</h1>
+      <h1>Steps:</h1>
     </div>
 
 
 <div id="steps" class="section level1">
-<h1 class="hasAnchor">
-<a href="#steps" class="anchor"></a>Steps:</h1>
+
 <ol>
 <li>Read data (from simulation or file)</li>
 <li>Add summary measures in wide form (lags, variance, mean, etc).</li>
 <li>Wait / simulate the minimal number of measurements needed from a single time series</li>
 <li>Using all these measurements, we estimate the density for q_w given w-, (g given g-), and q_y given y-. (If a dist is binary, we don’t have to estimate its distribution, but we still can using Oleg’s package, for consistency. The same goes for if a variable is discrete.)</li>
 <li>SuperLearning will be done to estimate the densities. That is, we use several different estimators for estimating the densities (currently we only use logistic regression). We will also fit the number of bins that best resembles our data.</li>
-<li>
-<p>Now, using these densities, we generate a number of draws, using the scheme you sent earlier, in order to get the counterfactual distribution (j is time of intervention, tau is time of response) :</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">result &lt;-<span class="st"> </span><span class="dv">0</span>
-B &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">100000</span>)
-for b in B
-  sample <span class="kw">W</span>(<span class="dv">1</span>) given <span class="kw">C_w</span>(<span class="dv">1</span>) from q_w
-  sample <span class="kw">A</span>(<span class="dv">1</span>) given <span class="kw">C_a</span>(<span class="dv">1</span>) from g_a
-  sample <span class="kw">Y</span>(<span class="dv">1</span>) given <span class="kw">C_y</span>(<span class="dv">1</span>)
-  sample <span class="kw">W</span>(<span class="dv">2</span>) given <span class="kw">C_w</span>(<span class="dv">2</span>) from q_w
-  sample <span class="kw">A</span>(<span class="dv">2</span>) given <span class="kw">C_a</span>(<span class="dv">2</span>) from g_a
-  sample <span class="kw">Y</span>(<span class="dv">2</span>) given <span class="kw">C_y</span>(<span class="dv">2</span>)
-  .
-  .
-  .
-  sample <span class="kw">W</span>(j) given <span class="kw">C_w</span>(j) from q_w
-  sample <span class="kw">A</span>(j) =<span class="st"> </span><span class="kw">a</span> (=<span class="st"> </span>specified, deterministic intervention)
-  sample <span class="kw">Y</span>(j) given <span class="kw">C_y</span>(j)
-  .
-  .
-  .
-  sample <span class="kw">W</span>(tau) given <span class="kw">C_w</span>(tau) from q_w
-  sample <span class="kw">A</span>(tau) given <span class="kw">C_a</span>(tau) from g_a
-  result +<span class="er">=</span><span class="st"> </span>(sample <span class="kw">Y</span>(tau) given <span class="kw">C_y</span>(tau)) /<span class="st"> </span>B
-endfor
-result</code></pre></div>
-which will give you the response for an <em>intervention a on time j for an outcome at time tau</em>.</li>
+<li>Now, using these densities, we generate a number of draws, using the scheme you sent earlier, in order to get the counterfactual distribution (j is time of intervention, tau is time of response) :</li>
+</ol>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1">result &lt;-<span class="st"> </span><span class="dv">0</span></a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">B &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">100000</span>)</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="cf">for</span> b <span class="cf">in</span> B</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">  sample <span class="kw">W</span>(<span class="dv">1</span>) given <span class="kw">C_w</span>(<span class="dv">1</span>) from q_w</a>
+<a class="sourceLine" id="cb1-5" data-line-number="5">  sample <span class="kw">A</span>(<span class="dv">1</span>) given <span class="kw">C_a</span>(<span class="dv">1</span>) from g_a</a>
+<a class="sourceLine" id="cb1-6" data-line-number="6">  sample <span class="kw">Y</span>(<span class="dv">1</span>) given <span class="kw">C_y</span>(<span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb1-7" data-line-number="7">  sample <span class="kw">W</span>(<span class="dv">2</span>) given <span class="kw">C_w</span>(<span class="dv">2</span>) from q_w</a>
+<a class="sourceLine" id="cb1-8" data-line-number="8">  sample <span class="kw">A</span>(<span class="dv">2</span>) given <span class="kw">C_a</span>(<span class="dv">2</span>) from g_a</a>
+<a class="sourceLine" id="cb1-9" data-line-number="9">  sample <span class="kw">Y</span>(<span class="dv">2</span>) given <span class="kw">C_y</span>(<span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb1-10" data-line-number="10">  .</a>
+<a class="sourceLine" id="cb1-11" data-line-number="11">  .</a>
+<a class="sourceLine" id="cb1-12" data-line-number="12">  .</a>
+<a class="sourceLine" id="cb1-13" data-line-number="13">  sample <span class="kw">W</span>(j) given <span class="kw">C_w</span>(j) from q_w</a>
+<a class="sourceLine" id="cb1-14" data-line-number="14">  sample <span class="kw">A</span>(j) =<span class="st"> </span><span class="kw">a</span> (=<span class="st"> </span>specified, deterministic intervention)</a>
+<a class="sourceLine" id="cb1-15" data-line-number="15">  sample <span class="kw">Y</span>(j) given <span class="kw">C_y</span>(j)</a>
+<a class="sourceLine" id="cb1-16" data-line-number="16">  .</a>
+<a class="sourceLine" id="cb1-17" data-line-number="17">  .</a>
+<a class="sourceLine" id="cb1-18" data-line-number="18">  .</a>
+<a class="sourceLine" id="cb1-19" data-line-number="19">  sample <span class="kw">W</span>(tau) given <span class="kw">C_w</span>(tau) from q_w</a>
+<a class="sourceLine" id="cb1-20" data-line-number="20">  sample <span class="kw">A</span>(tau) given <span class="kw">C_a</span>(tau) from g_a</a>
+<a class="sourceLine" id="cb1-21" data-line-number="21">  result <span class="op">+</span><span class="er">=</span><span class="st"> </span>(sample <span class="kw">Y</span>(tau) given <span class="kw">C_y</span>(tau)) <span class="op">/</span><span class="st"> </span>B</a>
+<a class="sourceLine" id="cb1-22" data-line-number="22">endfor</a>
+<a class="sourceLine" id="cb1-23" data-line-number="23">result</a></code></pre></div>
+<p>which will give you the response for an <em>intervention a on time j for an outcome at time tau</em>.</p>
+<ol>
 <li>Questions:
 <ul>
 <li>How do we deal with the initialization? Up to now I just expected that we’d skip the first <code>Z</code> measurements, where <code>Z</code> is the maximum number of observations needed for each of the summary measures we include.</li>
@@ -155,13 +178,13 @@ which will give you the response for an <em>intervention a on time j for an outc
 </ol>
 <p>4a. new object S3 structure</p>
 <p>4b. high-level description – flow of the application</p>
-<div class="sourceCode"><pre class="sourceCode R"><code class="sourceCode r">(i) learning step
-(ii) targeting step</code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode R"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">(i) learning step</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">(ii) targeting step</a></code></pre></div>
 <p>4c. encoding of a generic time series vocabulary:</p>
-<div class="sourceCode"><pre class="sourceCode R"><code class="sourceCode r">-<span class="st"> </span>(<span class="kw">W</span>(t), <span class="kw">A</span>(t), <span class="kw">Y</span>(t)) is the t-th block
--<span class="st"> </span><span class="kw">W</span>(t), <span class="kw">A</span>(t) and <span class="kw">Y</span>(t) are its nodes
--<span class="st"> </span><span class="kw">W</span>(t) in WW and <span class="kw">Y</span>(t) in YY, WW and YY possibly multi-dim
--<span class="st"> </span><span class="kw">A</span>(t) is discrete/binary?</code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode R"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="op">-</span><span class="st"> </span>(<span class="kw">W</span>(t), <span class="kw">A</span>(t), <span class="kw">Y</span>(t)) is the t<span class="op">-</span>th block</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2"><span class="op">-</span><span class="st"> </span><span class="kw">W</span>(t), <span class="kw">A</span>(t) and <span class="kw">Y</span>(t) are its nodes</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3"><span class="op">-</span><span class="st"> </span><span class="kw">W</span>(t) <span class="cf">in</span> WW and <span class="kw">Y</span>(t) <span class="cf">in</span> YY, WW and YY possibly multi<span class="op">-</span>dim</a>
+<a class="sourceLine" id="cb4-4" data-line-number="4"><span class="op">-</span><span class="st"> </span><span class="kw">A</span>(t) is discrete<span class="op">/</span>binary?</a></code></pre></div>
 <p>4d. simulation (i) characterization of data-generating distribution (ii) simulation under the data-generating distribution (iii) characterization of the parameter of interest - =&gt; providing intervention nodes, and the corresponding intervention distributions (iv) evaluation of the parameter of interest</p>
 <p>4e. encoding of summary measures of the past of each {W,A,Y}-node</p>
 <p>4f. write functions implementing <em>online</em> (super-) learning - must rely on <em>online</em> “prediction” algorithms - think about H2O…</p>
@@ -185,6 +208,8 @@ which will give you the response for an <em>intervention a on time j for an outc
 
       </footer>
    </div>
+
+  
 
   </body>
 </html>

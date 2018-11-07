@@ -106,6 +106,7 @@ context(" fit")
 #==========================================================
 test_that("it should throw if the provided initial_datasize is not an int", {
   data <- mock('data')
+  class(data) <- 'Data.Base'
   expect_error(subject$fit(data, initial_data_size = 'a', max_iterations = 20, mini_batch_size = 20), "Argument 'initial_data_size' contains")
   expect_error(
     subject$fit(data, initial_data_size = -1, max_iterations = 20, mini_batch_size = 20),
@@ -114,6 +115,7 @@ test_that("it should throw if the provided initial_datasize is not an int", {
 
 test_that("it should throw if the provided max_iterations are not ints", {
   data <- mock('data')
+  class(data) <- 'Data.Base'
   expect_error(
     subject$fit(data, initial_data_size = 1, max_iterations = 'a', mini_batch_size = 20),
     "Argument 'max_iterations' contains")
@@ -124,6 +126,7 @@ test_that("it should throw if the provided max_iterations are not ints", {
 
 test_that("it should throw if the provided mini_batch_size are not ints", {
   data <- mock('data')
+  class(data) <- 'Data.Base'
   expect_error(
     subject$fit(data, initial_data_size = 1, max_iterations = 20, mini_batch_size = 'a'),
     "Argument 'mini_batch_size' contains")
@@ -142,6 +145,7 @@ test_that("it should throw if the provided data is not a data object", {
 
 test_that("it should throw if the provided mini_batch_size is less than the test_set_size", {
   data <- mock('data')
+  class(data) <- 'Data.Base'
   expected <- 'We select a number of 1 block(s) from the mini_batch to be used as part of the test_set. As such, the mini batch size needs to be at least 2'
   expect_error(
     subject$fit(data, initial_data_size = 1, max_iterations = 20, mini_batch_size = 1),
@@ -197,7 +201,7 @@ test_that("it should call the train_library function with the data from the summ
   next_data <- data.table(a=seq(5), b=seq(5))
   SMG <- list(
     set_trajectories = function(data) { },
-    check_enough_data_available = function(relevantVariables) { },
+    check_enough_data_available = function(relevantVariables) { TRUE },
     getNext = function(n) {
       expect_equal(n, initial_data_size) 
       return(list(next_data))
@@ -232,7 +236,7 @@ test_that("it should call the update_library function with the correct data", {
   next_data <- data.table(a=seq(5), b=seq(5))
   SMG <- list(
     set_trajectories = function(...) { },
-    check_enough_data_available = function(...) { },
+    check_enough_data_available = function(relevantVariables) { TRUE },
     getNext = function(...) {
       list(next_data)
     }
@@ -277,7 +281,7 @@ test_that("it should return the cvrisk in the end", {
   next_data <- data.table(a=seq(5), b=seq(5))
   SMG <- list(
     set_trajectories = function(...) { },
-    check_enough_data_available = function(...) { },
+    check_enough_data_available = function(...) { TRUE },
     getNext = function(...) { }
   )
   class(SMG) <- 'SummaryMeasureGenerator'
@@ -544,7 +548,6 @@ test_that("it should not pick the osl", {
 test_that("it should work with an NA dosl.estimator", {
   SL.Library <- c('ML.Local.lm', 'ML.XGBoost', 'ML.SVM', 'ML.NeuralNet', 'ML.randomForest')
   subject <- described.class$new(SL.Library, summaryMeasureGenerator = SMG, relevant_variables = relevant_variables)
-
   cv_risk <- list(
     dosl.estimator = data.table(W = NA, A = NA, Y = NA),
     ML.XGBoost = data.table(W = 0.1, A = 0.9, Y = 0.3),
@@ -552,7 +555,6 @@ test_that("it should work with an NA dosl.estimator", {
     ML.NeuralNet = data.table(W = 0.3, A = 0.9, Y = 0.1),
     ML.RandomForest = data.table(W = 0.9, A = 0.9, Y = 0.9)
   )
-  ## w is best for w, a for A, y for Y
 
   stub(subject$fit_dosl, 'self$get_cv_risk',  function() { return(cv_risk)})
   expect_true(subject$fit_dosl())
@@ -562,24 +564,4 @@ test_that("it should work with an NA dosl.estimator", {
   expect_equal(result$A, SL.Library[[3]])
   expect_equal(result$Y, SL.Library[[4]])
 })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

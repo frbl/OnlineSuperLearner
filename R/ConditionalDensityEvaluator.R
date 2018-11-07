@@ -23,13 +23,15 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
         # We dont type check here to support mocks
         private$osl <- osl #Arguments$getInstanceOf(osl, 'OnlineSuperLearner')
         private$summary_measure_generator <- summary_measure_generator #Arguments$getInstanceOf(summary_measure_generator, 'SummaryMeasureGenerator')
+        private$evaluation_path <- get_file_location(name = 'density_evaluation', 
+                                                     extension = 'pdf')
       },
 
       evaluate = function(simulator, T_iter, B_iter, nbins = (5)) {
         T_iter <- Arguments$getInteger(T_iter, c(1, Inf))
         B_iter <- Arguments$getInteger(B_iter, c(1, Inf))
 
-        pdf('/tmp/density_evaluation.pdf')
+        pdf(private$evaluation_path)
         ## For all t in T_iter,
         ## And for all gamma in Gamma,
         sampled_p_values <- foreach(t = 1:T_iter) %do% {
@@ -42,8 +44,8 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
 
           # 1. Split the dataframe into seperate sections.
           # 2. Make the slicing into each of the different lagged / other vars.
-          data <- private$convert_observations(observed_data = observed_data)
 
+          data <- private$convert_observations(observed_data = observed_data)
           cluster_bins <- private$create_cluster_bins(data, nbins = nbins)
 
           ## We assume a discrete or binary treatment variable. Hence, just select
@@ -69,6 +71,7 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
             w_subset <- data[W >= from & W < to,]
 
             res_under_a <- foreach(a = A_bins) %do% {
+                
               private$verbose && enter(private$verbose, 'New A bin')
 
               ## Create a new subset from the W subset in which A = a
@@ -88,12 +91,12 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
                 return(NULL)
               }
 
-              newdata <- a_subset[sample(nrow(a_subset), 1),]
-
+              newdata <- a_subset[sample(available_subset_size, 1),]
+                
               res <- sampledata(private$osl, newdata, 
                                 nobs = available_subset_size,
                                 summarize = FALSE)$osl.estimator
-
+                
               names <- colnames(res)
 
               ## Plot some debugging distributions
@@ -112,6 +115,7 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
               #if(pval <= 0.05) browser()
               pval
             }
+
 
             names(res_under_a) <- A_bins
             private$verbose && exit(private$verbose)
@@ -138,6 +142,7 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
     ),
   private =
     list(
+      evaluation_path = NULL,
       verbose = NULL,
       osl = NULL,
       summary_measure_generator = NULL,

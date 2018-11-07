@@ -4,8 +4,8 @@
 \alias{OutputPlotGenerator.create_training_curve}
 \title{OutputPlotGenerator.create_training_curve}
 \usage{
-OutputPlotGenerator.create_training_curve(historical_cvs, relevantVariables,
-  output = "historical_cvs", dir = "~/tmp/osl/")
+OutputPlotGenerator.create_training_curve(historical_cvs,
+  relevantVariables, output = "historical_cvs", dir = "tmp")
 }
 \arguments{
 \item{historical_cvs}{the historical CV risks. List of lists of datatables.
@@ -17,7 +17,7 @@ has columns for each relevant variable.}
 \item{output}{string (default = 'historical_cvs') the filename to write the
 pdf to (without .pdf).}
 
-\item{dir}{string (default = '~/tmp/osl/') the directory to write the file
+\item{dir}{string (default = 'tmp') the directory to write the file
 to.}
 }
 \description{
