@@ -152,7 +152,6 @@ generateLagData <- function(simData_t0, ptn_id, to_block, prob_w2, n) {
     row_dag$Y   <- 1 + row_dag$A + Y_main+length_A_1/10+prev_Y/100
     row_dag$YA0 <- 1 + 0 + Y_main+length_A_1/10+prev_Y/100
     row_dag$YA1 <- 1 + 1 + Y_main+length_A_1/10+prev_Y/100
-    #browser()
     simData_t <- rbind(simData_t, row_dag)
  }
 
