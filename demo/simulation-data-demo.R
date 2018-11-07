@@ -102,7 +102,6 @@ generateLagData <- function(simData_t0, ptn_id, to_block, prob_w2, n) {
   for(j in 1:to_block) {
 
     row_dag$Block <- row_dag$Block + 1
-    row_dag$w1 <- row_dag$w1
     prev_A <- row_dag$A
     prev_Y <- row_dag$Y
 
