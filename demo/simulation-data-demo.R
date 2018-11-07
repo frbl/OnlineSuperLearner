@@ -13,9 +13,8 @@
 #Y_Y influence of Y on Y in the next block
 #Y_A influence of Y on A in the next block
 #Y_w2 influence of Y on w2 in the next blok
-
-
 devtools::load_all(".")
+
 library('magrittr')
 library('foreach')
 library("dplyr")
@@ -200,10 +199,12 @@ cat(" True_Psi:", True_Psi, "\n")
 
 ## We'd like to use the following features in our estimation:
 # TODO: When adding multiple people, include w1
+# REMOVING W1 for now!
 w2 <- RelevantVariable$new(formula = w2 ~ Y_lag_1 + A_lag_1 + w2_lag_1 + w3_lag_1,  family = 'gaussian')
 w3 <- RelevantVariable$new(formula = w3 ~ w2 + Y_lag_1 + A_lag_1 +  w2_lag_1 + w3_lag_1,  family = 'gaussian')
 A <- RelevantVariable$new(formula = A ~ w3 + w2 + Y_lag_1 + A_lag_1 +  w2_lag_1 + w3_lag_1, family = 'binomial')
-Y <- RelevantVariable$new(formula = Y ~ A + w3 + w2 + w1 + Y_lag_1 + A_lag_1 +  w2_lag_1 + w3_lag_1, family = 'gaussian')
+Y <- RelevantVariable$new(formula = Y ~ A + w3 + w2 + Y_lag_1 + A_lag_1 +  w2_lag_1 + w3_lag_1, family = 'gaussian')
+
 relevantVariables <- c(w2, w3, A, Y)
 
 log <- R.utils::Arguments$getVerbose(-8, timestamp=TRUE)

@@ -91,6 +91,14 @@ PreProcessor <- R6Class("PreProcessor",
           max_bound <- private$bounds[[name]]$max
           data[, (name) := lapply(.SD, function(x) fn(x, min_bound, max_bound) ), .SDcols = (name)]
         }
+
+        if (lapply(data, is.nan) %>% unlist %>% any) {
+          warning('Note! Some of your data is NaN. This could be OK (if youre
+                  not using those columns), but it could also be an issue.
+                  Please check that non of the columns you use are constant, as this
+                  will not work with the normalization')
+        }
+
         data
       }
     )

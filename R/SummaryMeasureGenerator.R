@@ -247,6 +247,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
 
       summarize_data = function(data = NULL, n = 1){
         # TODO: Rename data to trajectories
+        browser()
         trajectories <- data
 
         ## Make sure that we are able to work with more than one trajectory
@@ -299,6 +300,7 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
 
         ## Now, this combined with the cache, should be enough to get the new observations
         current <- private$get_next_normalized(n=n)
+
         private$build_cache(current_data = current)
 
         self$summarize_data(private$cache, n = n)

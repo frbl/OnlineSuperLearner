@@ -6,7 +6,6 @@ library('foreach')
 #' @importFrom condensier condensier_options
 #' @importFrom doParallel registerDoParallel
 #' @importFrom foreach foreachs
-#' 
 
 set.seed(12345)
 log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
