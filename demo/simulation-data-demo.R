@@ -64,10 +64,10 @@ generateData0<-function (n,prob_w2) {
 
   # calculate the initial Y variable
   Y_main <- (-0.1 * w1 + 0.4 * w2 + 0.3 * w3) + noise
-  Y <- -1 - A + Y_main
+  Y <- 1 + A + Y_main
   # Also store the counterfactual outcomes
-  YA0 <- -1 - 0 + Y_main
-  YA1 <- -1 - 1 + Y_main
+  YA0 <- 1 + 0 + Y_main
+  YA1 <- 1 + 1 + Y_main
 
   minx<- min(c(Y, YA0, YA1))
   maxx<- max(c(Y, YA0, YA1))
