@@ -28,6 +28,7 @@ NOISE_SD <<- 0.1
 NOISE_MEAN <<- 0
 
 Getw3 <- function(w2){
+  #if w2 = 1 (good sleep) the activity level will be higher then when w2 = 0 (bad sleep)
   if (w2 == 1) {
     min_val = 1.7
     max_val = 2.4
@@ -39,7 +40,7 @@ Getw3 <- function(w2){
 }
 
 min_max_scale <- function(x, max_val, minx, maxx){
-  round((x - minx) / (maxx - minx) * max_val)
+   round((x - minx) / (maxx - minx) * max_val)
 }
 
 
@@ -64,16 +65,16 @@ generateData0<-function (n,prob_w2) {
   Getw3Vectorized <- Vectorize(Getw3)
   w3 <- Getw3Vectorized(w2)
 
-  A <- rbinom(n, size = 1, prob=plogis(-0.4 + 0.1 * w2 + 0.15 * w3 + 0.15 * w2 * w3))
+  A <- rbinom(n, size = 1, prob=plogis(-0.4 + 0.1 * w1 + 0.1 * w2 + 0.15 * w3 + 0.15 * w2 * w3))
 
   noise <- rnorm(n, mean = NOISE_MEAN, sd = NOISE_SD)
 
   # calculate the initial Y variable
   Y_main <- (-0.1 * w1 + 0.4 * w2 + 0.3 * w3) + noise
-  Y <- -1 - A + Y_main
+  Y <- 1 + A + Y_main
   # Also store the counterfactual outcomes
-  YA0 <- -1 - 0 + Y_main
-  YA1 <- -1 - 1 + Y_main
+  YA0 <- 1 + 0 + Y_main
+  YA1 <- 1 + 1 + Y_main
 
   minx<- min(c(Y, YA0, YA1))
   maxx<- max(c(Y, YA0, YA1))
@@ -102,50 +103,63 @@ generateLagData <- function(simData_t0, ptn_id, to_block, prob_w2, n) {
   row_dag  <- simData_t0 %>%
     filter(Patient_id == ptn_id) %>%
     data.frame(.)
-
+  
+  length_A_1 <- 0
+  
   for(j in 1:to_block) {
 
     row_dag$Block <- row_dag$Block + 1
-    row_dag$w1 <- row_dag$w1
-    row_dag$Y <- row_dag$Y
-    Y_w2 <- row_dag$Y
+    prev_A <- row_dag$A
+    prev_Y <- row_dag$Y
 
     ## calculate w2 depending on Y and previous W2
     ## if Y> 50 increase if Y<50 decrease probability
-    ## if w2 = 0 decrease if w2= 1 increase probability
-    delta_prob_w2 <- ifelse(Y_w2 < 50, Y_w2/250, Y_w2/500)
-
-    delta_prob_w2 <- ifelse(row_dag$w2 == 0, delta_prob_w2 - 0.10, delta_prob_w2 + 0.10)
-
-    row_dag$w2 <- rbinom(n, size = 1, prob = prob_w2 + delta_prob_w2)
+    delta_prob_w2 <- ifelse(prev_Y < 50, (prev_Y+1)/250, (prev_Y+1)/500)
+    noise <- rnorm(n, mean = NOISE_MEAN, sd = NOISE_SD)
+    prob_w2_max_1 <- prob_w2 + delta_prob_w2 + noise
+    prob_w2_new <- ifelse(prob_w2_max_1 >0.99,1,prob_w2_max_1)
+    
+    row_dag$w2 <- rbinom(n, size = 1, prob = prob_w2_new)
 
     ## calculate w3 depending on w2
     ## categorize using the PAL scale
     ## function is neat, vectorization as in the first function is only needed when vectors are used
     row_dag$w3 <- Getw3(row_dag$w2)
-
+    noise <- rnorm(n, mean = NOISE_MEAN, sd = NOISE_SD)
+    row_dag$w3 <- row_dag$w3 + noise/10
     ## The use of A
+    ## When A is 1 the chances increase that A will become 1 again
+    ## after a period of A = 1 the chances increase that A will become 0 
+    
     noise <- rnorm(n, mean = NOISE_MEAN, sd = NOISE_SD)
-
-    if (Y_w2 < 50){
-      A_prob <- -0.4 + 0.1 * row_dag$w2 + 0.15 * row_dag$w3 + 0.15 * row_dag$w2 * row_dag$w3 + noise
+    if (prev_A == 1){
+       if (length_A_1 < 10) {
+       row_dag$A <- 1
+       length_A_1 <- length_A_1+1
+       } else{
+         A_prob <- 0.1 * row_dag$w1+ 0.1 * row_dag$w2 + 0.15 * row_dag$w3 + 0.15 * row_dag$w2 * row_dag$w3 + prev_Y/100+noise
+         ##print(A_prob)
+         row_dag$A <- rbinom(n, size = 1, prob = plogis(A_prob))
+         length_A_1 <- 0
+       }
     } else { 
-      A_prob <- -0.4 + 0.1 * row_dag$w2 + 0.15 * row_dag$w3 + 0.15 * row_dag$w2 * row_dag$w3 + noise
+      A_prob <- -0.3 + 0.1 * row_dag$w1+0.1 * row_dag$w2 + 0.15 * row_dag$w3 + 0.15 * row_dag$w2 * row_dag$w3 - prev_Y + noise
+      row_dag$A <- rbinom(n, size = 1, prob = plogis(A_prob))
     }
-    A <- rbinom(n, size = 1, prob = plogis(A_prob))
-
-    #n=1 when single patient_id is used
+   
+    
+    ##n=1 when single patient_id is used
     noise <- rnorm(n, mean = NOISE_MEAN, sd = NOISE_SD)
 
-    #counter factual
-    Y_main <- -0.1 * row_dag$w1 + 0.4 * row_dag$w2 + 0.3 * row_dag$w3 + Y_w2 / 100 + noise
-    row_dag$Y   <- -1 - row_dag$A + Y_main
-    row_dag$YA0 <- -1 - 0 + Y_main
-    row_dag$YA1 <- -1 - 1 + Y_main
-
-    #row_dag<-data.frame(row_dag)
+    ##counter factual
+    ##the longer A is used the higher Y becomes
+    ##
+    Y_main <- (-0.1 * row_dag$w1 + 0.4 * row_dag$w2 + 0.3 * row_dag$w3) +length_A_1/10+prev_Y/100 + noise
+    row_dag$Y   <- 1 + row_dag$A + Y_main
+    row_dag$YA0 <- 1 + 0 + Y_main
+    row_dag$YA1 <- 1 + 1 + Y_main
     simData_t <- rbind(simData_t, row_dag)
-  }
+ }
 
 
   ## Perform the min-max scaling at the end so we have all values,
@@ -180,7 +194,7 @@ n <- 1
 ## probability_w2 is the probability of good sleep
 probability_w2 <-0.65
 ## The number of blocks we'd like
-nblocks <- 1000
+nblocks <- 180
 
 # Calculate the first block
 simData_t0 <- generateData0(n, probability_w2)
@@ -245,7 +259,7 @@ osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
   test_set_size = 5 + (3 * 3 + 3), ## The size of the minibatch test size. Note that for this test set size it is super important that at least enough observations are available as 
   initial_data_size = training_set_size / 2, ## Train the first iteration (Nl) on this part of the data
   max_iterations = max_iterations, ## Use at most max_iterations over the data
-  mini_batch_size = floor((training_set_size / 2) / max_iterations) ## Split the remaining data into N-Nl/max_iterations equal blocks of data
+  mini_batch_size = 30 ## Split the remaining data into N-Nl/max_iterations equal blocks of data
 )
 
 OutputPlotGenerator.create_training_curve(osl$get_historical_cv_risk, 
@@ -256,11 +270,11 @@ if (FALSE) {
   
 ## Specify the intervention we'd like to test, and also specify when we want to
 ## test this intervention
-intervention <- list(variable = 'A', when = c(2), what = c(1))
+intervention <- list(variable = 'A', when = c(1), what = c(1))
 ## Tau is the time at which we want to test the intervention
-tau <-  2
+tau <- 1
 ## B is the number of iterations we'll run before we hope to converge
-B <- 100
+B <- 1000
 
 ## First we simulate data given the intervention. That is, we specify in our
 ## simulation that we want to sample data when this intervention would be
@@ -284,6 +298,7 @@ result.approx <- foreach(i=seq(B)) %do% {
 data.train <- Data.Static$new(dataset = data.train)
 osl$get_summary_measure_generator$set_trajectories(data.train)
 data.train.set <- osl$get_summary_measure_generator$getNext(2)
+discrete <- TRUE
 
 intervention_effects <- lapply(c(TRUE, FALSE), function(discrete) {
   ## First we create the calculator to determine the intervention effects with.
@@ -302,28 +317,32 @@ intervention_effects <- lapply(c(TRUE, FALSE), function(discrete) {
     discrete = TRUE, 
     initial_data = data.train.set$traj_1[1,],
     tau = tau
-  ) %>% unlist %>% mean
-  the_osl = ifelse(discrete, 'discrete osl', 'continuous osl')
-  paste(the_osl,":", intervention_effect, '\n')
+  )
 })
+
+result.dosl = intervention_effects[[1]]
+result.osl = intervention_effects[[2]]
+
+data <- list(truth = rep(33, length(dosl), dosl = result.dosl, osl = result.osl)
+OutputPlotGenerator.create_convergence_plot(data = data, output = 'convergence')
 
 
 ## actually do a good job estimating the true conditional distributions.
 ## Finally we run our kolmogorov smirnov test example to check whether we
 ## Define kolmogorov-smirnov test
-T_iter <- 10
-B_iter <- 100
-nbins <- 5
-n_A_bins <- 2
+#T_iter <- 10
+#B_iter <- 100
+#nbins <- 5
+#n_A_bins <- 2
 
-## Define the object that will be used to run the evalutation, and run the actual evaluations.
-subject <- ConditionalDensityEvaluator$new(log, osl = osl, summary_measure_generator = osl$get_summary_measure_generator)
-result <- subject$evaluate(
-  sim,
-  T_iter, 
-  B_iter,
-  nbins = nbins
-)
+### Define the object that will be used to run the evalutation, and run the actual evaluations.
+#subject <- ConditionalDensityEvaluator$new(log, osl = osl, summary_measure_generator = osl$get_summary_measure_generator)
+#result <- subject$evaluate(
+  #sim,
+  #T_iter, 
+  #B_iter,
+  #nbins = nbins
+#)
 
 ## Output the evaluation.
 flat_result <- result %>% unlist %>% unname

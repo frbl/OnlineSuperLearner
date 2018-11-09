@@ -50,8 +50,11 @@ Y <- RelevantVariable$new(formula = Y ~ A + W, family = 'gaussian')
 relevantVariables <- c(W, A, Y)
 
 ## Generate a dataset we will use for testing.
+training_set_size <- 1e3
+test_set_size <- 100
+## Generate a dataset we will use for testing.
 training_set_size <- 1e6
-initial_data_size <- 500 #training_set_size / 2
+initial_data_size <-  500#training_set_size / 2
 test_set_size <- 100
 
 ## Create a new simulator
@@ -84,18 +87,25 @@ algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
                                  params = list(nbins = c(5), online = TRUE))))
 
 ## Specify the intervention we'd like to test, and also specify when we want to
+## test this interventsion
+intervention <- list(variable = 'A', when = c(2), what = c(1))
+tau = 2
+
+## Specify the intervention we'd like to test, and also specify when we want to
 ## test this intervension
 intervention <- list(variable = 'A', when = c(2), what = c(1))
 tau <- 2
+
 ## Fit the actual OSL
 osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
   formulae = relevantVariables, ## Specify which are the formulae we expet
   data = data.train, ## Specify the data to train on
   algorithms = algos, ## SPecify the correct algorithms
   verbose = log, ## Logging information
+<<<<<<< HEAD
   bounds = TRUE, ## Let the OSL generate the bounds based on the data it gets
   test_set_size = 5 + (3 * 3 + 3), ## The size of the minibatch test size. Note that for this test set size it is super important that at least enough observations are available as 
-  initial_data_size = training_set_size / 2, ## Train the first iteration (Nl) on this part of the data
+  initial_data_size =initial_data_size, ## Train the first iteration (Nl) on this part of the data
   max_iterations = max_iterations, ## Use at most max_iterations over the data
   mini_batch_size = (training_set_size / 2) / max_iterations ## Split the remaining data into N-Nl/max_iterations equal blocks of data
 )
@@ -157,9 +167,14 @@ intervention_effects <- lapply(c(TRUE, FALSE), function(discrete) {
   paste(the_osl,":", intervention_effect, '\n')
 })
 
-
-## actually do a good job estimating the true conditional distributions.
 ## Finally we run our kolmogorov smirnov test example to check whether we
+## actually do a good job estimating the true conditional distributions.
+## Sample data from it
+
+#preds <- sampledata(osl, newdata = data.test, relevantVariables, plot = TRUE)
+#preds
+
+#sampledata(osl, newdata = data.test[1:3,], relevantVariables, plot = FALSE)
 ## Define kolmogorov-smirnov test
 T_iter <- 10
 B_iter <- 100
@@ -181,6 +196,25 @@ flat_result <- flat_result[!is.na(flat_result)]
 perc_significant <- sum(flat_result >= 0.95) / length(flat_result) * 100 %>% round(., 2)
 perc_significant <- perc_significant %>% round(., 2)
 paste(perc_significant,'% significant in the KS-test')
+
+#T_iter <- 10
+#B_iter <- 100
+#nbins <- 5
+#n_A_bins <- 2
+
+#subject <- ConditionalDensityEvaluator$new(log, osl = osl, summary_measure_generator = osl$get_summary_measure_generator)
+#result <- subject$evaluate(
+  #sim,
+  #T_iter, 
+  #B_iter,
+  #nbins = nbins
+#)
+
+#flat_result <- result %>% unlist %>% unname
+#flat_result <- flat_result[!is.na(flat_result)]
+#perc_significant <- sum(flat_result >= 0.95) / length(flat_result) * 100 %>% round(., 2)
+#perc_significant <- perc_significant %>% round(., 2)
+#paste(perc_significant,'% significant in the KS-test')
 
 cat('The effects of the interventions were:')
 cat(paste('approx',':', result.approx)) 

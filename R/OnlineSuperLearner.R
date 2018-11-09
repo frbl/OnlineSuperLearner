@@ -564,7 +564,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
             ## Note that there could be multiple trajectories, so we need to iterate
             for(data_current in trajectories) {
-              if(is.null(data_current) || nrow(data_current) < 1) {
+              if(is.null(data_current) || nrow(data_current) <= self$get_data_splitter$get_test_set_size + 1) {
                 ## TODO: Check wether the stopping criteria are met (e.g., improvement < theta)
                 stopped <- TRUE
                 break

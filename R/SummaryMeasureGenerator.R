@@ -247,7 +247,6 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
 
       summarize_data = function(data = NULL, n = 1){
         # TODO: Rename data to trajectories
-        browser()
         trajectories <- data
 
         ## Make sure that we are able to work with more than one trajectory

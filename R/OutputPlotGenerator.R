@@ -254,7 +254,7 @@ OutputPlotGenerator.create_risk_plot = function(performance, output, dir = 'tmp'
   full_file_name <- get_file_location(name = output,
                                       extension = 'pdf',
                                       dir = dir)
-  pdf(full_file_name)
+
   p <- ggplot(performance_dt)
 
   colors <- OutputPlotGenerator.get_simple_colors(length(outcomes))
@@ -276,6 +276,9 @@ OutputPlotGenerator.create_risk_plot = function(performance, output, dir = 'tmp'
   theme(legend.background = element_rect(colour="transparent"))+
   theme(legend.key = element_rect(fill = "transparent", colour = "transparent")) +
   theme(legend.key.size= unit(3,"lines"))
+
+  cat('Create_risk_plot plotting to:', full_file_name)
+  pdf(full_file_name)
   plot(p)
   dev.off()
 }

@@ -44,6 +44,7 @@ DataSplitter <- R6Class("DataSplitter",
       },
 
       split = function(data, test_set_size = NULL){
+        result = tryCatch({
         ## We offer the capability to override the initial testsize.
         if(is.null(test_set_size)) test_set_size <- self$get_test_set_size
 
@@ -65,7 +66,12 @@ DataSplitter <- R6Class("DataSplitter",
           train <- rbind(private$data.previous, train)
         }
         private$data.previous <- test
+
         return(list(train = train, test = test))
+          
+        }, error = function(e) {
+          browser()
+        })
       }
     ),
   active =
