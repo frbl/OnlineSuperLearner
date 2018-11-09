@@ -54,7 +54,7 @@ Suggests:
     mockery,
     knitr,
     rmarkdown
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
 Collate:
     'ConditionalDensityEvaluator.R'
     'ConstrainedGlm.R'
@@ -107,6 +107,7 @@ Collate:
     'OnlineSuperLearner.Simulation.R'
     'PreProcessor.R'
     'SMG.Base.R'
+    'Simulator.Example.R'
     'Simulator.GAD.R'
     'Simulator.Slow.R'
     'WCC.NLopt.R'
