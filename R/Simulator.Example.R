@@ -1,4 +1,5 @@
 #' Simulator.Example
+#'
 #' The running example from the paper simulation: if and with how much a binary
 #' treatment (antidepressant usage) attributes to changes in  depression.  We
 #' use  a  normalized  hypothetical  set  of  sum  scores  of  the  Inventory

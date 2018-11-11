@@ -47,6 +47,7 @@ Imports:
     nnls,
     ggplot2,
     reshape2,
+    dplyr,
     digest
 Suggests:
     roxygen2,
