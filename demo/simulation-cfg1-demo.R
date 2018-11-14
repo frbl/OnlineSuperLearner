@@ -60,6 +60,7 @@ test_set_size <- 100
 ## Create a new simulator
 sim <- Simulator.GAD$new()
 
+
 log <- R.utils::Arguments$getVerbose(-8, timestamp=TRUE)
 
 ## What is the maximum number of iterations the OSL can use while going over the data?
@@ -102,7 +103,6 @@ osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
   data = data.train, ## Specify the data to train on
   algorithms = algos, ## SPecify the correct algorithms
   verbose = log, ## Logging information
-<<<<<<< HEAD
   bounds = TRUE, ## Let the OSL generate the bounds based on the data it gets
   test_set_size = 5 + (3 * 3 + 3), ## The size of the minibatch test size. Note that for this test set size it is super important that at least enough observations are available as 
   initial_data_size =initial_data_size, ## Train the first iteration (Nl) on this part of the data
