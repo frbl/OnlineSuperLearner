@@ -1,7 +1,0 @@
-pandoc: 2.2.2
-pkgdown: 1.1.0
-pkgdown_sha: ~
-articles:
-  OnlineSuperLearner: OnlineSuperLearner.html
-  architecture: architecture.html
-

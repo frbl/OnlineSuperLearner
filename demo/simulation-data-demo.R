@@ -8,12 +8,12 @@ library(doParallel)
 set.seed(1234)
 registerDoParallel(cores = parallel::detectCores())
 
-sim <- Simulator.Example$new()
+sim <- Simulator.RunningExample$new()
 
 ## The number of blocks we'd like
 nblocks <- 1180
 
-simData_t0 <- sim$simulateWAY(numberOfBlocks = nblocks)
+simData_t_df <- sim$simulateWAY(numberOfBlocks = nblocks)
 
 # Combine block zero and the following blocks
 
@@ -54,11 +54,16 @@ algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
                                  algorithm_params = list(alpha = seq(0,1,0.2)),
                                  params = list(nbins = c(5), online = TRUE))))
 
+algos <- append(algos, list(list(algorithm = "ML.NeuralNet",
+                                 #algorithm_params = list(hidden = ),
+                                 params = list(nbins = c(5), online = TRUE))))
+
+training_set_size = nrow(simData_t_df)
 
 ## Fit the actual OSL
 osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
   formulae = relevantVariables, ## Specify which are the formulae we expet
-  data = data.train, ## Specify the data to train on
+  data = simData_t_df, ## Specify the data to train on
   algorithms = algos, ## SPecify the correct algorithms
   verbose = log, ## Logging information
   bounds = TRUE, ## Let the OSL generate the bounds based on the data it gets

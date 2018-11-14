@@ -108,15 +108,15 @@ Collate:
     'OnlineSuperLearner.Simulation.R'
     'PreProcessor.R'
     'SMG.Base.R'
-    'Simulator.Example.R'
     'Simulator.GAD.R'
+    'Simulator.RunningExample.R'
     'Simulator.Slow.R'
     'WCC.NLopt.R'
     'WCC.NNLS.R'
     'WCC.SGD.R'
 Remotes:
     github::osofr/condensier@fb-add-update,
-    github::osofr/simcausal,
+    github::osofr/simcausal@master,
     github::jeroenooms/jsonlite,
     github::jimhester/covr,
     github::airoldilab/sgd,
