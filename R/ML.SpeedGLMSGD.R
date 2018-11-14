@@ -9,7 +9,7 @@
 #' @include ML.Base.R
 #' @section Methods:
 #' \describe{
-#'   \item{\code{initialize()
+#'   \item{\code{initialize()}
 #'   }
 #' }
 #'

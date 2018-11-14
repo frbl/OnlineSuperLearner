@@ -11,4 +11,14 @@ ML.SpeedGLMSGD
 \description{
 Base class for Speedglm in combination with SGD machine learning model.
 }
+\section{Methods}{
+
+\describe{
+  \item{\code{initialize()}
+  }
+}
+
+## TO DO implement
+}
+
 \keyword{datasets}

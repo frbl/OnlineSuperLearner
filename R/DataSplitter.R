@@ -49,7 +49,7 @@ DataSplitter <- R6Class("DataSplitter",
 
         if (is.null(private$data.previous) && nrow(data) < (test_set_size + 1)) {
           throw('At least ', test_set_size + 1, ' rows of data are needed, ',
-                '1 train and ', test_set_size,' test')
+                '1 train and ', test_set_size,' test. Currently you have ', nrow(data))
         }
 
         ## Use the last tau observation as test set
@@ -65,6 +65,7 @@ DataSplitter <- R6Class("DataSplitter",
           train <- rbind(private$data.previous, train)
         }
         private$data.previous <- test
+
         return(list(train = train, test = test))
       }
     ),

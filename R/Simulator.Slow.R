@@ -234,7 +234,7 @@ Simulator.Slow <- R6Class("Simulator.Slow",
       },
 
       get_rgen = function(variable) {
-        private$rgen[[self$get_families[variable]]]
+        self$rgen[[self$get_families[variable]]]
       },
 
       validateMechanism = function(fun) {

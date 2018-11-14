@@ -251,6 +251,8 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
 
         ## Make sure that we are able to work with more than one trajectory
         if(is.null(trajectories)) trajectories <- private$cache
+
+        ## In case trajectories is (by mistake) still a datatable, embed it in a list here
         if (is(trajectories, 'data.table')) trajectories <- list(trajectories)
 
         if(length(trajectories) < length(self$get_trajectory_names)) {
@@ -297,9 +299,9 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
 
         ## Now, this combined with the cache, should be enough to get the new observations
         current <- private$get_next_normalized(n=n)
-        private$cache <- lapply(seq_along(current), function(i) { 
-          list(private$cache[[i]], current[[i]]) %>% rbindlist
-        })
+
+        private$build_cache(current_data = current)
+
         self$summarize_data(private$cache, n = n)
       },
 
@@ -366,6 +368,14 @@ SummaryMeasureGenerator <- R6Class("SummaryMeasureGenerator",
 
       remove_last_measurements_from_cache = function(n) {
         private$cache <- lapply(private$cache, function(cache) tail(cache, -n))
+      },
+
+      build_cache = function(current_data) {
+        private$cache <- lapply(seq_along(current_data), function(i) { 
+          list(private$cache[[i]], current_data[[i]]) %>% rbindlist
+        })
+        names(private$cache) <- self$get_trajectory_names
+        private$cache
       },
 
       get_next_normalized = function(n) {

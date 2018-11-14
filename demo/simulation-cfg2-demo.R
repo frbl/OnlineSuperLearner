@@ -23,8 +23,11 @@ max_iterations <- 50
 
 ## Specify the intervention we'd like to test, and also specify when we want to
 ## test this interventsion
-intervention <- list(variable = 'A', when = c(2), what = c(1))
-tau = 2
+intervention <- list(variable = 'A',
+                      when = c(3), 
+                      what = c(1))
+
+tau = 3
 
 ## B is the number of iterations we'll run before we hope to converge
 B <- 100
@@ -35,18 +38,29 @@ B <- 100
 ## Generate observations for training
 ## These are used in the simulator / its scheme.
 llW <- list(
-  stochMech=function(numberOfBlocks) {
-    rnorm(numberOfBlocks, 0, 10)
-  },
-  param=c(0, 0.5, -0.25, 0.1),
-  rgen=identity
+  list(stochMech = function(numberOfBlocks) {
+      rnorm(numberOfBlocks, 0, 10)
+    },
+    param=c(1),
+    rgen=identity),
+  list(stochMech = function(numberOfBlocks) {
+      runif(numberOfBlocks, 0, 1)
+    },
+    param=c(1),
+    rgen = identity),
+  list(stochMech = function(numberOfBlocks) {
+      runif(numberOfBlocks, 0, 1)
+    },
+    param=c(1),
+    rgen = identity)
 )
 
 llA <- list(
   stochMech=function(ww) {
       rbinom(length(ww), 1, expit(ww))
   },
-  param=c(-0.1, 0.1, 0.25),
+  #param=c(-0.1, 0.1, 0.3, 0.7),
+  param=c(0.5),
   rgen=function(xx, delta=0.05){
     probability <- delta+(1-2*delta)*expit(xx)
     rbinom(length(xx), 1, probability)
@@ -54,12 +68,11 @@ llA <- list(
 )
 
 llY <- list(rgen={function(AW){
-  aa <- AW[, "A"]
-  ww <- AW[, grep("[^A]", colnames(AW))]
-  mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
-    (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
-  mu <- aa*(0.9) + (1-aa)*(0.3)
-  rnorm(length(mu), mu, sd=0.1)}}
+    aa <- AW[, "A"]
+    ww <- AW[, grep("[^A]", colnames(AW))]
+    mu <- aa*(0.9) + (1-aa)*(0.3) + rnorm(length(aa), 0, 0.01)
+    mu <- lapply(mu, function(x) max(min(x, 1),0)) %>% unlist
+  }}
 )
 
 ## Create a new simulator
@@ -73,10 +86,13 @@ data.test <- sim$simulateWAY(test_set_size, qw=llW, ga=llA, Qy=llY, verbose=log)
 #------------------------------
 
 ## We'd like to use the following features in our estimation:
-W <- RelevantVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
-A <- RelevantVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
-Y <- RelevantVariable$new(formula = Y ~ A + W, family = 'gaussian')
-relevantVariables <- c(W, A, Y)
+# We'd like to use the following features in our estimation:
+W  <- RelevantVariable$new(family = 'gaussian', formula = W  ~ Y_lag_1 + W2_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2)
+W2 <- RelevantVariable$new(family = 'gaussian', formula = W2 ~ W_lag_1)
+W3 <- RelevantVariable$new(family = 'gaussian', formula = W3 ~ Y_lag_1)
+A  <- RelevantVariable$new(family = 'binomial', formula = A  ~ W + Y_lag_1 + A_lag_1 + W_lag_1)
+Y  <- RelevantVariable$new(family = 'gaussian', formula = Y  ~ A + W + Y_lag_1 + A_lag_1 + W_lag_1)
+relevantVariables <- c(W, W2, W3, A, Y)
 
 
 ## Define a list of algorithms to use
@@ -175,22 +191,22 @@ cat(paste('contin',':', result[[1]] %>% mean))
 ## actually do a good job estimating the true conditional distributions.
 
 ## Define kolmogorov-smirnov test
-T_iter <- 10
-B_iter <- 100
-nbins <- 5
+#T_iter <- 10
+#B_iter <- 100
+#nbins <- 5
 
-## Define the object that will be used to run the evalutation, and run the actual evaluations.
-subject <- ConditionalDensityEvaluator$new(log, osl = osl, summary_measure_generator = osl$get_summary_measure_generator)
-result <- subject$evaluate(
-  sim,
-  T_iter, 
-  B_iter,
-  nbins = nbins
-)
+### Define the object that will be used to run the evalutation, and run the actual evaluations.
+#subject <- ConditionalDensityEvaluator$new(log, osl = osl, summary_measure_generator = osl$get_summary_measure_generator)
+#result <- subject$evaluate(
+  #sim,
+  #T_iter, 
+  #B_iter,
+  #nbins = nbins
+#)
 
-## Output the evaluation.
-flat_result <- result %>% unlist %>% unname
-flat_result <- flat_result[!is.na(flat_result)]
-perc_significant <- sum(flat_result >= 0.95) / length(flat_result) * 100 %>% round(., 2)
-perc_significant <- perc_significant %>% round(., 2)
-paste(perc_significant,'% significant in the KS-test')
+### Output the evaluation.
+#flat_result <- result %>% unlist %>% unname
+#flat_result <- flat_result[!is.na(flat_result)]
+#perc_significant <- sum(flat_result >= 0.95) / length(flat_result) * 100 %>% round(., 2)
+#perc_significant <- perc_significant %>% round(., 2)
+#paste(perc_significant,'% significant in the KS-test')

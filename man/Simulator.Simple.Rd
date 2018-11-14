@@ -3,7 +3,7 @@
 \docType{class}
 \name{Simulator.Simple}
 \alias{Simulator.Simple}
-\title{Very basic simulator to generate data from a simple binary model}
+\title{SimpleSimulator}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 Simulator.Simple
