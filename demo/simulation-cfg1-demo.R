@@ -1,17 +1,36 @@
-#devtools::install_deps(dependencies = TRUE)
 devtools::load_all(".")
+
 library('magrittr')
 library('doParallel')
 library('foreach')
-#' @importFrom condensier condensier_options
-#' @importFrom doParallel registerDoParallel
-#' @importFrom foreach foreachs
+library('doParallel')
 
 set.seed(12345)
-log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
 
 ## Make sure we use all cores
-doParallel::registerDoParallel(cores = parallel::detectCores())
+registerDoParallel(cores = parallel::detectCores())
+
+log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
+
+## Generate a dataset we will use for testing.
+training_set_size <- 1e6
+initial_data_size <-  500#training_set_size / 2
+test_set_size <- 100
+
+## What is the maximum number of iterations the OSL can use while going over the data?
+## Note that in this case we split the data in equal parts with this number of iterations
+max_iterations <- 50
+
+## Specify the intervention we'd like to test, and also specify when we want to
+## test this interventsion
+intervention <- list(variable = 'A', when = c(2), what = c(1))
+tau = 2
+
+## B is the number of iterations we'll run before we hope to converge
+B <- 100
+
+# Initialize the simulator
+#--------------------
 
 ## Generate observations for training
 ## These are used in the simulator / its scheme.
@@ -43,33 +62,22 @@ llY <- list(rgen={function(AW){
   rnorm(length(mu), mu, sd=0.1)}}
 )
 
+## Create a new simulator
+sim <- Simulator.GAD$new()
+
+## Generate some fake data for testing and training
+data.train <- sim$simulateWAY(training_set_size, qw=llW, ga=llA, Qy=llY, verbose=log)
+data.test <- sim$simulateWAY(test_set_size, qw=llW, ga=llA, Qy=llY, verbose=log)
+
+# Create the relevant variables
+#------------------------------
+
 ## We'd like to use the following features in our estimation:
 W <- RelevantVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
 A <- RelevantVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
 Y <- RelevantVariable$new(formula = Y ~ A + W, family = 'gaussian')
 relevantVariables <- c(W, A, Y)
 
-## Generate a dataset we will use for testing.
-training_set_size <- 1e3
-test_set_size <- 100
-## Generate a dataset we will use for testing.
-training_set_size <- 1e6
-initial_data_size <-  500#training_set_size / 2
-test_set_size <- 100
-
-## Create a new simulator
-sim <- Simulator.GAD$new()
-
-
-log <- R.utils::Arguments$getVerbose(-8, timestamp=TRUE)
-
-## What is the maximum number of iterations the OSL can use while going over the data?
-## Note that in this case we split the data in equal parts with this number of iterations
-max_iterations <- 50
-
-## Generate some fake data for testing and training
-data.train <- sim$simulateWAY(training_set_size, qw=llW, ga=llA, Qy=llY, verbose=log)
-data.test <- sim$simulateWAY(test_set_size, qw=llW, ga=llA, Qy=llY, verbose=log)
 
 ## Define a list of algorithms to use
 algos <- list()
@@ -87,17 +95,9 @@ algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
                                  algorithm_params = list(alpha = seq(0,1,0.2)),
                                  params = list(nbins = c(5), online = TRUE))))
 
-## Specify the intervention we'd like to test, and also specify when we want to
-## test this interventsion
-intervention <- list(variable = 'A', when = c(2), what = c(1))
-tau = 2
-
-## Specify the intervention we'd like to test, and also specify when we want to
-## test this intervension
-intervention <- list(variable = 'A', when = c(2), what = c(1))
-tau <- 2
 
 ## Fit the actual OSL
+#--------------------
 osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
   formulae = relevantVariables, ## Specify which are the formulae we expet
   data = data.train, ## Specify the data to train on
@@ -110,17 +110,12 @@ osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
   mini_batch_size = (training_set_size / 2) / max_iterations ## Split the remaining data into N-Nl/max_iterations equal blocks of data
 )
 
-OutputPlotGenerator.create_training_curve(osl$get_historical_cv_risk, 
-                                          relevantVariables = relevantVariables,
-                                          output = 'curve')
-
-## Specify the intervention we'd like to test, and also specify when we want to
-## test this intervention
-intervention <- list(variable = 'A', when = c(2), what = c(1))
-## Tau is the time at which we want to test the intervention
-tau <-  2
-## B is the number of iterations we'll run before we hope to converge
-B <- 100
+## Create a quick overview of the training curve (the risk over time)
+OutputPlotGenerator.create_training_curve(
+  osl$get_historical_cv_risk,
+  relevantVariables = relevantVariables,
+  output = 'curve'
+)
 
 ## First we simulate data given the intervention. That is, we specify in our
 ## simulation that we want to sample data when this intervention would be
@@ -132,7 +127,7 @@ result.approx <- foreach(i=seq(B)) %do% {
   data.int <- sim$simulateWAY(tau, qw = llW, ga = llA, Qy = llY,
                                   intervention = intervention, verbose = FALSE)
   data.int$Y[tau]
-} %>% unlist %>% mean
+} %>% unlist
 
 
 ## The next step is to actually calculate the same intervention using the
@@ -145,16 +140,16 @@ data.train <- Data.Static$new(dataset = data.train)
 osl$get_summary_measure_generator$set_trajectories(data.train)
 data.train.set <- osl$get_summary_measure_generator$getNext(2)
 
-intervention_effects <- lapply(c(TRUE, FALSE), function(discrete) {
-  ## First we create the calculator to determine the intervention effects with.
-  intervention_effect_caluculator = InterventionEffectCalculator$new(
-    bootstrap_iterations = B, 
-    outcome_variable = Y$getY,
-    verbose = log,
-    parallel = TRUE
-  )
 
+## First we create the calculator to determine the intervention effects with.
+intervention_effect_caluculator = InterventionEffectCalculator$new(
+  bootstrap_iterations = B, 
+  outcome_variable = Y$getY,
+  verbose = log,
+  parallel = TRUE
+)
 
+result <- lapply(c(TRUE, FALSE), function(discrete) {
   ## Actually evaluate the intervention for the discrete superlearner
   intervention_effect <- intervention_effect_caluculator$evaluate_single_intervention(
     osl = osl,
@@ -162,24 +157,27 @@ intervention_effects <- lapply(c(TRUE, FALSE), function(discrete) {
     discrete = TRUE, 
     initial_data = data.train.set$traj_1[1,],
     tau = tau
-  ) %>% unlist %>% mean
+  ) %>% unlist
   the_osl = ifelse(discrete, 'discrete osl', 'continuous osl')
   paste(the_osl,":", intervention_effect, '\n')
 })
 
+
+data <- list(truth = result.approx, dosl = result[[1]], osl = result[[2]])
+OutputPlotGenerator.create_convergence_plot(data = data, output = 'convergence')
+
+cat('The effects of the interventions were:')
+cat(paste('approx',':', result.approx %>% mean)) 
+cat(paste('discre',':', result[[1]] %>% mean)) 
+cat(paste('contin',':', result[[1]] %>% mean)) 
+
 ## Finally we run our kolmogorov smirnov test example to check whether we
 ## actually do a good job estimating the true conditional distributions.
-## Sample data from it
 
-#preds <- sampledata(osl, newdata = data.test, relevantVariables, plot = TRUE)
-#preds
-
-#sampledata(osl, newdata = data.test[1:3,], relevantVariables, plot = FALSE)
 ## Define kolmogorov-smirnov test
 T_iter <- 10
 B_iter <- 100
 nbins <- 5
-n_A_bins <- 2
 
 ## Define the object that will be used to run the evalutation, and run the actual evaluations.
 subject <- ConditionalDensityEvaluator$new(log, osl = osl, summary_measure_generator = osl$get_summary_measure_generator)
@@ -196,26 +194,3 @@ flat_result <- flat_result[!is.na(flat_result)]
 perc_significant <- sum(flat_result >= 0.95) / length(flat_result) * 100 %>% round(., 2)
 perc_significant <- perc_significant %>% round(., 2)
 paste(perc_significant,'% significant in the KS-test')
-
-#T_iter <- 10
-#B_iter <- 100
-#nbins <- 5
-#n_A_bins <- 2
-
-#subject <- ConditionalDensityEvaluator$new(log, osl = osl, summary_measure_generator = osl$get_summary_measure_generator)
-#result <- subject$evaluate(
-  #sim,
-  #T_iter, 
-  #B_iter,
-  #nbins = nbins
-#)
-
-#flat_result <- result %>% unlist %>% unname
-#flat_result <- flat_result[!is.na(flat_result)]
-#perc_significant <- sum(flat_result >= 0.95) / length(flat_result) * 100 %>% round(., 2)
-#perc_significant <- perc_significant %>% round(., 2)
-#paste(perc_significant,'% significant in the KS-test')
-
-cat('The effects of the interventions were:')
-cat(paste('approx',':', result.approx)) 
-for(result in intervention_effects) { cat(result) }
