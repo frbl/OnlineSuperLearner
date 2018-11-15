@@ -129,7 +129,6 @@ result.approx <- foreach(i=seq(B)) %do% {
   data.int$Y[tau]
 } %>% unlist
 
-
 ## The next step is to actually calculate the same intervention using the
 ## superlearner. We use a similar technique for this, as we try to calculate
 ## the mean of the intervention effects.
@@ -154,14 +153,11 @@ result <- lapply(c(TRUE, FALSE), function(discrete) {
   intervention_effect <- intervention_effect_caluculator$evaluate_single_intervention(
     osl = osl,
     intervention = intervention, 
-    discrete = TRUE, 
+    discrete = discrete, 
     initial_data = data.train.set$traj_1[1,],
     tau = tau
   ) %>% unlist
-  the_osl = ifelse(discrete, 'discrete osl', 'continuous osl')
-  paste(the_osl,":", intervention_effect, '\n')
 })
-
 
 data <- list(truth = result.approx, dosl = result[[1]], osl = result[[2]])
 OutputPlotGenerator.create_convergence_plot(data = data, output = 'convergence')
@@ -169,14 +165,14 @@ OutputPlotGenerator.create_convergence_plot(data = data, output = 'convergence')
 cat('The effects of the interventions were:')
 cat(paste('approx',':', result.approx %>% mean)) 
 cat(paste('discre',':', result[[1]] %>% mean)) 
-cat(paste('contin',':', result[[1]] %>% mean)) 
+cat(paste('contin',':', result[[2]] %>% mean)) 
 
 ## Finally we run our kolmogorov smirnov test example to check whether we
 ## actually do a good job estimating the true conditional distributions.
 
 ## Define kolmogorov-smirnov test
 T_iter <- 10
-B_iter <- 100
+B_iter <- 1000
 nbins <- 5
 
 ## Define the object that will be used to run the evalutation, and run the actual evaluations.

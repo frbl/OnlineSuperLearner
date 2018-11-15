@@ -165,12 +165,10 @@ result <- lapply(c(TRUE, FALSE), function(discrete) {
   intervention_effect <- intervention_effect_caluculator$evaluate_single_intervention(
     osl = osl,
     intervention = intervention, 
-    discrete = TRUE, 
+    discrete = discrete, 
     initial_data = data.train.set$traj_1[1,],
     tau = tau
   ) %>% unlist
-  the_osl = ifelse(discrete, 'discrete osl', 'continuous osl')
-  paste(the_osl,":", intervention_effect, '\n')
 })
 
 

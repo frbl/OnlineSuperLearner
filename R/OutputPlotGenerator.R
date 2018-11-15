@@ -184,6 +184,8 @@ OutputPlotGenerator.create_training_curve = function(historical_cvs, relevantVar
                                       dir = dir)
   
 
+
+  cat('create_training_curve plotting to:', full_file_name)
   pdf(full_file_name)
   for (i in seq_along(plots)) {
     plot(plots[[i]])
