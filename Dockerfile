@@ -1,4 +1,4 @@
-FROM r-base:3.4.3
+FROM r-base:3.5.1
 MAINTAINER Frank Blaauw <f.j.blaauw@rug.nl>
 
 WORKDIR /app

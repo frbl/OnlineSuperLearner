@@ -1,4 +1,5 @@
 #' Simulator.GAD
+#'
 #' directed acyclic graph approach to simulation
 #'
 #' @docType class

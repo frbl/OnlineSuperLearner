@@ -44,7 +44,6 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
 
           # 1. Split the dataframe into seperate sections.
           # 2. Make the slicing into each of the different lagged / other vars.
-
           data <- private$convert_observations(observed_data = observed_data)
           cluster_bins <- private$create_cluster_bins(data, nbins = nbins)
 

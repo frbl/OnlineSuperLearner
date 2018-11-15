@@ -202,6 +202,6 @@ test_that("it should improve the fit if we update the model", {
 	## use the raw model
 	model_2 <- subject$perform_update(X_mat = X_mat, Y_vals = Y_vals, m.fit = list(coef = raw))
 	mse_model_2 <-mse(subject$perform_prediction( X_mat = test_X_mat, m.fit = list(coef = model_2)), test_Y_vals)  
-	expect_that(mse_model_2,is_less_than(mse_model_1))
+	expect_lt(mse_model_2, mse_model_1)
 })
 

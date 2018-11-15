@@ -34,9 +34,8 @@ B <- 100
 
 ## Generate observations for training
 ## These are used in the simulator / its scheme.
-llW <- list(
-  stochMech=function(numberOfBlocks) {
-    rnorm(numberOfBlocks, 0, 10)
+llW <- list(stochMech=function(numberOfBlocks) {
+    rnorm(numberOfBlocks, 0, 1)
   },
   param=c(0, 0.5, -0.25, 0.1),
   rgen=identity
@@ -44,7 +43,7 @@ llW <- list(
 
 llA <- list(
   stochMech=function(ww) {
-      rbinom(length(ww), 1, expit(ww))
+    rbinom(length(ww), 1, expit(ww))
   },
   param=c(-0.1, 0.1, 0.25),
   rgen=function(xx, delta=0.05){
@@ -54,12 +53,12 @@ llA <- list(
 )
 
 llY <- list(rgen={function(AW){
-  aa <- AW[, "A"]
-  ww <- AW[, grep("[^A]", colnames(AW))]
-  mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
-    (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
-  mu <- aa*(0.9) + (1-aa)*(0.3)
-  rnorm(length(mu), mu, sd=0.1)}}
+    aa <- AW[, "A"]
+    ww <- AW[, grep("[^A]", colnames(AW))]
+    mu <- aa*(0.9) + (1-aa)*(0.3) + rnorm(length(aa), 0, 1)
+    mu <- pmax(pmin(mu, 1),0)
+    rbinom(length(aa), 1, mu)
+  }}
 )
 
 ## Create a new simulator
@@ -75,7 +74,7 @@ data.test <- sim$simulateWAY(test_set_size, qw=llW, ga=llA, Qy=llY, verbose=log)
 ## We'd like to use the following features in our estimation:
 W <- RelevantVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
 A <- RelevantVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
-Y <- RelevantVariable$new(formula = Y ~ A + W, family = 'gaussian')
+Y <- RelevantVariable$new(formula = Y ~ A + W, family = 'binomial')
 relevantVariables <- c(W, A, Y)
 
 
@@ -129,6 +128,7 @@ result.approx <- foreach(i=seq(B)) %do% {
   data.int$Y[tau]
 } %>% unlist
 
+
 ## The next step is to actually calculate the same intervention using the
 ## superlearner. We use a similar technique for this, as we try to calculate
 ## the mean of the intervention effects.
@@ -159,20 +159,21 @@ result <- lapply(c(TRUE, FALSE), function(discrete) {
   ) %>% unlist
 })
 
+
 data <- list(truth = result.approx, dosl = result[[1]], osl = result[[2]])
 OutputPlotGenerator.create_convergence_plot(data = data, output = 'convergence')
 
 cat('The effects of the interventions were:')
 cat(paste('approx',':', result.approx %>% mean)) 
 cat(paste('discre',':', result[[1]] %>% mean)) 
-cat(paste('contin',':', result[[2]] %>% mean)) 
+cat(paste('contin',':', result[[1]] %>% mean)) 
 
 ## Finally we run our kolmogorov smirnov test example to check whether we
 ## actually do a good job estimating the true conditional distributions.
 
 ## Define kolmogorov-smirnov test
 T_iter <- 10
-B_iter <- 1000
+B_iter <- 100
 nbins <- 5
 
 ## Define the object that will be used to run the evalutation, and run the actual evaluations.
