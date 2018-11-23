@@ -80,7 +80,6 @@ ML.NeuralNet <- R6Class("ML.NeuralNet",
             if (w$message == 'algorithm did not converge in 1 of 1 repetition(s) within the stepmax') {
               warning(w$message)
               return(m.fit$coef)
-              
             }
         }) 
         

@@ -1,5 +1,8 @@
 devtools::load_all(".")
 
+# Turn off asking for enter
+par(ask=FALSE)
+
 library('magrittr')
 library('foreach')
 library("dplyr")

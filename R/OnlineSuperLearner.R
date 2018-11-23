@@ -576,7 +576,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                 lapply(names(risk), function(cv_name) {
                   paste(
                     'Updating OSL at iteration', t,
-                    'error for', cv_name,
+                    ', CV risk for', cv_name,
                     'is', risk[cv_name]
                   ) %>% cat(private$verbose, .)
                 })

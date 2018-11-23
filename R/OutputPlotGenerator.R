@@ -281,10 +281,10 @@ OutputPlotGenerator.create_risk_plot = function(performance, output, dir = 'tmp'
     theme(legend.key.size= unit(3,"lines"))
 
 
-  pdf(full_file_name)
+  #pdf(full_file_name)
   cat('Create_risk_plot plotting to:', full_file_name)
-  plot(p)
-  dev.off()
+  #plot(p)
+  #dev.off()
 }
 
 #' OutputPlotGenerator.get_colors

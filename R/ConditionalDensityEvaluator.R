@@ -111,6 +111,7 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
 
               ## Calculate kolmogorov smirnov test here.
               pval <- private$test_difference(res$Y, a_subset$Y)
+              pval <- pval / T_iter
               #if(pval <= 0.05) browser()
               pval
             }
@@ -134,6 +135,17 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
 
         ## TODO: We still need to perform the bonferoni correction.
         return(sampled_p_values)
+      },
+
+      calculate_significance = function(result, bonferroni_correction = TRUE, alpha = 0.05) {
+        flat_result <- result %>% unlist %>% unname
+        flat_result <- flat_result[!is.na(flat_result)]
+
+        if (bonferroni_correction) {
+          alpha <- alpha/(T_iter * nbins)
+        }
+
+        sum(flat_result >= 1- alpha) / length(flat_result) * 100 %>% round(., 2)
       }
     ),
   active =

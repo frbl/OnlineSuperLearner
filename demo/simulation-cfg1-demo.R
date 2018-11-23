@@ -1,5 +1,8 @@
 devtools::load_all(".")
 
+# Turn off asking for enter
+par(ask=FALSE)
+
 library('magrittr')
 library('doParallel')
 library('foreach')
@@ -107,7 +110,8 @@ osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
   test_set_size = 5 + (3 * 3 + 3), ## The size of the minibatch test size. Note that for this test set size it is super important that at least enough observations are available as 
   initial_data_size =initial_data_size, ## Train the first iteration (Nl) on this part of the data
   max_iterations = max_iterations, ## Use at most max_iterations over the data
-  mini_batch_size = (training_set_size / 2) / max_iterations ## Split the remaining data into N-Nl/max_iterations equal blocks of data
+  mini_batch_size = (training_set_size / 2) / max_iterations, ## Split the remaining data into N-Nl/max_iterations equal blocks of data
+  parallel = TRUE
 )
 
 ## Create a quick overview of the training curve (the risk over time)
@@ -185,8 +189,6 @@ result <- subject$evaluate(
 )
 
 ## Output the evaluation.
-flat_result <- result %>% unlist %>% unname
-flat_result <- flat_result[!is.na(flat_result)]
-perc_significant <- sum(flat_result >= 0.95) / length(flat_result) * 100 %>% round(., 2)
-perc_significant <- perc_significant %>% round(., 2)
+perc_significant <- subject$calculate_significance(result, TRUE, 0.05)
 paste(perc_significant,'% significant in the KS-test')
+
