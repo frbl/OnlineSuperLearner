@@ -15,6 +15,8 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
+#' @importFrom ggplot2 ggplot geom_density
+#' @importFrom respahe2 melt
 ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
   public =
     list(
@@ -94,23 +96,16 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
                                 nobs = available_subset_size,
                                 Y = outcome_variable,
                                 summarize = FALSE)$osl.estimator
-                
-              names <- colnames(res)
 
               ## Plot some debugging distributions
-              predicted_densities <- apply(res, 2, density)
-              true_densities <- lapply(names, function(name) density(a_subset[[name]]))
-              names(true_densities) <- names
-
               ## Only go for Y now
-              plot(true_densities$Y)
-              lines(predicted_densities$Y, col='red')
-              private$verbose && exit(private$verbose)
+              private$plot_densities(a_subset$Y, res$Y)
+
 
               ## Calculate kolmogorov smirnov test here.
               pval <- private$test_difference(res$Y, a_subset$Y)
-              pval <- pval / T_iter
-              #if(pval <= 0.05) browser()
+              private$verbose && exit(private$verbose)
+
               pval
             }
 
@@ -127,11 +122,17 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
         }
 
         ## TODO: For some reason the difference testing can result in NA. Look into this.
-        density_vals <- sampled_p_values %>% unlist %>% unname
-        plot(density(density_vals[!is.na(density_vals)]))
+        density_vals <- sampled_p_values %>% 
+          unlist %>% 
+          unname %>% 
+          data.frame(density_vals = .)
+
+        density_plot <- ggplot(density_vals, aes(density_vals)) + 
+          geom_density() 
+        plot(density_plot)
+
         dev.off()
 
-        ## TODO: We still need to perform the bonferoni correction.
         return(sampled_p_values)
       },
 
@@ -155,6 +156,16 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
       verbose = NULL,
       osl = NULL,
       summary_measure_generator = NULL,
+
+      plot_densities = function(observed_data, predicted_data) {
+        melted_df <- data.frame(observed = observed_data, predicted = predicted_data) %>%
+          melt(., measure.vars = colnames(.))
+
+        density_plot <- ggplot(melted_df, aes(x=value, fill=variable)) + 
+          geom_density(alpha=0.25)
+
+        density_plot %T>% plot
+      },
 
       convert_observations = function(observed_data) {
         data <- Data.Static$new(dataset = observed_data)

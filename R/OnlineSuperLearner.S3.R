@@ -111,9 +111,12 @@ sampledata.OnlineSuperLearner <- function(object, newdata, Y = NULL, nobs=1, sum
   ## If we have provided a Y outcome, retrieve the relevant variable from the OSL here
   if (!is.null(Y)) Y <- object$retrieve_list_of_relevant_variables(relevant_variables = Y)
 
-  res <- foreach(seq(1,nobs)) %do% {
+  res <- foreach(seq(1,nobs)) %dopar% {
     ## Sample a single row from the whole set of basedata
-    newdata_subset <- newdata[sample(nrow(newdata), 1),]
+
+    if(!is(newdata, 'Data.Base')) {
+      newdata_subset <- newdata[sample(nrow(newdata), 1),]
+    }
 
     sampled <- object$predict(data = newdata_subset, relevantVariables = Y, sample = TRUE, ...)
 
