@@ -27,7 +27,7 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
                                                      extension = 'pdf')
       },
 
-      evaluate = function(simulator, T_iter, B_iter, nbins = (5)) {
+      evaluate = function(simulator, T_iter, B_iter, nbins = (5), outcome_variable = NULL) {
         T_iter <- Arguments$getInteger(T_iter, c(1, Inf))
         B_iter <- Arguments$getInteger(B_iter, c(1, Inf))
 
@@ -89,11 +89,10 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
                 private$verbose && cat(private$verbose, 'Positivity failed, skipping entry')
                 return(NULL)
               }
-
-              newdata <- a_subset[sample(available_subset_size, 1),]
                 
-              res <- sampledata(private$osl, newdata, 
+              res <- sampledata(private$osl, a_subset, 
                                 nobs = available_subset_size,
+                                Y = outcome_variable,
                                 summarize = FALSE)$osl.estimator
                 
               names <- colnames(res)
@@ -103,7 +102,6 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
               true_densities <- lapply(names, function(name) density(a_subset[[name]]))
               names(true_densities) <- names
 
-              ##################
               ## Only go for Y now
               plot(true_densities$Y)
               lines(predicted_densities$Y, col='red')
@@ -130,7 +128,7 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
 
         ## TODO: For some reason the difference testing can result in NA. Look into this.
         density_vals <- sampled_p_values %>% unlist %>% unname
-        plot(density( density_vals[!is.na(density_vals)]))
+        plot(density(density_vals[!is.na(density_vals)]))
         dev.off()
 
         ## TODO: We still need to perform the bonferoni correction.

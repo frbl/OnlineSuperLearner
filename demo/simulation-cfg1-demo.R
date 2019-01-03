@@ -185,7 +185,8 @@ result <- subject$evaluate(
   sim,
   T_iter, 
   B_iter,
-  nbins = nbins
+  nbins = nbins,
+  outcome_variable = Y
 )
 
 ## Output the evaluation.
