@@ -65,11 +65,11 @@ llY <- list(rgen={function(AW){
 )
 
 ## Create a new simulator
-sim <- Simulator.GAD$new()
+sim <- Simulator.GAD$new(qw=llW, ga=llA, Qy=llY)
 
 ## Generate some fake data for testing and training
-data.train <- sim$simulateWAY(training_set_size, qw=llW, ga=llA, Qy=llY, verbose=log)
-data.test <- sim$simulateWAY(test_set_size, qw=llW, ga=llA, Qy=llY, verbose=log)
+data.train <- sim$simulateWAY(training_set_size, verbose=log)
+data.test <- sim$simulateWAY(test_set_size, verbose=log)
 
 # Create the relevant variables
 #------------------------------

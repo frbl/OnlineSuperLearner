@@ -107,8 +107,12 @@ ML.Base <- R6Class("ML.Base",
         private$do.update(...)
       },
 
-      create_formula = function(X, Y = 'Y') {
-        as.formula(paste(Y, "~", paste(X, collapse = " + ")))
+      create_formula = function(X, Y = 'Y', intercept = FALSE) {
+        form <- paste(Y, "~")
+        if (intercept) {
+          form <- paste(form, "Intercept + ")
+        }
+        as.formula(paste(form, paste(X, collapse = " + ")))
       }
     ),
   active =
@@ -116,7 +120,7 @@ ML.Base <- R6Class("ML.Base",
       ),
   private =
     list(
-      do.fit = function(X_mat, Y_vals) {
+      do.fit = function(X_mat, Y_vals, ...) {
         throw('The fit method needs to be inherited')
       }
     )

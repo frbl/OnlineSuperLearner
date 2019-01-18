@@ -1,17 +1,16 @@
 # Turn off asking for enter
-par(ask=FALSE)
-
 library('devtools')
 library('magrittr')
 library('doParallel')
 library('foreach')
 library('doParallel')
+par(ask=FALSE)
 load_all(".")
 
 set.seed(12345)
 
 ## Make sure we use all cores
-registerDoParallel(cores = parallel::detectCores())
+registerDoParallel(cores = parallel::detectCores() - 1)
 
 log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
 
@@ -61,16 +60,16 @@ llY <- list(rgen={function(AW){
   ww <- AW[, grep("[^A]", colnames(AW))]
   mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
     (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
-  mu <- aa*(0.9) + (1-aa)*(0.3)
+  mu <- 1 # aa*(0.9) + (1-aa)*(0.3)
   rnorm(length(mu), mu, sd=0.1)}}
 )
 
 ## Create a new simulator
-sim <- Simulator.GAD$new()
+sim <- Simulator.GAD$new(qw=llW, ga=llA, Qy=llY)
 
 ## Generate some fake data for testing and training
-data.train <- sim$simulateWAY(training_set_size, qw=llW, ga=llA, Qy=llY, verbose=log)
-data.test <- sim$simulateWAY(test_set_size, qw=llW, ga=llA, Qy=llY, verbose=log)
+data.train <- sim$simulateWAY(training_set_size, verbose=log)
+data.test <- sim$simulateWAY(test_set_size, verbose=log)
 
 # Create the relevant variables
 #------------------------------
@@ -91,13 +90,14 @@ algos <- list()
                                  #params = list(nbins = c(5), online = TRUE))))
 
 algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
+                                 params = list(nbins = c(50), online = TRUE))))
+algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
                                  params = list(nbins = c(15), online = TRUE))))
 algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
                                  params = list(nbins = c(5), online = TRUE))))
 algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
                                  algorithm_params = list(alpha = seq(0,1,0.2)),
                                  params = list(nbins = c(5), online = TRUE))))
-
 
 ## Fit the actual OSL
 #--------------------
@@ -111,7 +111,7 @@ osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
   initial_data_size =initial_data_size, ## Train the first iteration (Nl) on this part of the data
   max_iterations = max_iterations, ## Use at most max_iterations over the data
   mini_batch_size = (training_set_size / 2) / max_iterations, ## Split the remaining data into N-Nl/max_iterations equal blocks of data
-  parallel = TRUE
+  parallel = T
 )
 
 ## Create a quick overview of the training curve (the risk over time)
@@ -180,6 +180,7 @@ B_iter <- 1000
 nbins <- 5
 
 ## Define the object that will be used to run the evalutation, and run the actual evaluations.
+devtools::load_all('.')
 subject <- ConditionalDensityEvaluator$new(log, osl = osl, summary_measure_generator = osl$get_summary_measure_generator)
 result <- subject$evaluate(
   sim,
@@ -190,6 +191,5 @@ result <- subject$evaluate(
 )
 
 ## Output the evaluation.
-perc_significant <- subject$calculate_significance(result, TRUE, 0.05)
+perc_significant <- subject$calculate_significance(result, TRUE, 0.05) %>% round(.,2)
 paste(perc_significant,'% significant in the KS-test')
-

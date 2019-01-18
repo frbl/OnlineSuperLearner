@@ -46,124 +46,76 @@ ML.SpeedGLMSGD <- R6Class("ML.SpeedGLMSGD",
       should_save_model = NULL,
       file_name = file.path('output', 'coef.prn'),
 
-      do.predict = function(X_mat, m.fit = NULL) {
-        X_mat <- Arguments$getInstanceOf(X_mat, 'data.table')
-        #data <- cbind.data.frame(Y_vals, X_mat)
+      do.predict = function(X_mat, m.fit = NULL, ...) {
+        ## m.fit is a list here.
+        ## m.fit$coef$coef gives us the coefficients
+        if (!is(X_mat, 'data.frame')) { X_mat <- data.frame(X_mat) }
 
-        #rename colums to standardize depending on the number of columns
-        #data <- private$rename_columns(data)
+        ## Coef is the actual representation of coefficients now.
+        coefs <- private$from_mfit(m.fit)
+        result <- private$predict_lr(X_mat, coefs)
 
-        if(is.null(m.fit)){
-          # Nasty: Wrapping it in a double list so we essentially adhere to
-          # the speedlm api
-          m.fit <- list(coef = list(coef = private$read_model()))
-        }
-
-        if (!is(m.fit, 'list')) {
-         browser() 
-        }
-
-        #if (is.null(m.fit)){
-          ### fit the model
-          #m.fit <- coef(private$do.fit(X_mat = X_mat, Y_vals = Y_vals))
-        #}
-
-        result <- private$predict_lr(X_mat, m.fit$coef)
-        private$conditionally_save_model(model = m.fit$coef)
-
+        ## Return the predicted outcomes
         return(result)
       },
 
       do.update = function(X_mat, Y_vals, m.fit = NULL, ...) {
-        # speedlm uses the coefficients of the last model to update with more data.
-        X_mat <- Arguments$getInstanceOf(X_mat, 'data.table')
-        #X_mat <- data.frame(X_mat)
-        #Y_vals <- data.frame(Y_vals)
-        data <- cbind.data.frame(Y_vals, X_mat)
+        if (!is(X_mat, 'data.frame')) { X_mat <- data.frame(X_mat) }
 
-
-        #rename colums to standardize depending on the number of columns
-        #data <- private$rename_columns(data)
-
-        if(is.null(m.fit)){
-          m.fit <- private$read_model()
-        }
+        data <- cbind(Y = Y_vals, X_mat)
 
         if(is.null(m.fit)) {
           model <- private$do.fit(X_mat = data, Y_vals = Y_vals)
-          result <- coef(model)
+          coef <- coef(model) %>% as.matrix
         } else {
-          result <- private$gradient_descent(X_mat, Y_vals, coef = m.fit)
+          theta <- private$from_mfit(m.fit)
+          coef <- private$gradient_descent(X_mat, Y_vals, theta = theta)
         }
 
-        private$conditionally_save_model(model = result)
-
-        return(result)
-
+        if(any(is.na(coef))) browser()
+        private$to_mfit(coef)
       },
 
-      do.fit = function (X_mat, Y_vals, coef = NULL) {
-        # If we have not yet fit a model, we are using the first n observations as the training set,
-        # Create dataframe
-        #X_mat <- data.frame(X_mat)
-        #Y_vals <- data.frame(Y_vals)
-        #data <- cbind.data.frame(Y_vals, X_mat)
-        #Y_vals
-        X_mat <- Arguments$getInstanceOf(X_mat, 'data.table')
-          
+      ## Input from condensier: X_mat: matrix, 
+      do.fit = function (X_mat, Y_vals, coef = NULL, ...) {
+        ## If we have not yet fit a model, we are using the first n observations as the training set,
+        ## Create dataframe
+        if (!is(X_mat, 'data.frame')) { X_mat <- data.frame(X_mat) }
+
         data <- cbind(Y = Y_vals, X_mat)
-
-
-        #rename colums to standardize depending on the number of columns
-        #data <- private$rename_columns(data)
+        
+        ## Get the X names and remove the intercept, speedglm will add this.
         x_names <- colnames(data[,2:ncol(data)])
-        formula <- self$create_formula(x_names)
+        x_names <- x_names[!x_names == 'Intercept'] 
+        formula <- self$create_formula(x_names, intercept = FALSE)
 
-        # We use speedglm to fit the initial coefficients of the model
-        model <- speedglm(formula, data = data, family = binomial(logit))
-
-        private$conditionally_save_model(model = coef(model))
-        return(model)
+        ## We use speedglm to fit the initial coefficients of the model
+        speedglm(formula, data = data, family = binomial(logit))
       },
 
-      conditionally_save_model = function(model) {
-        result = NULL
-        if (private$should_save_model){
-          result = write.matrix(model, self$get_file_name, sep = "\t")
-        }
-        result
-      },
-
-      read_model = function() {
-        if (!file.exists(self$get_file_name) || !private$should_save_model ) {
-          return(NULL)
-        }
-        self$get_file_name %>%
-          read.table(., as.is = TRUE) %>%
-          as.matrix
-      },
-
-      predict_lr = function(X_mat, model){
-        # model <- Arguments$getInstanceOf(model, 'speedlm')
-        coef <- model$coef
+      predict_lr = function(X_mat, coef){
+        X_mat_mtx <- as.matrix(X_mat)
         coef_mtx <- as.matrix(coef)
 
-        X_mat_mtx <- as.matrix(X_mat)
-        X_mat_with_intercept <- cbind(intercept = 1, X_mat_mtx)
-        y_pred <- X_mat_with_intercept %*% coef_mtx
+        ## Set the NA coefss to 0. This is usualy because some columns have perfect 
+        ## collinearity
+        coef_mtx[is.na(coef_mtx)] <- 0
+        y_pred <- X_mat_mtx %*% coef_mtx
 
         ## Convert the result into a logit function
         return(plogis(y_pred))
       },
 
-      gradient_descent = function(X_mat, Y_vals, coef) {
-        #update the coeficients
-        theta <- as.matrix(coef)
-        X_mat <- cbind(intercept = 1, X_mat)
-
-        m = nrow(X_mat)
+      gradient_descent = function(X_mat, Y_vals, theta) {
+        ## Make sure we're only dealing with matrices here
         X_mat %<>% as.matrix        
         Y_vals %<>% as.matrix        
+        theta %<>% as.matrix
+
+        ## Set the NA coefss to 0. This is usualy because some columns have perfect 
+        ## collinearity
+        theta[is.na(theta)] <- 0
+        m <- nrow(X_mat)
 
         for (i in 1:self$get_loop) { 
           # finding the predicted values
@@ -175,15 +127,12 @@ ML.SpeedGLMSGD <- R6Class("ML.SpeedGLMSGD",
         return(theta = theta)
       },
 
-      rename_columns = function(data) {
-        for (i in (1:(ncol(data)))){
-          if (i > 1){
-            colnames(data)[i] <- paste("x", i - 1, sep = "")
-            next
-          } 
-          colnames(data)[i] <- "Y"
-        }
-        data
+      to_mfit = function(coef) {
+        list(coef = coef)
+      },
+
+      from_mfit = function(mfit) {
+        mfit$coef$coef
       }
     )
 )

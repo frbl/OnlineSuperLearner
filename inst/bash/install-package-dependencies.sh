@@ -39,15 +39,15 @@ packages <- c(
 "digest",
 "future",
 "roxygen2",
-
 "memoise",
+"simcausal",
 "withr",
 "httr"
 )
 
 gh_packages <- list(
   list(repo = "jeroenooms/jsonlite", branch = 'master'),
-  list(repo = "osofr/simcausal", branch = 'master'),
+  #list(repo = "osofr/simcausal", branch = 'master'),
   list(repo = "osofr/condensier", branch = 'fb-add-update'),
   list(repo = "jimhester/covr", branch = 'master'),
   list(repo = "n-s-f/mockery", branch = 'master'),
@@ -66,6 +66,12 @@ install <- function(packages, installfunc, ...){
 
 install(packages, install.packages)
 lapply(gh_packages, function(pkg) install(pkg$repo, devtools::install_github, ref = pkg$branch))
+
+
+if(unname((Sys.info()['nodename'] == 'frbl-mbp-2'))) {
+  devtools::load_all('../../osofr/condensier')
+}
+
 
 # Specific packages
 # Finds and remove any previously installed H2O packages for R.

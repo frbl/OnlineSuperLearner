@@ -301,6 +301,7 @@ DensityEstimation <- R6Class ("DensityEstimation",
               bins <- private$nbins
             }
             private$verbose && cat(private$verbose, 'Fitting density: ', Y, ' on ', self$get_name)
+
             dens_fit <- condensier::fit_density(
               X = X,
               Y = Y,
