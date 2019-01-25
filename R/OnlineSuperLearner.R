@@ -911,21 +911,28 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           `%looping_function%` <- private$get_looping_function()
           #private$fabricated_estimators <- mclapply(self$get_estimators, function(estimator) {
-          #for(estimator in self$get_estimators) {
-          estimators <- foreach(estimator=self$get_estimators) %looping_function% {
-            private$verbose && cat(private$verbose, 'Training ', estimator$get_name)
-            if(self$is_fitted && estimator$is_online) {
-              # Note that we use the data here, and not the cache, as
-              # essentially this cache will be  empty if none of the algorithms
-              # is online, and we only want to use the new observations to
-              # update the estimator.
-              estimator$update(data)
-            } else {
-              estimator$fit(cache, relevantVariables = self$get_relevant_variables)
+
+          estimators = tryCatch({
+            #for(estimator in self$get_estimators) {
+            estimators <- foreach(estimator=self$get_estimators) %looping_function% {
+              private$verbose && enter(private$verbose, 'Training ', estimator$get_name)
+              if(self$is_fitted && estimator$is_online) {
+                # Note that we use the data here, and not the cache, as
+                # essentially this cache will be  empty if none of the algorithms
+                # is online, and we only want to use the new observations to
+                # update the estimator.
+                estimator$update(data)
+              } else {
+                estimator$fit(cache, relevantVariables = self$get_relevant_variables)
+              }
+              private$verbose && exit(private$verbose)
+              estimator
             }
-            private$verbose && cat(private$verbose, 'Done training (or updating) ', estimator$get_name)
-            estimator
-          }
+            
+          }, error = function(e) {
+            print('Something went wrong with running all estimators, starting debugger.')
+            browser()
+          })
           private$verbose && cat(private$verbose, 'Trained all estimators for this RV in this iteration.')
           names(estimators) <- names(self$get_estimators)
           private$fabricated_estimators <- estimators

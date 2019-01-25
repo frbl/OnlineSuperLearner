@@ -15,7 +15,7 @@ registerDoParallel(cores = parallel::detectCores() - 1)
 log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
 
 ## Generate a dataset we will use for testing.
-training_set_size <- 1e6
+training_set_size <- 1e3
 initial_data_size <-  500#training_set_size / 2
 test_set_size <- 100
 
@@ -25,8 +25,8 @@ max_iterations <- 20
 
 ## Specify the intervention we'd like to test, and also specify when we want to
 ## test this interventsion
-intervention <- list(variable = 'A', when = c(2), what = c(1))
-tau = 2
+intervention <- list(variable = 'A', when = c(1), what = c(0))
+tau <- 1
 
 ## B is the number of iterations we'll run before we hope to converge
 B <- 100
@@ -38,7 +38,7 @@ B <- 100
 ## These are used in the simulator / its scheme.
 llW <- list(
   stochMech=function(numberOfBlocks) {
-    rnorm(numberOfBlocks, 0, 10)
+    rnorm(numberOfBlocks, 0, 0.1)
   },
   param=c(0, 0.5, -0.25, 0.1),
   rgen=identity
@@ -61,7 +61,7 @@ llY <- list(rgen={function(AW){
   mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
     (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
   mu <- aa * 0.9 + (1-aa) * 0.3
-  rnorm(length(mu), mu, sd=0.1)}}
+  rnorm(length(mu), mu, sd=0.01)}}
 )
 
 ## Create a new simulator
@@ -77,7 +77,7 @@ data.test <- sim$simulateWAY(test_set_size, verbose=log)
 ## We'd like to use the following features in our estimation:
 W <- RelevantVariable$new(formula = W ~ Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
 A <- RelevantVariable$new(formula = A ~ W + Y_lag_1 + A_lag_1 + W_lag_1, family = 'binomial')
-Y <- RelevantVariable$new(formula = Y ~ A + W, family = 'gaussian')
+Y <- RelevantVariable$new(formula = Y ~ A + W + Y_lag_1 + A_lag_1 +  W_lag_1 + Y_lag_2, family = 'gaussian')
 relevantVariables <- c(W, A, Y)
 
 
@@ -101,7 +101,8 @@ algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
 
 ## Fit the actual OSL
 #--------------------
-osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
+#unloadNamespace('OnlineSuperLearner'); unloadNamespace('condensier') ; install ('../../osofr/condensier/', dependency=T);devtools::load_all('.')
+devtools::load_all('.');osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
   formulae = relevantVariables, ## Specify which are the formulae we expet
   data = data.train, ## Specify the data to train on
   algorithms = algos, ## SPecify the correct algorithms
@@ -111,7 +112,7 @@ osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
   initial_data_size =initial_data_size, ## Train the first iteration (Nl) on this part of the data
   max_iterations = max_iterations, ## Use at most max_iterations over the data
   mini_batch_size = (training_set_size / 2) / max_iterations, ## Split the remaining data into N-Nl/max_iterations equal blocks of data
-  parallel = T
+  parallel = F
 )
 
 ## Create a quick overview of the training curve (the risk over time)
@@ -132,6 +133,7 @@ result.approx <- foreach(i=seq(B)) %do% {
                                   intervention = intervention, verbose = FALSE)
   data.int$Y[tau]
 } %>% unlist
+result.approx %>% mean
 
 ## The next step is to actually calculate the same intervention using the
 ## superlearner. We use a similar technique for this, as we try to calculate
@@ -191,5 +193,5 @@ result <- subject$evaluate(
 )
 
 ## Output the evaluation.
-perc_significant <- subject$calculate_significance(result, TRUE, 0.05) %>% round(.,2)
+perc_significant <- subject$calculate_significance(result, FALSE, 0.05) %>% round(.,2)
 paste(perc_significant,'% significant in the KS-test')

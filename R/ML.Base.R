@@ -107,11 +107,14 @@ ML.Base <- R6Class("ML.Base",
         private$do.update(...)
       },
 
-      create_formula = function(X, Y = 'Y', intercept = FALSE) {
+      create_formula = function(X, Y = 'Y', intercept = FALSE, force_intercept_removal = FALSE) {
         form <- paste(Y, "~")
         if (intercept) {
           form <- paste(form, "Intercept + ")
+        } else if(force_intercept_removal) {
+          form <- paste(form, "0 + ")
         }
+
         as.formula(paste(form, paste(X, collapse = " + ")))
       }
     ),

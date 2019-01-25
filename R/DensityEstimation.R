@@ -329,13 +329,14 @@ DensityEstimation <- R6Class ("DensityEstimation",
             X <- rv$getX
             Y <- rv$getY
             if(length(X) > 0) {
-              private$verbose && cat(private$verbose, 'Updating density: ', Y)
+              private$verbose && enter(private$verbose, 'Updating density: ', Y)
               data_obj <- private$create_data_store(newdata = newdata, Y = Y, X = X)
               dens_fit <- self$getConditionalDensities(Y)
 
               ## Update the fit with the new data
               updated_dens_fit <- dens_fit$update(newdata = data_obj)
               private$store_conditional_density(Y = Y, density = updated_dens_fit)
+              private$verbose && exit(private$verbose)
             }
           }
           TRUE

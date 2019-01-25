@@ -43,12 +43,14 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
           #observed_data = simulator$simulateWAY(numberOfTrajectories = B_iter)
           observed_data = simulator$simulateWAY(numberOfBlocks = B_iter)
 
+
           ## Split W in a number of bins. We use the minimal W value to the max W value
           ## and create the nbins over this interval.
 
           # 1. Split the dataframe into seperate sections.
           # 2. Make the slicing into each of the different lagged / other vars.
           data <- private$convert_observations(observed_data = observed_data)
+
           cluster_bins <- private$create_cluster_bins(data, nbins = nbins)
 
           ## We assume a discrete or binary treatment variable. Hence, just select
@@ -103,11 +105,14 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
 
               ## Plot some debugging distributions
               ## Only go for Y now
-              private$plot_densities(a_subset$Y, res$osl.estimator, res$dosl.estimator, A_bin = a)
+              ## First make sure to convert the observed data back to its original form
+              current_Y <- private$convert_normalized(a_subset)$Y
+
+              private$plot_densities(current_Y, res$osl.estimator, res$dosl.estimator, A_bin = a)
 
 
               ## Calculate kolmogorov smirnov test here.
-              pval <- private$test_difference(res$dosl.estimator, a_subset$Y)
+              pval <- private$test_difference(res$dosl.estimator, current_Y)
               private$verbose && exit(private$verbose)
 
               pval
@@ -170,6 +175,10 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
           guides(fill=guide_legend(title=paste("Number of observations:", length(observed_data), 'A:', A_bin)))
 
         density_plot %T>% plot
+      },
+
+      convert_normalized = function(normalized_data) {
+        private$summary_measure_generator$get_pre_processor$denormalize(normalized_data)
       },
 
       convert_observations = function(observed_data) {

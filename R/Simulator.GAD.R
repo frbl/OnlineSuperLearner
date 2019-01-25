@@ -175,6 +175,7 @@ Simulator.GAD <- R6Class("Simulator.GAD",
           if (is.vector(outcome)) {
             outcome <- matrix(outcome, ncol = 1)
           }
+
           # naming
           if (ncol(outcome) == 1) {
             col.names <- entry$var
