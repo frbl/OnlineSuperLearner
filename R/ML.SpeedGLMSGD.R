@@ -74,7 +74,12 @@ ML.SpeedGLMSGD <- R6Class("ML.SpeedGLMSGD",
         } else {
           theta <- private$from_mfit(m.fit)
 
-          coef <- private$gradient_descent(X_mat, Y_vals, theta = theta)
+          coef <- tryCatch({
+            private$gradient_descent(X_mat, Y_vals, theta = theta)
+          }, error = function(e) {
+            print('Gradient decent in GLM SGD failed! Starting browser.')
+            browser()
+          })
         }
 
         if(any(is.na(coef))) browser()
@@ -86,20 +91,31 @@ ML.SpeedGLMSGD <- R6Class("ML.SpeedGLMSGD",
       do.fit = function (X_mat, Y_vals, coef = NULL, ...) {
         ## If we have not yet fit a model, we are using the first n observations as the training set,
         ## Create dataframe
-        if (!is(X_mat, 'data.frame')) { X_mat <- data.frame(X_mat) }
+        result = tryCatch({
+          if (!is(X_mat, 'data.frame')) { X_mat <- data.frame(X_mat) }
 
-        data <- cbind(Y = Y_vals, X_mat)
+          data <- cbind(Y = Y_vals, X_mat)
 
-        ## Get the X names and remove the intercept, speedglm will add this.
-        x_names <- colnames(data[,2:ncol(data)])
-        x_names <- x_names[!x_names == 'Intercept']
-        formula <- self$create_formula(x_names, intercept = FALSE, force_intercept_removal = private$no_intercept)
+          ## Get the X names and remove the intercept, speedglm will add this.
+          x_names <- colnames(data[,2:ncol(data)])
+          x_names <- x_names[!x_names == 'Intercept']
+          formula <- self$create_formula(x_names, intercept = FALSE, force_intercept_removal = private$no_intercept)
 
-        ## We use speedglm to fit the initial coefficients of the model
-        coef <- speedglm(formula, data = data, family = binomial(logit))$coef %>% as.matrix
+          ## We use speedglm to fit the initial coefficients of the model
+          coef <- tryCatch({
+            speedglm(formula, data = rbind(data,data,data) , family = binomial(logit))$coef %>% as.matrix
+          }, error = function(e) {
+            ## Fallback to GLM if everything else fails
+            message('Fitting failed, falling back to glm')
+            glm(formula, data = rbind(data,data,data) , family = binomial(logit))$coef %>% as.matrix
+          })
 
-        coef[is.na(coef)] <- 0
-        coef
+          coef[is.na(coef)] <- 0
+          coef
+        }, error = function(e) {
+          print('Fitting has failed for GLM sgd. Starting debugger')
+          browser()
+        })
       },
 
       predict_lr = function(X_mat, coef){

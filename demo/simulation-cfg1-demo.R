@@ -60,7 +60,7 @@ llY <- list(rgen={function(AW){
   ww <- AW[, grep("[^A]", colnames(AW))]
   mu <- aa*(0.4-0.2*sin(ww)+0.05*ww) +
     (1-aa)*(0.2+0.1*cos(ww)-0.03*ww)
-  mu <- aa * 0.9 + (1-aa) * 0.3
+  #mu <- aa * 0.9 + (1-aa) * 0.3
   rnorm(length(mu), mu, sd=0.01)}}
 )
 
@@ -112,7 +112,7 @@ devtools::load_all('.');osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
   initial_data_size =initial_data_size, ## Train the first iteration (Nl) on this part of the data
   max_iterations = max_iterations, ## Use at most max_iterations over the data
   mini_batch_size = (training_set_size / 2) / max_iterations, ## Split the remaining data into N-Nl/max_iterations equal blocks of data
-  parallel = F
+  parallel = T
 )
 
 ## Create a quick overview of the training curve (the risk over time)

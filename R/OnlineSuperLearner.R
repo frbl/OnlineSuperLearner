@@ -914,7 +914,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           estimators = tryCatch({
             #for(estimator in self$get_estimators) {
-            estimators <- foreach(estimator=self$get_estimators) %looping_function% {
+            estimators <- foreach(estimator=self$get_estimators) %do% {
               private$verbose && enter(private$verbose, 'Training ', estimator$get_name)
               if(self$is_fitted && estimator$is_online) {
                 # Note that we use the data here, and not the cache, as
