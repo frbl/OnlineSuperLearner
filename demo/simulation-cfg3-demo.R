@@ -25,7 +25,7 @@ max_iterations <- 20
 
 ## Specify the intervention we'd like to test, and also specify when we want to
 ## test this interventsion
-intervention <- list(variable = 'A', when = c(3), what = c(1))
+intervention <- list(variable = 'A', when = c(1), what = c(1))
 
 tau <- 1
 
