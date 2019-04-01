@@ -15,7 +15,7 @@ registerDoParallel(cores = parallel::detectCores())
 log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
 
 ## Generate a dataset we will use for testing.
-training_set_size <- 1e3
+training_set_size <- 1e3 + (1e3/20 * 10)
 initial_data_size <-  500#training_set_size / 2
 test_set_size <- 100
 
