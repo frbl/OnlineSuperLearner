@@ -21,7 +21,7 @@ test_set_size <- 100
 
 ## What is the maximum number of iterations the OSL can use while going over the data?
 ## Note that in this case we split the data in equal parts with this number of iterations
-max_iterations <- 20
+max_iterations <- 30
 
 ## Specify the intervention we'd like to test, and also specify when we want to
 ## test this interventsion
@@ -166,10 +166,10 @@ result <- lapply(c(TRUE, FALSE), function(discrete) {
 data <- list(truth = result.approx, dosl = result[[1]], osl = result[[2]])
 OutputPlotGenerator.create_convergence_plot(data = data, output = 'convergence')
 
-cat('The effects of the interventions were:')
-cat(paste('approx',':', result.approx %>% mean)) 
-cat(paste('discre',':', result[[1]] %>% mean)) 
-cat(paste('contin',':', result[[2]] %>% mean)) 
+print('The effects of the interventions were:')
+print(paste('approx',':', result.approx %>% mean)) 
+print(paste('discre',':', result[[1]] %>% mean)) 
+print(paste('contin',':', result[[2]] %>% mean)) 
 
 ## Finally we run our kolmogorov smirnov test example to check whether we
 ## actually do a good job estimating the true conditional distributions.
