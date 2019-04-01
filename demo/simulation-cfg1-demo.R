@@ -4,8 +4,8 @@ library('magrittr')
 library('doParallel')
 library('foreach')
 library('doParallel')
-par(ask=FALSE)
 load_all(".")
+par(ask=FALSE)
 
 set.seed(12345)
 
@@ -101,7 +101,7 @@ algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
 
 ## Fit the actual OSL
 #--------------------
-#unloadNamespace('OnlineSuperLearner'); unloadNamespace('condensier') ; install ('../../osofr/condensier/', dependency=T);devtools::load_all('.')
+#unloadNamespace('OnlineSuperLearner'); unloadNamespace('condensier') ; install('../../osofr/condensier/', dependency=T);devtools::load_all('.')
 devtools::load_all('.');osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
   formulae = relevantVariables, ## Specify which are the formulae we expet
   data = data.train, ## Specify the data to train on
@@ -193,5 +193,5 @@ result <- subject$evaluate(
 )
 
 ## Output the evaluation.
-perc_significant <- subject$calculate_significance(result, FALSE, 0.05) %>% round(.,2)
+perc_significant <- subject$calculate_significance(result, TRUE, 0.05) %>% round(.,2)
 paste(perc_significant,'% significant in the KS-test')

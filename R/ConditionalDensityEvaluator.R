@@ -132,7 +132,7 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
         }
 
         ## TODO: For some reason the difference testing can result in NA. Look into this.
-        plot_pvalue_density(sampled_p_values)
+        private$plot_pvalue_density(sampled_p_values)
 
         dev.off()
 
@@ -161,7 +161,7 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
       summary_measure_generator = NULL,
 
       plot_pvalue_density = function(pvalues) {
-        density_vals <- sampled_p_values %>% 
+        density_vals <- pvalues %>% 
           unlist %>% 
           unname %>% 
           data.frame(density_vals = .)
@@ -169,8 +169,7 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
         density_plot <- ggplot(density_vals, aes(density_vals)) + 
           geom_density() 
         plot(density_plot)
-        plot(ecdf(density_vals))
-
+        plot(ecdf(density_vals$density_vals))
       },
 
       plot_densities = function(observed_data, osl, dosl, A_bin) {
