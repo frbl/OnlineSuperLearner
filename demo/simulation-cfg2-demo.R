@@ -183,7 +183,7 @@ OutputPlotGenerator.create_convergence_plot(data = data, output = 'convergence')
 cat('The effects of the interventions were:')
 cat(paste('approx',':', result.approx %>% mean)) 
 cat(paste('discre',':', result[[1]] %>% mean)) 
-cat(paste('contin',':', result[[1]] %>% mean)) 
+cat(paste('contin',':', result[[2]] %>% mean)) 
 
 ## Finally we run our kolmogorov smirnov test example to check whether we
 ## actually do a good job estimating the true conditional distributions.
