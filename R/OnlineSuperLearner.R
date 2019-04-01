@@ -416,7 +416,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$verbose && exit(private$verbose)
 
           toc <- Sys.time()
-          private$verbose && cat(private$verbose, 'The whole procedure took ', (toc - tic), ' seconds.')
+          private$verbose && cat(private$verbose, 'The whole procedure took ', (toc - tic), ' minutes.')
           return(self$get_cv_risk())
         },
 

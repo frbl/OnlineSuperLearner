@@ -1,12 +1,11 @@
-devtools::load_all(".")
-
 # Turn off asking for enter
-par(ask=FALSE)
-
+library('devtools')
 library('magrittr')
 library('doParallel')
 library('foreach')
 library('doParallel')
+load_all(".")
+par(ask=FALSE)
 
 set.seed(12345)
 
@@ -16,21 +15,19 @@ registerDoParallel(cores = parallel::detectCores())
 log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
 
 ## Generate a dataset we will use for testing.
-training_set_size <- 1e6
+training_set_size <- 1e3
 initial_data_size <-  500#training_set_size / 2
 test_set_size <- 100
 
 ## What is the maximum number of iterations the OSL can use while going over the data?
 ## Note that in this case we split the data in equal parts with this number of iterations
-max_iterations <- 50
+max_iterations <- 20
 
 ## Specify the intervention we'd like to test, and also specify when we want to
 ## test this interventsion
-intervention <- list(variable = 'A',
-                      when = c(3), 
-                      what = c(1))
+intervention <- list(variable = 'A', when = c(3), what = c(1))
 
-tau = 3
+tau <- 1
 
 ## B is the number of iterations we'll run before we hope to converge
 B <- 100

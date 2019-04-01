@@ -4,7 +4,7 @@ library('magrittr')
 library('doParallel')
 library('foreach')
 library('doParallel')
-load_all(".")
+#load_all(".")
 par(ask=FALSE)
 
 set.seed(12345)
@@ -102,7 +102,9 @@ algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
 ## Fit the actual OSL
 #--------------------
 #unloadNamespace('OnlineSuperLearner'); unloadNamespace('condensier') ; install('../../osofr/condensier/', dependency=T);devtools::load_all('.')
-devtools::load_all('.');osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
+
+#devtools::load_all('.');
+osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
   formulae = relevantVariables, ## Specify which are the formulae we expet
   data = data.train, ## Specify the data to train on
   algorithms = algos, ## SPecify the correct algorithms
@@ -182,7 +184,7 @@ B_iter <- 1000
 nbins <- 5
 
 ## Define the object that will be used to run the evalutation, and run the actual evaluations.
-devtools::load_all('.')
+#devtools::load_all('.')
 subject <- ConditionalDensityEvaluator$new(log, osl = osl, summary_measure_generator = osl$get_summary_measure_generator)
 result <- subject$evaluate(
   sim,
