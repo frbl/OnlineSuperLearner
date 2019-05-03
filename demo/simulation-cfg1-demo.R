@@ -15,7 +15,7 @@ registerDoParallel(cores = parallel::detectCores() - 1)
 log <- R.utils::Arguments$getVerbose(-1, timestamp=TRUE)
 
 ## Generate a dataset we will use for testing.
-training_set_size <- 1e3
+training_set_size <- 1e4
 initial_data_size <-  500#training_set_size / 2
 test_set_size <- 100
 
@@ -25,7 +25,7 @@ max_iterations <- 20
 
 ## Specify the intervention we'd like to test, and also specify when we want to
 ## test this interventsion
-intervention <- list(variable = 'A', when = c(1), what = c(0))
+intervention <- list(variable = 'A', when = c(1), what = c(1))
 tau <- 1
 
 ## B is the number of iterations we'll run before we hope to converge
@@ -121,7 +121,7 @@ osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
 OutputPlotGenerator.create_training_curve(
   osl$get_historical_cv_risk,
   relevantVariables = relevantVariables,
-  output = 'curve'
+  output = 'curve1'
 )
 
 ## First we simulate data given the intervention. That is, we specify in our
@@ -168,7 +168,7 @@ result <- lapply(c(TRUE, FALSE), function(discrete) {
 })
 
 data <- list(truth = result.approx, dosl = result[[1]], osl = result[[2]])
-OutputPlotGenerator.create_convergence_plot(data = data, output = 'convergence')
+OutputPlotGenerator.create_convergence_plot(data = data, output = 'convergence1')
 
 cat('The effects of the interventions were:')
 cat(paste('approx',':', result.approx %>% mean)) 
@@ -185,7 +185,7 @@ nbins <- 5
 
 ## Define the object that will be used to run the evalutation, and run the actual evaluations.
 #devtools::load_all('.')
-subject <- ConditionalDensityEvaluator$new(log, osl = osl, summary_measure_generator = osl$get_summary_measure_generator)
+subject <- ConditionalDensityEvaluator$new(log, osl = osl, summary_measure_generator = osl$get_summary_measure_generator, cfg = 1)
 result <- subject$evaluate(
   sim,
   T_iter, 

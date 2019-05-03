@@ -114,6 +114,7 @@ algos <- append(algos, list(list(algorithm = "ML.SpeedGLMSGD",
 
 ## Fit the actual OSL
 #--------------------
+load_all('.')
 osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
   formulae = relevantVariables, ## Specify which are the formulae we expet
   data = data.train, ## Specify the data to train on
@@ -130,7 +131,7 @@ osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
 OutputPlotGenerator.create_training_curve(
   osl$get_historical_cv_risk,
   relevantVariables = relevantVariables,
-  output = 'curve'
+  output = 'curve2'
 )
 
 ## First we simulate data given the intervention. That is, we specify in our
@@ -178,7 +179,7 @@ result <- lapply(c(TRUE, FALSE), function(discrete) {
 
 
 data <- list(truth = result.approx, dosl = result[[1]], osl = result[[2]])
-OutputPlotGenerator.create_convergence_plot(data = data, output = 'convergence')
+OutputPlotGenerator.create_convergence_plot(data = data, output = 'convergence2')
 
 cat('The effects of the interventions were:')
 cat(paste('approx',':', result.approx %>% mean)) 

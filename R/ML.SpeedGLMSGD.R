@@ -103,11 +103,11 @@ ML.SpeedGLMSGD <- R6Class("ML.SpeedGLMSGD",
 
           ## We use speedglm to fit the initial coefficients of the model
           coef <- tryCatch({
-            speedglm(formula, data = rbind(data,data,data) , family = binomial(logit))$coef %>% as.matrix
+            speedglm(formula, data = rbind(data) , family = binomial(logit))$coef %>% as.matrix
           }, error = function(e) {
             ## Fallback to GLM if everything else fails
             message('Fitting failed, falling back to glm')
-            glm(formula, data = rbind(data,data,data) , family = binomial(logit))$coef %>% as.matrix
+            glm(formula, data = rbind(data) , family = binomial(logit))$coef %>% as.matrix
           })
 
           coef[is.na(coef)] <- 0

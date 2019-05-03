@@ -116,7 +116,7 @@ osl <- OnlineSuperLearner::fit.OnlineSuperLearner(
 OutputPlotGenerator.create_training_curve(
   osl$get_historical_cv_risk,
   relevantVariables = relevantVariables,
-  output = 'curve'
+  output = 'curve3'
 )
 
 ## First we simulate data given the intervention. That is, we specify in our
@@ -164,7 +164,7 @@ result <- lapply(c(TRUE, FALSE), function(discrete) {
 
 
 data <- list(truth = result.approx, dosl = result[[1]], osl = result[[2]])
-OutputPlotGenerator.create_convergence_plot(data = data, output = 'convergence')
+OutputPlotGenerator.create_convergence_plot(data = data, output = 'convergence3')
 
 print('The effects of the interventions were:')
 print(paste('approx',':', result.approx %>% mean)) 

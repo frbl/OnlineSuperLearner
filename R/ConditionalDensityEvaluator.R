@@ -21,12 +21,12 @@
 ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
   public =
     list(
-      initialize = function(verbose = FALSE, osl, summary_measure_generator) {
+      initialize = function(verbose = FALSE, osl, summary_measure_generator, cfg = 1) {
         private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
         # We dont type check here to support mocks
         private$osl <- osl #Arguments$getInstanceOf(osl, 'OnlineSuperLearner')
         private$summary_measure_generator <- summary_measure_generator #Arguments$getInstanceOf(summary_measure_generator, 'SummaryMeasureGenerator')
-        private$evaluation_path <- get_file_location(name = 'density_evaluation', 
+        private$evaluation_path <- get_file_location(name = paste('density_evaluation', cfg, sep='_'), 
                                                      extension = 'pdf')
       },
 
