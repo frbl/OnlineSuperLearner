@@ -1,10 +1,11 @@
-# Turn off asking for enter
 library('devtools')
 library('magrittr')
 library('doParallel')
 library('foreach')
 library('doParallel')
 #load_all(".")
+
+# Turn off asking for enter
 par(ask=FALSE)
 
 set.seed(12345)
