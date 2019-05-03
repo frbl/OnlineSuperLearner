@@ -21,10 +21,9 @@ ML.SpeedGLMSGD <- R6Class("ML.SpeedGLMSGD",
     list(
       fitfunname = 'speedglmsgd',
       lmclass = 'speedglmsgd',
-      initialize = function(alpha = 0.001, loop = 1000, save_model = FALSE) {
+      initialize = function(alpha = 0.001, loop = 1000) {
         private$alpha <- Arguments$getNumeric(alpha, c(0, Inf))
         private$loop <- Arguments$getNumeric(loop, c(1, Inf))
-        private$should_save_model <- Arguments$getLogical(save_model)
         private$no_intercept <- FALSE
         super$initialize()
       }
@@ -46,7 +45,6 @@ ML.SpeedGLMSGD <- R6Class("ML.SpeedGLMSGD",
       alpha = NULL,
       loop = NULL,
       no_intercept = NULL,
-      should_save_model = NULL,
       file_name = file.path('output', 'coef.prn'),
 
       ## Input: m.fit is a list here, of which $coef is a matrix of coefficients

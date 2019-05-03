@@ -30,11 +30,13 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
                                                      extension = 'pdf')
       },
 
-      evaluate = function(simulator, T_iter, B_iter, nbins = (5), outcome_variable = NULL) {
+      evaluate = function(simulator, T_iter, B_iter, nbins = (5), outcome_variable, should_plot = TRUE) {
         T_iter <- Arguments$getInteger(T_iter, c(1, Inf))
         B_iter <- Arguments$getInteger(B_iter, c(1, Inf))
 
-        pdf(private$evaluation_path)
+        if (should_plot) {
+          pdf(private$evaluation_path)
+        }
         ## For all t in T_iter,
         ## And for all gamma in Gamma,
         sampled_p_values <- foreach(t = 1:T_iter) %do% {
@@ -101,6 +103,7 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
                                   summarize = FALSE)
                 return(list(osl = sub_res$osl.estimator, dosl = sub_res$dosl.estimator))
               }
+
               res <- lapply(res, as.data.frame) %>% rbindlist 
               colnames(res) <- c('osl.estimator', 'dosl.estimator')
 
@@ -109,7 +112,9 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
               ## First make sure to convert the observed data back to its original form
               current_Y <- private$convert_normalized(a_subset)$Y
 
-              private$plot_densities(current_Y, res$osl.estimator, res$dosl.estimator, A_bin = a)
+              if (should_plot) {
+                private$plot_densities(current_Y, res$osl.estimator, res$dosl.estimator, A_bin = a)
+              }
 
 
               ## Calculate kolmogorov smirnov test here.
@@ -126,15 +131,17 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
           }
           private$verbose && exit(private$verbose)
 
+
           names(estimated_data) <- apply(W_bins, 2, function(x) paste(x, collapse=' to '))
 
           estimated_data
         }
 
         ## TODO: For some reason the difference testing can result in NA. Look into this.
-        private$plot_pvalue_density(sampled_p_values)
-
-        dev.off()
+        if (should_plot) {
+          private$plot_pvalue_density(sampled_p_values)
+          dev.off()
+        }
 
         return(sampled_p_values)
       },

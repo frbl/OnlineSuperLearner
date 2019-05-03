@@ -153,12 +153,15 @@ test_that("it should show when the two provided distributions are not the same",
     return(data.table(W = W, A = A, Y=Y))
   }
 
-  mock_simulator <- list(simulateWAY = function(numberOfTrajectories) {
-    p_0(nobs = numberOfTrajectories)
+  mock_simulator <- list(simulateWAY = function(numberOfBlocks) {
+    p_0(nobs = numberOfBlocks)
   })
 
   sampledata.MockOsl <<- function(object, newdata, Y = NULL, nobs = 1, ...) {
     res <- p_1(nobs = nobs, newdata)
+    if (!is.null(Y)) {
+     res <- res[[Y]] 
+    }
     list(osl.estimator = res,
          dosl.estimator = res)
   }
@@ -171,7 +174,12 @@ test_that("it should show when the two provided distributions are not the same",
     get_minimal_measurements_needed = 1234,
     getNext = function(n) {
       list(p_0(n))
-    } 
+    }, 
+    get_pre_processor = list(
+      denormalize = function(input) {
+        input
+      }
+    )
   )
 
   class(mock_smg) <- 'SummaryMeasureGenerator'
@@ -186,7 +194,8 @@ test_that("it should show when the two provided distributions are not the same",
     mock_simulator,
     T_iter, 
     B_iter,
-    nbins = nbins
+    nbins = nbins,
+    outcome_variable='Y'
   )
   result %<>% unlist %>% unname
   total_insignificant <- (result <= 0.05) %>% as.numeric %>% sum
