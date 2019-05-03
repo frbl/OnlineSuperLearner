@@ -17,6 +17,8 @@ Makefile
 ^circleci\.yml$
 \.RData
 test.Dockerfile
+Dockerfile
+.dockerignore
 #----------------------------
 # Git and SVN related
 #^.svn
@@ -54,3 +56,5 @@ test.Dockerfile
 #^\.Rproj\.user$
 ^docs$
 ^\.travis\.yml$
+^packrat/
+^\.Rprofile$

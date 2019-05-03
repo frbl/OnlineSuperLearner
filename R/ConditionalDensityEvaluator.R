@@ -16,7 +16,7 @@
 #' @docType class
 #' @importFrom R6 R6Class
 #' @importFrom ggplot2 ggplot geom_density
-#' @importFrom respahe2 melt
+#' @importFrom reshape2 melt
 #' @importFrom stats ecdf
 ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
   public =

@@ -10,6 +10,7 @@
 #' @section Methods:
 #' \describe{
 #'   \item{\code{initialize()}
+#'     Initializes a new GLM
 #'   }
 #' }
 #'

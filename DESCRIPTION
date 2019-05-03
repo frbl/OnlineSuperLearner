@@ -13,6 +13,7 @@ Description: Package that enabling online super learning. This package runs a
     densities.
 License: MIT + file LICENSE
 LazyLoad: yes
+Encoding: UTF-8
 LazyData: yes
 Depends:
     R (>= 2.9.0),
@@ -52,8 +53,10 @@ Imports:
     digest
 Suggests:
     roxygen2,
+    covr,
     testthat,
     mockery,
+    devtools,
     knitr,
     rmarkdown
 RoxygenNote: 6.1.1

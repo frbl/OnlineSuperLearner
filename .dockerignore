@@ -1,0 +1,13 @@
+**/.git
+*.tar.gz
+Dockerfile
+*.Rcheck
+local
+
+# Apiblueprint
+structures/
+apiary.apib
+
+# these will be built within docker. Don't want to copy osx libs.
+packrat/lib*/
+packrat/src
