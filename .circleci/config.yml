@@ -81,11 +81,11 @@ jobs:
           name: Build application Docker image
           command: |
             docker build --cache-from=app -t app -f Dockerfile .
-      - run: docker tag app roqua/OnlineSuperLearner:staging
-      - run: docker tag app roqua/OnlineSuperLearner:production
-      - run: docker tag app roqua/OnlineSuperLearner:$(echo "$CIRCLE_TAG" | sed -e 's/v//g')
+      - run: docker tag app frbl/OnlineSuperLearner:staging
+      - run: docker tag app frbl/OnlineSuperLearner:production
+      - run: docker tag app frbl/OnlineSuperLearner:$(echo "$CIRCLE_TAG" | sed -e 's/v//g')
       - run: docker login --email=$DOCKER_EMAIL -u "$DOCKER_USER" -p "$DOCKER_PASS"
-      - run: docker push compsy/onlinesuperlearner
+      - run: docker push frbl/onlinesuperlearner
 
 workflows:
   version: 2
