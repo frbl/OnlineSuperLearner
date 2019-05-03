@@ -180,7 +180,7 @@ B_iter <- 100
 nbins <- 5
 
 ## Define the object that will be used to run the evalutation, and run the actual evaluations.
-subject <- ConditionalDensityEvaluator$new(log, osl = osl, summary_measure_generator = osl$get_summary_measure_generator)
+subject <- ConditionalDensityEvaluator$new(log, osl = osl, summary_measure_generator = osl$get_summary_measure_generator, cfg=3)
 result <- subject$evaluate(
   sim,
   T_iter, 

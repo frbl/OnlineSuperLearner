@@ -177,7 +177,7 @@ result <- lapply(c(TRUE, FALSE), function(discrete) {
 
 
 data <- list(truth = result.approx, dosl = result[[1]], osl = result[[2]])
-OutputPlotGenerator.create_convergence_plot(data = data, output = 'convergence1')
+OutputPlotGenerator.create_convergence_plot(data = data, output = 'convergence4')
 
 cat('The effects of the interventions were:')
 cat(paste('approx',':', result.approx %>% mean)) 
