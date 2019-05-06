@@ -22,18 +22,18 @@ jobs:
             set +o pipefail
             docker load -i /caches/app.tar | true
       - run:
-          no_output_timeout: 15m
+          no_output_timeout: 60m
           name: Build application Docker image
           command: |
             docker build --cache-from=app -t app -f Dockerfile .
       - run:
-          no_output_timeout: 15m
+          no_output_timeout: 60m
           name: Save Docker image layer cache
           command: |
             mkdir -p /caches
             docker save -o /caches/app.tar app
       - run:
-          no_output_timeout: 15m
+          no_output_timeout: 60m
           name: Test the app
           command: |
             docker run app R CMD check /app/OnlineSuperLearner_0.0.1.tar.gz --no-manual --no-build-vignettes
@@ -55,18 +55,18 @@ jobs:
             set +o pipefail
             docker load -i /caches/app.tar | true
       - run:
-          no_output_timeout: 15m
+          no_output_timeout: 60m
           name: Build application Docker image
           command: |
             docker build --cache-from=app -t app -f Dockerfile .
       - run:
-          no_output_timeout: 15m
+          no_output_timeout: 60m
           name: Save Docker image layer cache
           command: |
             mkdir -p /caches
             docker save -o /caches/app.tar app
       - run:
-          no_output_timeout: 15m
+          no_output_timeout: 60m
           name: Codecov the app
           command: |
             docker run -e CODECOV_TOKEN app Rscript -e 'covr::codecov()'
