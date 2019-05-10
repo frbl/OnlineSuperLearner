@@ -3,14 +3,12 @@
 \docType{class}
 \name{Simulator.GAD}
 \alias{Simulator.GAD}
-\title{Simulator.GAD
-directed acyclic graph approach to simulation}
+\title{Simulator.GAD}
 \format{An object of class \code{R6ClassGenerator} of length 24.}
 \usage{
 Simulator.GAD
 }
 \description{
-Simulator.GAD
 directed acyclic graph approach to simulation
 }
 \section{Methods}{

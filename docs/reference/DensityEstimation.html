@@ -65,7 +65,13 @@ variables provided to it." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">OnlineSuperLearner</a>
+<<<<<<< HEAD
         <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.1</span>
+||||||| merged common ancestors
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.0.1</span>
+=======
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.1</span>
+>>>>>>> 2b7fd8fec45d76d3e0ae0d86eafd422e6a022ae7
       </span>
     </div>
 
@@ -151,7 +157,7 @@ variables provided to it.</p>
     @param name (default = 'default') the name to use for the density
     estimator.
     @param verbose (default = FALSE) the verbosity (log level) to use while running.</p></dd>
-    <dt><code>predict(data, sample = FALSE, subset = NULL, plot = FALSE, check = FALSE) </code></dt><dd><p>Method to perform the prediction on all (or a subset of) the relevant
+    <dt><code><a href='https://www.rdocumentation.org/packages/stats/topics/predict'>predict(data, sample = FALSE, subset = NULL, plot = FALSE, check = FALSE) </a></code></dt><dd><p>Method to perform the prediction on all (or a subset of) the relevant
     variables / conditional densities. One can provide the option to
     <code>sample</code>, which means that if this is set, the predict function
     will sample new values from the underlying distributions. If this
@@ -190,10 +196,10 @@ variables provided to it.</p>
     @return list a list containing the predictions, where each entry is one
      of the relevantvariables for which a conditional distribution was fit.</p></dd>
     <dt><code>getConditionalDensities(outcome = NULL) </code></dt><dd><p>Function to get all fitted conditional densities. By default it will
-    return the full list of conditional densities (when <code>outcome =
-    NULL</code>).  One could also provide a subset of relevant variables to the
+    return the full list of conditional densities (when <code><a href='https://www.rdocumentation.org/packages/base/topics/assignOps'>outcome =
+    NULL</a></code>).  One could also provide a subset of relevant variables to the
     function.  Note that if only a single variable is returned (e.g.
-    <code>outcome = 'Y'</code>), it will return a single conditional density
+    <code><a href='https://www.rdocumentation.org/packages/base/topics/assignOps'>outcome = 'Y'</a></code>), it will return a single conditional density
     (i.e., this outcome is not encapsulated in a list). If a vector of
     outcomes is provided it will return a list.
     @param outcome (default = NULL) the subset of outcomes for which a
@@ -242,7 +248,7 @@ variables provided to it.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="http://pkgdown.r-lib.org/">pkgdown</a>.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a>.</p>
 </div>
 
       </footer>

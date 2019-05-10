@@ -136,9 +136,22 @@ a.anchor {
 .ref-index th {font-weight: normal;}
 
 .ref-index td {vertical-align: top;}
+.ref-index .icon {width: 40px;}
+.ref-index .alias {width: 40%;}
+<<<<<<< HEAD
+.ref-index .title {width: 60%;}
+
+||||||| merged common ancestors
+.ref-index .title {width: 60%;}
+
 .ref-index .alias {width: 40%;}
 .ref-index .title {width: 60%;}
 
+=======
+.ref-index-icons .alias {width: calc(40% - 40px);}
+.ref-index .title {width: 60%;}
+
+>>>>>>> 2b7fd8fec45d76d3e0ae0d86eafd422e6a022ae7
 .ref-arguments th {text-align: right; padding-right: 10px;}
 .ref-arguments th, .ref-arguments td {vertical-align: top;}
 .ref-arguments .name {width: 20%;}

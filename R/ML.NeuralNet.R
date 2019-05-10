@@ -46,7 +46,7 @@ ML.NeuralNet <- R6Class("ML.NeuralNet",
       hidden = NULL,
       file_name = file.path('output', 'model_NN.rds'),
 
-      do.fit = function(X_mat, Y_vals, save_model = FALSE, coef = NULL) {
+      do.fit = function(X_mat, Y_vals, save_model = FALSE, coef = NULL, ...) {
         formula <- self$create_formula(colnames(X_mat))
         data = cbind(X_mat, Y = Y_vals) 
         fitted_model<- neuralnet(formula, data = data, 
@@ -73,15 +73,14 @@ ML.NeuralNet <- R6Class("ML.NeuralNet",
         }
         
         fitted_model = tryCatch({
-            private$do.fit(X_mat, Y_vals, 
-                         save_model = save_model,
-                         coef = m.fit$coef$weights)
-          }, warning = function(w) {
-            if (w$message == 'algorithm did not converge in 1 of 1 repetition(s) within the stepmax') {
-              warning(w$message)
-              return(m.fit$coef)
-              
-            }
+          private$do.fit(X_mat, Y_vals, 
+                        save_model = save_model,
+                        coef = m.fit$coef$weights)
+        }, warning = function(w) {
+          if (w$message == 'algorithm did not converge in 1 of 1 repetition(s) within the stepmax') {
+            warning(w$message)
+            return(m.fit$coef)
+          }
         }) 
         
          
@@ -90,27 +89,28 @@ ML.NeuralNet <- R6Class("ML.NeuralNet",
         }
 
         
+        if (is.null(fitted_model)) {
+          print('Fitted model is null in NN.')
+          browser()
+        }
         return(fitted_model)
       },
 
-      do.predict = function(X_mat, m.fit = NULL) {
+      do.predict = function(X_mat, m.fit = NULL, ...) {
         if (is.null(m.fit)){
           m.fit <- private$read_model()
         }
-          
         private$validate_mfit(m.fit)
-         result= tryCatch({
-           if (is.null(m.fit$coef$result.matrix["reached.threshold",])){
-                   browser()
-           }
-           compute(m.fit$coef, X_mat)
+        result= tryCatch({
+          if (is.null(m.fit$coef$result.matrix["reached.threshold",])){
+            browser()
+          }
+          compute(m.fit$coef, X_mat)
         }, warning = function(w) {
-          
           browser()
-          },
-           error = function(e){
-             browser()
-           }
+          }, error = function(e){
+            browser()
+          }
         ) 
         
 

@@ -65,7 +65,13 @@ to the super learner machine learning model." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">OnlineSuperLearner</a>
+<<<<<<< HEAD
         <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.1</span>
+||||||| merged common ancestors
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.0.1</span>
+=======
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.1</span>
+>>>>>>> 2b7fd8fec45d76d3e0ae0d86eafd422e6a022ae7
       </span>
     </div>
 
@@ -179,7 +185,7 @@ to the super learner machine learning model.</p>
      collection of blocks / mini batch will be used as a validation set
      while training.
     @return data.table a data.table with the risks of each estimator.</p></dd>
-    <dt><code>predict(data, relevantVariables = NULL, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE)</code></dt><dd><p>Method to perform a prediction on the estimators. It can run in
+    <dt><code><a href='https://www.rdocumentation.org/packages/stats/topics/predict'>predict(data, relevantVariables = NULL, all_estimators = TRUE, discrete = TRUE, continuous = TRUE, sample = FALSE, plot = FALSE)</a></code></dt><dd><p>Method to perform a prediction on the estimators. It can run in
     different configurations. It can be configured to predict the outcome
     using all estimators (the <code>all_estimators</code> flag), using the
     discrete superlearner (the <code>discrete</code> flag), or using the
@@ -221,7 +227,7 @@ to the super learner machine learning model.</p>
     @param data = the initial data to start the sampling from. At most 1 row of data.
     @param tau integer (default = 10) the timestep at which you want to evaluate the output
     @param intervention list/intervention (default = NULL) the intervention,
-    e.g.: <code>list(when = c(1,2), what = c(1,0), variable = 'A')</code>. See the
+    e.g.: <code><a href='https://www.rdocumentation.org/packages/base/topics/list'>list(when = c(1,2), what = c(1,0), variable = 'A')</a></code>. See the
     <code>InterventionParser</code> for more details.
     @param return_type string (default = 'observations') the
      <code>OnlineSuperlearner.SampleIteratively</code> can return data in different
@@ -260,7 +266,7 @@ to the super learner machine learning model.</p>
      can be specified as follows:
      - List of <code>RelevantVariable</code> objects to predict
      - Single <code>RelevantVariable</code> object to predict
-     - List of strings with the names of the outputs (<code>list('X','Y')</code>)
+     - List of strings with the names of the outputs (<code><a href='https://www.rdocumentation.org/packages/base/topics/list'>list('X','Y')</a></code>)
      - Single string with the name of the output (<code>'Y'</code>)
     @return a list of <code>RelevantVariable</code> objects to use in the prediction function.</p></dd>
     <dt><code>is_fitted</code></dt><dd><p>Active method. Returns whether the OSL has been fitted or not
@@ -312,7 +318,7 @@ to the super learner machine learning model.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="http://pkgdown.r-lib.org/">pkgdown</a>.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a>.</p>
 </div>
 
       </footer>

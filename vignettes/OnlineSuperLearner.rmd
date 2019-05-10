@@ -33,6 +33,7 @@ Then appart from the system libraries, we need to install the R dependencies. We
 
 
 ``` {r install devtools, echo=FALSE, results='hide'}
+options(repos=structure(c(CRAN="https://cran.cnr.berkeley.edu/")))
 if (!("devtools" %in% rownames(installed.packages()))) { install.packages('devtools') }
 ```
 
@@ -44,8 +45,10 @@ use_local <- FALSE
 if ("package:OnlineSuperLearner" %in% search()) { detach("package:OnlineSuperLearner", unload=TRUE) }
 if ("OnlineSuperLearner" %in% rownames(installed.packages())) { remove.packages("OnlineSuperLearner") }
 if (use_local) {
+  print('Using local version of the OSL')
   install.packages('.', repos = NULL, type="source")
 } else {
+  print('Using github version of the OSL')
   devtools::install_github('frbl/onlinesuperlearner')
 }
 library('OnlineSuperLearner')

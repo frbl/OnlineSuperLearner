@@ -1,6 +1,16 @@
+<<<<<<< HEAD
 pandoc: 1.19.2.1
 pkgdown: 1.1.0.9000
 pkgdown_sha: 02559e3f164af800eb305015344b1304ac29a7a3
+||||||| merged common ancestors
+pandoc: 2.2.2
+pkgdown: 1.1.0
+pkgdown_sha: ~
+=======
+pandoc: 2.3.1
+pkgdown: 1.1.0.9000
+pkgdown_sha: 5f28dd1e87b6dfecb5426b21fc5353e486e6deb9
+>>>>>>> 2b7fd8fec45d76d3e0ae0d86eafd422e6a022ae7
 articles:
   OnlineSuperLearner: OnlineSuperLearner.html
   architecture: architecture.html

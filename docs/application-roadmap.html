@@ -61,7 +61,13 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">OnlineSuperLearner</a>
+<<<<<<< HEAD
         <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.1</span>
+||||||| merged common ancestors
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.0.1</span>
+=======
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.1</span>
+>>>>>>> 2b7fd8fec45d76d3e0ae0d86eafd422e6a022ae7
       </span>
     </div>
 
@@ -119,6 +125,7 @@
 <li>Wait / simulate the minimal number of measurements needed from a single time series</li>
 <li>Using all these measurements, we estimate the density for q_w given w-, (g given g-), and q_y given y-. (If a dist is binary, we don’t have to estimate its distribution, but we still can using Oleg’s package, for consistency. The same goes for if a variable is discrete.)</li>
 <li>SuperLearning will be done to estimate the densities. That is, we use several different estimators for estimating the densities (currently we only use logistic regression). We will also fit the number of bins that best resembles our data.</li>
+<<<<<<< HEAD
 <li>
 <p>Now, using these densities, we generate a number of draws, using the scheme you sent earlier, in order to get the counterfactual distribution (j is time of intervention, tau is time of response) :</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">result &lt;-<span class="st"> </span><span class="dv">0</span>
@@ -145,6 +152,63 @@ B &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">100
 endfor
 result</code></pre></div>
 which will give you the response for an <em>intervention a on time j for an outcome at time tau</em>.</li>
+||||||| merged common ancestors
+<li>Now, using these densities, we generate a number of draws, using the scheme you sent earlier, in order to get the counterfactual distribution (j is time of intervention, tau is time of response) :</li>
+</ol>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1">result &lt;-<span class="st"> </span><span class="dv">0</span></a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">B &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">100000</span>)</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="cf">for</span> b <span class="cf">in</span> B</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">  sample <span class="kw">W</span>(<span class="dv">1</span>) given <span class="kw">C_w</span>(<span class="dv">1</span>) from q_w</a>
+<a class="sourceLine" id="cb1-5" data-line-number="5">  sample <span class="kw">A</span>(<span class="dv">1</span>) given <span class="kw">C_a</span>(<span class="dv">1</span>) from g_a</a>
+<a class="sourceLine" id="cb1-6" data-line-number="6">  sample <span class="kw">Y</span>(<span class="dv">1</span>) given <span class="kw">C_y</span>(<span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb1-7" data-line-number="7">  sample <span class="kw">W</span>(<span class="dv">2</span>) given <span class="kw">C_w</span>(<span class="dv">2</span>) from q_w</a>
+<a class="sourceLine" id="cb1-8" data-line-number="8">  sample <span class="kw">A</span>(<span class="dv">2</span>) given <span class="kw">C_a</span>(<span class="dv">2</span>) from g_a</a>
+<a class="sourceLine" id="cb1-9" data-line-number="9">  sample <span class="kw">Y</span>(<span class="dv">2</span>) given <span class="kw">C_y</span>(<span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb1-10" data-line-number="10">  .</a>
+<a class="sourceLine" id="cb1-11" data-line-number="11">  .</a>
+<a class="sourceLine" id="cb1-12" data-line-number="12">  .</a>
+<a class="sourceLine" id="cb1-13" data-line-number="13">  sample <span class="kw">W</span>(j) given <span class="kw">C_w</span>(j) from q_w</a>
+<a class="sourceLine" id="cb1-14" data-line-number="14">  sample <span class="kw">A</span>(j) =<span class="st"> </span><span class="kw">a</span> (=<span class="st"> </span>specified, deterministic intervention)</a>
+<a class="sourceLine" id="cb1-15" data-line-number="15">  sample <span class="kw">Y</span>(j) given <span class="kw">C_y</span>(j)</a>
+<a class="sourceLine" id="cb1-16" data-line-number="16">  .</a>
+<a class="sourceLine" id="cb1-17" data-line-number="17">  .</a>
+<a class="sourceLine" id="cb1-18" data-line-number="18">  .</a>
+<a class="sourceLine" id="cb1-19" data-line-number="19">  sample <span class="kw">W</span>(tau) given <span class="kw">C_w</span>(tau) from q_w</a>
+<a class="sourceLine" id="cb1-20" data-line-number="20">  sample <span class="kw">A</span>(tau) given <span class="kw">C_a</span>(tau) from g_a</a>
+<a class="sourceLine" id="cb1-21" data-line-number="21">  result <span class="op">+</span><span class="er">=</span><span class="st"> </span>(sample <span class="kw">Y</span>(tau) given <span class="kw">C_y</span>(tau)) <span class="op">/</span><span class="st"> </span>B</a>
+<a class="sourceLine" id="cb1-22" data-line-number="22">endfor</a>
+<a class="sourceLine" id="cb1-23" data-line-number="23">result</a></code></pre></div>
+<p>which will give you the response for an <em>intervention a on time j for an outcome at time tau</em>.</p>
+<ol>
+=======
+<li>Now, using these densities, we generate a number of draws, using the scheme you sent earlier, in order to get the counterfactual distribution (j is time of intervention, tau is time of response) :</li>
+</ol>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1">result &lt;-<span class="st"> </span><span class="dv">0</span></a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">B &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/seq">seq</a></span>(<span class="dv">100000</span>)</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="cf">for</span> b <span class="cf">in</span> B</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">  sample <span class="kw">W</span>(<span class="dv">1</span>) given <span class="kw">C_w</span>(<span class="dv">1</span>) from q_w</a>
+<a class="sourceLine" id="cb1-5" data-line-number="5">  sample <span class="kw">A</span>(<span class="dv">1</span>) given <span class="kw">C_a</span>(<span class="dv">1</span>) from g_a</a>
+<a class="sourceLine" id="cb1-6" data-line-number="6">  sample <span class="kw">Y</span>(<span class="dv">1</span>) given <span class="kw">C_y</span>(<span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb1-7" data-line-number="7">  sample <span class="kw">W</span>(<span class="dv">2</span>) given <span class="kw">C_w</span>(<span class="dv">2</span>) from q_w</a>
+<a class="sourceLine" id="cb1-8" data-line-number="8">  sample <span class="kw">A</span>(<span class="dv">2</span>) given <span class="kw">C_a</span>(<span class="dv">2</span>) from g_a</a>
+<a class="sourceLine" id="cb1-9" data-line-number="9">  sample <span class="kw">Y</span>(<span class="dv">2</span>) given <span class="kw">C_y</span>(<span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb1-10" data-line-number="10">  .</a>
+<a class="sourceLine" id="cb1-11" data-line-number="11">  .</a>
+<a class="sourceLine" id="cb1-12" data-line-number="12">  .</a>
+<a class="sourceLine" id="cb1-13" data-line-number="13">  sample <span class="kw">W</span>(j) given <span class="kw">C_w</span>(j) from q_w</a>
+<a class="sourceLine" id="cb1-14" data-line-number="14">  sample <span class="kw">A</span>(j) =<span class="st"> </span><span class="kw">a</span> (=<span class="st"> </span>specified, deterministic intervention)</a>
+<a class="sourceLine" id="cb1-15" data-line-number="15">  sample <span class="kw">Y</span>(j) given <span class="kw">C_y</span>(j)</a>
+<a class="sourceLine" id="cb1-16" data-line-number="16">  .</a>
+<a class="sourceLine" id="cb1-17" data-line-number="17">  .</a>
+<a class="sourceLine" id="cb1-18" data-line-number="18">  .</a>
+<a class="sourceLine" id="cb1-19" data-line-number="19">  sample <span class="kw">W</span>(tau) given <span class="kw">C_w</span>(tau) from q_w</a>
+<a class="sourceLine" id="cb1-20" data-line-number="20">  sample <span class="kw">A</span>(tau) given <span class="kw">C_a</span>(tau) from g_a</a>
+<a class="sourceLine" id="cb1-21" data-line-number="21">  result <span class="op">+</span><span class="er">=</span><span class="st"> </span>(sample <span class="kw">Y</span>(tau) given <span class="kw">C_y</span>(tau)) <span class="op">/</span><span class="st"> </span>B</a>
+<a class="sourceLine" id="cb1-22" data-line-number="22">endfor</a>
+<a class="sourceLine" id="cb1-23" data-line-number="23">result</a></code></pre></div>
+<p>which will give you the response for an <em>intervention a on time j for an outcome at time tau</em>.</p>
+<ol>
+>>>>>>> 2b7fd8fec45d76d3e0ae0d86eafd422e6a022ae7
 <li>Questions:
 <ul>
 <li>How do we deal with the initialization? Up to now I just expected that we’d skip the first <code>Z</code> measurements, where <code>Z</code> is the maximum number of observations needed for each of the summary measures we include.</li>
@@ -166,7 +230,7 @@ which will give you the response for an <em>intervention a on time j for an outc
 <li>‘R.oxygen’</li>
 <li>‘R.utils’ (‘Arguments$getNumeric’ and the likes, ‘throw’, use of ‘verbose’)</li>
 </ul>
-<pre><code>  ## Example of verbose
+<pre><code><a href="https://www.rdocumentation.org/packages/base/topics/assignOps">  ## Example of verbose
   ## Argument 'verbose':
   verbose &lt;- Arguments$getVerbose(verbose)
   verbose &lt;- less(verbose, 10)
@@ -174,7 +238,7 @@ which will give you the response for an <em>intervention a on time j for an outc
   verbose &amp;&amp; enter(verbose, "Simulated  copy number and expression data
   for class 1")
   verbose &amp;&amp; str(verbose, V)
-  verbose &amp;&amp; exit(verbose)</code></pre>
+  verbose &amp;&amp; exit(verbose)</a></code></pre>
 <ol>
 <li>Keep in mind that we’re interested in oos (online one-step) and otmle (online tmle) estimators</li>
 </ol>
@@ -205,7 +269,7 @@ which will give you the response for an <em>intervention a on time j for an outc
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="http://pkgdown.r-lib.org/">pkgdown</a>.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a>.</p>
 </div>
 
       </footer>

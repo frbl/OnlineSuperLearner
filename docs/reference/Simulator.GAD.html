@@ -6,8 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Simulator.GAD
-directed acyclic graph approach to simulation — Simulator.GAD • OnlineSuperLearner</title>
+<title>Simulator.GAD — Simulator.GAD • OnlineSuperLearner</title>
 
 <link rel="shortcut icon" type="image/x-icon" href="../favicon.ico">
 
@@ -33,11 +32,9 @@ directed acyclic graph approach to simulation — Simulator.GAD • OnlineSuperL
 
 
 
-<meta property="og:title" content="Simulator.GAD
-directed acyclic graph approach to simulation — Simulator.GAD" />
+<meta property="og:title" content="Simulator.GAD — Simulator.GAD" />
 
-<meta property="og:description" content="Simulator.GAD
-directed acyclic graph approach to simulation" />
+<meta property="og:description" content="directed acyclic graph approach to simulation" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -67,7 +64,13 @@ directed acyclic graph approach to simulation" />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">OnlineSuperLearner</a>
+<<<<<<< HEAD
         <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.1</span>
+||||||| merged common ancestors
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released package">0.0.1</span>
+=======
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.1</span>
+>>>>>>> 2b7fd8fec45d76d3e0ae0d86eafd422e6a022ae7
       </span>
     </div>
 
@@ -113,16 +116,14 @@ directed acyclic graph approach to simulation" />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Simulator.GAD
-directed acyclic graph approach to simulation</h1>
+    <h1>Simulator.GAD</h1>
     
     <div class="hidden name"><code>Simulator.GAD.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Simulator.GAD
-directed acyclic graph approach to simulation</p>
+    <p>directed acyclic graph approach to simulation</p>
     
     </div>
 
@@ -148,7 +149,7 @@ directed acyclic graph approach to simulation</p>
    <code>stochMech</code> function the mechanism that is used to generate the underlying unmeasured confounders. These 'observations' form the basis of the data generative process.
    <code>param</code> vector with memories used to generate the dataset. Each entry in this vector is a coefficient for that point in history.
                 Note that this also includes preceeding measurements within the current observation, i.e. W A Y -&gt; A precedes Y, W precedes A, etc.
-                If we would thus have a memory of <code>c(0.1,0.5)</code> for <code>W</code>, that would mean that the current measurement of W is generated using the Y in the
+                If we would thus have a memory of <code><a href='https://www.rdocumentation.org/packages/base/topics/c'>c(0.1,0.5)</a></code> for <code>W</code>, that would mean that the current measurement of W is generated using the Y in the
                 previous measurment for 0.1, and A in the previous measurement for 0.5.
    <code>rgen</code> function</p></dd>
   <dt><code>simulateWAYiidTrajectories(numberOfBlocks, numberOfTrajectories, qw, ga, Qy, intervention, verbose)</code></dt><dd><p>does the exact same as simulateWAY, however, this function also takes an numberOfTrajectories argument, in which one can specify how many concurrent time series should be generated.
@@ -181,7 +182,7 @@ directed acyclic graph approach to simulation</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="http://pkgdown.r-lib.org/">pkgdown</a>.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a>.</p>
 </div>
 
       </footer>

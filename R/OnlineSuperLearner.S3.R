@@ -107,10 +107,15 @@ sampledata.OnlineSuperLearner <- function(object, newdata, Y = NULL, nobs=1, sum
     newdata <- object$get_summary_measure_generator$getNext(nrow(newdata))[[1]]
   }
 
+
+  ## If we have provided a Y outcome, retrieve the relevant variable from the OSL here
   if (!is.null(Y)) Y <- object$retrieve_list_of_relevant_variables(relevant_variables = Y)
 
   res <- foreach(seq(1,nobs)) %do% {
     sampled <- object$predict(data = newdata, relevantVariables = Y, sample = TRUE, ...)
+
+    ## We use the denormalized values here so we can treat the sampled values directly
+    ## as 'normal' or 'input' values
     sampled$denormalized
   }
     

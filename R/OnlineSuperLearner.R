@@ -380,7 +380,6 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           }
 
           data <- Arguments$getInstanceOf(data, 'Data.Base')
-
           ## Initialize the summary measure generator with the correct trajectories
           self$get_summary_measure_generator$set_trajectories(data = data)
 
@@ -417,7 +416,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           private$verbose && exit(private$verbose)
 
           toc <- Sys.time()
-          private$verbose && cat(private$verbose, 'The whole procedure took ', (toc - tic), ' seconds.')
+          private$verbose && cat(private$verbose, 'The whole procedure took ', (toc - tic), ' minutes.')
           return(self$get_cv_risk())
         },
 
@@ -565,7 +564,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
             ## Note that there could be multiple trajectories, so we need to iterate
             for(data_current in trajectories) {
-              if(is.null(data_current) || nrow(data_current) < 1) {
+              if(is.null(data_current) || nrow(data_current) <= self$get_data_splitter$get_test_set_size + 1) {
                 ## TODO: Check wether the stopping criteria are met (e.g., improvement < theta)
                 stopped <- TRUE
                 break
@@ -577,7 +576,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
                 lapply(names(risk), function(cv_name) {
                   paste(
                     'Updating OSL at iteration', t,
-                    'error for', cv_name,
+                    ', CV risk for', cv_name,
                     'is', risk[cv_name]
                   ) %>% cat(private$verbose, .)
                 })
@@ -912,21 +911,28 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
 
           `%looping_function%` <- private$get_looping_function()
           #private$fabricated_estimators <- mclapply(self$get_estimators, function(estimator) {
-          #for(estimator in self$get_estimators) {
-          estimators <- foreach(estimator=self$get_estimators) %looping_function% {
-            private$verbose && cat(private$verbose, 'Training ', estimator$get_name)
-            if(self$is_fitted && estimator$is_online) {
-              # Note that we use the data here, and not the cache, as
-              # essentially this cache will be  empty if none of the algorithms
-              # is online, and we only want to use the new observations to
-              # update the estimator.
-              estimator$update(data)
-            } else {
-              estimator$fit(cache, relevantVariables = self$get_relevant_variables)
+
+          estimators = tryCatch({
+            #for(estimator in self$get_estimators) {
+            estimators <- foreach(estimator=self$get_estimators) %do% {
+              private$verbose && enter(private$verbose, 'Training ', estimator$get_name)
+              if(self$is_fitted && estimator$is_online) {
+                # Note that we use the data here, and not the cache, as
+                # essentially this cache will be  empty if none of the algorithms
+                # is online, and we only want to use the new observations to
+                # update the estimator.
+                estimator$update(data)
+              } else {
+                estimator$fit(cache, relevantVariables = self$get_relevant_variables)
+              }
+              private$verbose && exit(private$verbose)
+              estimator
             }
-            private$verbose && cat(private$verbose, 'Done training (or updating) ', estimator$get_name)
-            estimator
-          }
+            
+          }, error = function(e) {
+            print('Something went wrong with running all estimators, starting debugger.')
+            browser()
+          })
           private$verbose && cat(private$verbose, 'Trained all estimators for this RV in this iteration.')
           names(estimators) <- names(self$get_estimators)
           private$fabricated_estimators <- estimators

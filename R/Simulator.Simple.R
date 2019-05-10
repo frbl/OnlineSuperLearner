@@ -1,3 +1,5 @@
+#' SimpleSimulator
+#'
 #' Very basic simulator to generate data from a simple binary model
 #'
 #' @docType class

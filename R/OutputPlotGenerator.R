@@ -51,6 +51,7 @@ OutputPlotGenerator.create_density_plot = function(yValues, estimated_probabilit
   ylim <- c(0,max(c(estimated_probabilities, true_density$y), na.rm=TRUE))
 
   pdf(full_file_name)
+
   plot(true_density, ylim=ylim)
   lines(estimated_y_values, estimated_probabilities, type = type, cex = .3, col = "red",
         ylim=c(0,max(estimated_probabilities)+.5))
@@ -184,6 +185,8 @@ OutputPlotGenerator.create_training_curve = function(historical_cvs, relevantVar
                                       dir = dir)
   
 
+
+  cat('create_training_curve plotting to:', full_file_name)
   pdf(full_file_name)
   for (i in seq_along(plots)) {
     plot(plots[[i]])
@@ -254,7 +257,7 @@ OutputPlotGenerator.create_risk_plot = function(performance, output, dir = 'tmp'
   full_file_name <- get_file_location(name = output,
                                       extension = 'pdf',
                                       dir = dir)
-  pdf(full_file_name)
+
   p <- ggplot(performance_dt)
 
   colors <- OutputPlotGenerator.get_simple_colors(length(outcomes))
@@ -262,22 +265,26 @@ OutputPlotGenerator.create_risk_plot = function(performance, output, dir = 'tmp'
   names(colors) <- outcomes
   for (name in outcomes) {
     p <- p + geom_point(size = 2, aes_string(x=name, y='names'), color=colors[[name]])+
-    theme(legend.position="left")
+      theme(legend.position="left")
   }
 
   p <- p +
-  scale_linetype(guide = guide_legend(override.aes = list(alpha = 1)), labels = outcomes) + 
-  theme(legend.position = c(.75, .25))+
-  theme(panel.background = element_rect(fill = 'transparent', colour = 'black', size=1))+
-  theme(axis.text.y = element_text(colour = "black") ) +
-  theme(axis.title.y=element_blank()) +
-  labs(y = '', x = paste(names(colors), colors, sep=': ', collapse = ', '))+
-  theme(legend.position="left")+
-  theme(legend.background = element_rect(colour="transparent"))+
-  theme(legend.key = element_rect(fill = "transparent", colour = "transparent")) +
-  theme(legend.key.size= unit(3,"lines"))
-  plot(p)
-  dev.off()
+    scale_linetype(guide = guide_legend(override.aes = list(alpha = 1)), labels = outcomes) + 
+    theme(legend.position = c(.75, .25))+
+    theme(panel.background = element_rect(fill = 'transparent', colour = 'black', size=1))+
+    theme(axis.text.y = element_text(colour = "black") ) +
+    theme(axis.title.y=element_blank()) +
+    labs(y = '', x = paste(names(colors), colors, sep=': ', collapse = ', '))+
+    theme(legend.position="left")+
+    theme(legend.background = element_rect(colour="transparent"))+
+    theme(legend.key = element_rect(fill = "transparent", colour = "transparent")) +
+    theme(legend.key.size= unit(3,"lines"))
+
+
+  #pdf(full_file_name)
+  cat('Create_risk_plot plotting to:', full_file_name)
+  #plot(p)
+  #dev.off()
 }
 
 #' OutputPlotGenerator.get_colors

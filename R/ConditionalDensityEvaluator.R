@@ -15,37 +15,45 @@
 #'
 #' @docType class
 #' @importFrom R6 R6Class
+#' @importFrom ggplot2 ggplot geom_density
+#' @importFrom reshape2 melt
+#' @importFrom stats ecdf
 ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
   public =
     list(
-      initialize = function(verbose = FALSE, osl, summary_measure_generator) {
+      initialize = function(verbose = FALSE, osl, summary_measure_generator, cfg = 1) {
         private$verbose <- Arguments$getVerbose(verbose, timestamp = TRUE)
         # We dont type check here to support mocks
         private$osl <- osl #Arguments$getInstanceOf(osl, 'OnlineSuperLearner')
         private$summary_measure_generator <- summary_measure_generator #Arguments$getInstanceOf(summary_measure_generator, 'SummaryMeasureGenerator')
-        private$evaluation_path <- get_file_location(name = 'density_evaluation', 
+        private$evaluation_path <- get_file_location(name = paste('density_evaluation', cfg, sep='_'), 
                                                      extension = 'pdf')
       },
 
-      evaluate = function(simulator, T_iter, B_iter, nbins = (5)) {
+      evaluate = function(simulator, T_iter, B_iter, nbins = (5), outcome_variable, should_plot = TRUE) {
         T_iter <- Arguments$getInteger(T_iter, c(1, Inf))
         B_iter <- Arguments$getInteger(B_iter, c(1, Inf))
 
-        pdf(private$evaluation_path)
+        if (should_plot) {
+          pdf(private$evaluation_path)
+        }
         ## For all t in T_iter,
         ## And for all gamma in Gamma,
         sampled_p_values <- foreach(t = 1:T_iter) %do% {
 
           ## Sample from the simulator B_iter times, independently!
-          observed_data = simulator$simulateWAY(numberOfTrajectories = B_iter)
+          ## Note that this is raw data (not normalized!)
+          #observed_data = simulator$simulateWAY(numberOfTrajectories = B_iter)
+          observed_data = simulator$simulateWAY(numberOfBlocks = B_iter)
+
 
           ## Split W in a number of bins. We use the minimal W value to the max W value
           ## and create the nbins over this interval.
 
           # 1. Split the dataframe into seperate sections.
           # 2. Make the slicing into each of the different lagged / other vars.
-
           data <- private$convert_observations(observed_data = observed_data)
+
           cluster_bins <- private$create_cluster_bins(data, nbins = nbins)
 
           ## We assume a discrete or binary treatment variable. Hence, just select
@@ -53,11 +61,6 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
           W_bins <- cluster_bins$W
           A_bins <- observed_data$A %>% unique
           n_A_bins <- length(A_bins)
-
-          #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          # WE MOETEN IPV EEN WAARDEN VERZINNEN, EEN HELE RIJ
-          # SAMPLEN. DAN IS HET PROBLEEM MET DE LAGS OPGELOST!
-          ##################################################
 
           ## Sample from osl B_iter times
           private$verbose && enter(private$verbose, 'New iteration')
@@ -90,29 +93,34 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
                 private$verbose && cat(private$verbose, 'Positivity failed, skipping entry')
                 return(NULL)
               }
+                
+              ## Sample a single row from the whole set of basedata
+              res <- foreach(seq(1,available_subset_size)) %dopar% {
+                idx <- sample(available_subset_size, 1)
+                sub_res <- sampledata(private$osl, a_subset[idx,], 
+                                  nobs = 1,
+                                  Y = outcome_variable,
+                                  summarize = FALSE)
+                return(list(osl = sub_res$osl.estimator, dosl = sub_res$dosl.estimator))
+              }
 
-              newdata <- a_subset[sample(available_subset_size, 1),]
-                
-              res <- sampledata(private$osl, newdata, 
-                                nobs = available_subset_size,
-                                summarize = FALSE)$osl.estimator
-                
-              names <- colnames(res)
+              res <- lapply(res, as.data.frame) %>% rbindlist 
+              colnames(res) <- c('osl.estimator', 'dosl.estimator')
 
               ## Plot some debugging distributions
-              predicted_densities <- apply(res, 2, density)
-              true_densities <- lapply(names, function(name) density(a_subset[[name]]))
-              names(true_densities) <- names
-
-              ##################
               ## Only go for Y now
-              plot(true_densities$Y)
-              lines(predicted_densities$Y, col='red')
-              private$verbose && exit(private$verbose)
+              ## First make sure to convert the observed data back to its original form
+              current_Y <- private$convert_normalized(a_subset)$Y
+
+              if (should_plot) {
+                private$plot_densities(current_Y, res$osl.estimator, res$dosl.estimator, A_bin = a)
+              }
+
 
               ## Calculate kolmogorov smirnov test here.
-              pval <- private$test_difference(res$Y, a_subset$Y)
-              #if(pval <= 0.05) browser()
+              pval <- private$test_difference(res$dosl.estimator, current_Y)
+              private$verbose && exit(private$verbose)
+
               pval
             }
 
@@ -123,18 +131,30 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
           }
           private$verbose && exit(private$verbose)
 
+
           names(estimated_data) <- apply(W_bins, 2, function(x) paste(x, collapse=' to '))
 
           estimated_data
         }
 
         ## TODO: For some reason the difference testing can result in NA. Look into this.
-        density_vals <- sampled_p_values %>% unlist %>% unname
-        plot(density( density_vals[!is.na(density_vals)]))
-        dev.off()
+        if (should_plot) {
+          private$plot_pvalue_density(sampled_p_values)
+          dev.off()
+        }
 
-        ## TODO: We still need to perform the bonferoni correction.
         return(sampled_p_values)
+      },
+
+      calculate_significance = function(result, bonferroni_correction = TRUE, alpha = 0.05) {
+        flat_result <- result %>% unlist %>% unname
+        flat_result <- flat_result[!is.na(flat_result)]
+
+        if (bonferroni_correction) {
+          alpha <- alpha/(T_iter * nbins)
+        }
+
+        sum(flat_result < alpha) / length(flat_result) * 100 %>% round(., 2)
       }
     ),
   active =
@@ -146,6 +166,33 @@ ConditionalDensityEvaluator <- R6Class("ConditionalDensityEvaluator",
       verbose = NULL,
       osl = NULL,
       summary_measure_generator = NULL,
+
+      plot_pvalue_density = function(pvalues) {
+        density_vals <- pvalues %>% 
+          unlist %>% 
+          unname %>% 
+          data.frame(density_vals = .)
+
+        density_plot <- ggplot(density_vals, aes(density_vals)) + 
+          geom_density() 
+        plot(density_plot)
+        plot(ecdf(density_vals$density_vals))
+      },
+
+      plot_densities = function(observed_data, osl, dosl, A_bin) {
+        melted_df <- data.frame(observed = observed_data, osl = osl, dosl = dosl) %>%
+          melt(., measure.vars = colnames(.))
+
+        density_plot <- ggplot(melted_df, aes(x=value, fill=variable)) + 
+          geom_density(alpha=0.25) +
+          guides(fill=guide_legend(title=paste("Number of observations:", length(observed_data), 'A:', A_bin)))
+
+        density_plot %T>% plot
+      },
+
+      convert_normalized = function(normalized_data) {
+        private$summary_measure_generator$get_pre_processor$denormalize(normalized_data)
+      },
 
       convert_observations = function(observed_data) {
         data <- Data.Static$new(dataset = observed_data)
