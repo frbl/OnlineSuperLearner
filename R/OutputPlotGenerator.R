@@ -76,7 +76,7 @@ OutputPlotGenerator.create_density_plot = function(yValues, estimated_probabilit
 #' @param dir string (default = 'tmp') the directory name to
 #'  store the output in.
 #' @export
-OutputPlotGenerator.create_convergence_plot = function(data, output, dir = 'tmp') {
+OutputPlotGenerator.create_convergence_plot = function(data, output, dir = 'tmp', range = c(0,1)) {
   labels = names(data)
   colors <- OutputPlotGenerator.get_colors(length(labels))
 
@@ -106,6 +106,11 @@ OutputPlotGenerator.create_convergence_plot = function(data, output, dir = 'tmp'
     theme(legend.background = element_rect(colour="transparent"))+
     theme(legend.key = element_rect(fill = "transparent", colour = "transparent")) +
     theme(legend.key.size= unit(3,"lines"))
+
+
+  if(!is.null(range)) {
+    plotje <- plotje + ylim(range[1], range[2])
+  }
 
   plot(plotje)
   dev.off()
