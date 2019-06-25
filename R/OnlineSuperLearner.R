@@ -3,11 +3,13 @@
 #' OnlineSuperLearner
 #'
 #' This is the main super learner class. This class contains everything related
-#' to the super learner machine learning model.
+#' to the super learner machine learning model. Note that we are including tidyverse
+#' here so it can be used in the cpp-demo.
 #'
 #' @docType class
 #' @importFrom R6 R6Class
 #' @import future
+#' @import tidyverse
 #' @include zzz.R
 #' @include LibraryFactory.R
 #' @include DataSplitter.R
