@@ -25,8 +25,9 @@ test_set_size <- 100
 max_iterations <- 20
 
 ## Specify the intervention we'd like to test, and also specify when we want to
-## test this interventsion
+## test this intervention
 intervention <- list(variable = 'A', when = c(1), what = c(1))
+
 tau <- 1
 
 ## B is the number of iterations we'll run before we hope to converge
