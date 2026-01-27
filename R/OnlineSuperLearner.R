@@ -767,7 +767,7 @@ OnlineSuperLearner <- R6Class ("OnlineSuperLearner",
           if (length(self$get_estimator_descriptions) == 0 || length(self$get_estimators) == 0 ) {
             throw("There should be at least one estimator in the library")
           }
-          if (is.null(self$get_summary_measure_generator) || class(self$get_summary_measure_generator) %in% 'SummaryMeasureGenerator') {
+          if (is.null(self$get_summary_measure_generator) || !("SummaryMeasureGenerator" %in% class(self$get_summary_measure_generator))) {
             throw("You need to provide a summary measure generator of class SummaryMeasureGenerator")
           }
           if (!is.a(self$get_weighted_combination_computers, 'list')) {
